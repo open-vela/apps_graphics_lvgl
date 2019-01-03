@@ -155,19 +155,25 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
     lv_img_header_t header;
     lv_img_dsc_get_info(src_img, &header);
 
+
+
     /*Save the source*/
     if(src_type == LV_IMG_SRC_VARIABLE) {
         LV_LOG_INFO("lv_img_set_src:  `LV_IMG_SRC_VARIABLE` type found");
+
+        /*If memory was allocated because of the previous `src_type` then free it*/
+        if(ext->src_type == LV_IMG_SRC_FILE || ext->src_type == LV_IMG_SRC_SYMBOL) {
+            lv_mem_free(ext->src);
+        }
         ext->src = src_img;
     } else if(src_type == LV_IMG_SRC_FILE || src_type == LV_IMG_SRC_SYMBOL) {
-
-
         /* If the new and the old src are the same then it was only a refresh.*/
         if(ext->src != src_img) {
+        	/*If memory was allocated because of the previous `src_type` then free it*/
             if(ext->src_type == LV_IMG_SRC_FILE || ext->src_type == LV_IMG_SRC_SYMBOL) {
-                lv_mem_free(ext->src); /*If memory was allocated because of the previous `src_type` then free it*/
+                lv_mem_free(ext->src);
             }
-            char * new_str = lv_mem_alloc(strlen(src_img) + 1);
+        	char * new_str = lv_mem_alloc(strlen(src_img) + 1);
             lv_mem_assert(new_str);
             if(new_str == NULL) return;
             strcpy(new_str, src_img);
@@ -200,13 +206,13 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
  * Enable the auto size feature.
  * If enabled the object size will be same as the picture size.
  * @param img pointer to an image
- * @param autosize_en true: auto size enable, false: auto size disable
+ * @param en true: auto size enable, false: auto size disable
  */
-void lv_img_set_auto_size(lv_obj_t * img, bool autosize_en)
+void lv_img_set_auto_size(lv_obj_t * img, bool en)
 {
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
-    ext->auto_size = (autosize_en == false ? 0 : 1);
+    ext->auto_size = (en == false ? 0 : 1);
 }
 
 
@@ -301,7 +307,10 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
             }
         } else if(ext->src_type == LV_IMG_SRC_SYMBOL) {
             LV_LOG_TRACE("lv_img_design: start to draw symbol");
-            lv_draw_label(&coords, mask, style, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL);
+            lv_style_t style_mod;
+            lv_style_copy(&style_mod, style);
+            style_mod.text.color = style->image.color;
+            lv_draw_label(&coords, mask, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL);
         } else {
             /*Trigger the error handler of image drawer*/
             LV_LOG_WARN("lv_img_design: image source type is unknown");
