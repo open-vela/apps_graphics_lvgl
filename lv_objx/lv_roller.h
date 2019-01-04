@@ -28,7 +28,6 @@ extern "C" {
 
 #include "../lv_core/lv_obj.h"
 #include "lv_ddlist.h"
-#include "lv_label.h"
 
 /*********************
  *      DEFINES
@@ -66,13 +65,6 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy);
  *====================*/
 
 /**
- * Set the align of the roller's options (left, right or center[default])
- * @param roller - pointer to a roller object
- * @param align - one of lv_label_align_t values (left, right, center)
- */
-void lv_roller_set_align(lv_obj_t * roller, lv_label_align_t align);
-
-/**
  * Set the options on a roller
  * @param roller pointer to roller object
  * @param options a string with '\n' separated options. E.g. "One\nTwo\nThree"
@@ -89,6 +81,7 @@ static inline void lv_roller_set_options(lv_obj_t * roller, const char * options
  * @param anim_en true: set with animation; false set immediately
  */
 void lv_roller_set_selected(lv_obj_t *roller, uint16_t sel_opt, bool anim_en);
+
 
 /**
  * Set a function to call when a new option is chosen
@@ -110,11 +103,11 @@ void lv_roller_set_visible_row_count(lv_obj_t *roller, uint8_t row_cnt);
 /**
  * Enable or disable the horizontal fit to the content
  * @param roller pointer to a roller
- * @param en true: enable auto fit; false: disable auto fit
+ * @param fit en true: enable auto fit; false: disable auto fit
  */
-static inline void lv_roller_set_hor_fit(lv_obj_t * roller, bool en)
+static inline void lv_roller_set_hor_fit(lv_obj_t * roller, bool fit_en)
 {
-    lv_ddlist_set_hor_fit(roller, en);
+    lv_ddlist_set_hor_fit(roller, fit_en);
 }
 
 /**
@@ -127,6 +120,7 @@ static inline void lv_roller_set_anim_time(lv_obj_t *roller, uint16_t anim_time)
     lv_ddlist_set_anim_time(roller, anim_time);
 }
 
+
 /**
  * Set a style of a roller
  * @param roller pointer to a roller object
@@ -138,13 +132,6 @@ void lv_roller_set_style(lv_obj_t *roller, lv_roller_style_t type, lv_style_t *s
 /*=====================
  * Getter functions
  *====================*/
-
-/**
- * Get the align attribute. Default alignment after _create is LV_LABEL_ALIGN_CENTER
- * @param roller pointer to a roller object
- * @return LV_LABEL_ALIGN_LEFT, LV_LABEL_ALIGN_RIGHT or LV_LABEL_ALIGN_CENTER
- */
-lv_label_align_t lv_roller_get_align(const lv_obj_t * roller);
 
 /**
  * Get the options of a roller

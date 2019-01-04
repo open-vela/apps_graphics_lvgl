@@ -16,13 +16,16 @@
 /*********************
  *      DEFINES
  *********************/
-#ifndef LV_ATTRIBUTE_FLUSH_READY
-#define LV_ATTRIBUTE_FLUSH_READY
-#endif
 
 /**********************
  *      TYPEDEFS
  **********************/
+enum {
+    LV_VDB_STATE_FREE = 0,      /*Not used*/
+    LV_VDB_STATE_ACTIVE,        /*Being used to render*/
+    LV_VDB_STATE_FLUSH,         /*Flushing pixels from it*/
+};
+typedef uint8_t lv_vdb_state_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -32,8 +35,9 @@
  *  STATIC VARIABLES
  **********************/
 
-/*Simple VDB*/
 #if LV_VDB_DOUBLE == 0
+/*Simple VDB*/
+static volatile lv_vdb_state_t vdb_state = LV_VDB_STATE_ACTIVE;
 #  if LV_VDB_ADR == 0
 /*If the buffer address is not specified  simply allocate it*/
 static uint8_t vdb_buf[LV_VDB_SIZE_IN_BYTES];
@@ -42,11 +46,9 @@ static lv_vdb_t vdb = {.buf = (lv_color_t *)vdb_buf};
 /*If the buffer address is specified use that address*/
 static lv_vdb_t vdb = {.buf = (lv_color_t *)LV_VDB_ADR};
 #  endif
-
-/*LV_VDB_DOUBLE != 0*/
-#else
+#else       /*LV_VDB_DOUBLE != 0*/
 /*Double VDB*/
-static uint8_t vdb_active = 0;
+static volatile lv_vdb_state_t vdb_state[2] = {LV_VDB_STATE_FREE, LV_VDB_STATE_FREE};
 #  if LV_VDB_ADR == 0
 /*If the buffer address is not specified  simply allocate it*/
 static uint8_t vdb_buf1[LV_VDB_SIZE_IN_BYTES];
@@ -57,8 +59,6 @@ static lv_vdb_t vdb[2] = {{.buf = (lv_color_t *) vdb_buf1}, {.buf = (lv_color_t 
 static lv_vdb_t vdb[2] = {{.buf = (lv_color_t *)LV_VDB_ADR}, {.buf = (lv_color_t *)LV_VDB2_ADR}};
 #  endif
 #endif
-
-static volatile bool vdb_flushing = false;
 
 /**********************
  *      MACROS
@@ -75,14 +75,32 @@ static volatile bool vdb_flushing = false;
 lv_vdb_t * lv_vdb_get(void)
 {
 #if LV_VDB_DOUBLE == 0
-    /* Wait until VDB is flushing.
-     * (Until this user calls of 'lv_flush_ready()' in the display drivers's flush function*/
-    while(vdb_flushing);
+    /* Wait until VDB become ACTIVE from FLUSH by the
+     * user call of 'lv_flush_ready()' in display drivers's flush function*/
+    while(vdb_state != LV_VDB_STATE_ACTIVE);
 
+    if(vdb.buf == (void *)LV_VDB_ADR_INV) {
+        LV_LOG_ERROR("VDB address is invalid. Use `lv_vdb_set_adr` to set a valid address or use LV_VDB_ADR = 0 in lv_conf.h");
+        return NULL;
+    }
     return &vdb;
 #else
     /*If already there is an active do nothing*/
-    return &vdb[vdb_active];
+    if(vdb_state[0] == LV_VDB_STATE_ACTIVE) return &vdb[0];
+    if(vdb_state[1] == LV_VDB_STATE_ACTIVE) return &vdb[1];
+
+    /*Try to allocate a free VDB*/
+    if(vdb_state[0] == LV_VDB_STATE_FREE) {
+        vdb_state[0] = LV_VDB_STATE_ACTIVE;
+        return &vdb[0];
+    }
+
+    if(vdb_state[1] == LV_VDB_STATE_FREE) {
+        vdb_state[1] = LV_VDB_STATE_ACTIVE;
+        return &vdb[1];
+    }
+
+    return NULL;   /*There wasn't free VDB (never happen)*/
 #endif
 }
 
@@ -96,31 +114,23 @@ void lv_vdb_flush(void)
         LV_LOG_WARN("Invalid VDB pointer");
         return;
     }
+#if LV_VDB_DOUBLE == 0
+    vdb_state = LV_VDB_STATE_FLUSH;     /*User call to 'lv_flush_ready()' will set to ACTIVE 'disp_flush'*/
+#else
+    /* Wait the pending flush before starting this one
+     * (Don't forget: 'lv_flush_ready()' has to be called when flushing is ready)*/
+    while(vdb_state[0] == LV_VDB_STATE_FLUSH || vdb_state[1] == LV_VDB_STATE_FLUSH);
 
-    /*Don't start a new flush while the previous is not finished*/
-#if LV_VDB_DOUBLE
-    while(vdb_flushing);
-#endif  /*LV_VDB_DOUBLE*/
-
-    vdb_flushing = true;
+    /*Turn the active VDB to flushing*/
+    if(vdb_state[0] == LV_VDB_STATE_ACTIVE) vdb_state[0] = LV_VDB_STATE_FLUSH;
+    if(vdb_state[1] == LV_VDB_STATE_ACTIVE) vdb_state[1] = LV_VDB_STATE_FLUSH;
+#endif
 
     /*Flush the rendered content to the display*/
     lv_disp_flush(vdb_act->area.x1, vdb_act->area.y1, vdb_act->area.x2, vdb_act->area.y2, vdb_act->buf);
 
-
-#if LV_VDB_DOUBLE
-    /*Make the other VDB active. The content of the current will be kept until the next flush*/
-    vdb_active++;
-    vdb_active &= 0x1;
-
-    /*If the screen is transparent initialize it when the new VDB is selected*/
-#  if LV_COLOR_SCREEN_TRANSP
-        memset(vdb[vdb_active].buf, 0x00, LV_VDB_SIZE_IN_BYTES);
-#  endif  /*LV_COLOR_SCREEN_TRANSP*/
-
-#endif  /*#if LV_VDB_DOUBLE*/
-
 }
+
 
 /**
  * Set the address of VDB buffer(s) manually. To use this set `LV_VDB_ADR` (and `LV_VDB2_ADR`) to `LV_VDB_ADR_INV` in `lv_conf.h`.
@@ -142,42 +152,29 @@ void lv_vdb_set_adr(void * buf1, void * buf2)
 /**
  * Call in the display driver's  'disp_flush' function when the flushing is finished
  */
-LV_ATTRIBUTE_FLUSH_READY void lv_flush_ready(void)
+void lv_flush_ready(void)
 {
-    vdb_flushing = false;
+#if LV_VDB_DOUBLE == 0
+    vdb_state = LV_VDB_STATE_ACTIVE;
 
-    /*If the screen is transparent initialize it when the flushing is ready*/
-#if LV_VDB_DOUBLE == 0 && LV_COLOR_SCREEN_TRANSP
+#if LV_COLOR_SCREEN_TRANSP
     memset(vdb_buf, 0x00, LV_VDB_SIZE_IN_BYTES);
 #endif
-}
 
-/**
- * Get currently active VDB, where the drawing happens. Used with `LV_VDB_DOUBLE  1`
- * @return pointer to the active VDB. If `LV_VDB_DOUBLE  0` give the single VDB
- */
-lv_vdb_t * lv_vdb_get_active(void)
-{
-    return &vdb[vdb_active];
-}
-
-/**
- * Get currently inactive VDB, which is being displayed or being flushed. Used with `LV_VDB_DOUBLE  1`
- * @return pointer to the inactive VDB. If `LV_VDB_DOUBLE  0` give the single VDB
- */
-lv_vdb_t * lv_vdb_get_inactive(void)
-{
-    return &vdb[(vdb_active + 1) & 0x1];
-
-}
-
-/**
- * Whether the flushing is in progress or not
- * @return true: flushing is in progress; false: flushing ready
- */
-bool lv_vdb_is_flushing(void)
-{
-    return vdb_flushing;
+#else
+    if(vdb_state[0] == LV_VDB_STATE_FLUSH) {
+#if LV_COLOR_SCREEN_TRANSP
+        memset(vdb_buf[0], 0x00, LV_VDB_SIZE_IN_BYTES);
+#endif
+        vdb_state[0] = LV_VDB_STATE_FREE;
+    }
+    if(vdb_state[1] == LV_VDB_STATE_FLUSH) {
+#if LV_COLOR_SCREEN_TRANSP
+        memset(vdb_buf[1], 0x00, LV_VDB_SIZE_IN_BYTES);
+#endif
+        vdb_state[1] = LV_VDB_STATE_FREE;
+    }
+#endif
 }
 
 /**********************
