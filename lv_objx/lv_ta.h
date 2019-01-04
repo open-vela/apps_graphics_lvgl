@@ -66,8 +66,10 @@ typedef struct
     uint8_t one_line :1;        /*One line mode (ignore line breaks)*/
     struct {
         lv_style_t *style;      /*Style of the cursor (NULL to use label's style)*/
-        lv_coord_t valid_x;         /*Used when stepping up/down in text area when stepping to a shorter line. (Handled by the library)*/
+        lv_coord_t valid_x;     /*Used when stepping up/down in text area when stepping to a shorter line. (Handled by the library)*/
         uint16_t pos;           /*The current cursor position (0: before 1. letter; 1: before 2. letter etc.)*/
+        lv_area_t area;         /*Cursor area relative to the Text Area*/
+        uint16_t txt_byte_pos;  /*Byte index of the letter after (on) the cursor*/
         lv_cursor_type_t type:4;  /*Shape of the cursor*/
         uint8_t state :1;       /*Indicates that the cursor is visible now or not (Handled by the library)*/
     } cursor;
@@ -76,6 +78,7 @@ typedef struct
 enum {
     LV_TA_STYLE_BG,
     LV_TA_STYLE_SB,
+    LV_TA_STYLE_EDGE_FLASH,
     LV_TA_STYLE_CURSOR,
 };
 typedef uint8_t lv_ta_style_t;
@@ -149,9 +152,9 @@ void lv_ta_set_cursor_type(lv_obj_t * ta, lv_cursor_type_t cur_type);
 /**
  * Enable/Disable password mode
  * @param ta pointer to a text area object
- * @param pwd_en true: enable, false: disable
+ * @param en true: enable, false: disable
  */
-void lv_ta_set_pwd_mode(lv_obj_t * ta, bool pwd_en);
+void lv_ta_set_pwd_mode(lv_obj_t * ta, bool en);
 
 /**
  * Configure the text area to one line or back to normal
@@ -201,6 +204,26 @@ static inline void lv_ta_set_action(lv_obj_t * ta, lv_action_t action)
 static inline void lv_ta_set_sb_mode(lv_obj_t * ta, lv_sb_mode_t mode)
 {
     lv_page_set_sb_mode(ta, mode);
+}
+
+/**
+ * Enable the scroll propagation feature. If enabled then the Text area will move its parent if there is no more space to scroll.
+ * @param ta pointer to a Text area
+ * @param en true or false to enable/disable scroll propagation
+ */
+static inline void lv_ta_set_scroll_propagation(lv_obj_t * ta, bool en)
+{
+    lv_page_set_scroll_propagation(ta, en);
+}
+
+/**
+ * Enable the edge flash effect. (Show an arc when the an edge is reached)
+ * @param page pointer to a Text Area
+ * @param en true or false to enable/disable end flash
+ */
+static inline void lv_ta_set_edge_flash(lv_obj_t * ta, bool en)
+{
+    lv_page_set_edge_flash(ta, en);
 }
 
 /**
@@ -296,6 +319,26 @@ static inline lv_action_t lv_ta_get_action(lv_obj_t * ta)
 static inline lv_sb_mode_t lv_ta_get_sb_mode(const lv_obj_t * ta)
 {
     return lv_page_get_sb_mode(ta);
+}
+
+/**
+ * Get the scroll propagation property
+ * @param ta pointer to a Text area
+ * @return true or false
+ */
+static inline bool lv_ta_get_scroll_propagation(lv_obj_t * ta)
+{
+    return lv_page_get_scroll_propagation(ta);
+}
+
+/**
+ * Get the scroll propagation property
+ * @param ta pointer to a Text area
+ * @return true or false
+ */
+static inline bool lv_ta_get_edge_flash(lv_obj_t * ta)
+{
+    return lv_page_get_edge_flash(ta);
 }
 
 /**
