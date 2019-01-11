@@ -265,14 +265,13 @@ void lv_group_focus_freeze(lv_group_t * group, bool en)
  * Send a control character to the focuses object of a group
  * @param group pointer to a group
  * @param c a character (use LV_GROUP_KEY_.. to navigate)
- * @return result of focused object in group.
  */
-lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c)
+void lv_group_send_data(lv_group_t * group, uint32_t c)
 {
     lv_obj_t * act = lv_group_get_focused(group);
-    if(act == NULL) return LV_RES_OK;
+    if(act == NULL) return;
 
-    return act->signal_func(act, LV_SIGNAL_CONTROLL, &c);
+    act->signal_func(act, LV_SIGNAL_CONTROLL, &c);
 }
 
 /**
