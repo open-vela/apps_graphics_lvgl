@@ -137,16 +137,16 @@ void lv_label_set_align(lv_obj_t *label, lv_label_align_t align);
 /**
  * Enable the recoloring by in-line commands
  * @param label pointer to a label object
- * @param en true: enable recoloring, false: disable
+ * @param recolor_en true: enable recoloring, false: disable
  */
-void lv_label_set_recolor(lv_obj_t * label, bool en);
+void lv_label_set_recolor(lv_obj_t * label, bool recolor_en);
 
 /**
  * Set the label to draw (or not draw) background specified in its style's body
  * @param label pointer to a label object
- * @param en true: draw body; false: don't draw body
+ * @param body_en true: draw body; false: don't draw body
  */
-void lv_label_set_body_draw(lv_obj_t *label, bool en);
+void lv_label_set_body_draw(lv_obj_t *label, bool body_en);
 
 /**
  * Set the label's animation speed in LV_LABEL_LONG_ROLL and SCROLL modes
