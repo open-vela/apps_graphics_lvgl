@@ -90,6 +90,7 @@ enum
     LV_SIGNAL_CORD_CHG,
     LV_SIGNAL_STYLE_CHG,
     LV_SIGNAL_REFR_EXT_SIZE,
+    LV_SIGNAL_LANG_CHG,
     LV_SIGNAL_GET_TYPE,
 
 	_LV_SIGNAL_FEEDBACK_SECTION_START,
@@ -550,6 +551,16 @@ void lv_obj_animate(lv_obj_t * obj, lv_anim_builtin_t type, uint16_t time, uint1
  * Getter functions
  *======================*/
 
+/*--------------
+ * Language
+ *--------------*/
+
+/**
+ * Return with ID of the currently selected language
+ * @return pointer to the active screen object (loaded by 'lv_scr_load()')
+ */
+lv_obj_t * lv_lang_act(void);
+
 /*------------------
  * Screen get
  *-----------------*/
@@ -761,7 +772,7 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj);
+lv_signal_func_t   lv_obj_get_signal_func(const lv_obj_t * obj);
 
 /**
  * Get the design function of an object
