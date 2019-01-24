@@ -1664,7 +1664,7 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot)
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_func_t   lv_obj_get_signal_func(const lv_obj_t * obj)
+lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj)
 {
     return obj->signal_func;
 }
@@ -1894,6 +1894,7 @@ static void report_style_mod_core(void * style_p, lv_obj_t * obj)
         report_style_mod_core(style_p, i);
     }
 }
+
 
 /**
  * Recursively refresh the style of the children. Go deeper until a not NULL style is found

@@ -59,7 +59,6 @@ extern "C" {
 #define LV_ANIM_DIR_MASK        0x80    /*ANIM_IN/ANIM_OUT mask*/
 
 #define LV_MAX_ANCESTOR_NUM     8
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -91,7 +90,6 @@ enum
     LV_SIGNAL_CORD_CHG,
     LV_SIGNAL_STYLE_CHG,
     LV_SIGNAL_REFR_EXT_SIZE,
-    LV_SIGNAL_LANG_CHG,
     LV_SIGNAL_GET_TYPE,
 
 	_LV_SIGNAL_FEEDBACK_SECTION_START,
@@ -763,7 +761,7 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_func_t   lv_obj_get_signal_func(const lv_obj_t * obj);
+lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj);
 
 /**
  * Get the design function of an object
