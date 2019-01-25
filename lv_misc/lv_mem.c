@@ -32,8 +32,6 @@
  *      TYPEDEFS
  **********************/
 
-#if LV_ENABLE_GC == 0 /*gc custom allocations must not include header*/
-
 /*The size of this union must be 4 bytes (uint32_t)*/
 typedef union {
     struct {
@@ -47,8 +45,6 @@ typedef struct {
     lv_mem_header_t header;
     uint8_t first_data;        /*First data byte in the allocated data (Just for easily create a pointer)*/
 } lv_mem_ent_t;
-
-#endif /* LV_ENABLE_GC */
 
 /**********************
  *  STATIC PROTOTYPES
@@ -132,11 +128,11 @@ void * lv_mem_alloc(uint32_t size)
         //End if there is not next entry OR the alloc. is successful
     } while(e != NULL && alloc == NULL);
 
+#if LV_MEM_ADD_JUNK
+    if(alloc != NULL) memset(alloc, 0xaa, size);
+#endif
 
 #else  /*Use custom, user defined malloc function*/
-#if LV_ENABLE_GC == 1 /*gc must not include header*/
-    alloc = LV_MEM_CUSTOM_ALLOC(size);
-#else /* LV_ENABLE_GC */
     /*Allocate a header too to store the size*/
     alloc = LV_MEM_CUSTOM_ALLOC(size + sizeof(lv_mem_header_t));
     if(alloc != NULL) {
@@ -144,11 +140,6 @@ void * lv_mem_alloc(uint32_t size)
         ((lv_mem_ent_t *) alloc)->header.used = 1;
         alloc = &((lv_mem_ent_t *) alloc)->first_data;
     }
-#endif /* LV_ENABLE_GC */
-#endif /* LV_MEM_CUSTOM */
-
-#if LV_MEM_ADD_JUNK
-    if(alloc != NULL) memset(alloc, 0xaa, size);
 #endif
 
     if(alloc == NULL) LV_LOG_WARN("Couldn't allocate memory");
@@ -170,11 +161,9 @@ void lv_mem_free(const void * data)
     memset((void *)data, 0xbb, lv_mem_get_size(data));
 #endif
 
-#if LV_ENABLE_GC==0
     /*e points to the header*/
     lv_mem_ent_t * e = (lv_mem_ent_t *)((uint8_t *) data - sizeof(lv_mem_header_t));
     e->header.used = 0;
-#endif
 
 #if LV_MEM_CUSTOM == 0
 #if LV_MEM_AUTO_DEFRAG
@@ -192,11 +181,7 @@ void lv_mem_free(const void * data)
     }
 #endif
 #else /*Use custom, user defined free function*/
-#if LV_ENABLE_GC==0
     LV_MEM_CUSTOM_FREE(e);
-#else
-    LV_MEM_CUSTOM_FREE((void*)data);
-#endif /*LV_ENABLE_GC*/
 #endif
 }
 
@@ -207,9 +192,6 @@ void lv_mem_free(const void * data)
  * @param new_size the desired new size in byte
  * @return pointer to the new memory
  */
-
-#if LV_ENABLE_GC==0
-
 void * lv_mem_realloc(void * data_p, uint32_t new_size)
 {
     /*data_p could be previously freed pointer (in this case it is invalid)*/
@@ -249,17 +231,6 @@ void * lv_mem_realloc(void * data_p, uint32_t new_size)
 
     return new_p;
 }
-
-#else /* LV_ENABLE_GC */
-
-void * lv_mem_realloc(void * data_p, uint32_t new_size)
-{
-    void * new_p = LV_MEM_CUSTOM_REALLOC(data_p, new_size);
-    if(new_p == NULL) LV_LOG_WARN("Couldn't allocate memory");
-    return new_p;
-}
-
-#endif /* lv_enable_gc */
 
 /**
  * Join the adjacent free memory blocks
@@ -343,9 +314,6 @@ void lv_mem_monitor(lv_mem_monitor_t * mon_p)
  * @param data pointer to an allocated memory
  * @return the size of data memory in bytes
  */
-
-#if LV_ENABLE_GC==0
-
 uint32_t lv_mem_get_size(const void * data)
 {
     if(data == NULL) return 0;
@@ -355,15 +323,6 @@ uint32_t lv_mem_get_size(const void * data)
 
     return e->header.d_size;
 }
-
-#else /* LV_ENABLE_GC */
-
-uint32_t lv_mem_get_size(const void * data)
-{
-    return LV_MEM_CUSTOM_GET_SIZE(data);
-}
-
-#endif /*LV_ENABLE_GC*/
 
 /**********************
  *   STATIC FUNCTIONS
