@@ -21,7 +21,6 @@
 #if LV_MEM_CUSTOM == 0
 #define LV_MEM_SIZE    (64U * 1024U)        /*Size memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
 #define LV_MEM_ATTR                         /*Complier prefix for big array declaration*/
-#define LV_MEM_ADR          0               /*Set an address for memory pool instead of allocation it as an array. Can be in external SRAM too.*/
 #define LV_MEM_AUTO_DEFRAG  1               /*Automatically defrag on free*/
 #else       /*LV_MEM_CUSTOM*/
 #define LV_MEM_CUSTOM_INCLUDE <stdlib.h>   /*Header for the dynamic memory function*/
@@ -122,6 +121,7 @@
 #define USE_LV_GPU              1               /*1: Enable GPU interface*/
 #define USE_LV_REAL_DRAW        1               /*1: Enable function which draw directly to the frame buffer instead of VDB (required if LV_VDB_SIZE = 0)*/
 #define USE_LV_FILESYSTEM       1               /*1: Enable file system (might be required for images*/
+#define USE_LV_MULTI_LANG       0               /* Number of languages for labels to store (0: to disable this feature)*/
 
 /*Compiler settings*/
 #define LV_ATTRIBUTE_TICK_INC                   /* Define a custom attribute to `lv_tick_inc` function */
