@@ -11,11 +11,6 @@
 
 #include "lv_ll.h"
 #include <string.h>
-#include "lv_gc.h"
-
-#if defined(LV_GC_INCLUDE)
-#   include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
 
 /*********************
  *      DEFINES
@@ -35,6 +30,7 @@ static lv_fs_drv_t * lv_fs_get_drv(char letter);
 /**********************
  *  STATIC VARIABLES
  **********************/
+static lv_ll_t drv_ll;
 
 /**********************
  *      MACROS
@@ -49,7 +45,7 @@ static lv_fs_drv_t * lv_fs_get_drv(char letter);
  */
 void lv_fs_init(void)
 {
-    lv_ll_init(&LV_GC_ROOT(_lv_drv_ll), sizeof(lv_fs_drv_t));
+    lv_ll_init(&drv_ll, sizeof(lv_fs_drv_t));
 }
 
 
@@ -453,7 +449,7 @@ void lv_fs_add_drv(lv_fs_drv_t * drv_p)
 {
     /*Save the new driver*/
     lv_fs_drv_t * new_drv;
-    new_drv =  lv_ll_ins_head(&LV_GC_ROOT(_lv_drv_ll));
+    new_drv =  lv_ll_ins_head(&drv_ll);
     lv_mem_assert(new_drv);
     if(new_drv == NULL) return;
 
@@ -470,7 +466,7 @@ char  * lv_fs_get_letters(char * buf)
     lv_fs_drv_t * drv;
     uint8_t i = 0;
 
-    LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    LL_READ(drv_ll, drv) {
         buf[i] = drv->letter;
         i++;
     }
@@ -524,7 +520,7 @@ char * lv_fs_up(char * path)
         if(path[i] == '/' || path[i] == '\\') break;
     }
 
-    if(i > 0) path[i] = '\0';
+    path[i] = '\0';
 
     return path;
 }
@@ -593,7 +589,7 @@ static lv_fs_drv_t * lv_fs_get_drv(char letter)
 {
     lv_fs_drv_t * drv;
 
-    LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    LL_READ(drv_ll, drv) {
         if(drv->letter == letter) {
             return drv;
         }
