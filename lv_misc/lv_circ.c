@@ -8,7 +8,7 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_circ.h"
+#include "lv_area.h"
 
 /*********************
  *      DEFINES
