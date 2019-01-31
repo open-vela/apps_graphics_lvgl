@@ -10,12 +10,6 @@
  *********************/
 #include "../lv_hal/lv_hal_indev.h"
 #include "../lv_misc/lv_mem.h"
-#include "../lv_misc/lv_gc.h"
-
-#if defined(LV_GC_INCLUDE)
-#   include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
-
 
 /*********************
  *      DEFINES
@@ -28,6 +22,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static lv_indev_t * indev_list = NULL;
 
 /**********************
  *  STATIC VARIABLES
@@ -49,7 +44,6 @@
  */
 void lv_indev_drv_init(lv_indev_drv_t * driver)
 {
-    LV_GC_ROOT(_lv_indev_list) = NULL;
     driver->read = NULL;
     driver->type = LV_INDEV_TYPE_NONE;
     driver->user_data = NULL;
@@ -76,10 +70,10 @@ lv_indev_t * lv_indev_drv_register(lv_indev_drv_t * driver)
     node->group = NULL;
     node->btn_points = NULL;
 
-    if(LV_GC_ROOT(_lv_indev_list) == NULL) {
-        LV_GC_ROOT(_lv_indev_list) = node;
+    if(indev_list == NULL) {
+        indev_list = node;
     } else {
-        lv_indev_t * last = LV_GC_ROOT(_lv_indev_list);
+        lv_indev_t * last = indev_list;
         while(last->next)
             last = last->next;
 
@@ -98,7 +92,7 @@ lv_indev_t * lv_indev_next(lv_indev_t * indev)
 {
 
     if(indev == NULL) {
-        return LV_GC_ROOT(_lv_indev_list);
+        return indev_list;
     } else {
         if(indev->next == NULL) return NULL;
         else return indev->next;

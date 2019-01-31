@@ -283,14 +283,14 @@ void lv_label_set_align(lv_obj_t * label, lv_label_align_t align)
 /**
  * Enable the recoloring by in-line commands
  * @param label pointer to a label object
- * @param en true: enable recoloring, false: disable
+ * @param recolor_en true: enable recoloring, false: disable
  */
-void lv_label_set_recolor(lv_obj_t * label, bool en)
+void lv_label_set_recolor(lv_obj_t * label, bool recolor_en)
 {
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if(ext->recolor == en) return;
+    if(ext->recolor == recolor_en) return;
 
-    ext->recolor = en == false ? 0 : 1;
+    ext->recolor = recolor_en == false ? 0 : 1;
 
     lv_label_refr_text(label);  /*Refresh the text because the potential colo codes in text needs to be hided or revealed*/
 }
@@ -298,14 +298,14 @@ void lv_label_set_recolor(lv_obj_t * label, bool en)
 /**
  * Set the label to draw (or not draw) background specified in its style's body
  * @param label pointer to a label object
- * @param en true: draw body; false: don't draw body
+ * @param body_en true: draw body; false: don't draw body
  */
-void lv_label_set_body_draw(lv_obj_t * label, bool en)
+void lv_label_set_body_draw(lv_obj_t * label, bool body_en)
 {
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if(ext->body_draw == en) return;
+    if(ext->body_draw == body_en) return;
 
-    ext->body_draw = en == false ? 0 : 1;
+    ext->body_draw = body_en == false ? 0 : 1;
 
     lv_obj_refresh_ext_size(label);
 
@@ -440,18 +440,28 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint16_t index, lv_point_t 
     }
 
     /*If the last character is line break then go to the next line*/
-    if(index > 0) {
-        if((txt[index - 1] == '\n' || txt[index - 1] == '\r') && txt[index] == '\0') {
-            y += letter_height + style->text.line_space;
-            line_start = index;
-        }
+    if((txt[index - 1] == '\n' || txt[index - 1] == '\r') && txt[index] == '\0') {
+        y += letter_height + style->text.line_space;
+        line_start = index;
     }
 
     /*Calculate the x coordinate*/
-    lv_coord_t x = lv_txt_get_width(&txt[line_start], index - line_start,
-                            font, style->text.letter_space, flag);
-
-    if(index != line_start) x += style->text.letter_space;
+    lv_coord_t x = 0;
+    uint32_t i = line_start;
+    uint32_t cnt = line_start;                      /*Count the letter (in UTF-8 1 letter not 1 byte)*/
+    lv_txt_cmd_state_t cmd_state = LV_TXT_CMD_STATE_WAIT;
+    uint32_t letter;
+    while(cnt < index) {
+        cnt += lv_txt_encoded_size(&txt[i]);
+        letter = lv_txt_encoded_next(txt, &i);
+        /*Handle the recolor command*/
+        if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
+            if(lv_txt_is_cmd(&cmd_state, txt[i]) != false) {
+                continue; /*Skip the letter is it is part of a command*/
+            }
+        }
+        x += lv_font_get_width(font, letter) + style->text.letter_space;
+    }
 
     if(ext->align == LV_LABEL_ALIGN_CENTER) {
         lv_coord_t line_w;
@@ -466,6 +476,7 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint16_t index, lv_point_t 
 
         x += lv_obj_get_width(label) - line_w;
     }
+
     pos->x = x;
     pos->y = y;
 }
@@ -776,7 +787,7 @@ static void lv_label_refr_text(lv_obj_t * label)
             anim.var = label;
             anim.repeat = 1;
             anim.playback = 1;
-            anim.start = 0;
+            anim.start = lv_font_get_width(font, ' ');
             anim.act_time = 0;
             anim.end_cb = NULL;
             anim.path = lv_anim_path_linear;
@@ -786,7 +797,7 @@ static void lv_label_refr_text(lv_obj_t * label)
             anim.repeat_pause = anim.playback_pause;
 
             if(lv_obj_get_width(label) > lv_obj_get_width(parent)) {
-                anim.end = lv_obj_get_width(parent) - lv_obj_get_width(label);
+                anim.end = lv_obj_get_width(parent) - lv_obj_get_width(label) - lv_font_get_width(font, ' ');
                 anim.fp = (lv_anim_fp_t) lv_obj_set_x;
                 anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
                 lv_anim_create(&anim);
@@ -806,7 +817,7 @@ static void lv_label_refr_text(lv_obj_t * label)
         anim.var = label;
         anim.repeat = 1;
         anim.playback = 1;
-        anim.start = 0;
+        anim.start = lv_font_get_width(font, ' ');
         anim.act_time = 0;
         anim.end_cb = NULL;
         anim.path = lv_anim_path_linear;
@@ -815,7 +826,7 @@ static void lv_label_refr_text(lv_obj_t * label)
 
         bool hor_anim = false;
         if(size.x > lv_obj_get_width(label)) {
-            anim.end = lv_obj_get_width(label) - size.x;
+            anim.end = lv_obj_get_width(label) - size.x - lv_font_get_width(font, ' ');
             anim.fp = (lv_anim_fp_t) lv_label_set_offset_x;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
