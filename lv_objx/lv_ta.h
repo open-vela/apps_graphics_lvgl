@@ -59,7 +59,6 @@ typedef struct
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
     lv_obj_t * label;           /*Label of the text area*/
-    lv_obj_t * placeholder;     /*Place holder label of the text area, only visible if text is an empty string*/
     char * pwd_tmp;             /*Used to store the original text in password mode*/
     const char * accapted_chars;/*Only these characters will be accepted. NULL: accept all*/
     uint16_t max_length;        /*The max. number of characters. 0: no limit*/
@@ -81,7 +80,6 @@ enum {
     LV_TA_STYLE_SB,
     LV_TA_STYLE_EDGE_FLASH,
     LV_TA_STYLE_CURSOR,
-    LV_TA_STYLE_PLACEHOLDER,
 };
 typedef uint8_t lv_ta_style_t;
 
@@ -134,13 +132,6 @@ void lv_ta_del_char(lv_obj_t * ta);
  * @param txt pointer to the text
  */
 void lv_ta_set_text(lv_obj_t * ta, const char * txt);
-
-/**
-* Set the placeholder text of a text area
-* @param ta pointer to a text area
-* @param txt pointer to the text
-*/
-void lv_ta_set_placeholder_text(lv_obj_t * ta, const char * txt);
 
 /**
  * Set the cursor position
@@ -253,13 +244,6 @@ void lv_ta_set_style(lv_obj_t *ta, lv_ta_style_t type, lv_style_t *style);
  * @return pointer to the text
  */
 const char * lv_ta_get_text(const lv_obj_t * ta);
-
-/**
-* Get the placeholder text of a text area
-* @param ta pointer to a text area object
-* @return pointer to the text
-*/
-const char * lv_ta_get_placeholder_text(lv_obj_t * ta);
 
 /**
  * Get the label of a text area
