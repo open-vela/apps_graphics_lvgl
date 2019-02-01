@@ -53,7 +53,7 @@ static void pwd_char_hider(lv_obj_t * ta);
 static bool char_is_accepted(lv_obj_t * ta, uint32_t c);
 static void get_cursor_style(lv_obj_t * ta, lv_style_t * style_res);
 static void refr_cursor_area(lv_obj_t * ta);
-static lv_res_t label_signal_wrapper(lv_obj_t * ta, lv_signal_t sign, void * param);
+static void placeholder_update(lv_obj_t * ta);
 
 /**********************
  *  STATIC VARIABLES
@@ -62,7 +62,6 @@ static lv_design_func_t ancestor_design;
 static lv_design_func_t scrl_design;
 static lv_signal_func_t ancestor_signal;
 static lv_signal_func_t scrl_signal;
-static lv_signal_func_t label_signal_original;
 
 /**********************
  *      MACROS
@@ -154,11 +153,6 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
         /*Refresh the style with new signal function*/
         lv_obj_refresh_style(new_ta);
     }
-
-    /*Wrap the labels signal function and make it clickable*/
-    if(label_signal_original == NULL) label_signal_original = lv_obj_get_signal_func(ext->label);
-    lv_obj_set_signal_func(ext->label, label_signal_wrapper);
-    lv_obj_set_click(ext->label, true);
 
 #if USE_LV_ANIMATION
     /*Create a cursor blinker animation*/
@@ -254,6 +248,8 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
 
     /*Revert the original edge flash state*/
     lv_ta_set_edge_flash(ta, edge_flash_en);
+
+    placeholder_update(ta);
 }
 
 /**
@@ -317,6 +313,8 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
 
     /*Revert the original edge flash state*/
     lv_ta_set_edge_flash(ta, edge_flash_en);
+
+    placeholder_update(ta);
 }
 
 /**
@@ -356,17 +354,8 @@ void lv_ta_del_char(lv_obj_t * ta)
 
     /*Move the cursor to the place of the deleted character*/
     lv_ta_set_cursor_pos(ta, ext->cursor.pos - 1);
-}
 
-/**
- * Delete the right character from the current cursor position
- * @param ta pointer to a text area object
- */
-void lv_ta_del_char_forward(lv_obj_t * ta)
-{
-	uint16_t cp = lv_ta_get_cursor_pos(ta);
-	lv_ta_set_cursor_pos(ta, cp + 1);
-	if(cp != lv_ta_get_cursor_pos(ta)) lv_ta_del_char(ta);
+    placeholder_update(ta);
 }
 
 /*=====================
@@ -429,6 +418,29 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
         pwd_char_hider(ta);
 #endif
     }
+
+    placeholder_update(ta);
+}
+
+/**
+* Set the placeholder text of a text area
+* @param ta pointer to a text area
+* @param txt pointer to the text
+*/
+void lv_ta_set_placeholder_text(lv_obj_t * ta, const char * txt)
+{
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+
+    /*Create the placeholder label only when it is needed*/
+    if (ext->placeholder == NULL) {
+        ext->placeholder = lv_label_create(ta, NULL);
+
+        lv_label_set_long_mode(ext->placeholder, LV_LABEL_LONG_CROP);
+    }
+
+    lv_label_set_text(ext->placeholder, txt);
+
+    placeholder_update(ta);
 }
 
 /**
@@ -681,6 +693,9 @@ void lv_ta_set_style(lv_obj_t * ta, lv_ta_style_t type, lv_style_t * style)
             lv_obj_refresh_ext_size(lv_page_get_scrl(ta)); /*Refresh ext. size because of cursor drawing*/
             refr_cursor_area(ta);
             break;
+        case LV_TA_STYLE_PLACEHOLDER:
+            if(ext->placeholder) lv_label_set_style(ext->placeholder, style);
+            break;
     }
 }
 
@@ -707,6 +722,21 @@ const char * lv_ta_get_text(const lv_obj_t * ta)
     return txt;
 }
 
+/**
+* Get the placeholder text of a text area
+* @param ta pointer to a text area object
+* @return pointer to the text
+*/
+const char * lv_ta_get_placeholder_text(lv_obj_t * ta)
+{
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+
+    const char * txt = NULL;
+
+    if (ext->placeholder) txt = lv_label_get_text(ext->label);
+
+    return txt;
+}
 
 /**
  * Get the label of a text area
@@ -810,6 +840,9 @@ lv_style_t * lv_ta_get_style(const lv_obj_t * ta, lv_ta_style_t type)
             break;
         case LV_TA_STYLE_CURSOR:
             style = ext->cursor.style;
+            break;
+        case LV_TA_STYLE_PLACEHOLDER:
+            if (ext->placeholder) style = lv_label_get_style(ext->placeholder);
             break;
         default:
             style = NULL;
@@ -1044,6 +1077,11 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
                 /*In not one line mode refresh the Label width because 'hpad' can modify it*/
                 lv_obj_set_width(ext->label, lv_obj_get_width(scrl) - 2 * style_scrl->body.padding.hor);
                 lv_obj_set_pos(ext->label, style_scrl->body.padding.hor, style_scrl->body.padding.ver);         /*Be sure the Label is in the correct position*/
+
+                if(ext->placeholder) {
+                    lv_obj_set_width(ext->placeholder, lv_obj_get_width(scrl) - 2 * style_scrl->body.padding.hor);
+                    lv_obj_set_pos(ext->placeholder, style_scrl->body.padding.hor, style_scrl->body.padding.ver);         /*Be sure the Label is in the correct position*/
+                }
             }
             lv_label_set_text(ext->label, NULL);
 
@@ -1062,6 +1100,19 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
                 refr_cursor_area(ta);
             }
         }
+        /*Set the placeholder width according to the text area width*/
+        if (ext->placeholder) {
+            if (lv_obj_get_width(ta) != lv_area_get_width(param) ||
+                   lv_obj_get_height(ta) != lv_area_get_height(param)) {
+                lv_obj_t * scrl = lv_page_get_scrl(ta);
+                lv_style_t * style_scrl = lv_obj_get_style(scrl);
+                lv_obj_set_width(ext->placeholder, lv_obj_get_width(scrl) - 2 * style_scrl->body.padding.hor);
+                lv_obj_set_pos(ext->placeholder, style_scrl->body.padding.hor, style_scrl->body.padding.ver);
+                lv_label_set_text(ext->placeholder, NULL);    /*Refresh the label*/
+
+                refr_cursor_area(ta);
+            }
+        }
     } else if(sign == LV_SIGNAL_CONTROLL) {
         uint32_t c = *((uint32_t *)param);      /*uint32_t because can be UTF-8*/
         if(c == LV_GROUP_KEY_RIGHT)     lv_ta_cursor_right(ta);
@@ -1069,9 +1120,11 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
         else if(c == LV_GROUP_KEY_UP)   lv_ta_cursor_up(ta);
         else if(c == LV_GROUP_KEY_DOWN) lv_ta_cursor_down(ta);
         else if(c == LV_GROUP_KEY_BACKSPACE) lv_ta_del_char(ta);
-        else if(c == LV_GROUP_KEY_DEL)  lv_ta_del_char_forward(ta);
-        else if(c == LV_GROUP_KEY_POS1) lv_ta_set_cursor_pos(ta, 0);
-        else if(c == LV_GROUP_KEY_END)  lv_ta_set_cursor_pos(ta, LV_TA_CURSOR_LAST);
+        else if(c == LV_GROUP_KEY_DEL)  {
+            uint16_t cp = lv_ta_get_cursor_pos(ta);
+            lv_ta_set_cursor_pos(ta, cp + 1);
+            if(cp != lv_ta_get_cursor_pos(ta)) lv_ta_del_char(ta);
+        }
         else {
             lv_ta_add_char(ta, c);
         }
@@ -1106,36 +1159,7 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
             lv_ta_set_cursor_type(ta, cur_type & (~LV_CURSOR_HIDDEN));
         }
 #endif
-    } else if(sign == LV_SIGNAL_PRESSED) {
-        lv_indev_t * indev = (lv_indev_t *)param;
-        lv_area_t label_coords;
-        uint16_t index_of_char_at_position;
-
-        lv_obj_get_coords(ext->label, &label_coords);
-
-        lv_point_t relative_position = {
-            indev->proc.act_point.x - label_coords.x1,
-            indev->proc.act_point.y - label_coords.y1
-        };
-
-        lv_coord_t label_width = lv_obj_get_width(ext->label);
-
-        /*Check if the click happend on the left side of the area ouside the label*/
-        if (relative_position.x < 0) {
-            index_of_char_at_position = 0;
-        }
-        /*Check if the click happend on the right side of the area ouside the label*/
-        else if (relative_position.x >= label_width) {
-            index_of_char_at_position = LV_TA_CURSOR_LAST;
-        }
-        else {
-            index_of_char_at_position = lv_label_get_letter_on(ext->label, &relative_position);
-
-        }
-
-        lv_ta_set_cursor_pos(ta, index_of_char_at_position);
     }
-
     return res;
 }
 
@@ -1390,27 +1414,19 @@ static void refr_cursor_area(lv_obj_t * ta)
     lv_inv_area(&area_tmp);
 }
 
-static lv_res_t label_signal_wrapper(lv_obj_t * label, lv_signal_t sign, void * param)
+static void placeholder_update(lv_obj_t * ta)
 {
-    if(sign == LV_SIGNAL_PRESSED) {
-        lv_obj_t * parent;
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+    const char *ta_text;
 
-        parent = lv_obj_get_parent(label);
-        /*Get the parent (ta) of the parent (scrl part)*/
-        parent = parent ? lv_obj_get_parent(parent) : NULL;
+    if (ext->placeholder == NULL) return;
 
-        /*Forward the pressed event to the parent, which is the ta*/
-        if(parent) {
-            lv_signal_func_t parent_signal = lv_obj_get_signal_func(parent);
+    ta_text = lv_ta_get_text(ta);
 
-            if(parent_signal) {
-                if(parent_signal(parent, sign, param) != LV_RES_OK) return LV_RES_INV;
-            }
-        }
-    }
+    uint32_t len = ta_text == NULL ? 0 : strlen(ta_text);
 
-    if(label_signal_original) return label_signal_original(label, sign, param);
-
-    return LV_RES_OK;
+    if(len == 0) lv_obj_set_hidden(ext->placeholder, false);
+    else lv_obj_set_hidden(ext->placeholder, true);
 }
+
 #endif
