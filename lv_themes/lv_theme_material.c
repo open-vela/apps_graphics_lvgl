@@ -72,7 +72,6 @@ static void basic_init(void)
     panel.body.padding.ver = LV_DPI / 8;
     panel.body.padding.inner = LV_DPI / 12;
     panel.text.color = LV_COLOR_HEX3(0x333);
-    panel.image.color = LV_COLOR_HEX3(0x333);
 
     lv_style_copy(&sb, &def);
     sb.body.main_color = LV_COLOR_BLACK;
@@ -761,7 +760,6 @@ static void win_init(void)
     header.body.padding.hor = 0;
     header.body.padding.ver = 0;
     header.text.color = LV_COLOR_HEX3(0x333);
-    header.image.color = LV_COLOR_HEX3(0x333);
 
     lv_style_copy(&pr, &def);
     pr.body.main_color = LV_COLOR_HEX3(0xbbb);
@@ -770,7 +768,6 @@ static void win_init(void)
     pr.body.empty = 0;
     pr.body.radius = 0;
     pr.text.color = LV_COLOR_HEX3(0x111);
-    pr.image.color = LV_COLOR_HEX3(0x111);
 
 
     theme.win.bg = theme.panel;
