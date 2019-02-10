@@ -1,21 +1,12 @@
 /**
- * @file lv_hal.h
+ * @file lv_disp.c
  *
  */
-
-#ifndef LV_HAL_H
-#define LV_HAL_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_hal_disp.h"
-#include "lv_hal_indev.h"
-#include "lv_hal_tick.h"
+#include "lv_disp.h"
 
 /*********************
  *      DEFINES
@@ -26,15 +17,21 @@ extern "C" {
  **********************/
 
 /**********************
- * GLOBAL PROTOTYPES
+ *  STATIC PROTOTYPES
+ **********************/
+
+/**********************
+ *  STATIC VARIABLES
  **********************/
 
 /**********************
  *      MACROS
  **********************/
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
 
-#endif
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
