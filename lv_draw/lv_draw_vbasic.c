@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../lv_hal/lv_hal.h"
+#include "../lv_hal/lv_hal_disp.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_font.h"
 #include "../lv_misc/lv_color.h"
@@ -147,7 +147,7 @@ void lv_vfill(const lv_area_t * cords_p, const lv_area_t * mask_p,
 
 
 #if USE_LV_GPU
-    static lv_color_t color_array_tmp[LV_HOR_RES_MAX];       /*Used by 'lv_disp_mem_blend'*/
+    static lv_color_t color_array_tmp[LV_HOR_RES];       /*Used by 'lv_disp_mem_blend'*/
     static lv_coord_t last_width = -1;
 
     lv_coord_t w = lv_area_get_width(&vdb_rel_a);
