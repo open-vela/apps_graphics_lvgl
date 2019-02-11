@@ -11,7 +11,7 @@
  *********************/
 #include <stdint.h>
 #include <stddef.h>
-#include "lv_hal.h"
+#include "../lv_hal/lv_hal_disp.h"
 #include "../lv_misc/lv_mem.h"
 #include "../lv_core/lv_obj.h"
 #include "../lv_misc/lv_gc.h"
@@ -57,8 +57,6 @@ void lv_disp_drv_init(lv_disp_drv_t * driver)
     driver->disp_fill = NULL;
     driver->disp_map = NULL;
     driver->disp_flush = NULL;
-    driver->hor_res = LV_HOR_RES_MAX;
-    driver->ver_res = LV_VER_RES_MAX;
 
 #if USE_LV_GPU
     driver->mem_blend = NULL;
@@ -78,35 +76,46 @@ void lv_disp_drv_init(lv_disp_drv_t * driver)
  */
 lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
 {
+    lv_disp_t * node;
 
-    lv_disp_t * node = lv_ll_ins_head(&LV_GC_ROOT(_lv_disp_ll));
-    if(!node) {
-        lv_mem_assert(node);
-        return NULL;
-    }
+    node = lv_mem_alloc(sizeof(lv_disp_t));
+    lv_mem_assert(node);
+    if(node == NULL) return NULL;
 
     memcpy(&node->driver, driver, sizeof(lv_disp_drv_t));
+    node->next = NULL;
 
-    lv_ll_init(&node->scr_ll, sizeof(lv_obj_t));
-
-    node->act_scr = lv_obj_create(NULL, NULL);  /*Create a default screen on the display*/
-    node->top_layer = lv_obj_create(NULL, NULL);  /*Create top layer on the display*/
+    /* Set first display as active by default */
+    if(LV_GC_ROOT(_lv_disp_list) == NULL) {
+        LV_GC_ROOT(_lv_disp_list) = node;
+        active = node;
+        lv_obj_invalidate(lv_scr_act());
+    } else {
+        ((lv_disp_t*)LV_GC_ROOT(_lv_disp_list))->next = node;
+    }
 
     return node;
 }
 
-void * lv_disp_get_next(lv_disp_t * disp)
+
+/**
+ * Set the active display
+ * @param disp pointer to a display (return value of 'lv_disp_register')
+ */
+void lv_disp_set_active(lv_disp_t * disp)
 {
-    if(disp == NULL) return lv_ll_get_head(&LV_GC_ROOT(_lv_disp_ll));
-    else return lv_ll_get_next(&LV_GC_ROOT(_lv_disp_ll), disp);
+    active = disp;
+    lv_obj_invalidate(lv_scr_act());
 }
 
-
-lv_disp_t * lv_disp_get_last(void)
+/**
+ * Get a pointer to the active display
+ * @return pointer to the active display
+ */
+lv_disp_t * lv_disp_get_active(void)
 {
-    return lv_ll_get_head(&LV_GC_ROOT(_lv_disp_ll));
+    return active;
 }
-
 
 /**
  * Get the next display.
@@ -115,25 +124,12 @@ lv_disp_t * lv_disp_get_last(void)
  */
 lv_disp_t * lv_disp_next(lv_disp_t * disp)
 {
-    if(disp == NULL) return lv_ll_get_head(&LV_GC_ROOT(_lv_disp_ll));
-    else return lv_ll_get_next(&LV_GC_ROOT(_lv_disp_ll), disp);
-}
-
-lv_coord_t lv_disp_get_hor_res(lv_disp_t * disp)
-{
-    if(disp == NULL) disp = lv_disp_get_active();
-
-    if(disp == NULL) return LV_HOR_RES_MAX;
-    else return disp->driver.hor_res;
-}
-
-
-lv_coord_t lv_disp_get_ver_res(lv_disp_t * disp)
-{
-    if(disp == NULL) disp = lv_disp_get_active();
-
-    if(disp == NULL) return LV_VER_RES_MAX;
-    else return disp->driver.ver_res;
+    if(disp == NULL) {
+        return LV_GC_ROOT(_lv_disp_list);
+    } else {
+        if(((lv_disp_t*)LV_GC_ROOT(_lv_disp_list))->next == NULL) return NULL;
+        else return ((lv_disp_t*)LV_GC_ROOT(_lv_disp_list))->next;
+    }
 }
 
 /**
