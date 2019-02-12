@@ -116,14 +116,14 @@ lv_obj_t * lv_page_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
             if(par == NULL) { /*Different styles if it is screen*/
-                lv_page_set_style(new_page, LV_PAGE_STYLE_BG, th->style.bg);
+                lv_page_set_style(new_page, LV_PAGE_STYLE_BG, th->bg);
                 lv_page_set_style(new_page, LV_PAGE_STYLE_SCRL, &lv_style_transp);
             } else {
-                lv_page_set_style(new_page, LV_PAGE_STYLE_BG, th->style.page.bg);
-                lv_page_set_style(new_page, LV_PAGE_STYLE_SCRL, th->style.page.scrl);
+                lv_page_set_style(new_page, LV_PAGE_STYLE_BG, th->page.bg);
+                lv_page_set_style(new_page, LV_PAGE_STYLE_SCRL, th->page.scrl);
 
             }
-            lv_page_set_style(new_page, LV_PAGE_STYLE_SB, th->style.page.sb);
+            lv_page_set_style(new_page, LV_PAGE_STYLE_SB, th->page.sb);
         } else {
             lv_page_set_style(new_page, LV_PAGE_STYLE_BG, &lv_style_pretty_color);
             lv_page_set_style(new_page, LV_PAGE_STYLE_SCRL, &lv_style_pretty);
@@ -567,7 +567,7 @@ void lv_page_scroll_ver(lv_obj_t * page, lv_coord_t dist)
     a.repeat_pause = 0;
     lv_anim_create(&a);
 #else
-    lv_obj_set_y(scrl, lv_obj_get_x(scrl) + dist);
+    lv_obj_set_y(scrl, lv_obj_get_y(scrl) + dist);
 #endif
 }
 
