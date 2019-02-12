@@ -1,10 +1,10 @@
 /**
- * @file lv_hal.h
+ * @file lv_disp.h
  *
  */
 
-#ifndef LV_HAL_H
-#define LV_HAL_H
+#ifndef LV_DISP_H
+#define LV_DISP_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,9 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_hal_disp.h"
-#include "lv_hal_indev.h"
-#include "lv_hal_tick.h"
+#include "../lv_hal/lv_hal.h"
 
 /*********************
  *      DEFINES
@@ -33,8 +31,9 @@ extern "C" {
  *      MACROS
  **********************/
 
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif
+#endif /*LV_TEMPL_H*/
