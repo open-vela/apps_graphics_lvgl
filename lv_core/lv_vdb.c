@@ -11,7 +11,6 @@
 
 #include "../lv_hal/lv_hal_disp.h"
 #include "../lv_misc/lv_log.h"
-#include "../lv_core/lv_refr.h"
 #include <stddef.h>
 
 /*********************
@@ -110,8 +109,7 @@ void lv_vdb_flush(void)
     vdb_flushing = true;
 
     /*Flush the rendered content to the display*/
-    lv_disp_t * disp = lv_refr_get_disp_refreshing();
-    if(disp->driver.disp_flush) disp->driver.disp_flush(disp, &vdb_act->area, vdb_act->buf);
+    lv_disp_flush(vdb_act->area.x1, vdb_act->area.y1, vdb_act->area.x2, vdb_act->area.y2, vdb_act->buf);
 
 
 #if LV_VDB_DOUBLE
