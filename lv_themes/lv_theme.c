@@ -34,8 +34,10 @@ static lv_theme_t * current_theme;
  * This way the theme styles will always point to the same memory address even after theme is change.
  * (The pointers in the theme points to the styles declared by the theme itself) */
 
-/* Store the styles in this array. */
-static lv_style_t th_styles[LV_THEME_STYLE_COUNT];
+/* Store the styles in this array.
+ * Can't determine the size in compile time because sizeof is not evaluated (should be `sizeof(lv_theme_t) / sizeof(lv_style_t*)`).
+ * Error will be generated in run time if too small.*/
+static lv_style_t th_styles[120];
 static bool inited = false;
 static lv_theme_t current_theme;
 #endif
@@ -58,12 +60,18 @@ void lv_theme_set_current(lv_theme_t * th)
 #if LV_THEME_LIVE_UPDATE == 0
     current_theme = th;
 #else
-    uint32_t style_num = sizeof(th->style) / sizeof(lv_style_t *);     /*Number of styles in a theme*/
+    uint32_t style_num = sizeof(lv_theme_t) / sizeof(lv_style_t *);     /*Number of styles in a theme*/
 
     if(!inited) {
+        /*It's not sure `th_styles` is big enough. Check it now!*/
+        if(style_num > sizeof(th_styles) / sizeof(lv_style_t)) {
+            LV_LOG_ERROR("Themes: th_styles array is too small. Increase it's size!");
+            while(1);
+        }
+
         /*Initialize the style pointers `current_theme` to point to the `th_styles` style array */
         uint16_t i;
-        lv_style_t ** cur_th_style_p = (lv_style_t **) &current_theme.style;
+        lv_style_t ** cur_th_style_p = (lv_style_t **) &current_theme;
         for(i = 0; i < style_num; i++) {
             uintptr_t adr = (uintptr_t)&th_styles[i];
             memcpy(&cur_th_style_p[i], &adr, sizeof(lv_style_t *));
@@ -74,14 +82,11 @@ void lv_theme_set_current(lv_theme_t * th)
 
     /*Copy the styles pointed by the new theme to the `th_styles` style array*/
     uint16_t i;
-    lv_style_t ** th_style = (lv_style_t **) &th->style;
+    lv_style_t ** th_style = (lv_style_t **) th;
     for(i = 0; i < style_num; i++) {
         uintptr_t s = (uintptr_t)th_style[i];
         if(s) memcpy(&th_styles[i], (void *)s, sizeof(lv_style_t));
     }
-
-    /*Copy group style modification callback functions*/
-    current_theme.group = th->group;
 
     /*Let the object know their style might change*/
     lv_obj_report_style_mod(NULL);
