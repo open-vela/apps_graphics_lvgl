@@ -27,14 +27,13 @@ extern "C" {
 #include "../lv_misc/lv_ll.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_log.h"
-#include "../lv_hal/lv_hal.h"
 
 /*********************
  *      DEFINES
  *********************/
 
 /*Error check of lv_conf.h*/
-#if LV_HOR_RES_MAX == 0 || LV_VER_RES_MAX == 0
+#if LV_HOR_RES == 0 || LV_VER_RES == 0
 #error "LittlevGL: LV_HOR_RES and LV_VER_RES must be greater than 0"
 #endif
 
@@ -561,19 +560,20 @@ void lv_obj_animate(lv_obj_t * obj, lv_anim_builtin_t type, uint16_t time, uint1
  * Return with a pointer to the active screen
  * @return pointer to the active screen object (loaded by 'lv_scr_load()')
  */
-lv_obj_t * lv_scr_act(lv_disp_t * disp);
+lv_obj_t * lv_scr_act(void);
 
 /**
  * Return with the top layer. (Same on every screen and it is above the normal screen layer)
  * @return pointer to the top layer object  (transparent screen sized lv_obj)
  */
-lv_obj_t * lv_layer_top(lv_disp_t * disp);
+lv_obj_t * lv_layer_top(void);
 
 /**
- * Return with the sys. layer. (Same on every screen and it is above the normal screen layer)
- * @return pointer to the sys layer object  (transparent screen sized lv_obj)
+ * Return with the system layer. (Same on every screen and it is above the all other layers)
+ * It is used for example by the cursor
+ * @return pointer to the system layer object (transparent screen sized lv_obj)
  */
-lv_obj_t * lv_layer_sys(lv_disp_t * disp);
+lv_obj_t * lv_layer_sys(void);
 
 /**
  * Return with the screen of an object
@@ -581,11 +581,6 @@ lv_obj_t * lv_layer_sys(lv_disp_t * disp);
  * @return pointer to a screen
  */
 lv_obj_t * lv_obj_get_screen(const lv_obj_t * obj);
-
-
-lv_disp_t * lv_scr_get_disp(lv_obj_t * scr);
-
-lv_disp_t * lv_obj_get_disp(const lv_obj_t * obj);
 
 /*---------------------
  * Parent/children get
