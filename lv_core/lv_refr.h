@@ -83,13 +83,6 @@ uint16_t lv_refr_get_buf_size(void);
  * @param num number of areas to delete
  */
 void lv_refr_pop_from_buf(uint16_t num);
-
-/**
- * Get the display which is being refreshed
- * @return the display being refreshed
- */
-lv_disp_t * lv_refr_get_disp_refreshing(void);
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
