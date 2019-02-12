@@ -49,8 +49,6 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param);
  *  STATIC VARIABLES
  **********************/
 
-static bool _lv_initialized = false;
-
 /**********************
  *      MACROS
  **********************/
@@ -64,10 +62,6 @@ static bool _lv_initialized = false;
  */
 void lv_init(void)
 {
-    /* Do nothing if already initialized */
-    if (_lv_initialized)
-         return;
-    
     LV_GC_ROOT(_lv_def_scr) = NULL;
     LV_GC_ROOT(_lv_act_scr) = NULL;
     LV_GC_ROOT(_lv_top_layer) = NULL;
@@ -117,7 +111,7 @@ void lv_init(void)
     lv_indev_init();
 #endif
 
-    _lv_initialized = true;
+
     LV_LOG_INFO("lv_init ready");
 }
 
@@ -166,7 +160,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->bg;
+            new_obj->style_p = th->style.bg;
         } else {
             new_obj->style_p = &lv_style_scr;
         }
@@ -233,7 +227,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set appearance*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->panel;
+            new_obj->style_p = th->style.panel;
         } else {
             new_obj->style_p = &lv_style_plain_color;
         }
