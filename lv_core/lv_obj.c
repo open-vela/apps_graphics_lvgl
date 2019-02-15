@@ -91,10 +91,6 @@ void lv_init(void)
     lv_anim_init();
 #endif
 
-#if USE_LV_GROUP
-    lv_group_init();
-#endif
-
     /*Init. the sstyles*/
     lv_style_init();
 
@@ -170,7 +166,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->style.bg;
+            new_obj->style_p = th->bg;
         } else {
             new_obj->style_p = &lv_style_scr;
         }
@@ -237,7 +233,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set appearance*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->style.panel;
+            new_obj->style_p = th->panel;
         } else {
             new_obj->style_p = &lv_style_plain_color;
         }
