@@ -62,34 +62,41 @@ The easiest way to get started with LittlevGL is to run it in a simulator on you
 
 Choose a project with your favourite IDE:
 
-|   Eclipse   |  CodeBlocks | Visual Studio | PlatformIO | Qt Creator |
-|-------------|-------------|---------------|-----------|------------|
+|   Eclipse   | CodeBlock  | Visual Studio | PlatformIO | Qt Creator |
+|-------------|----------- |---------------|-----------|------------|
 |  [![Eclipse](https://littlevgl.com/logo/ide/eclipse.jpg)](https://github.com/littlevgl/pc_simulator_sdl_eclipse) | [![CodeBlocks](https://littlevgl.com/logo/ide/codeblocks.jpg)](https://github.com/littlevgl/pc_simulator_win_codeblocks) | [![VisualStudio](https://littlevgl.com/logo/ide/visualstudio.jpg)](https://github.com/littlevgl/visual_studio_2017_sdl_x64)   |   [![PlatformIO](https://littlevgl.com/logo/ide/platformio.jpg)](https://github.com/littlevgl/pc_simulator_sdl_platformio) | [![QtCreator](https://littlevgl.com/logo/ide/qtcreator.jpg)](https://blog.littlevgl.com/2019-01-03/qt-creator) |
 | Cross-platform<br>with SDL | Native Windows | Cross-platform<br>with SDL | Cross-platform<br>with SDL | Cross-platform<br>with SDL |
 
 ### Porting to an embedded hardware
 In the most simple case you need to do these steps:
 1. Copy `lv_conf_templ.h` as `lv_conf.h` next to `lvgl` and set at least `LV_HOR_RES`, `LV_VER_RES` and `LV_COLOR_DEPTH`. 
-2. Call `lv_tick_inc(x)` every `x` milliseconds **in a Timer or Task** (`x` should be between 1 and 10)
+2. Call `lv_tick_inc(x)` every `x` milliseconds in a Timer or Task (`x` should be between 1 and 10)
 3. Call `lv_init()`
-4. Register a function which can **copy a pixel array** to an area of the screen:
+4. Create a buffer for LittlevGL
+```c
+static lv_disp_buf_t disp_buf;
+static lv_color_t buf[LV_HOR_RES_MAX * 10];                     /*Declare a buffer for 10 lines*/
+v_disp_buf_init(&disp_buf1, buf, NULL, LV_HOR_RES_MAX * 10);    /*Initialize the display buffer*/
+```
+4. Implement and register a function which can **copy a pixel array** to an area of your diplay:
 ```c
 lv_disp_drv_t disp_drv;               /*Descriptor of a display driver*/
 lv_disp_drv_init(&disp_drv);          /*Basic initialization*/
-disp_drv.disp_flush = disp_flush;     /*Set your driver function*/
+disp_drv.flush_cb = my_disp_flush;    /*Set your driver function*/
+disp_drv.buffer = &disp_buf;          /*Assign the buffer to teh display*/
 lv_disp_drv_register(&disp_drv);      /*Finally register the driver*/
     
-void disp_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p)
+void my_disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * color_p)
 {
     int32_t x, y;
-    for(y = y1; y <= y2; y++) {
-        for(x = x1; x <= x2; x++) {
-            sep_pixel(x, y, *color_p);  /* Put a pixel to the display.*/
+    for(y = area->y1; y <= area->y2; y++) {
+        for(x = area->x1; x <= area->x2; x++) {
+            set_pixel(x, y, *color_p);  /* Put a pixel to the display.*/
             color_p++;
         }
     }
 
-    lv_flush_ready();                  /* Tell you are ready with the flushing*/
+    lv_disp_flush_ready(disp);                  /* Tell you are ready with the flushing*/
 }
     
 ```
