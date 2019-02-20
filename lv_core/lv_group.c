@@ -55,6 +55,8 @@ lv_group_t * lv_group_create(void)
     group->focus_cb = NULL;
     group->click_focus = 1;
     group->editing = 0;
+    group->refocus_policy = LV_GROUP_REFOCUS_POLICY_PREV;
+    group->wrap = 1;
 
     return group;
 }
