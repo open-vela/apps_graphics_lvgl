@@ -1,12 +1,12 @@
 /**
- * @file hal_indev.h
+ * @file lv_hal_indev.h
  *
  * @description Input Device HAL interface layer header file
  *
  */
 
-#ifndef HAL_INDEV_H
-#define HAL_INDEV_H
+#ifndef LV_HAL_INDEV_H
+#define LV_HAL_INDEV_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,9 +17,7 @@ extern "C" {
  *********************/
 #include <stdbool.h>
 #include <stdint.h>
-#include "lv_hal.h"
 #include "../lv_misc/lv_area.h"
-#include "../lv_core/lv_obj.h"
 
 /*********************
  *      DEFINES
@@ -28,6 +26,8 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
+
+struct _disp_t;
 
 /*Possible input device types*/
 enum {
@@ -48,13 +48,13 @@ typedef uint8_t lv_indev_state_t;
 
 /*Data type when an input device is read */
 typedef struct {
+    void *user_data;           /*'lv_indev_drv_t.priv' for this driver*/
     union {
         lv_point_t point;      /*For LV_INDEV_TYPE_POINTER the currently pressed point*/
         uint32_t key;          /*For LV_INDEV_TYPE_KEYPAD the currently pressed key*/
         uint32_t btn;          /*For LV_INDEV_TYPE_BUTTON the currently pressed button*/
         int16_t enc_diff;      /*For LV_INDEV_TYPE_ENCODER number of steps since the previous read*/
     };
-    void *user_data;           /*'lv_indev_drv_t.priv' for this driver*/
     lv_indev_state_t state;    /*LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
 } lv_indev_data_t;
 
@@ -62,6 +62,7 @@ typedef struct {
 typedef struct {
     lv_hal_indev_type_t type;                   /*Input device type*/
     bool (*read)(lv_indev_data_t *data);        /*Function pointer to read data. Return 'true' if there is still data to be read (buffered)*/
+    struct _disp_t * disp;
     void *user_data;                            /*Pointer to user defined data, passed in 'lv_indev_data_t' on read*/
 } lv_indev_drv_t;
 
@@ -101,7 +102,7 @@ typedef struct _lv_indev_proc_t {
 
 struct _lv_indev_t;
 
-typedef void (*lv_indev_feedback_t)(struct _lv_indev_t *, lv_signal_t);
+typedef void (*lv_indev_feedback_t)(struct _lv_indev_t *, uint8_t);
 
 struct _lv_obj_t;
 struct _lv_group_t;
@@ -118,7 +119,6 @@ typedef struct _lv_indev_t {
         const lv_point_t * btn_points;      /*Array points assigned to the button ()screen will be pressed here by the buttons*/
 
     };
-    struct _lv_indev_t *next;
 } lv_indev_t;
 
 /**********************
@@ -143,7 +143,7 @@ lv_indev_t * lv_indev_drv_register(lv_indev_drv_t *driver);
 /**
  * Get the next input device.
  * @param indev pointer to the current input device. NULL to initialize.
- * @return the next input devise or NULL if no more. Gives the first input device when the parameter is NULL
+ * @return the next input devise or NULL if no more. Give the first input device when the parameter is NULL
  */
 lv_indev_t * lv_indev_next(lv_indev_t * indev);
 

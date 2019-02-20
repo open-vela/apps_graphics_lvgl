@@ -129,8 +129,8 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_ta_set_style(new_ta, LV_TA_STYLE_BG, th->ta.area);
-            lv_ta_set_style(new_ta, LV_TA_STYLE_SB, th->ta.sb);
+            lv_ta_set_style(new_ta, LV_TA_STYLE_BG, th->style.ta.area);
+            lv_ta_set_style(new_ta, LV_TA_STYLE_SB, th->style.ta.sb);
         } else {
             lv_ta_set_style(new_ta, LV_TA_STYLE_BG, &lv_style_pretty);
         }
@@ -1230,13 +1230,14 @@ static void cursor_blink_anim(lv_obj_t * ta, uint8_t show)
         if(ext->cursor.type != LV_CURSOR_NONE &&
                 (ext->cursor.type & LV_CURSOR_HIDDEN) == 0)
         {
+            lv_disp_t * disp  = lv_obj_get_disp(ta);
             lv_area_t area_tmp;
             lv_area_copy(&area_tmp, &ext->cursor.area);
             area_tmp.x1 += ext->label->coords.x1;
             area_tmp.y1 += ext->label->coords.y1;
             area_tmp.x2 += ext->label->coords.x1;
             area_tmp.y2 += ext->label->coords.y1;
-            lv_inv_area(&area_tmp);
+            lv_inv_area(disp, &area_tmp);
         }
     }
 }
@@ -1421,13 +1422,14 @@ static void refr_cursor_area(lv_obj_t * ta)
     }
 
     /*Save the new area*/
+    lv_disp_t * disp  = lv_obj_get_disp(ta);
     lv_area_t area_tmp;
     lv_area_copy(&area_tmp, &ext->cursor.area);
     area_tmp.x1 += ext->label->coords.x1;
     area_tmp.y1 += ext->label->coords.y1;
     area_tmp.x2 += ext->label->coords.x1;
     area_tmp.y2 += ext->label->coords.y1;
-    lv_inv_area(&area_tmp);
+    lv_inv_area(disp, &area_tmp);
 
     lv_area_copy(&ext->cursor.area, &cur_area);
 
@@ -1436,7 +1438,7 @@ static void refr_cursor_area(lv_obj_t * ta)
     area_tmp.y1 += ext->label->coords.y1;
     area_tmp.x2 += ext->label->coords.x1;
     area_tmp.y2 += ext->label->coords.y1;
-    lv_inv_area(&area_tmp);
+    lv_inv_area(disp, &area_tmp);
 }
 
 static void placeholder_update(lv_obj_t * ta)
