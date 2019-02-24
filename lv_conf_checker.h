@@ -63,10 +63,10 @@
 
 /* Horizontal and vertical resolution of the library.*/
 #ifndef LV_HOR_RES
-#define LV_HOR_RES          (480)
+//#define LV_HOR_RES          (480)
 #endif
 #ifndef LV_VER_RES
-#define LV_VER_RES          (320)
+//#define LV_VER_RES          (320)
 #endif
 
 /* Dot Per Inch: used to initialize default sizes. E.g. a button with width = LV_DPI / 2 -> half inch wide
@@ -100,7 +100,7 @@
  * Setting it to 0 will disable VDB and `disp_drv.disp_fill` and `disp_drv.disp_map` functions
  * will be called to draw to the frame buffer directly*/
 #ifndef LV_VDB_SIZE
-#define LV_VDB_SIZE         ((LV_VER_RES * LV_HOR_RES) / 10)
+//#define LV_VDB_SIZE         ((LV_VER_RES * LV_HOR_RES) / 10)
 #endif
 
  /* Bit-per-pixel of VDB. Useful for monochrome or non-standard color format displays.
@@ -113,7 +113,7 @@
   * 0: allocate automatically into RAM
   * LV_VDB_ADR_INV: to replace it later with `lv_vdb_set_adr()`*/
 #ifndef LV_VDB_ADR
-#define LV_VDB_ADR          0
+//#define LV_VDB_ADR          0
 #endif
 
 /* Use two Virtual Display buffers (VDB) to parallelize rendering and flushing
