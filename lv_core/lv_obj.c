@@ -91,10 +91,6 @@ void lv_init(void)
     lv_anim_init();
 #endif
 
-#if USE_LV_GROUP
-    lv_group_init();
-#endif
-
     /*Init. the sstyles*/
     lv_style_init();
 
@@ -170,7 +166,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->style.bg;
+            new_obj->style_p = th->bg;
         } else {
             new_obj->style_p = &lv_style_scr;
         }
@@ -237,7 +233,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set appearance*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->style.panel;
+            new_obj->style_p = th->panel;
         } else {
             new_obj->style_p = &lv_style_plain_color;
         }
@@ -623,12 +619,6 @@ void lv_obj_set_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
     /*Send a signal to the parent too*/
     lv_obj_t * par = lv_obj_get_parent(obj);
     if(par != NULL) par->signal_func(par, LV_SIGNAL_CHILD_CHG, obj);
-
-    /*Tell the children the parent's size has changed*/
-    lv_obj_t * i;
-    LL_READ(obj->child_ll, i) {
-       i->signal_func(i, LV_SIGNAL_PARENT_SIZE_CHG, NULL);
-    }
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
