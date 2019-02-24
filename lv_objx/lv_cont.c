@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "../lv_draw/lv_draw.h"
-#include "../lv_draw/lv_draw_vbasic.h"
+#include "../lv_draw/lv_draw_basic.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_color.h"
@@ -89,7 +89,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_cont_set_style(new_cont, th->cont);
+            lv_cont_set_style(new_cont, th->style.cont);
         } else {
             lv_cont_set_style(new_cont, &lv_style_pretty);
         }
