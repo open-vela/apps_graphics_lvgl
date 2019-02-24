@@ -1,4 +1,5 @@
-CSRCS += lv_draw_basic.c
+CSRCS += lv_draw_vbasic.c
+CSRCS += lv_draw_rbasic.c
 CSRCS += lv_draw.c
 CSRCS += lv_draw_rect.c
 CSRCS += lv_draw_label.c
