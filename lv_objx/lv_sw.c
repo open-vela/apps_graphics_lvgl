@@ -35,7 +35,7 @@ static void lv_sw_anim_to_value(lv_obj_t * sw, int16_t value);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_cb_t ancestor_signal;
+static lv_signal_func_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -76,7 +76,7 @@ lv_obj_t * lv_sw_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->style_knob_on = ext->slider.style_knob;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(new_sw, lv_sw_signal);
+    lv_obj_set_signal_func(new_sw, lv_sw_signal);
 
     /*Init the new switch switch*/
     if(copy == NULL) {
@@ -310,6 +310,10 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
     if(sign == LV_SIGNAL_PRESSING) old_val = ext->slider.drag_value;
     else old_val = lv_slider_get_value(sw);
 
+    /*Do not let the slider to call the callback. The Switch will do it if required*/
+    lv_action_t slider_action = ext->slider.action;
+    ext->slider.action = NULL;
+
     lv_res_t res;
     /* Include the ancient signal function */
     res = ancestor_signal(sw, sign, param);
@@ -373,7 +377,7 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
             if(lv_sw_get_state(sw)) lv_sw_off_anim(sw);
             else lv_sw_on_anim(sw);
 
-            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+            if(slider_action != NULL) res = slider_action(sw);
         }
         /*If the switch was dragged then calculate the new state based on the current position*/
         else {
@@ -381,7 +385,7 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
             if(v > LV_SWITCH_SLIDER_ANIM_MAX / 2) lv_sw_on_anim(sw);
             else lv_sw_off_anim(sw);
 
-            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+            if(slider_action != NULL) res = slider_action(sw);
         }
 
     } else if(sign == LV_SIGNAL_CONTROLL) {
@@ -391,13 +395,13 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
             if(old_val) lv_sw_off_anim(sw);
             else lv_sw_on_anim(sw);
 
-            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+            if(slider_action) res = slider_action(sw);
         } else if(c == LV_GROUP_KEY_UP || c == LV_GROUP_KEY_RIGHT) {
             lv_sw_on_anim(sw);
-            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+            if(slider_action) res = slider_action(sw);
         } else if(c == LV_GROUP_KEY_DOWN || c == LV_GROUP_KEY_LEFT) {
             lv_sw_off_anim(sw);
-            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+            if(slider_action) res = slider_action(sw);
         }
     } else if(sign == LV_SIGNAL_GET_EDITABLE) {
         bool * editable = (bool *)param;
@@ -410,6 +414,9 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
         }
         buf->type[i] = "lv_sw";
     }
+
+    /*Restore the callback*/
+    if(res == LV_RES_OK) ext->slider.action = slider_action;
 
     return res;
 }
