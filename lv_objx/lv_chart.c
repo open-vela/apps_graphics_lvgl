@@ -90,12 +90,12 @@ lv_obj_t * lv_chart_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Init the new chart background object*/
     if(copy == NULL) {
-        lv_obj_set_size(new_chart, LV_HOR_RES / 3, LV_VER_RES / 3);
+        lv_obj_set_size(new_chart, LV_DPI * 3, LV_DPI * 2);
 
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_chart_set_style(new_chart, th->chart);
+            lv_chart_set_style(new_chart, th->style.chart);
         } else {
             lv_chart_set_style(new_chart, &lv_style_pretty);
         }
