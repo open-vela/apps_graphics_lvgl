@@ -77,6 +77,8 @@ typedef struct
             lv_coord_t hor;
             lv_coord_t inner;
         } padding;
+
+        uint8_t empty :1;   /*Transparent background (border still drawn)*/
     } body;
 
 
