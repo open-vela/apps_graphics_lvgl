@@ -47,8 +47,8 @@ static const char * lv_btnm_def_map[] = {"Btn1", "Btn2", "Btn3", "\n",
                                          "\002Btn4", "Btn5", ""
                                         };
 
-static lv_design_cb_t ancestor_design_f;
-static lv_signal_cb_t ancestor_signal;
+static lv_design_func_t ancestor_design_f;
+static lv_signal_func_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -96,8 +96,8 @@ lv_obj_t * lv_btnm_create(lv_obj_t * par, const lv_obj_t * copy)
 
     if(ancestor_design_f == NULL) ancestor_design_f = lv_obj_get_design_func(new_btnm);
 
-    lv_obj_set_signal_cb(new_btnm, lv_btnm_signal);
-    lv_obj_set_design_cb(new_btnm, lv_btnm_design);
+    lv_obj_set_signal_func(new_btnm, lv_btnm_signal);
+    lv_obj_set_design_func(new_btnm, lv_btnm_design);
 
     /*Init the new button matrix object*/
     if(copy == NULL) {
@@ -275,8 +275,8 @@ void lv_btnm_set_map(const lv_obj_t * btnm, const char ** map)
  * @param btnm pointer to a button matrix object
  * @param ctrl_map pointer to an array of `lv_btn_ctrl_t` control bytes. The
  *                 length of the array and position of the elements must match
- *                 that when the map was set via `lv_btnm_set_map` (i.e. one
- *                 element for each button AND new line).
+ *                 the number and order of the individual buttons (i.e. excludes
+ *                 newline entries).
  *                 The control bits are:
  *                 - bit 5   : 1 = inactive (disabled)
  *                 - bit 4   : 1 = no repeat (on long press)
