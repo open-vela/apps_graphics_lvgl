@@ -48,14 +48,13 @@ typedef struct
     /*New data for this type */
     lv_obj_t *label;                     /*Label for the options*/
     lv_style_t * sel_style;              /*Style of the selected option*/
-    lv_action_t action;                  /*Pointer to function to call when an option is selected*/
     uint16_t option_cnt;                 /*Number of options*/
     uint16_t sel_opt_id;                 /*Index of the current option*/
     uint16_t sel_opt_id_ori;             /*Store the original index on focus*/
     uint16_t anim_time;                  /*Open/Close animation time [ms]*/
     uint8_t opened :1;                   /*1: The list is opened (handled by the library)*/
     uint8_t draw_arrow :1;               /*1: Draw arrow*/
-
+    uint8_t stay_open :1;              /*1: Don't close the list when a new item is selected*/
     lv_coord_t fix_height;               /*Height of the ddlist when opened. (0: auto-size)*/
 } lv_ddlist_ext_t;
 
@@ -82,13 +81,6 @@ lv_obj_t * lv_ddlist_create(lv_obj_t * par, const lv_obj_t * copy);
  *====================*/
 
 /**
- * Set arrow draw in a drop down list
- * @param ddlist pointer to drop down list object
- * @param en enable/disable a arrow draw. E.g. "true" for draw.
- */
-void lv_ddlist_set_draw_arrow(lv_obj_t * ddlist, bool en);
-
-/**
  * Set the options in a drop down list from a string
  * @param ddlist pointer to drop down list object
  * @param options a string with '\n' separated options. E.g. "One\nTwo\nThree"
@@ -101,13 +93,6 @@ void lv_ddlist_set_options(lv_obj_t * ddlist, const char * options);
  * @param sel_opt id of the selected option (0 ... number of option - 1);
  */
 void lv_ddlist_set_selected(lv_obj_t * ddlist, uint16_t sel_opt);
-
-/**
- * Set a function to call when a new option is chosen
- * @param ddlist pointer to a drop down list
- * @param action pointer to a call back function
- */
-void lv_ddlist_set_action(lv_obj_t * ddlist, lv_action_t action);
 
 /**
  * Set the fix height for the drop down list
@@ -123,7 +108,21 @@ void lv_ddlist_set_fix_height(lv_obj_t * ddlist, lv_coord_t h);
  * @param ddlist pointer to a drop down list
  * @param fit fit mode from `lv_fit_t` (Typically `LV_FIT_NONE` or `LV_FIT_TIGHT`)
  */
-void lv_ddlist_set_hor_fit(lv_obj_t * ddlist, lv_fit_t fit);
+void lv_ddlist_set_fit(lv_obj_t * ddlist, lv_fit_t fit);
+
+/**
+ * Set arrow draw in a drop down list
+ * @param ddlist pointer to drop down list object
+ * @param en enable/disable a arrow draw. E.g. "true" for draw.
+ */
+void lv_ddlist_set_draw_arrow(lv_obj_t * ddlist, bool en);
+
+/**
+ * Leave the list opened when a new value is selected
+ * @param ddlist pointer to drop down list object
+ * @param en enable/disable "stay open" feature
+ */
+void lv_ddlist_set_stay_open(lv_obj_t * ddlist, bool en);
 
 /**
  * Set the scroll bar mode of a drop down list
@@ -162,11 +161,6 @@ void lv_ddlist_set_align(lv_obj_t *ddlist, lv_label_align_t align);
  * Getter functions
  *====================*/
 
-/**
- * Get arrow draw in a drop down list
- * @param ddlist pointer to drop down list object
- */
-bool lv_ddlist_get_draw_arrow(lv_obj_t * ddlist);
 
 /**
  * Get the options of a drop down list
@@ -189,12 +183,6 @@ uint16_t lv_ddlist_get_selected(const lv_obj_t * ddlist);
  */
 void lv_ddlist_get_selected_str(const lv_obj_t * ddlist, char * buf);
 
-/**
- * Get the "option selected" callback function
- * @param ddlist pointer to a drop down list
- * @return  pointer to the call back function
- */
-lv_action_t lv_ddlist_get_action(const lv_obj_t * ddlist);
 
 /**
  * Get the fix height value.
@@ -202,6 +190,18 @@ lv_action_t lv_ddlist_get_action(const lv_obj_t * ddlist);
  * @return the height if the ddlist is opened (0: auto size)
  */
 lv_coord_t lv_ddlist_get_fix_height(const lv_obj_t * ddlist);
+
+/**
+ * Get arrow draw in a drop down list
+ * @param ddlist pointer to drop down list object
+ */
+bool lv_ddlist_get_draw_arrow(lv_obj_t * ddlist);
+
+/**
+ * Get whether the drop down list stay open after selecting a  value or not
+ * @param ddlist pointer to drop down list object
+ */
+bool lv_ddlist_get_stay_open(lv_obj_t * ddlist);
 
 /**
  * Get the scroll bar mode of a drop down list

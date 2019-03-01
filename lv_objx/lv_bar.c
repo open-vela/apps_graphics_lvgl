@@ -36,8 +36,8 @@ static void lv_bar_anim_ready(void * bar);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_design_func_t ancestor_design_f;
-static lv_signal_func_t ancestor_signal;
+static lv_design_cb_t ancestor_design_f;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -80,8 +80,8 @@ lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->sym = 0;
     ext->style_indic = &lv_style_pretty_color;
 
-    lv_obj_set_signal_func(new_bar, lv_bar_signal);
-    lv_obj_set_design_func(new_bar, lv_bar_design);
+    lv_obj_set_signal_cb(new_bar, lv_bar_signal);
+    lv_obj_set_design_cb(new_bar, lv_bar_design);
 
     /*Init the new  bar object*/
     if(copy == NULL) {
@@ -420,7 +420,7 @@ static bool lv_bar_design(lv_obj_t * bar, const lv_area_t * mask, lv_design_mode
             lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
             lv_style_t style_tmp;
             lv_style_copy(&style_tmp, style_bg);
-            style_tmp.body.empty = 1;
+            style_tmp.body.opa = LV_OPA_TRANSP;
             style_tmp.body.shadow.width = 0;
             lv_draw_rect(&bar->coords, mask, &style_tmp, opa_scale);
         }
