@@ -34,7 +34,7 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_func_t ancestor_signal;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -75,7 +75,7 @@ lv_obj_t * lv_sw_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->style_knob_on = ext->slider.style_knob;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_func(new_sw, lv_sw_signal);
+    lv_obj_set_signal_cb(new_sw, lv_sw_signal);
 
     /*Init the new switch switch*/
     if(copy == NULL) {
@@ -275,14 +275,16 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
     else old_val = lv_slider_get_value(sw);
 
     /*Don't let the slider to call the action. Switch handles it differently*/
-    lv_action_t action = ext->slider.action;
-    ext->slider.action = NULL;
+    lv_event_cb_t event_cb = sw->event_cb;
+    sw->event_cb = NULL;
 
     lv_res_t res;
     /* Include the ancient signal function */
 
     res = ancestor_signal(sw, sign, param);
     if(res != LV_RES_OK) return res;
+
+    sw->event_cb = event_cb;
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
@@ -326,10 +328,12 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
         if(lv_sw_get_state(sw)) {
             lv_slider_set_style(sw, LV_SLIDER_STYLE_KNOB, ext->style_knob_on);
             lv_slider_set_value(sw, LV_SW_MAX_VALUE, true);
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
         }
         else {
             lv_slider_set_style(sw, LV_SLIDER_STYLE_KNOB, ext->style_knob_off);
             lv_slider_set_value(sw, 0, true);
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
         }
     }
     else if(sign == LV_SIGNAL_RELEASED) {
@@ -337,22 +341,28 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
         if(ext->changed == 0) {
             if(lv_sw_get_state(sw)) lv_sw_off(sw, true);
             else lv_sw_on(sw, true);
+
         }
         /*If the switch was dragged then calculate the new state based on the current position*/
         else {
             int16_t v = lv_slider_get_value(sw);
             if(v > LV_SW_MAX_VALUE / 2) lv_sw_on(sw, true);
             else lv_sw_off(sw, true);
+
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
         }
     } else if(sign == LV_SIGNAL_CONTROLL) {
         char c = *((char *)param);
         if(c == LV_GROUP_KEY_ENTER) {
-            if(old_val) lv_sw_off(sw, true);
-            else lv_sw_on(sw, true);
+            lv_sw_toggle(sw, true);
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
         } else if(c == LV_GROUP_KEY_RIGHT || c == LV_GROUP_KEY_UP) {
             lv_slider_set_value(sw, LV_SW_MAX_VALUE, true);
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
         } else if(c == LV_GROUP_KEY_LEFT || c == LV_GROUP_KEY_DOWN) {
             lv_slider_set_value(sw, 0, true);
+            lv_obj_send_event(sw, LV_EVENT_VALUE_CHANGED);
+
         }
     } else if(sign == LV_SIGNAL_GET_EDITABLE) {
         bool * editable = (bool *)param;
@@ -365,9 +375,6 @@ static lv_res_t lv_sw_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
         }
         buf->type[i] = "lv_sw";
     }
-
-    /*Revert the action*/
-    ext->slider.action = action;
 
     return res;
 }
