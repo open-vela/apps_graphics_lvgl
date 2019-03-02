@@ -47,8 +47,8 @@ static const char * lv_btnm_def_map[] = {"Btn1", "Btn2", "Btn3", "\n",
                                          "\002Btn4", "Btn5", ""
                                         };
 
-static lv_design_func_t ancestor_design_f;
-static lv_signal_func_t ancestor_signal;
+static lv_design_cb_t ancestor_design_f;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -96,8 +96,8 @@ lv_obj_t * lv_btnm_create(lv_obj_t * par, const lv_obj_t * copy)
 
     if(ancestor_design_f == NULL) ancestor_design_f = lv_obj_get_design_func(new_btnm);
 
-    lv_obj_set_signal_func(new_btnm, lv_btnm_signal);
-    lv_obj_set_design_func(new_btnm, lv_btnm_design);
+    lv_obj_set_signal_cb(new_btnm, lv_btnm_signal);
+    lv_obj_set_design_cb(new_btnm, lv_btnm_design);
 
     /*Init the new button matrix object*/
     if(copy == NULL) {
@@ -301,25 +301,6 @@ void lv_btnm_set_action(lv_obj_t * btnm, lv_btnm_action_t action)
 {
     lv_btnm_ext_t * ext = lv_obj_get_ext_attr(btnm);
     ext->action = action;
-}
-
-/**
- * Set the pressed button
- * @param btnm pointer to button matrix object
- * @param id index of the currently pressed button (`LV_BTNM_PR_NONE` to unpress)
- */
-void lv_btnm_set_pressed(const lv_obj_t * btnm, uint16_t id)
-{
-    lv_btnm_ext_t * ext = lv_obj_get_ext_attr(btnm);
-
-    if (id >= ext->btn_cnt && id != LV_BTNM_PR_NONE)
-        return;
-
-    if (id == ext->btn_id_pr)
-        return;
-
-    ext->btn_id_pr = id;
-    lv_obj_invalidate(btnm);
 }
 
 /**

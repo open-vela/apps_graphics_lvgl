@@ -62,7 +62,7 @@ enum
 };
 typedef uint8_t lv_design_mode_t;
 
-typedef bool (* lv_design_func_t) (struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
+typedef bool (* lv_design_cb_t) (struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
 
 enum
 {
@@ -70,6 +70,30 @@ enum
     LV_RES_OK,           /*The object is valid (no deleted) after the action*/
 };
 typedef uint8_t lv_res_t;
+
+
+typedef enum {
+    LV_EVENT_PRESSED,
+    LV_EVENT_PRESSING,
+    LV_EVENT_PRESS_LOST,
+    LV_EVENT_RELEASED,
+    LV_EVENT_CLICKED,
+    LV_EVENT_LONG_PRESSED,
+    LV_EVENT_LONG_PRESSED_REPEAT,
+    LV_EVENT_LONG_HOVER_IN,
+    LV_EVENT_LONG_HOVER_OUT,
+    LV_EVENT_DRAG_BEGIN,
+    LV_EVENT_DRAG_END,
+    LV_EVENT_DRAG_THROW_BEGIN,
+    LV_EVENT_FOCUSED,
+    LV_EVENT_DEFOCUSED,
+    LV_EVENT_VALUE_CHANGED,
+    LV_EVENT_REFRESH,
+    LV_EVENT_APPLY,         /*"Ok", "Apply" or similar specific button has clicked*/
+    LV_EVENT_CANCEL,        /*"Close", "Cancel" or similar specific button has clicked*/
+}lv_event_t;
+
+typedef void (*lv_event_cb_t)(struct _lv_obj_t * obj, lv_event_t event);
 
 enum
 {
@@ -102,7 +126,7 @@ enum
 };
 typedef uint8_t lv_signal_t;
 
-typedef lv_res_t (* lv_signal_func_t) (struct _lv_obj_t * obj, lv_signal_t sign, void * param);
+typedef lv_res_t (* lv_signal_cb_t) (struct _lv_obj_t * obj, lv_signal_t sign, void * param);
 
 enum
 {
@@ -149,15 +173,12 @@ typedef struct _lv_obj_t
 
     lv_area_t coords;               /*Coordinates of the object (x1, y1, x2, y2)*/
 
-    lv_signal_func_t signal_func;     /*Object type specific signal function*/
-    lv_design_func_t design_func;     /*Object type specific design function*/
+    lv_event_cb_t event_cb;
+    lv_signal_cb_t signal_cb;     /*Object type specific signal function*/
+    lv_design_cb_t design_cb;     /*Object type specific design function*/
 
     void * ext_attr;                 /*Object type specific extended data*/
     lv_style_t * style_p;       /*Pointer to the object's style*/
-
-#if LV_OBJ_FREE_PTR != 0
-    void * free_ptr;              /*Application specific pointer (set it freely)*/
-#endif
 
 #if USE_LV_GROUP != 0
     void * group_p;                 /*Pointer to the group of the object*/
@@ -170,6 +191,7 @@ typedef struct _lv_obj_t
     uint8_t hidden        :1;    /*1: Object is hidden*/
     uint8_t top           :1;    /*1: If the object or its children is clicked it goes to the foreground*/
     uint8_t opa_scale_en  :1;    /*1: opa_scale is set*/
+    uint8_t event_parent :1;     /*1: Send the object's events to the parent too. */
     uint8_t protect;            /*Automatically happening actions can be prevented. 'OR'ed values from `lv_protect_t`*/
     lv_opa_t opa_scale;         /*Scale down the opacity by this factor. Effects all children as well*/
 
@@ -178,12 +200,17 @@ typedef struct _lv_obj_t
     lv_reailgn_t realign;
 #endif
 
-#ifdef LV_OBJ_FREE_NUM_TYPE
-    LV_OBJ_FREE_NUM_TYPE free_num;          /*Application specific identifier (set it freely)*/
+#if USE_LV_USER_DATA_SINGLE
+    lv_obj_user_data_t user_data;
 #endif
-} lv_obj_t;
 
-typedef lv_res_t (*lv_action_t) (struct _lv_obj_t * obj);
+#if USE_LV_USER_DATA_MULTI
+    lv_obj_user_data_t event_user_data;
+    lv_obj_user_data_t signal_user_data;
+    lv_obj_user_data_t design_user_data;
+#endif
+
+} lv_obj_t;
 
 /*Protect some attributes (max. 8 bit)*/
 enum
@@ -462,19 +489,41 @@ void lv_obj_set_protect(lv_obj_t * obj, uint8_t prot);
 void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot);
 
 /**
- * Set the signal function of an object.
+ * Set a an event handler function for an object.
+ * Used by the user to react on event which happens with the object.
+ * @param obj pointer to an object
+ * @param cb the new event function
+ */
+void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t cb);
+
+/**
+ * Send an event to the object
+ * @param obj pointer to an object
+ * @param event the type of the event from `lv_event_t`.
+ */
+void lv_obj_send_event(lv_obj_t * obj, lv_event_t event);
+
+/**
+ * Set the a signal function of an object. Used internally by the library.
  * Always call the previous signal function in the new.
  * @param obj pointer to an object
- * @param fp the new signal function
+ * @param cb the new signal function
  */
-void lv_obj_set_signal_func(lv_obj_t * obj, lv_signal_func_t fp);
+void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t cb);
+
+/**
+ * Send an event to the object
+ * @param obj pointer to an object
+ * @param event the type of the event from `lv_event_t`.
+ */
+void lv_obj_send_signal(lv_obj_t * obj, lv_signal_t signal, void * param);
 
 /**
  * Set a new design function for an object
  * @param obj pointer to an object
- * @param fp the new design function
+ * @param cb the new design function
  */
-void lv_obj_set_design_func(lv_obj_t * obj, lv_design_func_t fp);
+void lv_obj_set_design_cb(lv_obj_t * obj, lv_design_cb_t cb);
 
 /*----------------
  * Other set
@@ -493,26 +542,6 @@ void * lv_obj_allocate_ext_attr(lv_obj_t * obj, uint16_t ext_size);
  * @param obj pointer to an object
  */
 void lv_obj_refresh_ext_size(lv_obj_t * obj);
-
-#ifdef LV_OBJ_FREE_NUM_TYPE
-/**
- * Set an application specific number for an object.
- * It can help to identify objects in the application.
- * @param obj pointer to an object
- * @param free_num the new free number
- */
-void lv_obj_set_free_num(lv_obj_t * obj, LV_OBJ_FREE_NUM_TYPE free_num);
-#endif
-
-#if LV_OBJ_FREE_PTR != 0
-/**
- * Set an application specific  pointer for an object.
- * It can help to identify objects in the application.
- * @param obj pointer to an object
- * @param free_p the new free pinter
- */
-void lv_obj_set_free_ptr(lv_obj_t * obj, void * free_p);
-#endif
 
 #if USE_LV_ANIMATION
 /**
@@ -725,14 +754,14 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj);
+lv_signal_cb_t lv_obj_get_signal_func(const lv_obj_t * obj);
 
 /**
  * Get the design function of an object
  * @param obj pointer to an object
  * @return the design function
  */
-lv_design_func_t lv_obj_get_design_func(const lv_obj_t * obj);
+lv_design_cb_t lv_obj_get_design_func(const lv_obj_t * obj);
 
 /*------------------
  * Other get
@@ -754,22 +783,14 @@ void * lv_obj_get_ext_attr(const lv_obj_t * obj);
  */
 void lv_obj_get_type(lv_obj_t * obj, lv_obj_type_t * buf);
 
-#ifdef LV_OBJ_FREE_NUM_TYPE
+
+#if USE_LV_USER_DATA_SINGLE
 /**
- * Get the free number
+ * Get a pointer to the pbject's user data
  * @param obj pointer to an object
  * @return the free number
  */
-LV_OBJ_FREE_NUM_TYPE lv_obj_get_free_num(const lv_obj_t * obj);
-#endif
-
-#if LV_OBJ_FREE_PTR != 0
-/**
- * Get the free pointer
- * @param obj pointer to an object
- * @return the free pointer
- */
-void * lv_obj_get_free_ptr(const lv_obj_t * obj);
+lv_obj_user_data_t * lv_obj_get_user_data(lv_obj_t * obj);
 #endif
 
 #if USE_LV_GROUP
