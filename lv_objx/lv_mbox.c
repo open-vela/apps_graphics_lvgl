@@ -43,7 +43,7 @@ static void lv_mbox_close_end_cb(lv_obj_t * mbox);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_func_t ancestor_signal;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -80,7 +80,7 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->anim_time = LV_MBOX_CLOSE_ANIM_TIME;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_func(new_mbox, lv_mbox_signal);
+    lv_obj_set_signal_cb(new_mbox, lv_mbox_signal);
 
     /*Init the new message box message box*/
     if(copy == NULL) {
@@ -377,29 +377,17 @@ lv_style_t * lv_mbox_get_style(const lv_obj_t * mbox, lv_mbox_style_t type)
 
 /**
  * Get whether recoloring is enabled
- * @param mbox pointer to a message box object
+ * @param btnm pointer to button matrix object
  * @return whether recoloring is enabled
  */
 bool lv_mbox_get_recolor(const lv_obj_t * mbox)
 {
-    lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
+	lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
-    if(!ext->btnm)
-        return false;
+	if(!ext->btnm)
+		return false;
 
-    return lv_btnm_get_recolor(ext->btnm);
-}
-
-/**
- * Get message box button matrix
- * @param mbox pointer to a message box object
- * @return pointer to button matrix object
- * @remarks return value will be NULL unless `lv_mbox_add_btns` has been already called
- */
-lv_obj_t * lv_mbox_get_btnm(lv_obj_t * mbox)
-{
-    lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
-    return ext->btnm;
+	return lv_btnm_get_recolor(ext->btnm);
 }
 
 
@@ -443,7 +431,7 @@ static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS ||
               sign == LV_SIGNAL_CONTROLL || sign == LV_SIGNAL_GET_EDITABLE) {
         if(ext->btnm) {
-            ext->btnm->signal_func(ext->btnm, sign, param);
+            ext->btnm->signal_cb(ext->btnm, sign, param);
         }
 
         /* The button matrix with ENCODER input supposes it's in a group but in this case it isn't (Only the message box's container)
