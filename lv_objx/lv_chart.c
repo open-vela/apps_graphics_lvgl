@@ -39,8 +39,8 @@ static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mas
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_design_func_t ancestor_design_f;
-static lv_signal_func_t ancestor_signal;
+static lv_design_cb_t ancestor_design_f;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -85,17 +85,17 @@ lv_obj_t * lv_chart_create(lv_obj_t * par, const lv_obj_t * copy)
     if(ancestor_design_f == NULL) ancestor_design_f = lv_obj_get_design_func(new_chart);
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_chart);
 
-    lv_obj_set_signal_func(new_chart, lv_chart_signal);
-    lv_obj_set_design_func(new_chart, lv_chart_design);
+    lv_obj_set_signal_cb(new_chart, lv_chart_signal);
+    lv_obj_set_design_cb(new_chart, lv_chart_design);
 
     /*Init the new chart background object*/
     if(copy == NULL) {
-        lv_obj_set_size(new_chart, LV_HOR_RES / 3, LV_VER_RES / 3);
+        lv_obj_set_size(new_chart, LV_DPI * 3, LV_DPI * 2);
 
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_chart_set_style(new_chart, th->chart);
+            lv_chart_set_style(new_chart, th->style.chart);
         } else {
             lv_chart_set_style(new_chart, &lv_style_pretty);
         }
@@ -674,7 +674,6 @@ static void lv_chart_draw_points(lv_obj_t * chart, const lv_area_t * mask)
     lv_style_copy(&style_point, &lv_style_plain);
 
     style_point.body.border.width = 0;
-    style_point.body.empty = 0;
     style_point.body.radius = LV_RADIUS_CIRCLE;
     style_point.body.opa = ext->series.opa;
     style_point.body.radius = ext->series.width;
@@ -725,7 +724,6 @@ static void lv_chart_draw_cols(lv_obj_t * chart, const lv_area_t * mask)
 
     lv_style_copy(&rects, &lv_style_plain);
     rects.body.border.width = 0;
-    rects.body.empty = 0;
     rects.body.radius = 0;
     rects.body.opa = ext->series.opa;
 
