@@ -10,13 +10,14 @@
 #include "lv_indev.h"
 #include "lv_refr.h"
 #include "lv_group.h"
+#include "lv_disp.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_draw/lv_draw.h"
-#include "../lv_draw/lv_draw_rbasic.h"
 #include "../lv_misc/lv_anim.h"
 #include "../lv_misc/lv_task.h"
 #include "../lv_misc/lv_fs.h"
 #include "../lv_misc/lv_ufs.h"
+#include "../lv_hal/lv_hal.h"
 #include <stdint.h>
 #include <string.h>
 #include "../lv_misc/lv_gc.h"
@@ -65,15 +66,10 @@ static bool _lv_initialized = false;
 void lv_init(void)
 {
     /* Do nothing if already initialized */
-    if (_lv_initialized)
-         return;
-    
-    LV_GC_ROOT(_lv_def_scr) = NULL;
-    LV_GC_ROOT(_lv_act_scr) = NULL;
-    LV_GC_ROOT(_lv_top_layer) = NULL;
-    LV_GC_ROOT(_lv_sys_layer) = NULL;
-    LV_GC_ROOT(_lv_disp_list) = NULL;
-    LV_GC_ROOT(_lv_indev_list) = NULL;
+    if (_lv_initialized) {
+        LV_LOG_WARN("lv_init: already inited");
+        return;
+    }
 
     LV_LOG_TRACE("lv_init started");
 
@@ -91,26 +87,19 @@ void lv_init(void)
     lv_anim_init();
 #endif
 
+#if USE_LV_GROUP
+    lv_group_init();
+#endif
+
     /*Init. the sstyles*/
     lv_style_init();
 
     /*Initialize the screen refresh system*/
     lv_refr_init();
 
-    /*Create the default screen*/
-    lv_ll_init(&LV_GC_ROOT(_lv_scr_ll), sizeof(lv_obj_t));
-    LV_GC_ROOT(_lv_def_scr) = lv_obj_create(NULL, NULL);
+    lv_ll_init(&LV_GC_ROOT(_lv_disp_ll), sizeof(lv_disp_t));
+    lv_ll_init(&LV_GC_ROOT(_lv_indev_ll), sizeof(lv_indev_t));
 
-    LV_GC_ROOT(_lv_act_scr) = LV_GC_ROOT(_lv_def_scr);
-
-    LV_GC_ROOT(_lv_top_layer) = lv_obj_create(NULL, NULL);
-    lv_obj_set_style(LV_GC_ROOT(_lv_top_layer), &lv_style_transp_fit);
-
-    LV_GC_ROOT(_lv_sys_layer) = lv_obj_create(NULL, NULL);
-    lv_obj_set_style(LV_GC_ROOT(_lv_sys_layer), &lv_style_transp_fit);
-
-    /*Refresh the screen*/
-    lv_obj_invalidate(LV_GC_ROOT(_lv_act_scr));
 
 #if LV_INDEV_READ_PERIOD != 0
     /*Init the input device handling*/
@@ -139,8 +128,13 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
     /*Create a screen if the parent is NULL*/
     if(parent == NULL) {
         LV_LOG_TRACE("Screen create started");
+        lv_disp_t * disp = lv_disp_get_default();
+        if(!disp) {
+            LV_LOG_WARN("lv_obj_create: not display created to so far. No place to assign the new screen");
+            return NULL;
+        }
 
-        new_obj = lv_ll_ins_head(&LV_GC_ROOT(_lv_scr_ll));
+        new_obj = lv_ll_ins_head(&disp->scr_ll);
         lv_mem_assert(new_obj);
         if(new_obj == NULL) return NULL;
 
@@ -150,8 +144,8 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set coordinates to full screen size*/
         new_obj->coords.x1 = 0;
         new_obj->coords.y1 = 0;
-        new_obj->coords.x2 = LV_HOR_RES - 1;
-        new_obj->coords.y2 = LV_VER_RES - 1;
+        new_obj->coords.x2 = lv_disp_get_hor_res(NULL) - 1;
+        new_obj->coords.y2 = lv_disp_get_ver_res(NULL) - 1;
         new_obj->ext_size = 0;
 
         /*Init realign*/
@@ -166,21 +160,23 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->bg;
+            new_obj->style_p = th->style.bg;
         } else {
             new_obj->style_p = &lv_style_scr;
         }
-        /*Set virtual functions*/
-        lv_obj_set_signal_func(new_obj, lv_obj_signal);
-        lv_obj_set_design_func(new_obj, lv_obj_design);
+        /*Set the callbacks*/
+        lv_obj_set_signal_cb(new_obj, lv_obj_signal);
+        lv_obj_set_design_cb(new_obj, lv_obj_design);
+        new_obj->event_cb = NULL;
 
-        /*Set free data*/
-#ifdef LV_OBJ_FREE_NUM_TYPE
-        new_obj->free_num = 0;
+        /*Init. user date*/
+#if USE_LV_USER_DATA_SINGLE
+        memset(&new_obj->user_data, 0, sizeof(lv_obj_user_data_t));
 #endif
-
-#if LV_OBJ_FREE_PTR != 0
-        new_obj->free_ptr = NULL;
+#if USE_LV_USER_DATA_MULTI
+        memset(&new_obj->event_user_data, 0, sizeof(lv_obj_user_data_t));
+        memset(&new_obj->signal_user_data, 0, sizeof(lv_obj_user_data_t));
+        memset(&new_obj->design_user_data, 0, sizeof(lv_obj_user_data_t));
 #endif
 
 #if USE_LV_GROUP
@@ -233,22 +229,26 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         /*Set appearance*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            new_obj->style_p = th->panel;
+            new_obj->style_p = th->style.panel;
         } else {
             new_obj->style_p = &lv_style_plain_color;
         }
 
-        /*Set virtual functions*/
-        lv_obj_set_signal_func(new_obj, lv_obj_signal);
-        lv_obj_set_design_func(new_obj, lv_obj_design);
+        /*Set the callbacks*/
+        lv_obj_set_signal_cb(new_obj, lv_obj_signal);
+        lv_obj_set_design_cb(new_obj, lv_obj_design);
+        new_obj->event_cb = NULL;
 
-        /*Set free data*/
-#ifdef LV_OBJ_FREE_NUM_TYPE
-        new_obj->free_num = 0;
+        /*Init. user date*/
+#if USE_LV_USER_DATA_SINGLE
+        memset(&new_obj->user_data, 0, sizeof(lv_obj_user_data_t));
 #endif
-#if LV_OBJ_FREE_PTR != 0
-        new_obj->free_ptr = NULL;
+#if USE_LV_USER_DATA_MULTI
+        memset(&new_obj->event_user_data, 0, sizeof(lv_obj_user_data_t));
+        memset(&new_obj->signal_user_data, 0, sizeof(lv_obj_user_data_t));
+        memset(&new_obj->design_user_data, 0, sizeof(lv_obj_user_data_t));
 #endif
+
 #if USE_LV_GROUP
         new_obj->group_p = NULL;
 #endif
@@ -267,16 +267,19 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         new_obj->ext_attr = NULL;
     }
 
+    /*Copy the attributes if required*/
     if(copy != NULL) {
         lv_area_copy(&new_obj->coords, &copy->coords);
         new_obj->ext_size = copy->ext_size;
 
         /*Set free data*/
-#ifdef LV_OBJ_FREE_NUM_TYPE
-        new_obj->free_num = copy->free_num;
+#if USE_LV_USER_DATA_SINGLE
+        memcpy(&new_obj->user_data, &copy->user_data, sizeof(lv_obj_user_data_t));
 #endif
-#if LV_OBJ_FREE_PTR != 0
-        new_obj->free_ptr = copy->free_ptr;
+#if USE_LV_USER_DATA_MULTI
+        memcpy(&new_obj->event_user_data, &copy->event_user_data, sizeof(lv_obj_user_data_t));
+        memcpy(&new_obj->signal_user_data, &copy->signal_user_data, sizeof(lv_obj_user_data_t));
+        memcpy(&new_obj->design_user_data, &copy->design_user_data, sizeof(lv_obj_user_data_t));
 #endif
 
         /*Copy realign*/
@@ -288,7 +291,10 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
         new_obj->realign.auto_realign = copy->realign.auto_realign;
 #endif
 
-        /*Set attributes*/
+        /*Only copy the `event_cb`. `signal_cb` and `design_cb` will be copied the the derived object type (e.g. `lv_btn`)*/
+        new_obj-> event_cb = copy->event_cb;
+
+        /*Copy attributes*/
         new_obj->click = copy->click;
         new_obj->drag = copy->drag;
         new_obj->drag_throw = copy->drag_throw;
@@ -317,7 +323,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const  lv_obj_t * copy)
 
     /*Send a signal to the parent to notify it about the new child*/
     if(parent != NULL) {
-        parent->signal_func(parent, LV_SIGNAL_CHILD_CHG, new_obj);
+        parent->signal_cb(parent, LV_SIGNAL_CHILD_CHG, new_obj);
 
         /*Invalidate the area if not screen created*/
         lv_obj_invalidate(new_obj);
@@ -363,7 +369,8 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
     /*Remove the object from parent's children list*/
     lv_obj_t * par = lv_obj_get_parent(obj);
     if(par == NULL) { /*It is a screen*/
-        lv_ll_rem(&LV_GC_ROOT(_lv_scr_ll), obj);
+        lv_disp_t * d = lv_obj_get_disp(obj);
+        lv_ll_rem(&d->scr_ll, obj);
     } else {
         lv_ll_rem(&(par->child_ll), obj);
     }
@@ -372,7 +379,7 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
      * the currently pressed object is deleted*/
     lv_indev_t * indev = lv_indev_next(NULL);
     while(indev) {
-        if(indev->proc.act_obj == obj || indev->proc.last_obj == obj) {
+        if(indev->proc.types.pointer.act_obj == obj || indev->proc.types.pointer.last_obj == obj) {
             lv_indev_reset(indev);
         }
         indev = lv_indev_next(indev);
@@ -380,7 +387,7 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
 
     /* All children deleted.
      * Now clean up the object specific data*/
-    obj->signal_func(obj, LV_SIGNAL_CLEANUP, NULL);
+    obj->signal_cb(obj, LV_SIGNAL_CLEANUP, NULL);
 
     /*Delete the base objects*/
     if(obj->ext_attr != NULL)  lv_mem_free(obj->ext_attr);
@@ -388,7 +395,7 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
 
     /*Send a signal to the parent to notify it about the child delete*/
     if(par != NULL) {
-        par->signal_func(par, LV_SIGNAL_CHILD_CHG, NULL);
+        par->signal_cb(par, LV_SIGNAL_CHILD_CHG, NULL);
     }
 
     return LV_RES_INV;
@@ -421,9 +428,10 @@ void lv_obj_invalidate(const lv_obj_t * obj)
 
     /*Invalidate the object only if it belongs to the 'LV_GC_ROOT(_lv_act_scr)'*/
     lv_obj_t * obj_scr = lv_obj_get_screen(obj);
-    if(obj_scr == lv_scr_act() ||
-            obj_scr == lv_layer_top() ||
-            obj_scr == lv_layer_sys()) {
+    lv_disp_t * disp = lv_obj_get_disp(obj_scr);
+    if(obj_scr == lv_disp_get_scr_act(disp) ||
+            obj_scr == lv_disp_get_layer_top(disp)||
+            obj_scr == lv_disp_get_layer_sys(disp)) {
         /*Truncate recursively to the parents*/
         lv_area_t area_trunc;
         lv_obj_t * par = lv_obj_get_parent(obj);
@@ -445,7 +453,7 @@ void lv_obj_invalidate(const lv_obj_t * obj)
             par = lv_obj_get_parent(par);
         }
 
-        if(union_ok != false) lv_inv_area(&area_trunc);
+        if(union_ok) lv_inv_area(disp, &area_trunc);
     }
 }
 
@@ -453,21 +461,6 @@ void lv_obj_invalidate(const lv_obj_t * obj)
 /*=====================
  * Setter functions
  *====================*/
-
-/*--------------
- * Screen set
- *--------------*/
-
-/**
- * Load a new screen
- * @param scr pointer to a screen
- */
-void lv_scr_load(lv_obj_t * scr)
-{
-    LV_GC_ROOT(_lv_act_scr) = scr;
-
-    lv_obj_invalidate(LV_GC_ROOT(_lv_act_scr));
-}
 
 /*--------------------
  * Parent/children set
@@ -504,10 +497,10 @@ void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent)
     lv_obj_set_pos(obj, old_pos.x, old_pos.y);
 
     /*Notify the original parent because one of its children is lost*/
-    old_par->signal_func(old_par, LV_SIGNAL_CHILD_CHG, NULL);
+    old_par->signal_cb(old_par, LV_SIGNAL_CHILD_CHG, NULL);
 
     /*Notify the new parent about the child*/
-    parent->signal_func(parent, LV_SIGNAL_CHILD_CHG, obj);
+    parent->signal_cb(parent, LV_SIGNAL_CHILD_CHG, obj);
 
     lv_obj_invalidate(obj);
 }
@@ -554,10 +547,10 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     refresh_children_position(obj, diff.x, diff.y);
 
     /*Inform the object about its new coordinates*/
-    obj->signal_func(obj, LV_SIGNAL_CORD_CHG, &ori);
+    obj->signal_cb(obj, LV_SIGNAL_CORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
-    par->signal_func(par, LV_SIGNAL_CHILD_CHG, obj);
+    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
@@ -614,11 +607,17 @@ void lv_obj_set_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
 
 
     /*Send a signal to the object with its new coordinates*/
-    obj->signal_func(obj, LV_SIGNAL_CORD_CHG, &ori);
+    obj->signal_cb(obj, LV_SIGNAL_CORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
     lv_obj_t * par = lv_obj_get_parent(obj);
-    if(par != NULL) par->signal_func(par, LV_SIGNAL_CHILD_CHG, obj);
+    if(par != NULL) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+
+    /*Tell the children the parent's size has changed*/
+    lv_obj_t * i;
+    LL_READ(obj->child_ll, i) {
+       i->signal_cb(i, LV_SIGNAL_PARENT_SIZE_CHG, NULL);
+    }
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
@@ -1000,7 +999,7 @@ void lv_obj_set_style(lv_obj_t * obj, lv_style_t * style)
 void lv_obj_refresh_style(lv_obj_t * obj)
 {
     lv_obj_invalidate(obj);
-    obj->signal_func(obj, LV_SIGNAL_STYLE_CHG, NULL);
+    obj->signal_cb(obj, LV_SIGNAL_STYLE_CHG, NULL);
     lv_obj_invalidate(obj);
 
 }
@@ -1012,13 +1011,18 @@ void lv_obj_refresh_style(lv_obj_t * obj)
  */
 void lv_obj_report_style_mod(lv_style_t * style)
 {
-    lv_obj_t * i;
-    LL_READ(LV_GC_ROOT(_lv_scr_ll), i) {
-        if(i->style_p == style || style == NULL) {
-            lv_obj_refresh_style(i);
-        }
+    lv_disp_t * d = lv_disp_get_next(NULL);
 
-        report_style_mod_core(style, i);
+    while(d) {
+        lv_obj_t * i;
+        LL_READ(d->scr_ll, i) {
+            if(i->style_p == style || style == NULL) {
+                lv_obj_refresh_style(i);
+            }
+
+            report_style_mod_core(style, i);
+        }
+        d = lv_disp_get_next(d);
     }
 }
 
@@ -1040,7 +1044,7 @@ void lv_obj_set_hidden(lv_obj_t * obj, bool en)
     if(!obj->hidden) lv_obj_invalidate(obj);    /*Invalidate when not hidden (hidden objects are ignored) */
 
     lv_obj_t * par = lv_obj_get_parent(obj);
-    par->signal_func(par, LV_SIGNAL_CHILD_CHG, obj);
+    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 
 }
 
@@ -1140,24 +1144,59 @@ void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot)
 }
 
 /**
- * Set the signal function of an object.
+ * Set a an event handler function for an object.
+ * Used by the user to react on event which happens with the object.
+ * @param obj pointer to an object
+ * @param cb the new event function
+ */
+void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t cb)
+{
+    obj->event_cb = cb;
+}
+
+/**
+ * Send an event to the object
+ * @param obj pointer to an object
+ * @param event the type of the event from `lv_event_t`.
+ */
+void lv_obj_send_event(lv_obj_t * obj, lv_event_t event)
+{
+    if(obj->event_cb) obj->event_cb(obj, event);
+
+    if(obj->event_parent && obj->par) {
+        lv_obj_send_event(obj->par, event);
+    }
+}
+
+/**
+ * Set the a signal function of an object. Used internally by the library.
  * Always call the previous signal function in the new.
  * @param obj pointer to an object
- * @param fp the new signal function
+ * @param cb the new signal function
  */
-void lv_obj_set_signal_func(lv_obj_t * obj, lv_signal_func_t fp)
+void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t cb)
 {
-    obj->signal_func = fp;
+    obj->signal_cb = cb;
+}
+
+/**
+ * Send an event to the object
+ * @param obj pointer to an object
+ * @param event the type of the event from `lv_event_t`.
+ */
+void lv_obj_send_signal(lv_obj_t * obj, lv_signal_t signal, void * param)
+{
+    if(obj->signal_cb) obj->signal_cb(obj, signal, param);
 }
 
 /**
  * Set a new design function for an object
  * @param obj pointer to an object
- * @param fp the new design function
+ * @param cb the new design function
  */
-void lv_obj_set_design_func(lv_obj_t * obj, lv_design_func_t fp)
+void lv_obj_set_design_cb(lv_obj_t * obj, lv_design_cb_t cb)
 {
-    obj->design_func = fp;
+    obj->design_cb = cb;
 }
 
 /*----------------
@@ -1184,36 +1223,10 @@ void * lv_obj_allocate_ext_attr(lv_obj_t * obj, uint16_t ext_size)
 void lv_obj_refresh_ext_size(lv_obj_t * obj)
 {
     obj->ext_size = 0;
-    obj->signal_func(obj, LV_SIGNAL_REFR_EXT_SIZE, NULL);
+    obj->signal_cb(obj, LV_SIGNAL_REFR_EXT_SIZE, NULL);
 
     lv_obj_invalidate(obj);
 }
-
-#ifdef LV_OBJ_FREE_NUM_TYPE
-/**
- * Set an application specific number for an object.
- * It can help to identify objects in the application.
- * @param obj pointer to an object
- * @param free_num the new free number
- */
-void lv_obj_set_free_num(lv_obj_t * obj, LV_OBJ_FREE_NUM_TYPE free_num)
-{
-    obj->free_num = free_num;
-}
-#endif
-
-#if LV_OBJ_FREE_PTR != 0
-/**
- * Set an application specific  pointer for an object.
- * It can help to identify objects in the application.
- * @param obj pointer to an object
- * @param free_p the new free pinter
- */
-void lv_obj_set_free_ptr(lv_obj_t * obj, void * free_p)
-{
-    obj->free_ptr = free_p;
-}
-#endif
 
 #if USE_LV_ANIMATION
 /**
@@ -1300,38 +1313,6 @@ void lv_obj_animate(lv_obj_t * obj, lv_anim_builtin_t type, uint16_t time, uint1
  * Getter functions
  *======================*/
 
-/*------------------
- * Screen get
- *-----------------*/
-
-/**
- * Return with a pointer to the active screen
- * @return pointer to the active screen object (loaded by 'lv_scr_load()')
- */
-lv_obj_t * lv_scr_act(void)
-{
-    return LV_GC_ROOT(_lv_act_scr);
-}
-
-/**
- * Return with the top layer. (Same on every screen and it is above the normal screen layer)
- * @return pointer to the top layer object  (transparent screen sized lv_obj)
- */
-lv_obj_t * lv_layer_top(void)
-{
-    return LV_GC_ROOT(_lv_top_layer);
-}
-
-/**
- * Return with the system layer. (Same on every screen and it is above the all other layers)
- * It is used for example by the cursor
- * @return pointer to the system layer object (transparent screen sized lv_obj)
- */
-lv_obj_t * lv_layer_sys(void)
-{
-    return LV_GC_ROOT(_lv_sys_layer);
-}
-
 /**
  * Return with the screen of an object
  * @param obj pointer to an object
@@ -1348,6 +1329,30 @@ lv_obj_t * lv_obj_get_screen(const lv_obj_t * obj)
     } while(par != NULL);
 
     return (lv_obj_t *)act_p;
+}
+
+/**
+ * Get the display of an object
+ * @param scr pointer to an object
+ * @return pointer the object's display
+ */
+lv_disp_t * lv_obj_get_disp(const lv_obj_t * obj)
+{
+    const lv_obj_t * scr;
+
+    if(obj->par == NULL) scr = obj;         /*`obj` is a screen*/
+    else scr = lv_obj_get_screen(obj);      /*get the screen of `obj`*/
+
+    lv_disp_t * d;
+    LL_READ(LV_GC_ROOT(_lv_disp_ll), d) {
+        lv_obj_t * s;
+        LL_READ(d->scr_ll, s) {
+            if(s == scr) return d;
+        }
+    }
+
+    LV_LOG_WARN("lv_scr_get_disp: screen not found")
+    return NULL;
 }
 
 /*---------------------
@@ -1672,9 +1677,9 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot)
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj)
+lv_signal_cb_t lv_obj_get_signal_func(const lv_obj_t * obj)
 {
-    return obj->signal_func;
+    return obj->signal_cb;
 }
 
 /**
@@ -1682,9 +1687,9 @@ lv_signal_func_t lv_obj_get_signal_func(const lv_obj_t * obj)
  * @param obj pointer to an object
  * @return the design function
  */
-lv_design_func_t lv_obj_get_design_func(const lv_obj_t * obj)
+lv_design_cb_t lv_obj_get_design_func(const lv_obj_t * obj)
 {
-    return obj->design_func;
+    return obj->design_cb;
 }
 
 /*------------------
@@ -1715,7 +1720,7 @@ void lv_obj_get_type(lv_obj_t * obj, lv_obj_type_t * buf)
     memset(buf, 0, sizeof(lv_obj_type_t));
     memset(&tmp, 0, sizeof(lv_obj_type_t));
 
-    obj->signal_func(obj, LV_SIGNAL_GET_TYPE, &tmp);
+    obj->signal_cb(obj, LV_SIGNAL_GET_TYPE, &tmp);
 
     uint8_t cnt;
     for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
@@ -1730,30 +1735,17 @@ void lv_obj_get_type(lv_obj_t * obj, lv_obj_type_t * buf)
     }
 }
 
-#ifdef LV_OBJ_FREE_NUM_TYPE
+#if USE_LV_USER_DATA_SINGLE
 /**
- * Get the free number
+ * Get a pointer to the pbject's user data
  * @param obj pointer to an object
  * @return the free number
  */
-LV_OBJ_FREE_NUM_TYPE lv_obj_get_free_num(const lv_obj_t * obj)
+lv_obj_user_data_t * lv_obj_get_user_data(lv_obj_t * obj)
 {
-    return obj->free_num;
+    return &obj->user_data;
 }
 #endif
-
-#if LV_OBJ_FREE_PTR != 0
-/**
- * Get the free pointer
- * @param obj pointer to an object
- * @return the free pointer
- */
-void * lv_obj_get_free_ptr(const lv_obj_t * obj)
-{
-    return obj->free_ptr;
-}
-#endif
-
 
 #if USE_LV_GROUP
 /**
@@ -1798,11 +1790,15 @@ static bool lv_obj_design(lv_obj_t * obj, const  lv_area_t * mask_p, lv_design_m
 {
     if(mode == LV_DESIGN_COVER_CHK) {
 
+        /*Most trivial test. The mask is fully  IN the object? If no it surely not covers it*/
+        if(lv_area_is_in(mask_p, &obj->coords) == false) return false;
+
+        /*Can cover the area only if fully solid (no opacity)*/
+        lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.opa != LV_OPA_COVER) return false;
+
         /* Because of the radius it is not sure the area is covered
          * Check the areas where there is no radius*/
-        lv_style_t * style = lv_obj_get_style(obj);
-        if(style->body.empty != 0) return false;
-
         uint16_t r = style->body.radius;
 
         if(r == LV_RADIUS_CIRCLE) return false;
@@ -1961,7 +1957,7 @@ static void delete_children(lv_obj_t * obj)
      * the currently pressed object is deleted*/
     lv_indev_t * indev = lv_indev_next(NULL);
     while(indev) {
-        if(indev->proc.act_obj == obj || indev->proc.last_obj == obj) {
+        if(indev->proc.types.pointer.act_obj == obj || indev->proc.types.pointer.last_obj == obj) {
             lv_indev_reset(indev);
         }
         indev = lv_indev_next(indev);
@@ -1972,7 +1968,7 @@ static void delete_children(lv_obj_t * obj)
     lv_ll_rem(&(par->child_ll), obj);
 
     /* Clean up the object specific data*/
-    obj->signal_func(obj, LV_SIGNAL_CLEANUP, NULL);
+    obj->signal_cb(obj, LV_SIGNAL_CLEANUP, NULL);
 
     /*Delete the base objects*/
     if(obj->ext_attr != NULL)  lv_mem_free(obj->ext_attr);
