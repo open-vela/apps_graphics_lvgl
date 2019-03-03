@@ -78,20 +78,11 @@ lv_obj_t * lv_cb_create(lv_obj_t * par, const lv_obj_t * copy);
  *====================*/
 
 /**
- * Set the text of a check box. `txt` will be copied and may be deallocated
- * after this function returns.
+ * Set the text of a check box
  * @param cb pointer to a check box
- * @param txt the text of the check box. NULL to refresh with the current text.
+ * @param txt the text of the check box
  */
 void lv_cb_set_text(lv_obj_t * cb, const char * txt);
-
-/**
- * Set the text of a check box. `txt` must not be deallocated during the life
- * of this checkbox.
- * @param cb pointer to a check box
- * @param txt the text of the check box. NULL to refresh with the current text.
- */
-void lv_cb_set_static_text(lv_obj_t * cb, const char * txt);
 
 /**
  * Set the state of the check box
@@ -111,6 +102,16 @@ static inline void lv_cb_set_inactive(lv_obj_t * cb)
 {
     lv_btn_set_state(cb, LV_BTN_STATE_INA);
 }
+
+/**
+ * Set a function to call when the check box is clicked
+ * @param cb pointer to a check box object
+ */
+static inline void lv_cb_set_action(lv_obj_t * cb, lv_action_t action)
+{
+    lv_btn_set_action(cb, LV_BTN_ACTION_CLICK, action);
+}
+
 
 /**
  * Set a style of a check box
@@ -140,6 +141,17 @@ static inline bool lv_cb_is_checked(const lv_obj_t * cb)
 {
     return lv_btn_get_state(cb) == LV_BTN_STATE_REL ? false : true;
 }
+
+/**
+ * Get the action of a check box
+ * @param cb pointer to a button object
+ * @return pointer to the action function
+ */
+static inline lv_action_t lv_cb_get_action(const lv_obj_t * cb)
+{
+    return lv_btn_get_action(cb, LV_BTN_ACTION_CLICK);
+}
+
 
 /**
  * Get a style of a button

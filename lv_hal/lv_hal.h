@@ -1,10 +1,10 @@
 /**
- * @file lv_hal.h
+ * @file hal.h
  *
  */
 
-#ifndef LV_HAL_H
-#define LV_HAL_H
+#ifndef HAL_H
+#define HAL_H
 
 #ifdef __cplusplus
 extern "C" {
