@@ -29,8 +29,8 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_cb_t ancestor_signal;
-static lv_design_cb_t ancestor_design;
+static lv_signal_func_t ancestor_signal;
+static lv_design_func_t ancestor_design;
 
 /**********************
  *      MACROS
@@ -63,6 +63,8 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_spinbox);
 
     /*Initialize the allocated 'ext'*/
+    ext->ta.one_line = 1;
+    ext->ta.pwd_mode = 0;
     ext->ta.accapted_chars = "1234567890+-. ";
 
     ext->value = 0;
@@ -75,20 +77,19 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->value_changed_cb = NULL;
 
     lv_ta_set_cursor_type(new_spinbox, LV_CURSOR_BLOCK | LV_CURSOR_HIDDEN); /*hidden by default*/
-    lv_ta_set_one_line(new_spinbox, true);
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(new_spinbox, lv_spinbox_signal);
-    lv_obj_set_design_cb(new_spinbox, ancestor_design);        /*Leave the Text area's design function*/
+    lv_obj_set_signal_func(new_spinbox, lv_spinbox_signal);
+    lv_obj_set_design_func(new_spinbox, ancestor_design);        /*Leave the Text area's design function*/
 
     /*Init the new spinbox spinbox*/
     if(copy == NULL) {
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_BG, th->style.spinbox.bg);
-            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_CURSOR, th->style.spinbox.cursor);
-            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_SB, th->style.spinbox.sb);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_BG, th->spinbox.bg);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_CURSOR, th->spinbox.cursor);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_SB, th->spinbox.sb);
         }
     }
     /*Copy an existing spinbox*/
