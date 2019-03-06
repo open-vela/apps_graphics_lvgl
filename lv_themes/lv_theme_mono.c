@@ -215,7 +215,7 @@ static void lmeter_init(void)
 #if USE_LV_LMETER != 0
     static lv_style_t lmeter_bg;
     lv_style_copy(&lmeter_bg, &light_frame);
-    lmeter_bg.body.empty = 1;
+    lmeter_bg.body.opa = LV_OPA_TRANSP;
     lmeter_bg.body.main_color = LV_COLOR_BLACK;
     lmeter_bg.body.grad_color = LV_COLOR_BLACK;
     lmeter_bg.body.padding.hor = LV_DPI / 20;
@@ -414,15 +414,16 @@ static void win_init(void)
 
 #if USE_LV_GROUP
 
-static void style_mod(lv_style_t * style)
+static void style_mod(lv_group_t * group, lv_style_t * style)
 {
+    (void) group;   /*Unused*/
 #if LV_COLOR_DEPTH != 1
     /*Make the style to be a little bit orange*/
     style->body.border.opa = LV_OPA_COVER;
     style->body.border.color = LV_COLOR_BLACK;
 
     /*If not empty or has border then emphasis the border*/
-    if (style->body.empty == 0 || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
+    if (style->body.opa != LV_OPA_TRANSP || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
 #else
     style->body.border.opa = LV_OPA_COVER;
     style->body.border.color = LV_COLOR_BLACK;
@@ -430,15 +431,16 @@ static void style_mod(lv_style_t * style)
 #endif
 }
 
-static void style_mod_edit(lv_style_t * style)
+static void style_mod_edit(lv_group_t * group, lv_style_t * style)
 {
+    (void) group;   /*Unused*/
 #if LV_COLOR_DEPTH != 1
     /*Make the style to be a little bit orange*/
     style->body.border.opa = LV_OPA_COVER;
     style->body.border.color = LV_COLOR_BLACK;
 
     /*If not empty or has border then emphasis the border*/
-    if (style->body.empty == 0 || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
+    if (style->body.opa != LV_OPA_TRANSP || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
 #else
     style->body.border.opa = LV_OPA_COVER;
     style->body.border.color = LV_COLOR_BLACK;
