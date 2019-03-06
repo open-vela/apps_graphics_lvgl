@@ -124,7 +124,7 @@ lv_res_t lv_img_dsc_get_info(const char * src, lv_img_header_t * header)
         if(res != LV_FS_RES_OK || rn != sizeof(lv_img_header_t)) {
             header->w = LV_DPI;
             header->h = LV_DPI;
-            header->cf = LV_IMG_CF_UNKNOWN;
+            header->cf = LV_IMG_CF_UNKOWN;
         }
 
         lv_fs_close(&file);
@@ -150,7 +150,7 @@ uint8_t lv_img_color_format_get_px_size(lv_img_cf_t cf)
     uint8_t px_size = 0;
 
     switch(cf) {
-        case LV_IMG_CF_UNKNOWN:
+        case LV_IMG_CF_UNKOWN:
         case LV_IMG_CF_RAW:
             px_size = 0;
             break;
@@ -234,7 +234,7 @@ bool lv_img_color_format_has_alpha(lv_img_cf_t cf)
  *  - pointer to an 'lv_img_t' variable (image stored internally and compiled into the code)
  *  - a path to a file (e.g. "S:/folder/image.bin")
  *  - or a symbol (e.g. SYMBOL_CLOSE)
- * @return type of the image source LV_IMG_SRC_VARIABLE/FILE/SYMBOL/UNKNOWN
+ * @return type of the image source LV_IMG_SRC_VARIABLE/FILE/SYMBOL/UNKOWN
  */
 lv_img_src_t lv_img_src_get_type(const void * src)
 {
@@ -316,7 +316,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
     /* The decoder open could open the image and gave the entire uncompressed image.
      * Just draw it!*/
     if(img_data) {
-        lv_draw_map(coords, mask, img_data, opa, chroma_keyed, alpha_byte, style->image.color, style->image.intense);
+        map_fp(coords, mask, img_data, opa, chroma_keyed, alpha_byte, style->image.color, style->image.intense);
     }
     /* The whole uncompressed image is not available. Try to read it line-by-line*/
     else {
@@ -325,7 +325,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
 #if LV_COMPILER_VLA_SUPPORTED
         uint8_t buf[(lv_area_get_width(&mask_com) * ((LV_COLOR_DEPTH >> 3) + 1))];
 #else
-        uint8_t buf[LV_HOR_RES_MAX * ((LV_COLOR_DEPTH >> 3) + 1)];  /*+1 because of the possible alpha byte*/
+        uint8_t buf[LV_HOR_RES * ((LV_COLOR_DEPTH >> 3) + 1)];  /*+1 because of the possible alpha byte*/
 #endif
         lv_area_t line;
         lv_area_copy(&line, &mask_com);
@@ -341,7 +341,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
                 LV_LOG_WARN("Image draw can't read the line");
                 return LV_RES_INV;
             }
-            lv_draw_map(&line, mask, buf, opa, chroma_keyed, alpha_byte, style->image.color, style->image.intense);
+            map_fp(&line, mask, buf, opa, chroma_keyed, alpha_byte, style->image.color, style->image.intense);
             line.y1++;
             line.y2++;
             y++;
@@ -439,7 +439,7 @@ static const uint8_t * lv_img_decoder_open(const void * src, const lv_style_t * 
 
         uint32_t i;
         for(i = 0; i < palette_size; i++) {
-            decoder_index_map[i] = LV_COLOR_MAKE(palette_p[i].ch.red, palette_p[i].ch.green, palette_p[i].ch.blue);
+            decoder_index_map[i] = LV_COLOR_MAKE(palette_p[i].red, palette_p[i].green, palette_p[i].blue);
         }
         return NULL;
 #else
