@@ -91,11 +91,13 @@ typedef struct _lv_indev_proc_t {
             lv_point_t last_point;
             lv_point_t vect;
             lv_point_t drag_sum;                /*Count the dragged pixels to check LV_INDEV_DRAG_LIMIT*/
-            struct _lv_obj_t * act_obj;
-            struct _lv_obj_t * last_obj;
+            lv_point_t drag_throw_vect;
+            struct _lv_obj_t * act_obj;         /*The object being pressed*/
+            struct _lv_obj_t * last_obj;        /*The last obejct which was pressed (used by dragthrow and other post-release event)*/
+            struct _lv_obj_t * last_pressed;    /*The lastly pressed object*/
 
             /*Flags*/
-            uint8_t drag_range_out      :1;
+            uint8_t drag_limit_out      :1;
             uint8_t drag_in_prog        :1;
             uint8_t wait_unil_release   :1;
         }pointer;

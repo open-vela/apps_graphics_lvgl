@@ -61,7 +61,7 @@
 #endif
 #if LV_MEM_CUSTOM == 0
 #ifndef LV_MEM_SIZE
-#  define LV_MEM_SIZE    (16U * 1024U)        /*Size memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
+#  define LV_MEM_SIZE    (32U * 1024U)        /*Size memory used by `lv_mem_alloc` in bytes (>= 2kB)*/
 #endif
 #ifndef LV_MEM_ATTR
 #  define LV_MEM_ATTR                         /*Complier prefix for big array declaration*/
@@ -195,8 +195,6 @@
 #endif
 #endif   /*LV_TICK_CUSTOM*/
 
-typedef void * lv_disp_drv_user_data_t;                 /*Type of user data in the display driver*/
-typedef void * lv_indev_drv_user_data_t;                /*Type of user data in the display driver*/
 
 /*Log settings*/
 #ifndef USE_LV_LOG
@@ -332,12 +330,6 @@ typedef void * lv_indev_drv_user_data_t;                /*Type of user data in t
 /*===================
  *  LV_OBJ SETTINGS
  *==================*/
-#ifndef LV_OBJ_FREE_NUM_TYPE
-#define LV_OBJ_FREE_NUM_TYPE    uint32_t    /*Type of free number attribute (comment out disable free number)*/
-#endif
-#ifndef LV_OBJ_FREE_PTR
-#define LV_OBJ_FREE_PTR         1           /*Enable the free pointer attribute*/
-#endif
 #ifndef LV_OBJ_REALIGN
 #define LV_OBJ_REALIGN          1           /*Enable `lv_obj_realaign()` based on `lv_obj_align()` parameters*/
 #endif

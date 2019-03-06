@@ -45,7 +45,7 @@ extern "C" {
  **********************/
 struct _lv_group_t;
 
-typedef void (*lv_group_style_mod_func_t)(lv_style_t *);
+typedef void (*lv_group_style_mod_func_t)(struct _lv_group_t *, lv_style_t *);
 typedef void (*lv_group_focus_cb_t)(struct _lv_group_t *);
 
 typedef struct _lv_group_t
@@ -56,6 +56,16 @@ typedef struct _lv_group_t
     lv_group_style_mod_func_t style_mod_edit;/*A function which modifies the style of the focused object*/
     lv_group_focus_cb_t focus_cb;           /*A function to call when a new object is focused (optional)*/
     lv_style_t style_tmp;                   /*Stores the modified style of the focused object */
+#if USE_LV_USER_DATA_SINGLE
+    lv_group_user_data_t    user_data;
+#endif
+
+#if USE_LV_USER_DATA_MULTI
+    lv_group_user_data_t    focus_user_data;
+    lv_group_user_data_t    style_mod_user_data;
+    lv_group_user_data_t    style_mod_edit_user_data;
+#endif
+
     uint8_t frozen          :1;             /*1: can't focus to new object*/
     uint8_t editing         :1;             /*1: Edit mode, 0: Navigate mode*/
     uint8_t click_focus     :1;             /*1: If an object in a group is clicked by an indev then it will be focused */
@@ -199,6 +209,18 @@ lv_style_t * lv_group_mod_style(lv_group_t * group, const lv_style_t * style);
  * @return pointer to the focused object
  */
 lv_obj_t * lv_group_get_focused(const lv_group_t * group);
+
+#if USE_LV_USER_DATA_SINGLE
+/**
+ * Get a pointer to the group's user data
+ * @param group pointer to an group
+ * @return pointer to the user data
+ */
+lv_group_user_data_t * lv_group_get_user_data(lv_group_t * group)
+{
+    return &group->user_data;
+}
+#endif
 
 /**
  * Get a the style modifier function of a group
