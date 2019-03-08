@@ -7,15 +7,17 @@
  *      INCLUDES
  *********************/
 #include "lv_img.h"
-#if LV_USE_IMG != 0
+#if USE_LV_IMG != 0
 
 /*Testing of dependencies*/
-#if LV_USE_LABEL == 0
-#error "lv_img: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL  1) "
+#if USE_LV_LABEL == 0
+#error "lv_img: lv_label is required. Enable it in lv_conf.h (USE_LV_LABEL  1) "
 #endif
 
+#include "../lv_core/lv_lang.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_fs.h"
+#include "../lv_misc/lv_ufs.h"
 #include "../lv_misc/lv_txt.h"
 #include "../lv_misc/lv_log.h"
 
@@ -36,7 +38,7 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_cb_t ancestor_signal;
+static lv_signal_func_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -72,14 +74,19 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
 
     ext->src = NULL;
     ext->src_type = LV_IMG_SRC_UNKNOWN;
-    ext->cf = LV_IMG_CF_UNKNOWN;
+    ext->cf = LV_IMG_CF_UNKOWN;
     ext->w = lv_obj_get_width(new_img);
     ext->h = lv_obj_get_height(new_img);
     ext->auto_size = 1;
+    ext->offset.x = 0;
+    ext->offset.y = 0;
+#if USE_LV_MULTI_LANG
+    ext->lang_txt_id = LV_LANG_TXT_ID_NONE;
+#endif
 
     /*Init the new object*/
-    lv_obj_set_signal_cb(new_img, lv_img_signal);
-    lv_obj_set_design_cb(new_img, lv_img_design);
+    lv_obj_set_signal_func(new_img, lv_img_signal);
+    lv_obj_set_design_func(new_img, lv_img_design);
 
     if(copy == NULL) {
         lv_obj_set_click(new_img, false);
@@ -124,7 +131,7 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
     lv_img_src_t src_type = lv_img_src_get_type(src_img);
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
-#if LV_USE_LOG && LV_LOG_LEVEL >= LV_LOG_LEVEL_INFO
+#if LV_LOG_LEVEL >= LV_LOG_LEVEL_INFO
     switch(src_type) {
         case LV_IMG_SRC_FILE:
             LV_LOG_TRACE("lv_img_set_src: `LV_IMG_SRC_FILE` type found");
@@ -201,6 +208,22 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
     lv_obj_invalidate(img);
 }
 
+#if USE_LV_MULTI_LANG
+/**
+ * Set an ID which means a the same source but in different languages
+ * @param img pointer to an image object
+ * @param src_id ID of the source
+ */
+void lv_img_set_src_id(lv_obj_t * img, uint32_t src_id)
+{
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+    ext->lang_txt_id = src_id;
+
+    /*Apply the new language*/
+    img->signal_func(img, LV_SIGNAL_LANG_CHG, NULL);
+}
+#endif
+
 /**
  * Enable the auto size feature.
  * If enabled the object size will be same as the picture size.
@@ -214,6 +237,52 @@ void lv_img_set_auto_size(lv_obj_t * img, bool en)
     ext->auto_size = (en == false ? 0 : 1);
 }
 
+/**
+ * Set an offset for the source of an image.
+ * so the image will be displayed from the new origin.
+ * @param img pointer to an image
+ * @param x: the new offset along x axis.
+ * @param y: the new offset along y axis.
+ */
+void lv_img_set_offset(lv_obj_t *img, lv_coord_t x, lv_coord_t y)
+{
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+
+    if((x < ext->w - 1) && (y < ext->h - 1)) {
+        ext->offset.x = x;
+        ext->offset.y = y;
+    }
+}
+
+/**
+ * Set an offset for the source of an image.
+ * so the image will be displayed from the new origin.
+ * @param img pointer to an image
+ * @param x: the new offset along x axis.
+ */
+void lv_img_set_offset_x(lv_obj_t *img, lv_coord_t x)
+{
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+
+    if(x < ext->w - 1) {
+        ext->offset.x = x;
+    }
+}
+
+/**
+ * Set an offset for the source of an image.
+ * so the image will be displayed from the new origin.
+ * @param img pointer to an image
+ * @param y: the new offset along y axis.
+ */
+void lv_img_set_offset_y(lv_obj_t *img, lv_coord_t y)
+{
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+
+    if(y < ext->h - 1) {
+        ext->offset.y = y;
+    }
+}
 
 /*=====================
  * Getter functions
@@ -244,6 +313,19 @@ const char * lv_img_get_file_name(const lv_obj_t * img)
     if(ext->src_type == LV_IMG_SRC_FILE) return ext->src;
     else return "";
 }
+
+#if USE_LV_MULTI_LANG
+/**
+ * Get the source ID of the image. (Used by the multi-language feature)
+ * @param img pointer to an image
+ * @return ID of the source
+ */
+uint16_t lv_img_get_src_id(lv_obj_t * img)
+{
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+    return ext->lang_txt_id;
+}
+#endif
 
 /**
  * Get the auto size enable attribute
@@ -291,6 +373,9 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
         lv_obj_get_coords(img, &coords);
 
         if(ext->src_type == LV_IMG_SRC_FILE || ext->src_type == LV_IMG_SRC_VARIABLE) {
+            coords.x1 -= ext->offset.x;
+            coords.y1 -= ext->offset.y;
+            
             LV_LOG_TRACE("lv_img_design: start to draw image");
             lv_area_t cords_tmp;
             cords_tmp.y1 = coords.y1;
@@ -348,6 +433,17 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
             lv_img_set_src(img, ext->src);
 
         }
+    } else if(sign == LV_SIGNAL_LANG_CHG) {
+#if USE_LV_MULTI_LANG
+        if(ext->lang_txt_id != LV_LANG_TXT_ID_NONE) {
+            const char * lang_src = lv_lang_get_text(ext->lang_txt_id);
+            if(lang_src) {
+                lv_img_set_src(img, lang_src);
+            } else {
+                LV_LOG_WARN("lv_lang_get_text return NULL for an image's source");
+            }
+        }
+#endif
     } else if(sign == LV_SIGNAL_GET_TYPE) {
         lv_obj_type_t * buf = param;
         uint8_t i;

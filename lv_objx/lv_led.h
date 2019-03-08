@@ -19,7 +19,7 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if LV_USE_LED != 0
+#if USE_LV_LED != 0
 
 #include "../lv_core/lv_obj.h"
 
@@ -107,7 +107,7 @@ static inline lv_style_t* lv_led_get_style(const lv_obj_t *led)
  *      MACROS
  **********************/
 
-#endif  /*LV_USE_LED*/
+#endif  /*USE_LV_LED*/
 
 #ifdef __cplusplus
 } /* extern "C" */
