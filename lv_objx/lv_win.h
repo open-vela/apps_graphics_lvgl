@@ -19,24 +19,24 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if LV_USE_WIN != 0
+#if USE_LV_WIN != 0
 
 /*Testing of dependencies*/
-#if LV_USE_BTN == 0
-#error "lv_win: lv_btn is required. Enable it in lv_conf.h (LV_USE_BTN  1) "
+#if USE_LV_BTN == 0
+#error "lv_win: lv_btn is required. Enable it in lv_conf.h (USE_LV_BTN  1) "
 #endif
 
-#if LV_USE_LABEL == 0
-#error "lv_win: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL  1) "
+#if USE_LV_LABEL == 0
+#error "lv_win: lv_label is required. Enable it in lv_conf.h (USE_LV_LABEL  1) "
 #endif
 
-#if LV_USE_IMG == 0
-#error "lv_win: lv_img is required. Enable it in lv_conf.h (LV_USE_IMG  1) "
+#if USE_LV_IMG == 0
+#error "lv_win: lv_img is required. Enable it in lv_conf.h (USE_LV_IMG  1) "
 #endif
 
 
-#if LV_USE_PAGE == 0
-#error "lv_win: lv_page is required. Enable it in lv_conf.h (LV_USE_PAGE  1) "
+#if USE_LV_PAGE == 0
+#error "lv_win: lv_page is required. Enable it in lv_conf.h (USE_LV_PAGE  1) "
 #endif
 
 #include "../lv_core/lv_obj.h"
@@ -105,21 +105,21 @@ void lv_win_clean(lv_obj_t *obj);
  * Add control button to the header of the window
  * @param win pointer to a window object
  * @param img_src an image source ('lv_img_t' variable, path to file or a symbol)
- * @param event_cb specify the an event handler function. NULL if unused
+ * @param rel_action a function pointer to call when the button is released
  * @return pointer to the created button object
  */
-lv_obj_t * lv_win_add_btn(lv_obj_t * win, const void * img_src, lv_event_cb_t event_cb);
+lv_obj_t * lv_win_add_btn(lv_obj_t * win, const void * img_src, lv_action_t rel_action);
 
 /*=====================
  * Setter functions
  *====================*/
 
 /**
- * Can be assigned to a window control button to close the window
- * @param btn pointer to the control button on teh widows header
- * @param evet the event type
+ * A release action which can be assigned to a window control button to close it
+ * @param btn pointer to the released button
+ * @return always LV_ACTION_RES_INV because the button is deleted with the window
  */
-void lv_win_close_event(lv_obj_t * btn, lv_event_t event);
+lv_res_t lv_win_close_action(lv_obj_t * btn);
 
 /**
  * Set the title of a window
@@ -273,7 +273,7 @@ static inline void lv_win_scroll_ver(lv_obj_t * win, lv_coord_t dist)
  *      MACROS
  **********************/
 
-#endif /*LV_USE_WIN*/
+#endif /*USE_LV_WIN*/
 
 #ifdef __cplusplus
 } /* extern "C" */

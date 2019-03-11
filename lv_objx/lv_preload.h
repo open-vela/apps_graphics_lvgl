@@ -19,15 +19,15 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if LV_USE_PRELOAD != 0
+#if USE_LV_PRELOAD != 0
 
 /*Testing of dependencies*/
-#if LV_USE_ARC == 0
-#error "lv_preload: lv_arc is required. Enable it in lv_conf.h (LV_USE_ARC  1) "
+#if USE_LV_ARC == 0
+#error "lv_preload: lv_arc is required. Enable it in lv_conf.h (USE_LV_ARC  1) "
 #endif
 
-#if LV_USE_ANIMATION == 0
-#error "lv_preload: animations are required. Enable it in lv_conf.h (LV_USE_ANIMATION  1) "
+#if USE_LV_ANIMATION == 0
+#error "lv_preload: animations are required. Enable it in lv_conf.h (USE_LV_ANIMATION  1) "
 #endif
 
 #include "../lv_core/lv_obj.h"
@@ -159,7 +159,7 @@ void lv_preload_spinner_animation(void * ptr, int32_t val);
  *      MACROS
  **********************/
 
-#endif  /*LV_USE_PRELOAD*/
+#endif  /*USE_LV_PRELOAD*/
 
 #ifdef __cplusplus
 } /* extern "C" */
