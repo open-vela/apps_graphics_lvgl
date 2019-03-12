@@ -20,11 +20,11 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if LV_USE_SPINBOX != 0
+#if USE_LV_SPINBOX != 0
 
 /*Testing of dependencies*/
-#if LV_USE_TA == 0
-#error "lv_spinbox: lv_ta is required. Enable it in lv_conf.h (LV_USE_TA  1) "
+#if USE_LV_TA == 0
+#error "lv_spinbox: lv_ta is required. Enable it in lv_conf.h (USE_LV_TA  1) "
 #endif
 
 #include "../lv_core/lv_obj.h"
@@ -53,6 +53,7 @@ typedef struct {
     uint16_t digit_count:4;
     uint16_t dec_point_pos:4;      /*if 0, there is no separator and the number is an integer*/
     uint16_t digit_padding_left:4;
+    lv_spinbox_value_changed_cb_t value_changed_cb;
 } lv_spinbox_ext_t;
 
 
@@ -191,7 +192,7 @@ void lv_spinbox_decrement(lv_obj_t * spinbox);
  *      MACROS
  **********************/
 
-#endif  /*LV_USE_SPINBOX*/
+#endif  /*USE_LV_SPINBOX*/
 
 #ifdef __cplusplus
 } /* extern "C" */

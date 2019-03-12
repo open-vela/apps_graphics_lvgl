@@ -19,7 +19,7 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if LV_USE_THEME_MATERIAL
+#if USE_LV_THEME_MATERIAL
 
 /*********************
  *      DEFINES
