@@ -24,8 +24,10 @@
  **********************/
 static void disp_init(void);
 
-static void disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * color_p);
-#if LV_USE_GPU
+static void disp_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p);
+static void disp_map(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p);
+static void disp_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2,  lv_color_t color);
+#if USE_LV_GPU
 static void mem_blend(lv_color_t * dest, const lv_color_t * src, uint32_t length, lv_opa_t opa);
 static void mem_fill(lv_color_t * dest, uint32_t length, lv_color_t color);
 #endif
@@ -49,46 +51,6 @@ void lv_port_disp_init(void)
      * -----------------------*/
     disp_init();
 
-    /*-----------------------------
-     * Create a buffer for drawing
-     *----------------------------*/
-
-    /* LittlevGL requires a buffer where it draws the objects. The buffer's has to be greater than 1 display row
-     *
-     * There are three buffering configurations:
-     * 1. Create ONE buffer with some rows: 
-     *      LittlevGL will draw the display's content here and writes it to your display
-     * 
-     * 2. Create TWO buffer with some rows: 
-     *      LittlevGL will draw the display's content to a buffer and writes it your display.
-     *      You should use DMA to write the buffer's content to the display.
-     *      It will enable LittlevGL to draw the next part of the screen to the other buffer while
-     *      the data is being sent form the first buffer. It makes rendering and flushing parallel.
-     * 
-     * 3. Create TWO screen-sized buffer: 
-     *      Similar to 2) but the buffer have to be screen sized. When LittlevGL is ready it will give the
-     *      whole frame to display. This way you only need to change the frame buffer's address instead of
-     *      copying the pixels.
-     * */
-
-    /* Example for 1) */
-    static lv_disp_buf_t disp_buf_1;
-    static lv_color_t buf1_1[LV_HOR_RES_MAX * 10];                      /*A buffer for 10 rows*/
-    lv_disp_buf_init(&disp_buf_1, buf1_1, NULL, LV_HOR_RES_MAX * 10);   /*Initialize the display buffer*/
-
-    /* Example for 2) */
-    static lv_disp_buf_t disp_buf_2;
-    static lv_color_t buf2_1[LV_HOR_RES_MAX * 10];                        /*A buffer for 10 rows*/
-    static lv_color_t buf2_2[LV_HOR_RES_MAX * 10];                        /*An other buffer for 10 rows*/
-    lv_disp_buf_init(&disp_buf_2, buf2_1, buf2_2, LV_HOR_RES_MAX * 10);   /*Initialize the display buffer*/
-
-    /* Example for 3) */
-    static lv_disp_buf_t disp_buf_3;
-    static lv_color_t buf3_1[LV_HOR_RES_MAX * LV_VER_RES_MAX];            /*A screen sized buffer*/
-    static lv_color_t buf3_2[LV_HOR_RES_MAX * LV_VER_RES_MAX];            /*An other screen sized buffer*/
-    lv_disp_buf_init(&disp_buf_3, buf3_1, buf3_2, LV_HOR_RES_MAX * LV_VER_RES_MAX);   /*Initialize the display buffer*/
-
-
     /*-----------------------------------
      * Register the display in LittlevGL
      *----------------------------------*/
@@ -98,17 +60,16 @@ void lv_port_disp_init(void)
 
     /*Set up the functions to access to your display*/
 
-    /*Set the resolution of the display*/
-    disp_drv.hor_res = 480;
-    disp_drv.ver_res = 320;
+    /*Used in buffered mode (LV_VDB_SIZE != 0  in lv_conf.h)*/
+    disp_drv.disp_flush = disp_flush;
 
-    /*Used to copy the buffer's content to the display*/
-    disp_drv.flush_cb = disp_flush;
+    /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
+    disp_drv.disp_fill = disp_fill;
 
-    /*Set a display buffer*/
-    disp_drv.buffer = &disp_buf_2;
+    /*Used in unbuffered mode (LV_VDB_SIZE == 0  in lv_conf.h)*/
+    disp_drv.disp_map = disp_map;
 
-#if LV_USE_GPU
+#if USE_LV_GPU
     /*Optionally add functions to access the GPU. (Only in buffered mode, LV_VDB_SIZE != 0)*/
 
     /*Blend two color array using opacity*/
@@ -134,15 +95,16 @@ static void disp_init(void)
 
 /* Flush the content of the internal buffer the specific area on the display
  * You can use DMA or any hardware acceleration to do this operation in the background but
- * 'lv_disp_flush_ready()' has to be called when finished. */
-static void disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * color_p)
+ * 'lv_flush_ready()' has to be called when finished
+ * This function is required only when LV_VDB_SIZE != 0 in lv_conf.h*/
+static void disp_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p)
 {
     /*The most simple case (but also the slowest) to put all pixels to the screen one-by-one*/
 
     int32_t x;
     int32_t y;
-    for(y = area->y1; y <= area->y2; y++) {
-        for(x = area->x1; x <= area->x2; x++) {
+    for(y = y1; y <= y2; y++) {
+        for(x = x1; x <= x2; x++) {
             /* Put a pixel to the display. For example: */
             /* put_px(x, y, *color_p)*/
             color_p++;
@@ -151,12 +113,48 @@ static void disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * co
 
     /* IMPORTANT!!!
      * Inform the graphics library that you are ready with the flushing*/
-    lv_disp_flush_ready(disp);
+    lv_flush_ready();
 }
 
 
+/* Write a pixel array (called 'map') to the a specific area on the display
+ * This function is required only when LV_VDB_SIZE == 0 in lv_conf.h*/
+static void disp_map(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p)
+{
+    /*The most simple case (but also the slowest) to put all pixels to the screen one-by-one*/
+
+    int32_t x;
+    int32_t y;
+    for(y = y1; y <= y2; y++) {
+        for(x = x1; x <= x2; x++) {
+            /* Put a pixel to the display. For example: */
+            /* put_px(x, y, *color_p)*/
+            color_p++;
+        }
+    }
+}
+
+
+/* Write a pixel array (called 'map') to the a specific area on the display
+ * This function is required only when LV_VDB_SIZE == 0 in lv_conf.h*/
+static void disp_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2,  lv_color_t color)
+{
+    /*The most simple case (but also the slowest) to put all pixels to the screen one-by-one*/
+
+    int32_t x;
+    int32_t y;
+    for(y = y1; y <= y2; y++) {
+        for(x = x1; x <= x2; x++) {
+            /* Put a pixel to the display. For example: */
+            /* put_px(x, y, *color)*/
+        }
+    }
+
+    (void)color; /*Just to avid warnings*/
+}
+
 /*OPTIONAL: GPU INTERFACE*/
-#if LV_USE_GPU
+#if USE_LV_GPU
 
 /* If your MCU has hardware accelerator (GPU) then you can use it to blend to memories using opacity
  * It can be used only in buffered mode (LV_VDB_SIZE != 0 in lv_conf.h)*/
@@ -182,6 +180,6 @@ static void mem_fill(lv_color_t * dest, uint32_t length, lv_color_t color)
     }
 }
 
-#endif  /*LV_USE_GPU*/
+#endif  /*USE_LV_GPU*/
 
 #endif
