@@ -238,7 +238,7 @@ void lv_tileview_set_tile_act(lv_obj_t * tileview, lv_coord_t x, lv_coord_t y, b
         }
 #endif
     } else {
-        lv_obj_set_size(tileview, x_coord, y_coord);
+        lv_obj_set_pos(scrl, x_coord, y_coord);
     }
 
 
@@ -395,7 +395,7 @@ static lv_res_t lv_tileview_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void 
                         lv_page_start_edge_flash(tileview);
                     }
 
-                    lv_obj_set_y(scrl, -ext->act_id.y * h + style_bg->body.padding.top);
+                    lv_obj_set_y(scrl, -ext->act_id.y * h + style_bg->body.padding.ver);
                 }
             }
             if(ext->drag_bottom_en == 0 && indev->proc.types.pointer.vect.y < 0 && ext->drag_hor == 0) {
@@ -408,7 +408,7 @@ static lv_res_t lv_tileview_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void 
                     }
                 }
 
-                lv_obj_set_y(scrl, -ext->act_id.y * h + style_bg->body.padding.top);
+                lv_obj_set_y(scrl, -ext->act_id.y * h + style_bg->body.padding.ver);
             }
             if(ext->drag_left_en == 0) {
                 if(x > -(ext->act_id.x * w) && indev->proc.types.pointer.vect.x > 0 && ext->drag_ver == 0) {
@@ -419,7 +419,7 @@ static lv_res_t lv_tileview_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void 
                         lv_page_start_edge_flash(tileview);
                     }
 
-                    lv_obj_set_x(scrl, -ext->act_id.x * w + style_bg->body.padding.left);
+                    lv_obj_set_x(scrl, -ext->act_id.x * w + style_bg->body.padding.hor);
                 }
             }
             if(ext->drag_right_en == 0 && indev->proc.types.pointer.vect.x < 0 && ext->drag_ver == 0) {
@@ -432,12 +432,12 @@ static lv_res_t lv_tileview_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void 
                     }
                 }
 
-                lv_obj_set_x(scrl, -ext->act_id.x * w + style_bg->body.padding.top);
+                lv_obj_set_x(scrl, -ext->act_id.x * w + style_bg->body.padding.hor);
             }
 
             /*Apply the drag constraints*/
-            if(ext->drag_ver == 0) lv_obj_set_y(scrl, - ext->act_id.y * lv_obj_get_height(tileview) + style_bg->body.padding.top);
-            if(ext->drag_hor == 0) lv_obj_set_x(scrl, - ext->act_id.x * lv_obj_get_width(tileview) + style_bg->body.padding.left);
+            if(ext->drag_ver == 0) lv_obj_set_y(scrl, - ext->act_id.y * lv_obj_get_height(tileview) + style_bg->body.padding.ver);
+            if(ext->drag_hor == 0) lv_obj_set_x(scrl, - ext->act_id.x * lv_obj_get_width(tileview) + style_bg->body.padding.hor);
         }
     }
     return res;
