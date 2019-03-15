@@ -73,10 +73,8 @@ typedef struct
         } shadow;
 
         struct {
-            lv_coord_t top;
-            lv_coord_t bottom;
-            lv_coord_t left;
-            lv_coord_t right;
+            lv_coord_t ver;
+            lv_coord_t hor;
             lv_coord_t inner;
         } padding;
     } body;
