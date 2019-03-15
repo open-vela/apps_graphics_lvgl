@@ -58,14 +58,14 @@ void lv_indev_reset(lv_indev_t * indev);
  * Reset the long press state of an input device
  * @param indev_proc pointer to an input device
  */
-void lv_indev_reset_long_press(lv_indev_t * indev);
+void lv_indev_reset_lpr(lv_indev_t * indev);
 
 /**
- * Enable or disable an input devices
- * @param indev pointer to an input device
- * @param en true: enable; false: disable
+ * Enable input devices device by type
+ * @param type Input device type
+ * @param enable true: enable this type; false: disable this type
  */
-void lv_indev_enable(lv_indev_t * indev, bool en);
+void lv_indev_enable(lv_hal_indev_type_t type, bool enable);
 
 /**
  * Set a cursor for a pointer input device (for LV_INPUT_TYPE_POINTER and LV_INPUT_TYPE_BUTTON)
@@ -74,7 +74,7 @@ void lv_indev_enable(lv_indev_t * indev, bool en);
  */
 void lv_indev_set_cursor(lv_indev_t *indev, lv_obj_t *cur_obj);
 
-#if LV_USE_GROUP
+#if USE_LV_GROUP
 /**
  * Set a destination group for a keypad input device (for LV_INDEV_TYPE_KEYPAD)
  * @param indev pointer to an input device
