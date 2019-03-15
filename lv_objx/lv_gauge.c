@@ -8,7 +8,7 @@
  *      INCLUDES
  *********************/
 #include "lv_gauge.h"
-#if USE_LV_GAUGE != 0
+#if LV_USE_GAUGE != 0
 
 #include "../lv_draw/lv_draw.h"
 #include "../lv_themes/lv_theme.h"
@@ -42,8 +42,8 @@ static void lv_gauge_draw_needle(lv_obj_t * gauge, const lv_area_t * mask);
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_design_func_t ancestor_design;
-static lv_signal_func_t ancestor_signal;
+static lv_design_cb_t ancestor_design;
+static lv_signal_cb_t ancestor_signal;
 
 /**********************
  *      MACROS
@@ -82,8 +82,8 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_gauge);
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_func(new_gauge, lv_gauge_signal);
-    lv_obj_set_design_func(new_gauge, lv_gauge_design);
+    lv_obj_set_signal_cb(new_gauge, lv_gauge_signal);
+    lv_obj_set_design_cb(new_gauge, lv_gauge_design);
 
     /*Init the new gauge gauge*/
     if(copy == NULL) {
@@ -95,7 +95,7 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-            lv_gauge_set_style(new_gauge, th->gauge);
+            lv_gauge_set_style(new_gauge, th->style.gauge);
         } else {
             lv_gauge_set_style(new_gauge, &lv_style_pretty_color);
         }
@@ -286,7 +286,8 @@ static bool lv_gauge_design(lv_obj_t * gauge, const lv_area_t * mask, lv_design_
         lv_style_copy(&style_tmp, style);
         ext->lmeter.line_cnt = ext->label_count;                        /*Only to labels*/
         style_tmp.line.width = style_tmp.line.width * 2;                /*Ticker lines*/
-        style_tmp.body.padding.hor = style_tmp.body.padding.hor * 2;    /*Longer lines*/
+        style_tmp.body.padding.left = style_tmp.body.padding.left * 2;    /*Longer lines*/
+        style_tmp.body.padding.right = style_tmp.body.padding.right * 2;    /*Longer lines*/
         gauge->style_p = &style_tmp;
 
         ancestor_design(gauge, mask, mode);           /*To draw lines*/
@@ -348,7 +349,7 @@ static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask)
     lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
     lv_style_t * style = lv_obj_get_style(gauge);
     lv_opa_t opa_scale = lv_obj_get_opa_scale(gauge);
-    lv_coord_t r = lv_obj_get_width(gauge) / 2 - (3 * style->body.padding.hor) - style->body.padding.inner;
+    lv_coord_t r = lv_obj_get_width(gauge) / 2 - (3 * style->body.padding.left) - style->body.padding.inner;
     lv_coord_t x_ofs = lv_obj_get_width(gauge) / 2 + gauge->coords.x1;
     lv_coord_t y_ofs = lv_obj_get_height(gauge) / 2 + gauge->coords.y1;
     int16_t scale_angle = lv_lmeter_get_scale_angle(gauge);
@@ -398,7 +399,7 @@ static void lv_gauge_draw_needle(lv_obj_t * gauge, const lv_area_t * mask)
     lv_style_t * style = lv_gauge_get_style(gauge);
     lv_opa_t opa_scale = lv_obj_get_opa_scale(gauge);
 
-    lv_coord_t r = lv_obj_get_width(gauge) / 2 - style->body.padding.hor;
+    lv_coord_t r = lv_obj_get_width(gauge) / 2 - style->body.padding.left;
     lv_coord_t x_ofs = lv_obj_get_width(gauge) / 2 + gauge->coords.x1;
     lv_coord_t y_ofs = lv_obj_get_height(gauge) / 2 + gauge->coords.y1;
     uint16_t angle = lv_lmeter_get_scale_angle(gauge);
@@ -455,10 +456,10 @@ static void lv_gauge_draw_needle(lv_obj_t * gauge, const lv_area_t * mask)
     style_neddle_mid.body.radius = LV_RADIUS_CIRCLE;
 
     lv_area_t nm_cord;
-    nm_cord.x1 = x_ofs - style->body.padding.ver;
-    nm_cord.y1 = y_ofs - style->body.padding.ver;
-    nm_cord.x2 = x_ofs + style->body.padding.ver;
-    nm_cord.y2 = y_ofs + style->body.padding.ver;
+    nm_cord.x1 = x_ofs - style->body.padding.top;
+    nm_cord.y1 = y_ofs - style->body.padding.top;
+    nm_cord.x2 = x_ofs + style->body.padding.top;
+    nm_cord.y2 = y_ofs + style->body.padding.top;
 
     lv_draw_rect(&nm_cord, mask, &style_neddle_mid, lv_obj_get_opa_scale(gauge));
 }

@@ -20,7 +20,7 @@ extern "C" {
 #include "../../lv_conf.h"
 #endif
 
-#if USE_LV_TILEVIEW != 0
+#if LV_USE_TILEVIEW != 0
 
 #include "../lv_objx/lv_page.h"
 
@@ -44,7 +44,6 @@ typedef struct {
     /*New data for this type */
     const lv_point_t * valid_pos;
     uint16_t anim_time;
-    lv_tileview_action_t action;
     lv_point_t act_id;
     uint8_t drag_top_en     :1;
     uint8_t drag_bottom_en  :1;
@@ -80,9 +79,10 @@ lv_obj_t * lv_tileview_create(lv_obj_t * par, const lv_obj_t * copy);
 
 /**
  * Register an object on the tileview. The register object will able to slide the tileview
+ * @param tileview pointer to a Tileview object
  * @param element pointer to an object
  */
-void lv_tileview_add_element(lv_obj_t * element);
+void lv_tileview_add_element(lv_obj_t * tileview, lv_obj_t * element);
 
 /*=====================
  * Setter functions
@@ -154,7 +154,7 @@ lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_
  *      MACROS
  **********************/
 
-#endif  /*USE_LV_TILEVIEW*/
+#endif  /*LV_USE_TILEVIEW*/
 
 #ifdef __cplusplus
 } /* extern "C" */
