@@ -37,8 +37,8 @@
  **********************/
 static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param);
 static void mbox_realign(lv_obj_t * mbox);
+static lv_res_t lv_mbox_close_action(lv_obj_t * btn, const char * txt);
 static void lv_mbox_close_end_cb(lv_obj_t * mbox);
-static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event);
 
 /**********************
  *  STATIC VARIABLES
@@ -93,7 +93,6 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_cont_set_fit2(new_mbox, LV_FIT_NONE, LV_FIT_TIGHT);
         lv_obj_set_width(new_mbox, LV_DPI * 2);
         lv_obj_align(new_mbox, NULL, LV_ALIGN_CENTER, 0, 0);
-        lv_obj_set_event_cb(new_mbox, lv_mbox_default_event_cb);
 
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
@@ -132,8 +131,9 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
  * @param mbox pointer to message box object
  * @param btn_map button descriptor (button matrix map).
  *                E.g.  a const char *txt[] = {"ok", "close", ""} (Can not be local variable)
+ * @param action a function which will be called when a button is released
  */
-void lv_mbox_add_btns(lv_obj_t * mbox, const char ** btn_map)
+void lv_mbox_add_btns(lv_obj_t * mbox, const char ** btn_map, lv_btnm_action_t action)
 {
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
@@ -153,7 +153,8 @@ void lv_mbox_add_btns(lv_obj_t * mbox, const char ** btn_map)
     }
 
     lv_btnm_set_map(ext->btnm, btn_map);
-    lv_obj_set_parent_event(ext->btnm, true);
+    if(action == NULL) lv_btnm_set_action(ext->btnm, lv_mbox_close_action); /*Set a default action anyway*/
+    else  lv_btnm_set_action(ext->btnm, action);
 
     mbox_realign(mbox);
 }
@@ -174,6 +175,19 @@ void lv_mbox_set_text(lv_obj_t * mbox, const char * txt)
 
     mbox_realign(mbox);
 }
+
+
+/**
+ * Stop the action to call when button is released
+ * @param pointer to an 'lv_btnm_action_t' action. In the action you need to use `lv_mbox_get_from_btn()` to get the `mbox`.
+ * @param pointer to an 'lv_btnm_action_t' action
+ */
+void lv_mbox_set_action(lv_obj_t * mbox, lv_btnm_action_t action)
+{
+    lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
+    lv_btnm_set_action(ext->btnm, action);
+}
+
 
 /**
  * Set animation duration
@@ -297,29 +311,16 @@ const char * lv_mbox_get_text(const lv_obj_t * mbox)
 }
 
 /**
- * Get the index of the lastly "activated" button by the user (pressed, released etc)
- * Useful in the the `event_cb`.
- * @param btnm pointer to button matrix object
- * @return  index of the last released button (LV_BTNM_BTN_NONE: if unset)
+ * Get the message box object from one of its button.
+ * It is useful in the button release actions where only the button is known
+ * @param btn pointer to a button of a message box
+ * @return pointer to the button's message box
  */
-uint16_t lv_mbox_get_active_btn(lv_obj_t * mbox)
+lv_obj_t * lv_mbox_get_from_btn(const lv_obj_t * btn)
 {
-    lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
-    if(ext->btnm) return lv_btnm_get_active_btn(ext->btnm);
-    else return LV_BTNM_BTN_NONE;
-}
+    lv_obj_t * mbox = lv_obj_get_parent(btn);
 
-/**
- * Get the text of the lastly "activated" button by the user (pressed, released etc)
- * Useful in the the `event_cb`.
- * @param btnm pointer to button matrix object
- * @return text of the last released button (NULL: if unset)
- */
-const char * lv_mbox_get_active_btn_text(lv_obj_t * mbox)
-{
-    lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
-    if(ext->btnm) return lv_btnm_get_active_btn_text(ext->btnm);
-    else return NULL;
+    return mbox;
 }
 
 /**
@@ -401,6 +402,7 @@ lv_obj_t * lv_mbox_get_btnm(lv_obj_t * mbox)
     return ext->btnm;
 }
 
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -435,19 +437,10 @@ static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param)
         if(lv_obj_get_width(mbox) != lv_area_get_width(param)) {
             mbox_realign(mbox);
         }
-    }
-    else if(sign == LV_SIGNAL_STYLE_CHG) {
+    } else if(sign == LV_SIGNAL_STYLE_CHG) {
         mbox_realign(mbox);
 
-    }
-    else if(sign == LV_SIGNAL_PRESSED) {
-        /*If the message box was pressed clear the last active button*/
-        if(ext->btnm) {
-            lv_btnm_ext_t * btnm_ext = lv_obj_get_ext_attr(ext->btnm);
-            btnm_ext->btn_id_act = LV_BTNM_BTN_NONE;
-        }
-    }
-    else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS ||
+    } else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS ||
               sign == LV_SIGNAL_CONTROLL || sign == LV_SIGNAL_GET_EDITABLE) {
         if(ext->btnm) {
             ext->btnm->signal_cb(ext->btnm, sign, param);
@@ -463,7 +456,7 @@ static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param)
                 /*In navigation mode don't select any button but in edit mode select the fist*/
                 lv_btnm_ext_t * btnm_ext = lv_obj_get_ext_attr(ext->btnm);
                 if(lv_group_get_editing(lv_obj_get_group(mbox))) btnm_ext->btn_id_pr = 0;
-                else btnm_ext->btn_id_pr = LV_BTNM_BTN_NONE;
+                else btnm_ext->btn_id_pr = LV_BTNM_PR_NONE;
             }
 #endif
         }
@@ -490,7 +483,7 @@ static void mbox_realign(lv_obj_t * mbox)
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
     lv_style_t * style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BG);
-    lv_coord_t w = lv_obj_get_width(mbox) - style->body.padding.left - style->body.padding.right;
+    lv_coord_t w = lv_obj_get_width(mbox) - 2 * style->body.padding.hor;
 
     if(ext->text) {
         lv_obj_set_width(ext->text, w);
@@ -500,26 +493,24 @@ static void mbox_realign(lv_obj_t * mbox)
         lv_style_t * btn_bg_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_BG);
         lv_style_t * btn_rel_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_REL);
         lv_coord_t font_h = lv_font_get_height(btn_rel_style->text.font);
-        lv_obj_set_size(ext->btnm, w, font_h + btn_rel_style->body.padding.top + btn_rel_style->body.padding.bottom +
-                btn_bg_style->body.padding.top + btn_bg_style->body.padding.bottom);
+        lv_obj_set_size(ext->btnm, w, font_h + 2 * btn_rel_style->body.padding.ver + 2 * btn_bg_style->body.padding.ver);
     }
+}
+
+static lv_res_t lv_mbox_close_action(lv_obj_t * btn, const char * txt)
+{
+    lv_obj_t * mbox = lv_mbox_get_from_btn(btn);
+
+    if(txt[0] != '\0') {
+        lv_mbox_start_auto_close(mbox, 0);
+        return LV_RES_INV;
+    }
+
+    return LV_RES_OK;
 }
 
 static void lv_mbox_close_end_cb(lv_obj_t * mbox)
 {
     lv_obj_del(mbox);
 }
-
-
-static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event)
-{
-    if(event != LV_EVENT_CLICKED) return;
-
-    uint16_t btn_id = lv_mbox_get_active_btn(mbox);
-    if(btn_id == LV_BTNM_BTN_NONE) return;
-
-    lv_mbox_start_auto_close(mbox, 0);
-
-}
-
 #endif

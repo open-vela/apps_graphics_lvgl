@@ -119,21 +119,12 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
 {
     if(group == NULL) return;
 
-    /*Do not add the object twice*/
-    lv_obj_t ** obj_i;
-    LV_LL_READ(group->obj_ll, obj_i) {
-        if((*obj_i) == obj) {
-            LV_LOG_INFO("lv_group_add_obj: the object is already added to this group");
-            return;
-        }
-    }
-
     /*If the object is already in a group and focused then defocus it*/
     if(obj->group_p) {
         if(lv_obj_is_focused(obj)) {
             lv_group_refocus(obj->group_p);
 
-            LV_LOG_INFO("lv_group_add_obj: assign object to an other group");
+            LV_LOG_INFO("group: assign object to an other group");
         }
     }
 
@@ -196,7 +187,6 @@ void lv_group_remove_obj(lv_obj_t * obj)
  */
 void lv_group_focus_obj(lv_obj_t * obj)
 {
-    if(obj == NULL) return;
     lv_group_t * g = obj->group_p;
     if(g == NULL) return;
 
