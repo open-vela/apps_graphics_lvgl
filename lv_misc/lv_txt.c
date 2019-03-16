@@ -437,7 +437,7 @@ static uint8_t lv_txt_utf8_size(const char * str)
     else if((str[0] & 0xE0) == 0xC0) return 2;
     else if((str[0] & 0xF0) == 0xE0) return 3;
     else if((str[0] & 0xF8) == 0xF0) return 4;
-    return 1;  /*If the char was invalid step tell it's 1 byte long*/
+    return 0;
 }
 
 
@@ -616,6 +616,7 @@ static uint32_t lv_txt_utf8_get_byte_id(const char * txt, uint32_t utf8_id)
     }
 
     return byte_cnt;
+
 }
 
 
