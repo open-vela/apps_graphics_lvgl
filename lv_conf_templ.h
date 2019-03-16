@@ -185,7 +185,7 @@ typedef void * lv_indev_drv_user_data_t;                /*Type of user data in t
  *  LV_OBJ SETTINGS
  *==================*/
 typedef void * lv_obj_user_data_t;          /*Declare the type of the user data of object (can be e.g. `void *`, `int`, `struct`)*/
-#define LV_OBJ_REALIGN          0           /*Enable `lv_obj_realaign()` based on `lv_obj_align()` parameters*/
+#define LV_OBJ_REALIGN          0           /*Enable `lv_obj_realign()` based on `lv_obj_align()` parameters*/
 
 /*==================
  *  LV OBJ X USAGE
@@ -334,7 +334,6 @@ typedef void * lv_obj_user_data_t;          /*Declare the type of the user data 
 #define LV_USE_ROLLER    1
 #if LV_USE_ROLLER != 0
 #  define LV_ROLLER_ANIM_TIME     200     /*Focus animation time [ms] (0: no animation)*/
-#  define LV_ROLLER_INF_PAGES     7       /*With inifinite rollers the options are added multiple times (on select positioned back to the center)*/
 #endif
 
 /*Slider (dependencies: lv_bar)*/

@@ -39,7 +39,7 @@ static lv_res_t tabpage_scrl_signal(lv_obj_t * tab_scrl, lv_signal_t sign, void 
 static void tabpage_pressed_handler(lv_obj_t * tabview, lv_obj_t * tabpage);
 static void tabpage_pressing_handler(lv_obj_t * tabview, lv_obj_t * tabpage);
 static void tabpage_press_lost_handler(lv_obj_t * tabview, lv_obj_t * tabpage);
-static lv_res_t tab_btnm_action(lv_obj_t * tab_btnm, const char * tab_name);
+static void tab_btnm_event_cb(lv_obj_t * tab_btnm, lv_event_t event);
 static void tabview_realign(lv_obj_t * tabview);
 
 /**********************
@@ -89,7 +89,6 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->content = NULL;
     ext->indic = NULL;
     ext->btns = NULL;
-    ext->tab_load_action = NULL;
     ext->btns_pos = LV_TABVIEW_BTNS_POS_TOP;
     ext->anim_time = LV_TABVIEW_ANIM_TIME;
     ext->btns_hide = 0;
@@ -111,8 +110,7 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->btns = lv_btnm_create(new_tabview, NULL);
         lv_obj_set_height(ext->btns, 3 * LV_DPI / 4);
         lv_btnm_set_map(ext->btns, tab_def);
-        lv_btnm_set_action(ext->btns, tab_btnm_action);
-        lv_btnm_set_toggle(ext->btns, true, 0);
+        lv_obj_set_event_cb(ext->btns, tab_btnm_event_cb);
 
         ext->indic = lv_obj_create(ext->btns, NULL);
         lv_obj_set_width(ext->indic, LV_DPI);
@@ -151,7 +149,6 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->indic = lv_obj_create(ext->btns, copy_ext->indic);
         ext->content = lv_cont_create(new_tabview, copy_ext->content);
         ext->anim_time = copy_ext->anim_time;
-        ext->tab_load_action = copy_ext->tab_load_action;
 
         ext->tab_name_ptr = lv_mem_alloc(sizeof(char *));
         lv_mem_assert(ext->tab_name_ptr);
@@ -218,18 +215,10 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
 
     /*Extend the button matrix map with the new name*/
     char * name_dm;
-    if((name[0] & LV_BTNM_CTRL_MASK) == LV_BTNM_CTRL_CODE) { /*If control byte presented let is*/
-        name_dm = lv_mem_alloc(strlen(name) + 1); /*+1 for the the closing '\0' */
-        lv_mem_assert(name_dm);
-        if(name_dm == NULL) return NULL;
-        strcpy(name_dm, name);
-    } else { /*Set a no long press control byte is not presented*/
-        name_dm = lv_mem_alloc(strlen(name) + 2); /*+1 for the the closing '\0' and +1 for the control byte */
-        lv_mem_assert(name_dm);
-        if(name_dm == NULL) return NULL;
-        name_dm[0] = '\221';
-        strcpy(&name_dm[1], name);
-    }
+    name_dm = lv_mem_alloc(strlen(name) + 1); /*+1 for the the closing '\0' */
+    lv_mem_assert(name_dm);
+    if(name_dm == NULL) return NULL;
+    strcpy(name_dm, name);
 
     ext->tab_cnt++;
     ext->tab_name_ptr = lv_mem_realloc(ext->tab_name_ptr, sizeof(char *) * (ext->tab_cnt + 1));
@@ -239,20 +228,28 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
     ext->tab_name_ptr[ext->tab_cnt - 1] = name_dm;
     ext->tab_name_ptr[ext->tab_cnt] = "";
 
+    /* The button matrix's map still points to the old `tab_name_ptr` which might be freed by `lv_mem_realloc`.
+     * So make its current map invalid*/
+    lv_btnm_ext_t * btnm_ext = lv_obj_get_ext_attr(ext->btns);
+    btnm_ext->map_p = NULL;
+
     lv_btnm_set_map(ext->btns, ext->tab_name_ptr);
+    lv_btnm_set_btn_no_repeat(ext->btns, ext->tab_cnt - 1, true);
 
     /*Modify the indicator size*/
     lv_style_t * style_tabs = lv_obj_get_style(ext->btns);
-    lv_coord_t indic_width = (lv_obj_get_width(tabview) - style_tabs->body.padding.inner * (ext->tab_cnt - 1) - 2 * style_tabs->body.padding.hor) / ext->tab_cnt;
+    lv_coord_t indic_width = (lv_obj_get_width(tabview) - style_tabs->body.padding.inner * (ext->tab_cnt - 1) -
+            style_tabs->body.padding.left - style_tabs->body.padding.right) / ext->tab_cnt;
     lv_obj_set_width(ext->indic, indic_width);
-    lv_obj_set_x(ext->indic, indic_width * ext->tab_cur + style_tabs->body.padding.inner * ext->tab_cur + style_tabs->body.padding.hor);
+    lv_obj_set_x(ext->indic, indic_width * ext->tab_cur + style_tabs->body.padding.inner * ext->tab_cur + style_tabs->body.padding.left);
 
     /*Set the first btn as active*/
     if(ext->tab_cnt == 1) {
         ext->tab_cur = 0;
-        lv_tabview_set_tab_act(tabview, 0, false);
         tabview_realign(tabview);       /*To set the proper btns height*/
     }
+
+    lv_tabview_set_tab_act(tabview, ext->tab_cur, false);
 
     return h;
 }
@@ -278,12 +275,13 @@ void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, bool anim_en)
 
     lv_res_t res = LV_RES_OK;
     if(id >= ext->tab_cnt) id = ext->tab_cnt - 1;
-    if(ext->tab_load_action && id != ext->tab_cur) res = ext->tab_load_action(tabview, id);
+
+    if(id != ext->tab_cur) res = lv_obj_send_event(tabview, LV_EVENT_VALUE_CHANGED);
     if(res != LV_RES_OK) return;        /*Prevent the tab loading*/
 
     ext->tab_cur = id;
 
-    lv_coord_t cont_x = -(lv_obj_get_width(tabview) * id + style->body.padding.inner * id + style->body.padding.hor);
+    lv_coord_t cont_x = -(lv_obj_get_width(tabview) * id + style->body.padding.inner * id + style->body.padding.left);
     if(ext->anim_time == 0 || anim_en == false) {
         lv_obj_set_x(ext->content, cont_x);
     } else {
@@ -308,7 +306,7 @@ void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, bool anim_en)
     /*Move the indicator*/
     lv_coord_t indic_width = lv_obj_get_width(ext->indic);
     lv_style_t * tabs_style = lv_obj_get_style(ext->btns);
-    lv_coord_t indic_x = indic_width * id + tabs_style->body.padding.inner * id + tabs_style->body.padding.hor;
+    lv_coord_t indic_x = indic_width * id + tabs_style->body.padding.inner * id + tabs_style->body.padding.left;
 
     if(ext->anim_time == 0 || anim_en == false) {
         lv_obj_set_x(ext->indic, indic_x);
@@ -331,19 +329,7 @@ void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, bool anim_en)
 #endif
     }
 
-    lv_btnm_set_toggle(ext->btns, true, ext->tab_cur);
-}
-
-/**
- * Set an action to call when a tab is loaded (Good to create content only if required)
- * lv_tabview_get_act() still gives the current (old) tab (to remove content from here)
- * @param tabview pointer to a tabview object
- * @param action pointer to a function to call when a btn is loaded
- */
-void lv_tabview_set_tab_load_action(lv_obj_t * tabview, lv_tabview_action_t action)
-{
-    lv_tabview_ext_t  * ext = lv_obj_get_ext_attr(tabview);
-    ext->tab_load_action = action;
+    lv_btnm_set_btn_toggle_state(ext->btns, ext->tab_cur, true);
 }
 
 /**
@@ -485,17 +471,6 @@ lv_obj_t * lv_tabview_get_tab(const lv_obj_t * tabview, uint16_t id)
 }
 
 /**
- * Get the tab load action
- * @param tabview pointer to a tabview object
- * @param return the current btn load action
- */
-lv_tabview_action_t lv_tabview_get_tab_load_action(const lv_obj_t * tabview)
-{
-    lv_tabview_ext_t  * ext = lv_obj_get_ext_attr(tabview);
-    return ext->tab_load_action;
-}
-
-/**
  * Get horizontal sliding is enabled or not
  * @param tabview pointer to Tab view object
  * @return true: enable sliding; false: disable sliding
@@ -605,18 +580,32 @@ static lv_res_t lv_tabview_signal(lv_obj_t * tabview, lv_signal_t sign, void * p
         ext->tab_name_ptr = NULL;
         ext->btns = NULL;     /*These objects were children so they are already invalid*/
         ext->content = NULL;
-    } else if(sign == LV_SIGNAL_CORD_CHG) {
+    }
+    else if(sign == LV_SIGNAL_CORD_CHG) {
         if(ext->content != NULL &&
                 (lv_obj_get_width(tabview) != lv_area_get_width(param) ||
                  lv_obj_get_height(tabview) != lv_area_get_height(param))) {
             tabview_realign(tabview);
         }
-    } else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS || sign == LV_SIGNAL_CONTROLL) {
+    }
+    else if(sign == LV_SIGNAL_RELEASED) {
+        /*If released by a KEYPAD or ENCODER then really the tab buttons should be released.
+         * So simulate a CLICK on the tab buttons*/
+        lv_indev_t * indev = lv_indev_get_act();
+        lv_hal_indev_type_t indev_type = lv_indev_get_type(indev);
+        if(indev_type == LV_INDEV_TYPE_KEYPAD ||
+                (indev_type == LV_INDEV_TYPE_ENCODER && lv_group_get_editing(lv_obj_get_group(tabview))))
+        {
+            lv_obj_send_event(ext->btns, LV_EVENT_CLICKED);
+        }
+    }
+    else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS || sign == LV_SIGNAL_CONTROLL) {
         /* The button matrix is not in a group (the tab view is in it) but it should handle the group signals.
          * So propagate the related signals to the button matrix manually*/
         if(ext->btns) {
             ext->btns->signal_cb(ext->btns, sign, param);
         }
+
         if(sign == LV_SIGNAL_FOCUS) {
             lv_hal_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
             /*With ENCODER select the first button only in edit mode*/
@@ -762,7 +751,7 @@ static void tabpage_pressing_handler(lv_obj_t * tabview, lv_obj_t * tabpage)
         lv_style_t * indic_style = lv_obj_get_style(ext->indic);
         lv_coord_t p = ((tabpage->coords.x1 - tabview->coords.x1) * (indic_width + tabs_style->body.padding.inner)) / lv_obj_get_width(tabview);
 
-        lv_obj_set_x(ext->indic, indic_width * ext->tab_cur + tabs_style->body.padding.inner * ext->tab_cur + indic_style->body.padding.hor - p);
+        lv_obj_set_x(ext->indic, indic_width * ext->tab_cur + tabs_style->body.padding.inner * ext->tab_cur + indic_style->body.padding.left - p);
     }
 }
 
@@ -806,26 +795,23 @@ static void tabpage_press_lost_handler(lv_obj_t * tabview, lv_obj_t * tabpage)
 }
 
 /**
- * Called when a tab button is released
+ * Called when a tab button is clicked
  * @param tab_btnm pointer to the tab's button matrix object
- * @param id the id of the tab (>= 0)
- * @return LV_ACTION_RES_OK because the button matrix in not deleted in the function
+ * @param event type of the event
  */
-static lv_res_t tab_btnm_action(lv_obj_t * tab_btnm, const char * tab_name)
+static void tab_btnm_event_cb(lv_obj_t * tab_btnm, lv_event_t event)
 {
+    if(event != LV_EVENT_CLICKED) return;
+
+    uint16_t btn_id = lv_btnm_get_active_btn(tab_btnm);
+    if(btn_id == LV_BTNM_BTN_NONE) return;
+
+
+    lv_btnm_set_btn_toggle_state_all(tab_btnm, false);
+    lv_btnm_set_btn_toggle_state(tab_btnm, btn_id, true);
+
     lv_obj_t * tab = lv_obj_get_parent(tab_btnm);
-    const char ** tabs_map = lv_btnm_get_map(tab_btnm);
-
-    uint8_t i = 0;
-
-    while(tabs_map[i][0] != '\0') {
-        if(strcmp(&tabs_map[i][1], tab_name) == 0) break;   /*[1] to skip the control byte*/
-        i++;
-    }
-
-    lv_tabview_set_tab_act(tab, i, true);
-
-    return LV_RES_OK;
+    lv_tabview_set_tab_act(tab, btn_id, true);
 }
 
 /**
@@ -853,13 +839,13 @@ static void tabview_realign(lv_obj_t * tabview)
 
         /*Set the indicator widths*/
         lv_coord_t indic_width = (lv_obj_get_width(tabview) - style_btn_bg->body.padding.inner * (ext->tab_cnt - 1) -
-                                  2 * style_btn_bg->body.padding.hor) / ext->tab_cnt;
+                                 style_btn_bg->body.padding.left - style_btn_bg->body.padding.right) / ext->tab_cnt;
         lv_obj_set_width(ext->indic, indic_width);
 
         /*Set the tabs height*/
         lv_coord_t btns_height = lv_font_get_height(style_btn_rel->text.font) +
-                                 2 * style_btn_rel->body.padding.ver +
-                                 2 * style_btn_bg->body.padding.ver;
+                                 style_btn_rel->body.padding.top + style_btn_rel->body.padding.bottom +
+                                 style_btn_bg->body.padding.top + style_btn_bg->body.padding.bottom;
         lv_obj_set_height(ext->btns, btns_height);
 
         lv_obj_set_height(ext->content, lv_obj_get_height(tabview) - lv_obj_get_height(ext->btns));
