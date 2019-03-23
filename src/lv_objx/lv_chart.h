@@ -44,14 +44,6 @@ enum
 };
 typedef uint8_t lv_chart_type_t;
 
-/*Chart update mode*/
-enum
-{
-	LV_CHART_UPDATE_MODE_SHIFT,
-	LV_CHART_UPDATE_MODE_CIRCULAR,
-};
-typedef uint8_t lv_chart_update_mode_t;
-    
 typedef struct
 {
     lv_coord_t * points;
@@ -71,7 +63,6 @@ typedef struct
     uint8_t vdiv_cnt;       /*Number of vertical division lines*/
     uint16_t point_cnt;     /*Point number in a data line*/
     lv_chart_type_t type;   /*Line, column or point chart (from 'lv_chart_type_t')*/
-    uint8_t update_mode: 1;
     struct {
         lv_coord_t width;  /*Line width or point radius*/
         uint8_t num;       /*Number of data lines in dl_ll*/

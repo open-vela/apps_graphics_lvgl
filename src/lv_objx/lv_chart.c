@@ -9,7 +9,6 @@
 #include "lv_chart.h"
 #if LV_USE_CHART != 0
 
-#include "../lv_core/lv_refr.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_themes/lv_theme.h"
 
@@ -37,9 +36,7 @@ static void lv_chart_draw_points(lv_obj_t * chart, const lv_area_t * mask);
 static void lv_chart_draw_cols(lv_obj_t * chart, const lv_area_t * mask);
 static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mask);
 static void lv_chart_draw_areas(lv_obj_t * chart, const lv_area_t * mask);
-static void lv_chart_inv_lines(lv_obj_t * chart, uint16_t i);
-static void lv_chart_inv_points(lv_obj_t * chart,  uint16_t i);
-static void lv_chart_inv_cols(lv_obj_t * chart,  uint16_t i);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -82,7 +79,6 @@ lv_obj_t * lv_chart_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->vdiv_cnt = LV_CHART_VDIV_DEF;
     ext->point_cnt = LV_CHART_PNUM_DEF;
     ext->type = LV_CHART_TYPE_LINE;
-    ext->update_mode = LV_CHART_UPDATE_MODE_SHIFT;
     ext->series.opa = LV_OPA_COVER;
     ext->series.dark = LV_OPA_50;
     ext->series.width = 2;
@@ -147,6 +143,7 @@ lv_chart_series_t * lv_chart_add_series(lv_obj_t * chart, lv_color_t color)
     if(ser == NULL) return NULL;
 
     ser->color = color;
+
     ser->points = lv_mem_alloc(sizeof(lv_coord_t) * ext->point_cnt);
     lv_mem_assert(ser->points);
     if(ser->points == NULL) {
@@ -383,21 +380,12 @@ void lv_chart_set_points(lv_obj_t * chart, lv_chart_series_t * ser, lv_coord_t *
  */
 void lv_chart_set_next(lv_obj_t * chart, lv_chart_series_t * ser, lv_coord_t y)
 {
-	lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
-	if(ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT) {
-		ser->points[ser->start_point] = y;  /*This was the place of the former left most value, after shifting it is the rightmost*/
-		ser->start_point = (ser->start_point + 1) % ext->point_cnt;
-		lv_chart_refresh(chart);
-	} else if(ext->update_mode == LV_CHART_UPDATE_MODE_CIRCULAR) {
-		ser->points[ser->start_point] = y;
+    lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
 
-		if(ext->type & LV_CHART_TYPE_LINE) lv_chart_inv_lines(chart, ser->start_point);
-		if(ext->type & LV_CHART_TYPE_COLUMN) lv_chart_inv_cols(chart, ser->start_point);
-		if(ext->type & LV_CHART_TYPE_POINT) lv_chart_inv_points(chart, ser->start_point);
-		if(ext->type & LV_CHART_TYPE_VERTICAL_LINE) lv_chart_inv_lines(chart, ser->start_point);
+    ser->points[ser->start_point] = y;  /*This was the place of the former left most value, after shifting it is the rightmost*/
+    ser->start_point = (ser->start_point + 1) % ext->point_cnt;
 
-		ser->start_point = (ser->start_point + 1) % ext->point_cnt;/*update the x for next incoming y*/
-	}
+    lv_chart_refresh(chart);
 }
 
 /*=====================
@@ -504,7 +492,6 @@ static bool lv_chart_design(lv_obj_t * chart, const lv_area_t * mask, lv_design_
         if(ext->type & LV_CHART_TYPE_POINT) lv_chart_draw_points(chart, mask);
         if(ext->type & LV_CHART_TYPE_VERTICAL_LINE) lv_chart_draw_vertical_lines(chart, mask);
         if(ext->type & LV_CHART_TYPE_AREA) lv_chart_draw_areas(chart, mask);
-
     }
     return true;
 }
@@ -558,8 +545,8 @@ static void lv_chart_draw_div(lv_obj_t * chart, const lv_area_t * mask)
     uint8_t div_i_start;
     lv_point_t p1;
     lv_point_t p2;
-    lv_coord_t w = lv_obj_get_width(chart) - 1;
-    lv_coord_t h = lv_obj_get_height(chart) - 1;
+    lv_coord_t w = lv_obj_get_width(chart);
+    lv_coord_t h = lv_obj_get_height(chart);
     lv_coord_t x_ofs = chart->coords.x1;
     lv_coord_t y_ofs = chart->coords.y1;
 
@@ -638,12 +625,10 @@ static void lv_chart_draw_lines(lv_obj_t * chart, const lv_area_t * mask)
     LV_LL_READ_BACK(ext->series_ll, ser) {
         style.line.color = ser->color;
 
-        lv_coord_t start_point = ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->start_point : 0;
-
         p1.x = 0 + x_ofs;
         p2.x = 0 + x_ofs;
 
-        p_prev = start_point;
+        p_prev = ser->start_point;
         y_tmp = (int32_t)((int32_t) ser->points[p_prev] - ext->ymin) * h;
         y_tmp = y_tmp / (ext->ymax - ext->ymin);
         p2.y = h - y_tmp + y_ofs;
@@ -654,7 +639,7 @@ static void lv_chart_draw_lines(lv_obj_t * chart, const lv_area_t * mask)
 
             p2.x = ((w * i) / (ext->point_cnt - 1)) + x_ofs;
 
-            p_act = (start_point + i) % ext->point_cnt;
+            p_act = (ser->start_point + i) % ext->point_cnt;
 
             y_tmp = (int32_t)((int32_t) ser->points[p_act] - ext->ymin) * h;
             y_tmp = y_tmp / (ext->ymax - ext->ymin);
@@ -697,8 +682,6 @@ static void lv_chart_draw_points(lv_obj_t * chart, const lv_area_t * mask)
 
     /*Go through all data lines*/
     LV_LL_READ_BACK(ext->series_ll, ser) {
-        lv_coord_t start_point = ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->start_point : 0;
-
         style_point.body.main_color = ser->color;
         style_point.body.grad_color = lv_color_mix(LV_COLOR_BLACK, ser->color, ext->series.dark);
 
@@ -706,7 +689,7 @@ static void lv_chart_draw_points(lv_obj_t * chart, const lv_area_t * mask)
             cir_a.x1 = ((w * i) / (ext->point_cnt - 1)) + x_ofs;
             cir_a.x2 = cir_a.x1 + style_point.body.radius;
             cir_a.x1 -= style_point.body.radius;
-            p_act = (start_point + i) % ext->point_cnt;
+            p_act = (ser->start_point + i) % ext->point_cnt;
             y_tmp = (int32_t)((int32_t) ser->points[p_act] - ext->ymin) * h;
             y_tmp = y_tmp / (ext->ymax - ext->ymin);
             cir_a.y1 = h - y_tmp + y_ofs;
@@ -757,15 +740,13 @@ static void lv_chart_draw_cols(lv_obj_t * chart, const lv_area_t * mask)
 
         /*Draw the current point of all data line*/
         LV_LL_READ_BACK(ext->series_ll, ser) {
-            lv_coord_t start_point = ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->start_point : 0;
-
             rects.body.main_color = ser->color;
             rects.body.grad_color = lv_color_mix(LV_COLOR_BLACK, ser->color, ext->series.dark);
             col_a.x1 = x_act;
             col_a.x2 = col_a.x1 + col_w;
             x_act += col_w;
 
-            lv_coord_t p_act = (start_point + i) % ext->point_cnt;
+            lv_coord_t p_act = (ser->start_point + i) % ext->point_cnt;
             y_tmp = (int32_t)((int32_t) ser->points[p_act] - ext->ymin) * h;
             y_tmp = y_tmp / (ext->ymax - ext->ymin);
             col_a.y1 = h - y_tmp + chart->coords.y1;
@@ -796,7 +777,6 @@ static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mas
     uint16_t i;
     lv_point_t p1;
     lv_point_t p2;
-    lv_coord_t p_act;
     lv_coord_t h = lv_obj_get_height(chart);
     lv_coord_t x_ofs = chart->coords.x1;
     lv_coord_t y_ofs = chart->coords.y1;
@@ -810,7 +790,6 @@ static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mas
 
     /*Go through all data lines*/
     LV_LL_READ_BACK(ext->series_ll, ser) {
-        lv_coord_t start_point = ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->start_point : 0;
         style.line.color = ser->color;
 
         p1.x = 0 + x_ofs;
@@ -822,9 +801,8 @@ static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mas
 
         for(i = 0; i < ext->point_cnt; i++)
         {
-            p_act = (start_point + i) % ext->point_cnt;
 
-            y_tmp = (int32_t)((int32_t) ser->points[p_act] - ext->ymin) * h;
+            y_tmp = (int32_t)((int32_t) ser->points[i] - ext->ymin) * h;
             y_tmp = y_tmp / (ext->ymax - ext->ymin);
             p2.y = h - y_tmp + y_ofs;
 
@@ -833,11 +811,11 @@ static void lv_chart_draw_vertical_lines(lv_obj_t * chart, const lv_area_t * mas
                 p2.x++;
             }
 
-            if(ser->points[p_act] != LV_CHART_POINT_DEF) {
+            if(ser->points[i] != LV_CHART_POINT_DEF) {
                 lv_draw_line(&p1, &p2, mask, &style, opa_scale);
             }
 
-            p2.x = ((w * p_act) / (ext->point_cnt - 1)) + x_ofs;
+            p2.x = ((w * i) / (ext->point_cnt - 1)) + x_ofs;
             p1.x = p2.x;
             p1.y = p2.y;
         }
@@ -869,7 +847,6 @@ static void lv_chart_draw_areas(lv_obj_t * chart, const lv_area_t * mask)
 
     /*Go through all data lines*/
     LV_LL_READ_BACK(ext->series_ll, ser) {
-        lv_coord_t start_point = ext->update_mode == LV_CHART_UPDATE_MODE_SHIFT ? ser->start_point : 0;
         style.body.main_color = ser->color;
 
         p1.x = 0 + x_ofs;
@@ -884,8 +861,8 @@ static void lv_chart_draw_areas(lv_obj_t * chart, const lv_area_t * mask)
             p1.x = p2.x;
             p1.y = p2.y;
 
-            p_act = (start_point + i) % ext->point_cnt;
-            p2.x = ((w * p_act) / (ext->point_cnt - 1)) + x_ofs;
+            p2.x = ((w * i) / (ext->point_cnt - 1)) + x_ofs;
+            p_act = (ser->start_point + i) % ext->point_cnt;
 
             y_tmp = (int32_t)((int32_t) ser->points[p_act] - ext->ymin) * h;
             y_tmp = y_tmp / (ext->ymax - ext->ymin);
@@ -905,81 +882,6 @@ static void lv_chart_draw_areas(lv_obj_t * chart, const lv_area_t * mask)
             p_prev = p_act;
         }
     }
-}
-
-/**
- * invalid area of the new line data lines on a chart
- * @param obj pointer to chart object
- */
-static void lv_chart_inv_lines(lv_obj_t * chart, uint16_t i)
-{
-	lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
-
-	lv_coord_t w = lv_obj_get_width(chart);
-	lv_coord_t x_ofs = chart->coords.x1;
-
-	if(i < ext->point_cnt) {
-		lv_area_t coords;
-        lv_obj_get_coords(chart, &coords);
-        if(i < ext->point_cnt - 1) {
-            coords.x1 = ((w * i) / (ext->point_cnt - 1)) + x_ofs - ext->series.width;
-            coords.x2 = ((w * (i + 1)) / (ext->point_cnt - 1)) + x_ofs + ext->series.width;
-            lv_inv_area(lv_obj_get_disp(chart), &coords);
-        }
-
-        if(i > 0) {
-            coords.x1 = ((w * (i - 1)) / (ext->point_cnt - 1)) + x_ofs - ext->series.width;
-            coords.x2 = ((w * i) / (ext->point_cnt - 1)) + x_ofs + ext->series.width;
-            lv_inv_area(lv_obj_get_disp(chart), &coords);
-        }
-	}
-}
-
-/**
- * invalid area of the new point data lines on a chart
- * @param chart pointer to chart object
- * @param mask mask, inherited from the design function
- */
-static void lv_chart_inv_points(lv_obj_t * chart, uint16_t i)
-{
-	lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
-
-	lv_area_t cir_a;
-	lv_coord_t w = lv_obj_get_width(chart);
-	lv_coord_t x_ofs = chart->coords.x1;
-
-	lv_obj_get_coords(chart, &cir_a);
-	cir_a.x1 = ((w * i) / (ext->point_cnt - 1)) + x_ofs;
-	cir_a.x2 = cir_a.x1 + ext->series.width;
-	cir_a.x1 -= ext->series.width;
-
-    lv_inv_area(lv_obj_get_disp(chart), &cir_a);
-}
-
-/**
- * invalid area of the new column data lines on a chart
- * @param chart pointer to chart object
- * @param mask mask, inherited from the design function
- */
-static void lv_chart_inv_cols(lv_obj_t * chart, uint16_t i)
-{
-	lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
-
-	lv_area_t col_a;
-	lv_coord_t w = lv_obj_get_width(chart);
-	lv_coord_t col_w = w / ((ext->series.num + 1) * ext->point_cnt); /* Suppose + 1 series as separator*/
-	lv_coord_t x_ofs = col_w / 2; /*Shift with a half col.*/
-
-	lv_coord_t x_act;
-
-	x_act = (int32_t)((int32_t) w * i) / ext->point_cnt;
-	x_act += chart->coords.x1 + x_ofs;
-
-	lv_obj_get_coords(chart, &col_a);
-	col_a.x1 = x_act;
-	col_a.x2 = col_a.x1 + col_w;
-
-    lv_inv_area(lv_obj_get_disp(chart), &col_a);
 }
 
 #endif
