@@ -73,7 +73,7 @@ typedef struct _lv_group_t
     uint8_t wrap            :1;             /*1: Focus next/prev can wrap at end of list. 0: Focus next/prev stops at end of list.*/
 } lv_group_t;
 
-enum _lv_group_refocus_policy_t {
+enum {
     LV_GROUP_REFOCUS_POLICY_NEXT = 0,
     LV_GROUP_REFOCUS_POLICY_PREV = 1
 };
