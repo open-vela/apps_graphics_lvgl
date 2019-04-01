@@ -2,7 +2,7 @@
 name: All other issues
 about: Questions and enhancement requests should go to the forum.
 title: ''
-labels: not-template
+labels: stale
 assignees: ''
 
 ---
