@@ -39,7 +39,8 @@ extern "C" {
 
 /* Button states
  * It can be used not only by buttons but other button-like objects too*/
-enum {
+enum
+{
     LV_BTN_STATE_REL,
     LV_BTN_STATE_PR,
     LV_BTN_STATE_TGL_REL,
@@ -54,14 +55,14 @@ typedef struct
 {
     lv_cont_ext_t cont; /*Ext. of ancestor*/
     /*New data for this type */
-    lv_style_t * styles[LV_BTN_STATE_NUM]; /*Styles in each state*/
-    lv_btn_state_t state; /*Current state of the button from 'lv_btn_state_t' enum*/
+    lv_style_t * styles[LV_BTN_STATE_NUM];        /*Styles in each state*/
+    lv_btn_state_t state;                         /*Current state of the button from 'lv_btn_state_t' enum*/
 #if LV_BTN_INK_EFFECT
-    uint16_t ink_in_time;   /*[ms] Time of ink fill effect (0: disable ink effect)*/
-    uint16_t ink_wait_time; /*[ms] Wait before the ink disappears */
-    uint16_t ink_out_time;  /*[ms] Time of ink disappearing*/
+    uint16_t ink_in_time;                         /*[ms] Time of ink fill effect (0: disable ink effect)*/
+    uint16_t ink_wait_time;                       /*[ms] Wait before the ink disappears */
+    uint16_t ink_out_time;                        /*[ms] Time of ink disappearing*/
 #endif
-    uint8_t toggle : 1; /*1: Toggle enabled*/
+    uint8_t toggle :1;                            /*1: Toggle enabled*/
 } lv_btn_ext_t;
 
 /*Styles*/
@@ -129,8 +130,7 @@ static inline void lv_btn_set_layout(lv_obj_t * btn, lv_layout_t layout)
  * @param top bottom fit policy from `lv_fit_t`
  * @param bottom bottom fit policy from `lv_fit_t`
  */
-static inline void lv_btn_set_fit4(lv_obj_t * btn, lv_fit_t left, lv_fit_t right, lv_fit_t top,
-                                   lv_fit_t bottom)
+static inline void lv_btn_set_fit4(lv_obj_t * btn, lv_fit_t left, lv_fit_t right, lv_fit_t top, lv_fit_t bottom)
 {
     lv_cont_set_fit4(btn, left, right, top, bottom);
 }
@@ -185,7 +185,7 @@ void lv_btn_set_ink_out_time(lv_obj_t * btn, uint16_t time);
  * @param type which style should be set
  * @param style pointer to a style
  *  */
-void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, lv_style_t * style);
+void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, lv_style_t *style);
 
 /*=====================
  * Getter functions
@@ -255,6 +255,7 @@ static inline lv_fit_t lv_btn_get_fit_bottom(const lv_obj_t * btn)
     return lv_cont_get_fit_bottom(btn);
 }
 
+
 /**
  * Get time of the ink in effect (draw a circle on click to animate in the new state)
  * @param btn pointer to a button object
@@ -288,10 +289,10 @@ lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type);
  *      MACROS
  **********************/
 
-#endif /*LV_USE_BUTTON*/
+#endif  /*LV_USE_BUTTON*/
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /*LV_BTN_H*/
+#endif  /*LV_BTN_H*/
