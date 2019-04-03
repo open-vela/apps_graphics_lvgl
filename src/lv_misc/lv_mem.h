@@ -10,6 +10,7 @@
 extern "C" {
 #endif
 
+
 /*********************
  *      INCLUDES
  *********************/
@@ -28,14 +29,14 @@ extern "C" {
  *********************/
 // Check windows
 #ifdef __WIN64
-#define LV_MEM_ENV64
+# define LV_MEM_ENV64
 #endif
 
 // Check GCC
 #ifdef __GNUC__
-#if defined(__x86_64__) || defined(__ppc64__)
-#define LV_MEM_ENV64
-#endif
+# if defined(__x86_64__) || defined(__ppc64__)
+#   define LV_MEM_ENV64
+# endif
 #endif
 
 /**********************
@@ -56,6 +57,7 @@ typedef struct
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
+
 
 /**
  * Initiaize the dyn_mem module (work memory and other variables)
@@ -103,6 +105,7 @@ void lv_mem_monitor(lv_mem_monitor_t * mon_p);
  */
 uint32_t lv_mem_get_size(const void * data);
 
+
 /**********************
  *      MACROS
  **********************/
@@ -112,24 +115,13 @@ uint32_t lv_mem_get_size(const void * data);
  * p pointer to a memory
  */
 #if LV_USE_LOG == 0
-#define lv_mem_assert(p)                                                                           \
-    {                                                                                              \
-        if(p == NULL)                                                                              \
-            while(1)                                                                               \
-                ;                                                                                  \
-    }
+# define  lv_mem_assert(p) {if(p == NULL) while(1); }
 #else
-#define lv_mem_assert(p)                                                                           \
-    {                                                                                              \
-        if(p == NULL) {                                                                            \
-            LV_LOG_ERROR("Out of memory!");                                                        \
-            while(1)                                                                               \
-                ;                                                                                  \
-        }                                                                                          \
-    }
+# define  lv_mem_assert(p) {if(p == NULL) {LV_LOG_ERROR("Out of memory!"); while(1); }}
 #endif
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 #endif /*LV_MEM_H*/
+
