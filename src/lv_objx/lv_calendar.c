@@ -528,7 +528,7 @@ static lv_res_t lv_calendar_signal(lv_obj_t * calendar, lv_signal_t sign, void *
     } else if(sign == LV_SIGNAL_CONTROL) {
         uint8_t c               = *((uint8_t *)param);
         lv_calendar_ext_t * ext = lv_obj_get_ext_attr(calendar);
-        if(c == LV_GROUP_KEY_RIGHT || c == LV_GROUP_KEY_UP) {
+        if(c == LV_KEY_RIGHT || c == LV_KEY_UP) {
             if(ext->showed_date.month >= 12) {
                 ext->showed_date.month = 1;
                 ext->showed_date.year++;
@@ -536,7 +536,7 @@ static lv_res_t lv_calendar_signal(lv_obj_t * calendar, lv_signal_t sign, void *
                 ext->showed_date.month++;
             }
             lv_obj_invalidate(calendar);
-        } else if(c == LV_GROUP_KEY_LEFT || c == LV_GROUP_KEY_DOWN) {
+        } else if(c == LV_KEY_LEFT || c == LV_KEY_DOWN) {
             if(ext->showed_date.month <= 1) {
                 ext->showed_date.month = 12;
                 ext->showed_date.year--;
@@ -706,7 +706,7 @@ static void draw_day_names(lv_obj_t * calendar, const lv_area_t * mask)
     uint32_t i;
     for(i = 0; i < 7; i++) {
         label_area.x1 = calendar->coords.x1 + (w * i) / 7 + l_pad;
-        label_area.x2 = label_area.x1 + box_w - 1;
+        label_area.x2 = label_area.x1 + box_w;
         lv_draw_label(&label_area, mask, ext->style_day_names, opa_scale, get_day_name(calendar, i),
                       LV_TXT_FLAG_CENTER, NULL, -1, -1);
     }
@@ -805,7 +805,7 @@ static void draw_days(lv_obj_t * calendar, const lv_area_t * mask)
 
             label_area.x1 = calendar->coords.x1 + (w * day) / 7 + style_bg->body.padding.left +
                             style_bg->body.padding.right;
-            label_area.x2 = label_area.x1 + box_w - 1;
+            label_area.x2 = label_area.x1 + box_w;
 
             /*Draw the "today box"*/
             if(draw_state == DAY_DRAW_ACT_MONTH && month_of_today_shown &&
