@@ -651,11 +651,10 @@ static void refr_position(lv_obj_t * roller, bool anim_en)
 
 /**
  * Set the middle page for the roller if inifinte is enabled
- * @param scrl pointer to the roller's scrollable (lv_obj_t *)
+ * @param roller_scrl pointer to the roller's scrollable
  */
-static void inf_normalize(void * scrl)
+static void inf_normalize(void * roller_scrl)
 {
-    lv_obj_t * roller_scrl= (lv_obj_t *)scrl;
     lv_obj_t * roller     = lv_obj_get_parent(roller_scrl);
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
 
@@ -668,6 +667,8 @@ static void inf_normalize(void * scrl)
             (LV_ROLLER_INF_PAGES / 2) * real_id_cnt; /*Select the middle page*/
 
         /*Move to the new id*/
+        lv_obj_t * roller_scrl   = lv_page_get_scrl(roller);
+        lv_roller_ext_t * ext    = lv_obj_get_ext_attr(roller);
         lv_style_t * style_label = lv_obj_get_style(ext->ddlist.label);
         const lv_font_t * font   = style_label->text.font;
         lv_coord_t font_h        = lv_font_get_height(font);

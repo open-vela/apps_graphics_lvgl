@@ -408,14 +408,13 @@ static void indev_keypad_proc(lv_indev_t * i, lv_indev_data_t * data)
             focused->signal_cb(focused, LV_SIGNAL_PRESSED, NULL);
             if(i->proc.reset_query) return; /*The object might be deleted*/
             lv_event_send(focused, LV_EVENT_PRESSED, NULL);
-            if(i->proc.reset_query) return;     /*The object might be deleted*/
-        }
-        else if(data->key == LV_KEY_ESC) {
+            if(i->proc.reset_query) return; /*The object might be deleted*/
+        } else if(data->key == LV_KEY_ESC) {
             /*Send the ESC as a normal KEY*/
             lv_group_send_data(g, LV_KEY_ESC);
 
             lv_event_send(focused, LV_EVENT_CANCEL, NULL);
-            if(i->proc.reset_query) return;     /*The object might be deleted*/
+            if(i->proc.reset_query) return; /*The object might be deleted*/
         }
         /*Move the focus on NEXT*/
         else if(data->key == LV_KEY_NEXT) {
@@ -1028,7 +1027,6 @@ static lv_obj_t * indev_search_obj(const lv_indev_proc_t * proc, lv_obj_t * obj)
 static void indev_drag(lv_indev_proc_t * state)
 {
     lv_obj_t * drag_obj = state->types.pointer.act_obj;
-    bool drag_just_started = false;
 
     /*If drag parent is active check recursively the drag_parent attribute*/
     while(lv_obj_get_drag_parent(drag_obj) != false && drag_obj != NULL) {
@@ -1053,7 +1051,6 @@ static void indev_drag(lv_indev_proc_t * state)
            ((allowed_dirs & LV_DRAG_DIR_VER) &&
             LV_MATH_ABS(state->types.pointer.drag_sum.y) >= indev_act->driver.drag_limit)) {
             state->types.pointer.drag_limit_out = 1;
-            drag_just_started = true;
         }
     }
 
@@ -1071,26 +1068,16 @@ static void indev_drag(lv_indev_proc_t * state)
             lv_coord_t prev_par_h = lv_obj_get_height(lv_obj_get_parent(drag_obj));
 
             /*Get the coordinates of the object and modify them*/
-            lv_coord_t act_x      = lv_obj_get_x(drag_obj);
-            lv_coord_t act_y      = lv_obj_get_y(drag_obj);
+            lv_coord_t act_x = lv_obj_get_x(drag_obj);
+            lv_coord_t act_y = lv_obj_get_y(drag_obj);
 
-            if(allowed_dirs == LV_DRAG_DIR_ALL) {
-                if(drag_just_started) {
-                    act_x += state->types.pointer.drag_sum.x;
-                    act_y += state->types.pointer.drag_sum.y;
-                }
-                lv_obj_set_pos(drag_obj, act_x + state->types.pointer.vect.x, act_y + state->types.pointer.vect.y);
-            } else if(allowed_dirs & LV_DRAG_DIR_HOR) {
-                if(drag_just_started) {
-                    act_x += state->types.pointer.drag_sum.x;
-                }
+            if(allowed_dirs == LV_DRAG_DIR_ALL)
+                lv_obj_set_pos(drag_obj, act_x + state->types.pointer.vect.x,
+                               act_y + state->types.pointer.vect.y);
+            else if(allowed_dirs & LV_DRAG_DIR_HOR)
                 lv_obj_set_x(drag_obj, act_x + state->types.pointer.vect.x);
-            } else if(allowed_dirs & LV_DRAG_DIR_VER) {
-                if(drag_just_started) {
-                    act_y += state->types.pointer.drag_sum.y;
-                }
+            else if(allowed_dirs & LV_DRAG_DIR_VER)
                 lv_obj_set_y(drag_obj, act_y + state->types.pointer.vect.y);
-            }
 
             /*Set the drag in progress flag*/
             /*Send the drag begin signal on first move*/
@@ -1114,7 +1101,6 @@ static void indev_drag(lv_indev_proc_t * state)
                                              new_inv_buf_size - inv_buf_size);
                 }
             }
-
         }
     }
 }
@@ -1162,11 +1148,11 @@ static void indev_drag_throw(lv_indev_proc_t * proc)
         lv_coord_t act_y = lv_obj_get_y(drag_obj) + proc->types.pointer.drag_throw_vect.y;
 
         if(allowed_dirs == LV_DRAG_DIR_ALL)
-		lv_obj_set_pos(drag_obj, act_x, act_y);
+            lv_obj_set_pos(drag_obj, act_x, act_y);
         else if(allowed_dirs & LV_DRAG_DIR_HOR)
-		lv_obj_set_x(drag_obj, act_x);
+            lv_obj_set_x(drag_obj, act_x);
         else if(allowed_dirs & LV_DRAG_DIR_VER)
-		lv_obj_set_y(drag_obj, act_y);
+            lv_obj_set_y(drag_obj, act_y);
 
         lv_area_t coord_new;
         lv_obj_get_coords(drag_obj, &coord_new);
