@@ -40,9 +40,6 @@
 static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param);
 static lv_res_t lv_list_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param);
 static void lv_list_btn_single_selected(lv_obj_t * btn);
-static bool lv_list_is_list_btn(lv_obj_t * list_btn);
-static bool lv_list_is_list_img(lv_obj_t * list_btn);
-static bool lv_list_is_list_label(lv_obj_t * list_btn);
 
 /**********************
  *  STATIC VARIABLES
@@ -429,7 +426,7 @@ lv_obj_t * lv_list_get_btn_label(const lv_obj_t * btn)
     lv_obj_t * label = lv_obj_get_child(btn, NULL);
     if(label == NULL) return NULL;
 
-    while(lv_list_is_list_label(label)) {
+    while(label->signal_cb != label_signal) {
         label = lv_obj_get_child(btn, label);
         if(label == NULL) break;
     }
@@ -448,7 +445,7 @@ lv_obj_t * lv_list_get_btn_img(const lv_obj_t * btn)
     lv_obj_t * img = lv_obj_get_child(btn, NULL);
     if(img == NULL) return NULL;
 
-    while(lv_list_is_list_img(img)) {
+    while(img->signal_cb != img_signal) {
         img = lv_obj_get_child(btn, img);
         if(img == NULL) break;
     }
@@ -476,7 +473,7 @@ lv_obj_t * lv_list_get_prev_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(lv_list_is_list_btn(btn)) {
+    while(btn->signal_cb != lv_list_btn_signal) {
         btn = lv_obj_get_child(scrl, btn);
         if(btn == NULL) break;
     }
@@ -501,7 +498,7 @@ lv_obj_t * lv_list_get_next_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child_back(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(lv_list_is_list_btn(btn)) {
+    while(btn->signal_cb != lv_list_btn_signal) {
         btn = lv_obj_get_child_back(scrl, btn);
         if(btn == NULL) break;
     }
@@ -935,60 +932,6 @@ static void lv_list_btn_single_selected(lv_obj_t * btn)
         }
         e = lv_list_get_next_btn(list, e);
     } while(e != NULL);
-}
-
-/**
- * Check if this is really a list button or another object.
- * @param list_btn List button
- */
-static bool lv_list_is_list_btn(lv_obj_t * list_btn)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_btn, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_btn"))
-            return true;
-    }
-    return false;
-}
-
-/**
- * Check if this is really a list label or another object.
- * @param list_label List label
- */
-static bool lv_list_is_list_label(lv_obj_t * list_label)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_label, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_label"))
-            return true;
-    }
-    return false;
-}
-
-/**
- * Check if this is really a list image or another object.
- * @param list_image List image
- */
-static bool lv_list_is_list_img(lv_obj_t * list_img)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_img, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_img"))
-            return true;
-    }
-    return false;
 }
 
 #endif
