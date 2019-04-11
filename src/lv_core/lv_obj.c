@@ -345,10 +345,9 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
         /*Delete from the group*/
 #if LV_USE_GROUP
     bool was_focused = false;
-    lv_group_t * group = lv_obj_get_group(obj);
 
-    if(group) {
-        if(lv_group_get_focused(group) == obj) was_focused = true;
+    if(obj->group_p) {
+        if(lv_group_get_focused(obj->group_p) == obj) was_focused = true;
         lv_group_remove_obj(obj);
     }
 #endif
@@ -391,7 +390,7 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
         }
 
 #if LV_USE_GROUP
-        if(indev->group == group && was_focused) {
+        if(was_focused) {
             lv_indev_reset(indev);
         }
 #endif
@@ -2068,9 +2067,8 @@ static void delete_children(lv_obj_t * obj)
      * LV_SIGNAL_DEFOCUS call*/
 #if LV_USE_GROUP
     bool was_focused = false;
-    lv_group_t * group = lv_obj_get_group(obj);
 
-    if(group) {
+    if(obj->group_p) {
         if(lv_group_get_focused(obj->group_p) == obj) was_focused = true;
         lv_group_remove_obj(obj);
     }
@@ -2100,7 +2098,7 @@ static void delete_children(lv_obj_t * obj)
             lv_indev_reset(indev);
         }
 #if LV_USE_GROUP
-        if(indev->group == group && was_focused) {
+        if(was_focused) {
             lv_indev_reset(indev);
         }
 #endif
