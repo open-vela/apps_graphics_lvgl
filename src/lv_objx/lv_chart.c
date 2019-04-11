@@ -409,7 +409,7 @@ void lv_chart_set_margin(lv_obj_t * chart, uint16_t margin)
 {
     lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
     ext->margin          = margin;
-    lv_obj_refresh_ext_draw_pad(chart);
+    lv_obj_refresh_ext_size(chart);
 }
 
 /**
@@ -596,9 +596,9 @@ static lv_res_t lv_chart_signal(lv_obj_t * chart, lv_signal_t sign, void * param
             if(buf->type[i] == NULL) break;
         }
         buf->type[i] = "lv_chart";
-    } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+    } else if(sign == LV_SIGNAL_REFR_EXT_SIZE) {
         /*Provide extra px draw area around the chart*/
-        chart->ext_draw_pad = ext->margin;
+        chart->ext_size = ext->margin;
     }
 
     return res;
@@ -611,9 +611,9 @@ static lv_res_t lv_chart_signal(lv_obj_t * chart, lv_signal_t sign, void * param
  */
 static void lv_chart_draw_div(lv_obj_t * chart, const lv_area_t * mask)
 {
-    lv_chart_ext_t * ext = lv_obj_get_ext_attr(chart);
-    lv_style_t * style   = lv_obj_get_style(chart);
-    lv_opa_t opa_scale   = lv_obj_get_opa_scale(chart);
+    lv_chart_ext_t * ext     = lv_obj_get_ext_attr(chart);
+    const lv_style_t * style = lv_obj_get_style(chart);
+    lv_opa_t opa_scale       = lv_obj_get_opa_scale(chart);
 
     uint8_t div_i;
     uint8_t div_i_end;
