@@ -23,8 +23,6 @@
 #define LV_LABEL_DEF_SCROLL_SPEED (25)
 #endif
 
-#define ANIM_WAIT_CHAR_COUNT 3
-
 #define LV_LABEL_DOT_END_INV 0xFFFF
 
 /**********************
@@ -43,11 +41,6 @@ static void lv_label_revert_dots(lv_obj_t * label);
 static void lv_label_set_offset_x(lv_obj_t * label, lv_coord_t x);
 static void lv_label_set_offset_y(lv_obj_t * label, lv_coord_t y);
 #endif
-
-static bool lv_label_set_dot_tmp(lv_obj_t *label, char *data, int len);
-static char * lv_label_get_dot_tmp(lv_obj_t *label);
-static void lv_label_dot_tmp_free(lv_obj_t *label);
-
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -95,13 +88,8 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->anim_speed      = LV_LABEL_DEF_SCROLL_SPEED;
     ext->offset.x        = 0;
     ext->offset.y        = 0;
-#if LV_LABEL_SELECTION_EN
-    ext->selection_start = 0;
-    ext->selection_end   = 0;
-    ext->selection_en    = 0;
-#endif
-    ext->dot_tmp_ptr = NULL;
-    ext->dot_tmp_alloc = 0;
+    ext->selection_start = -1;
+    ext->selection_end   = -1;
 
     lv_obj_set_design_cb(new_label, lv_label_design);
     lv_obj_set_signal_cb(new_label, lv_label_signal);
@@ -133,14 +121,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
             memcpy(ext->text, copy_ext->text, lv_mem_get_size(copy_ext->text));
         }
 
-        if(copy_ext->dot_tmp_alloc && copy_ext->dot_tmp_ptr ){
-            int len = strlen(copy_ext->dot_tmp_ptr);
-            lv_label_set_dot_tmp(new_label, ext->dot_tmp_ptr, len);
-        }
-        else{
-            memcpy(ext->dot_tmp, copy_ext->dot_tmp, sizeof(ext->dot_tmp));
-        }
-        ext->dot_tmp_alloc = copy_ext->dot_tmp_alloc;
+        memcpy(ext->dot_tmp, copy_ext->dot_tmp, sizeof(ext->dot_tmp));
         ext->dot_end = copy_ext->dot_end;
 
         /*Refresh the style with new signal function*/
@@ -354,34 +335,6 @@ void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed)
     if(ext->long_mode == LV_LABEL_LONG_ROLL || ext->long_mode == LV_LABEL_LONG_ROLL_CIRC) {
         lv_label_refr_text(label);
     }
-}
-
-void lv_label_set_selection_start( lv_obj_t * label, int32_t index ) {
-#if LV_LABEL_SELECTION_EN
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( index >= 0 ) {
-        ext->selection_en = 1;
-        ext->selection_start = index;
-    }
-    else {
-        ext->selection_en = 0;
-        ext->selection_start = 0;
-    }
-#endif
-}
-
-void lv_label_set_selection_end( lv_obj_t * label, int32_t index ) {
-#if LV_LABEL_SELECTION_EN
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( index >= 0 ) {
-        ext->selection_en = 1;
-        ext->selection_end = index;
-    }
-    else {
-        ext->selection_en = 0;
-        ext->selection_end = 0;
-    }
-#endif
 }
 
 /*=====================
@@ -604,41 +557,6 @@ uint16_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos)
 }
 
 /**
- * @brief Get the selection start index.
- * @param label pointer to a label object.
- * @return selection start index. -1 if nothing is selected.
- */
-int32_t lv_label_get_selection_start( const lv_obj_t * label ) {
-#if LV_LABEL_SELECTION_EN
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( ext->selection_en )
-        return ext->selection_start;
-    else
-        return -1;
-#else
-    return -1;
-#endif
-}
-
-/**
- * @brief Get the selection end index.
- * @param label pointer to a label object.
- * @return selection end index. -1 if nothing is selected.
- */
-int32_t lv_label_get_selection_end( const lv_obj_t * label ) {
-#if LV_LABEL_SELECTION_EN
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( ext->selection_en )
-        return ext->selection_end;
-    else
-        return -1;
-#else
-    return -1;
-#endif
-}
-
-
-/**
  * Check if a character is drawn under a point.
  * @param label Label object
  * @param pos Point to check for characte under
@@ -843,7 +761,7 @@ static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_
         }
 
         lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ext->offset,
-                lv_label_get_selection_start(label), lv_label_get_selection_end(label));
+                      ext->selection_start, ext->selection_end);
 
         if(ext->long_mode == LV_LABEL_LONG_ROLL_CIRC) {
             lv_point_t size;
@@ -854,11 +772,10 @@ static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_
             /*Draw the text again next to the original to make an circular effect */
             if(size.x > lv_obj_get_width(label)) {
                 ofs.x = ext->offset.x + size.x +
-                        lv_font_get_width(style->text.font, ' ') * ANIM_WAIT_CHAR_COUNT;
+                        lv_font_get_width(style->text.font, ' ') * LV_LABEL_WAIT_CHAR_COUNT;
                 ofs.y = ext->offset.y;
-
                 lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ofs,
-                        lv_label_get_selection_start(label), lv_label_get_selection_end(label));
+                              ext->selection_start, ext->selection_end);
             }
 
             /*Draw the text again below the original to make an circular effect */
@@ -866,7 +783,7 @@ static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_
                 ofs.x = ext->offset.x;
                 ofs.y = ext->offset.y + size.y + lv_font_get_height(style->text.font);
                 lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ofs,
-                        lv_label_get_selection_start(label), lv_label_get_selection_end(label));
+                              ext->selection_start, ext->selection_end);
             }
         }
     }
@@ -894,7 +811,6 @@ static lv_res_t lv_label_signal(lv_obj_t * label, lv_signal_t sign, void * param
             lv_mem_free(ext->text);
             ext->text = NULL;
         }
-        lv_label_dot_tmp_free(label);
     } else if(sign == LV_SIGNAL_STYLE_CHG) {
         /*Revert dots for proper refresh*/
         lv_label_revert_dots(label);
@@ -966,15 +882,13 @@ static void lv_label_refr_text(lv_obj_t * label)
         anim.repeat   = 1;
         anim.playback = 1;
         anim.start    = 0;
-        anim.act_time = 0;
         anim.end_cb   = NULL;
         anim.path     = lv_anim_path_linear;
         anim.playback_pause =
             (((lv_font_get_width(style->text.font, ' ') + style->text.letter_space) * 1000) /
-             ext->anim_speed) *
-            ANIM_WAIT_CHAR_COUNT;
-        ;
+             ext->anim_speed) * LV_LABEL_WAIT_CHAR_COUNT;
         anim.repeat_pause = anim.playback_pause;
+        anim.act_time = -anim.playback_pause;
 
         bool hor_anim = false;
         if(size.x > lv_obj_get_width(label)) {
@@ -1009,7 +923,9 @@ static void lv_label_refr_text(lv_obj_t * label)
         anim.repeat         = 1;
         anim.playback       = 0;
         anim.start          = 0;
-        anim.act_time       = 0;
+        anim.act_time       = 
+            -(((lv_font_get_width(style->text.font, ' ') + style->text.letter_space) * 1000) /
+             ext->anim_speed) * LV_LABEL_WAIT_CHAR_COUNT;
         anim.end_cb         = NULL;
         anim.path           = lv_anim_path_linear;
         anim.playback_pause = 0;
@@ -1017,7 +933,7 @@ static void lv_label_refr_text(lv_obj_t * label)
 
         bool hor_anim = false;
         if(size.x > lv_obj_get_width(label)) {
-            anim.end  = -size.x - lv_font_get_width(font, ' ') * ANIM_WAIT_CHAR_COUNT;
+            anim.end  = -size.x - lv_font_get_width(font, ' ') * LV_LABEL_WAIT_CHAR_COUNT;
             anim.fp   = (lv_anim_fp_t)lv_label_set_offset_x;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
@@ -1066,13 +982,15 @@ static void lv_label_refr_text(lv_obj_t * label)
                 lv_txt_encoded_next(ext->text, &byte_id);
             }
 
-            if( lv_label_set_dot_tmp(label, &ext->text[byte_id_ori], len ) ){
-                for(i = 0; i < LV_LABEL_DOT_NUM; i++) {
-                    ext->text[byte_id_ori + i] = '.';
-                }
-                ext->text[byte_id_ori + LV_LABEL_DOT_NUM] = '\0';
-                ext->dot_end = letter_id + LV_LABEL_DOT_NUM;
+            memcpy(ext->dot_tmp, &ext->text[byte_id_ori], len);
+            ext->dot_tmp[len] = '\0'; /*Close with a zero*/
+
+            for(i = 0; i < LV_LABEL_DOT_NUM; i++) {
+                ext->text[byte_id_ori + i] = '.';
             }
+            ext->text[byte_id_ori + LV_LABEL_DOT_NUM] = '\0';
+
+            ext->dot_end = letter_id + LV_LABEL_DOT_NUM;
         }
     }
     /*In break mode only the height can change*/
@@ -1097,13 +1015,10 @@ static void lv_label_revert_dots(lv_obj_t * label)
 
     /*Restore the characters*/
     uint8_t i = 0;
-    char* dot_tmp = lv_label_get_dot_tmp(label);
-    while(ext->text[byte_i + i] != '\0') {
-        ext->text[byte_i + i] = dot_tmp[i];
+    while(ext->dot_tmp[i] != '\0') {
+        ext->text[byte_i + i] = ext->dot_tmp[i];
         i++;
     }
-    ext->text[byte_i + i] = dot_tmp[i];
-    lv_label_dot_tmp_free(label);
 
     ext->dot_end = LV_LABEL_DOT_END_INV;
 }
@@ -1123,64 +1038,4 @@ static void lv_label_set_offset_y(lv_obj_t * label, lv_coord_t y)
     lv_obj_invalidate(label);
 }
 #endif
-
-/**
- * Store `len` characters from `data`. Allocates space if necessary.
- *
- * @param label pointer to label object
- * @param len Number of characters to store.
- * @return true on success.
- */
-static bool lv_label_set_dot_tmp(lv_obj_t *label, char *data, int len){
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    lv_label_dot_tmp_free( label ); /* Deallocate any existing space */
-    if( len > sizeof(char *) ){
-        /* Memory needs to be allocated. Allocates an additional byte
-         * for a NULL-terminator so it can be copied. */
-        ext->dot_tmp_ptr = lv_mem_alloc(len + 1);
-        if( ext->dot_tmp_ptr == NULL ){
-            LV_LOG_ERROR("Failed to allocate memory for dot_tmp_ptr");
-            return false;
-        }
-        memcpy(ext->dot_tmp_ptr, data, len);
-        ext->dot_tmp_ptr[len]='\0';
-        ext->dot_tmp_alloc = true;
-    }
-    else {
-        /* Characters can be directly stored in object */
-        ext->dot_tmp_alloc = false;
-        memcpy(ext->dot_tmp, data, len);
-    }
-    return true;
-}
-
-/**
- * Get the stored dot_tmp characters
- * @param label pointer to label object
- * @return char pointer to a stored characters. Is *not* necessarily NULL-terminated.
- */
-static char * lv_label_get_dot_tmp(lv_obj_t *label){
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( ext->dot_tmp_alloc ){
-        return ext->dot_tmp_ptr;
-    }
-    else{
-        return ext->dot_tmp;
-    }
-}
-
-/**
- * Free the dot_tmp_ptr field if it was previously allocated.
- * Always clears the field
- * @param label pointer to label object.
- */
-static void lv_label_dot_tmp_free(lv_obj_t *label){
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( ext->dot_tmp_alloc && ext->dot_tmp_ptr ){
-        lv_mem_free(ext->dot_tmp_ptr);
-    }
-    ext->dot_tmp_alloc = false;
-    ext->dot_tmp_ptr = NULL;
-}
-
 #endif
