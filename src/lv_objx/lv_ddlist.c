@@ -43,7 +43,6 @@ static lv_res_t lv_ddlist_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void * 
 static lv_res_t release_handler(lv_obj_t * ddlist);
 static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en);
 static void lv_ddlist_pos_current_option(lv_obj_t * ddlist);
-static void lv_ddlist_refr_width(lv_obj_t* ddlist);
 static void lv_ddlist_anim_cb(lv_obj_t * ddlist);
 static void lv_ddlist_adjust_height(lv_obj_t * ddlist, int32_t height);
 
@@ -178,8 +177,6 @@ void lv_ddlist_set_options(lv_obj_t * ddlist, const char * options)
 
     lv_label_set_text(ext->label, options);
 
-    lv_ddlist_refr_width(ddlist);
-
     switch(lv_label_get_align(ext->label)) {
     case LV_LABEL_ALIGN_LEFT:
         lv_obj_align(ext->label, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
@@ -295,10 +292,7 @@ void lv_ddlist_set_style(lv_obj_t * ddlist, lv_ddlist_style_t type, const lv_sty
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     switch(type) {
-        case LV_DDLIST_STYLE_BG:
-            lv_page_set_style(ddlist, LV_PAGE_STYLE_BG, style);
-            lv_ddlist_refr_width(ddlist);
-            break;
+        case LV_DDLIST_STYLE_BG: lv_page_set_style(ddlist, LV_PAGE_STYLE_BG, style); break;
         case LV_DDLIST_STYLE_SB: lv_page_set_style(ddlist, LV_PAGE_STYLE_SB, style); break;
         case LV_DDLIST_STYLE_SEL:
             ext->sel_style  = style;
@@ -872,9 +866,8 @@ static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en)
         lv_ddlist_pos_current_option(ddlist);
         if(ext->opened) lv_page_set_sb_mode(ddlist, LV_SB_MODE_UNHIDE);
 #if LV_USE_ANIMATION
-        lv_anim_del(ddlist, (lv_anim_fp_t)lv_ddlist_adjust_height); /*If an animation is in progress then
+        lv_anim_del(ddlist, (lv_anim_fp_t)lv_obj_set_height); /*If an animation is in progress then
                                                                  it will overwrite this changes*/
-        lv_ddlist_anim_cb(ddlist); /*Force animation complete to fix highlight selection*/
     } else {
         lv_anim_t a;
         a.var            = ddlist;
@@ -942,20 +935,6 @@ static void lv_ddlist_pos_current_option(lv_obj_t * ddlist)
                          ext->label->coords.y1 - scrl->coords.y1;
 
     lv_obj_set_y(scrl, -line_y1 + (h - font_h) / 2);
-    lv_obj_invalidate(ddlist);
-}
-
-/**
- * Be sure the width of the scrollable exactly fits the ddlist
- * @param ddlist pointer to a ddlist
- */
-static void lv_ddlist_refr_width(lv_obj_t* ddlist)
-{
-    /*Set the TIGHT fit horizontally the set the width to the content*/
-    lv_page_set_scrl_fit2(ddlist, LV_FIT_TIGHT, LV_FIT_TIGHT);
-
-    /*Revert FILL fit to fill the parent with the options area. It allows to RIGHT/CENTER align the text*/
-    lv_page_set_scrl_fit2(ddlist, LV_FIT_FILL, LV_FIT_TIGHT);
 }
 
 #endif
