@@ -78,8 +78,8 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->values        = NULL;
     ext->needle_colors = NULL;
     ext->label_count   = LV_GAUGE_DEF_LABEL_COUNT;
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_gauge);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_gauge);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_gauge);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_gauge);
 
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(new_gauge, lv_gauge_signal);
@@ -130,7 +130,7 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
  * @param needle_cnt new count of needles
  * @param colors an array of colors for needles (with 'num' elements)
  */
-void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_color_t colors[])
+void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_color_t * colors)
 {
     lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
 
@@ -272,9 +272,9 @@ static bool lv_gauge_design(lv_obj_t * gauge, const lv_area_t * mask, lv_design_
         /* Store the real pointer because of 'lv_group'
          * If the object is in focus 'lv_obj_get_style()' will give a pointer to tmp style
          * and to the real object style. It is important because of style change tricks below*/
-        const lv_style_t * style_ori_p = gauge->style_p;
-        const lv_style_t * style       = lv_obj_get_style(gauge);
-        lv_gauge_ext_t * ext           = lv_obj_get_ext_attr(gauge);
+        lv_style_t * style_ori_p = gauge->style_p;
+        lv_style_t * style       = lv_obj_get_style(gauge);
+        lv_gauge_ext_t * ext     = lv_obj_get_ext_attr(gauge);
 
         lv_gauge_draw_scale(gauge, mask);
 
@@ -347,9 +347,9 @@ static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask)
 {
     char scale_txt[16];
 
-    lv_gauge_ext_t * ext     = lv_obj_get_ext_attr(gauge);
-    const lv_style_t * style = lv_obj_get_style(gauge);
-    lv_opa_t opa_scale       = lv_obj_get_opa_scale(gauge);
+    lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
+    lv_style_t * style   = lv_obj_get_style(gauge);
+    lv_opa_t opa_scale   = lv_obj_get_opa_scale(gauge);
     lv_coord_t r =
         lv_obj_get_width(gauge) / 2 - (3 * style->body.padding.left) - style->body.padding.inner;
     lv_coord_t x_ofs    = lv_obj_get_width(gauge) / 2 + gauge->coords.x1;
@@ -398,9 +398,9 @@ static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask)
 static void lv_gauge_draw_needle(lv_obj_t * gauge, const lv_area_t * mask)
 {
     lv_style_t style_needle;
-    lv_gauge_ext_t * ext     = lv_obj_get_ext_attr(gauge);
-    const lv_style_t * style = lv_gauge_get_style(gauge);
-    lv_opa_t opa_scale       = lv_obj_get_opa_scale(gauge);
+    lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
+    lv_style_t * style   = lv_gauge_get_style(gauge);
+    lv_opa_t opa_scale   = lv_obj_get_opa_scale(gauge);
 
     lv_coord_t r      = lv_obj_get_width(gauge) / 2 - style->body.padding.left;
     lv_coord_t x_ofs  = lv_obj_get_width(gauge) / 2 + gauge->coords.x1;

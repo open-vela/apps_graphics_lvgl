@@ -33,7 +33,7 @@ typedef struct
                                will be modified too*/
     lv_style_t style_end;
     lv_style_t * style_anim;
-    lv_anim_ready_cb_t ready_cb;
+    void (*end_cb)(void *);
 } lv_style_anim_dsc_t;
 #endif
 
@@ -42,7 +42,7 @@ typedef struct
  **********************/
 #if LV_USE_ANIMATION
 static void style_animator(lv_style_anim_dsc_t * dsc, int32_t val);
-static void style_animation_common_end_cb(lv_anim_t * a);
+static void style_animation_common_end_cb(void * ptr);
 #endif
 
 /**********************
@@ -116,14 +116,14 @@ void lv_style_init(void)
     lv_style_scr.line.rounded = 0;
 
     /*Plain style (by default near the same as the screen style)*/
-    lv_style_copy(&lv_style_plain, &lv_style_scr);
+    memcpy(&lv_style_plain, &lv_style_scr, sizeof(lv_style_t));
     lv_style_plain.body.padding.left   = LV_DPI / 12;
     lv_style_plain.body.padding.right  = LV_DPI / 12;
     lv_style_plain.body.padding.top    = LV_DPI / 12;
     lv_style_plain.body.padding.bottom = LV_DPI / 12;
 
     /*Plain color style*/
-    lv_style_copy(&lv_style_plain_color, &lv_style_plain);
+    memcpy(&lv_style_plain_color, &lv_style_plain, sizeof(lv_style_t));
     lv_style_plain_color.text.color      = lv_color_make(0xf0, 0xf0, 0xf0);
     lv_style_plain_color.image.color     = lv_color_make(0xf0, 0xf0, 0xf0);
     lv_style_plain_color.line.color      = lv_color_make(0xf0, 0xf0, 0xf0);
@@ -131,7 +131,7 @@ void lv_style_init(void)
     lv_style_plain_color.body.grad_color = lv_style_plain_color.body.main_color;
 
     /*Pretty style */
-    lv_style_copy(&lv_style_pretty, &lv_style_plain);
+    memcpy(&lv_style_pretty, &lv_style_plain, sizeof(lv_style_t));
     lv_style_pretty.text.color        = lv_color_make(0x20, 0x20, 0x20);
     lv_style_pretty.image.color       = lv_color_make(0x20, 0x20, 0x20);
     lv_style_pretty.line.color        = lv_color_make(0x20, 0x20, 0x20);
@@ -143,7 +143,7 @@ void lv_style_init(void)
     lv_style_pretty.body.border.opa   = LV_OPA_30;
 
     /*Pretty color style*/
-    lv_style_copy(&lv_style_pretty_color, &lv_style_pretty);
+    memcpy(&lv_style_pretty_color, &lv_style_pretty, sizeof(lv_style_t));
     lv_style_pretty_color.text.color        = lv_color_make(0xe0, 0xe0, 0xe0);
     lv_style_pretty_color.image.color       = lv_color_make(0xe0, 0xe0, 0xe0);
     lv_style_pretty_color.line.color        = lv_color_make(0xc0, 0xc0, 0xc0);
@@ -152,24 +152,24 @@ void lv_style_init(void)
     lv_style_pretty_color.body.border.color = lv_color_make(0x15, 0x2c, 0x42);
 
     /*Transparent style*/
-    lv_style_copy(&lv_style_transp, &lv_style_plain);
+    memcpy(&lv_style_transp, &lv_style_plain, sizeof(lv_style_t));
     lv_style_transp.glass             = 1;
     lv_style_transp.body.border.width = 0;
     lv_style_transp.body.opa          = LV_OPA_TRANSP;
 
     /*Transparent fitting size*/
-    lv_style_copy(&lv_style_transp_fit, &lv_style_transp);
+    memcpy(&lv_style_transp_fit, &lv_style_transp, sizeof(lv_style_t));
     lv_style_transp_fit.body.padding.left   = 0;
     lv_style_transp_fit.body.padding.right  = 0;
     lv_style_transp_fit.body.padding.top    = 0;
     lv_style_transp_fit.body.padding.bottom = 0;
 
     /*Transparent tight style*/
-    lv_style_copy(&lv_style_transp_tight, &lv_style_transp_fit);
+    memcpy(&lv_style_transp_tight, &lv_style_transp_fit, sizeof(lv_style_t));
     lv_style_transp_tight.body.padding.inner = 0;
 
     /*Button released style*/
-    lv_style_copy(&lv_style_btn_rel, &lv_style_plain);
+    memcpy(&lv_style_btn_rel, &lv_style_plain, sizeof(lv_style_t));
     lv_style_btn_rel.body.main_color     = lv_color_make(0x76, 0xa2, 0xd0);
     lv_style_btn_rel.body.grad_color     = lv_color_make(0x19, 0x3a, 0x5d);
     lv_style_btn_rel.body.radius         = LV_DPI / 15;
@@ -187,7 +187,7 @@ void lv_style_init(void)
     lv_style_btn_rel.image.color         = lv_color_make(0xff, 0xff, 0xff);
 
     /*Button pressed style*/
-    lv_style_copy(&lv_style_btn_pr, &lv_style_btn_rel);
+    memcpy(&lv_style_btn_pr, &lv_style_btn_rel, sizeof(lv_style_t));
     lv_style_btn_pr.body.main_color = lv_color_make(0x33, 0x62, 0x94);
     lv_style_btn_pr.body.grad_color = lv_color_make(0x10, 0x26, 0x3c);
     lv_style_btn_pr.text.color      = lv_color_make(0xa4, 0xb5, 0xc6);
@@ -195,7 +195,7 @@ void lv_style_init(void)
     lv_style_btn_pr.line.color      = lv_color_make(0xa4, 0xb5, 0xc6);
 
     /*Button toggle released style*/
-    lv_style_copy(&lv_style_btn_tgl_rel, &lv_style_btn_rel);
+    memcpy(&lv_style_btn_tgl_rel, &lv_style_btn_rel, sizeof(lv_style_t));
     lv_style_btn_tgl_rel.body.main_color   = lv_color_make(0x0a, 0x11, 0x22);
     lv_style_btn_tgl_rel.body.grad_color   = lv_color_make(0x37, 0x62, 0x90);
     lv_style_btn_tgl_rel.body.border.color = lv_color_make(0x01, 0x07, 0x0d);
@@ -204,7 +204,7 @@ void lv_style_init(void)
     lv_style_btn_tgl_rel.line.color        = lv_color_make(0xc8, 0xdd, 0xf4);
 
     /*Button toggle pressed style*/
-    lv_style_copy(&lv_style_btn_tgl_pr, &lv_style_btn_tgl_rel);
+    memcpy(&lv_style_btn_tgl_pr, &lv_style_btn_tgl_rel, sizeof(lv_style_t));
     lv_style_btn_tgl_pr.body.main_color = lv_color_make(0x02, 0x14, 0x27);
     lv_style_btn_tgl_pr.body.grad_color = lv_color_make(0x2b, 0x4c, 0x70);
     lv_style_btn_tgl_pr.text.color      = lv_color_make(0xa4, 0xb5, 0xc6);
@@ -212,7 +212,7 @@ void lv_style_init(void)
     lv_style_btn_tgl_pr.line.color      = lv_color_make(0xa4, 0xb5, 0xc6);
 
     /*Button inactive style*/
-    lv_style_copy(&lv_style_btn_ina, &lv_style_btn_rel);
+    memcpy(&lv_style_btn_ina, &lv_style_btn_rel, sizeof(lv_style_t));
     lv_style_btn_ina.body.main_color   = lv_color_make(0xd8, 0xd8, 0xd8);
     lv_style_btn_ina.body.grad_color   = lv_color_make(0xd8, 0xd8, 0xd8);
     lv_style_btn_ina.body.border.color = lv_color_make(0x90, 0x90, 0x90);
@@ -303,15 +303,15 @@ void * lv_style_anim_create(lv_style_anim_t * anim)
     memcpy(&dsc->style_start, anim->style_start, sizeof(lv_style_t));
     memcpy(&dsc->style_end, anim->style_end, sizeof(lv_style_t));
     memcpy(dsc->style_anim, anim->style_start, sizeof(lv_style_t));
-    dsc->ready_cb = anim->ready_cb;
+    dsc->end_cb = anim->end_cb;
 
     lv_anim_t a;
     a.var            = (void *)dsc;
     a.start          = 0;
     a.end            = STYLE_MIX_MAX;
-    a.exec_cb        = (lv_anim_exec_cb_t)style_animator;
-    a.path_cb        = lv_anim_path_linear;
-    a.ready_cb       = style_animation_common_end_cb;
+    a.fp             = (lv_anim_fp_t)style_animator;
+    a.path           = lv_anim_path_linear;
+    a.end_cb         = style_animation_common_end_cb;
     a.act_time       = anim->act_time;
     a.time           = anim->time;
     a.playback       = anim->playback;
@@ -348,15 +348,13 @@ static void style_animator(lv_style_anim_dsc_t * dsc, int32_t val)
 /**
  * Called when a style animation is ready
  * It called the user defined call back and free the allocated memories
- * @param a pointer to the animation
+ * @param ptr the 'animated variable' set by lv_style_anim_create()
  */
-static void style_animation_common_end_cb(lv_anim_t * a)
+static void style_animation_common_end_cb(void * ptr)
 {
+    lv_style_anim_dsc_t * dsc = ptr; /*To avoid casting*/
 
-    (void) a;       /*Unused*/
-    lv_style_anim_dsc_t * dsc = a->var; /*To avoid casting*/
-
-    if(dsc->ready_cb) dsc->ready_cb(a);
+    if(dsc->end_cb) dsc->end_cb(dsc);
 
     lv_mem_free(dsc);
 }
