@@ -31,10 +31,6 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-/* parametes: pointer to a tileview object, x, y (tile coordinates to load)
- * return: LV_RES_INV: to prevent the loading of the tab;  LV_RES_OK: if everything is fine*/
-typedef lv_res_t (*lv_tileview_action_t)(lv_obj_t *, lv_coord_t, lv_coord_t);
-
 /*Data of tileview*/
 typedef struct
 {
@@ -118,7 +114,7 @@ static inline void lv_tileview_set_edge_flash(lv_obj_t * tileview, bool en)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, lv_style_t * style);
+void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -140,7 +136,7 @@ static inline bool lv_tileview_get_edge_flash(lv_obj_t * tileview)
  * @param type which style should be get
  * @return style pointer to the style
  */
-lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_t type);
+const lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_t type);
 
 /*=====================
  * Other functions

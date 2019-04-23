@@ -72,7 +72,7 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy);
  * @param needle_cnt new count of needles
  * @param colors an array of colors for needles (with 'num' elements)
  */
-void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_color_t * colors);
+void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_color_t colors[]);
 
 /**
  * Set the value of a needle
@@ -205,7 +205,7 @@ static inline uint16_t lv_gauge_get_scale_angle(const lv_obj_t * gauge)
  * @param gauge pointer to a gauge object
  * @return pointer to the gauge's style
  */
-static inline lv_style_t * lv_gauge_get_style(const lv_obj_t * gauge)
+static inline const lv_style_t * lv_gauge_get_style(const lv_obj_t * gauge)
 {
     return lv_obj_get_style(gauge);
 }

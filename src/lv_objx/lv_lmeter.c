@@ -60,7 +60,7 @@ lv_obj_t * lv_lmeter_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_lmeter);
     if(new_lmeter == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_lmeter);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_lmeter);
 
     /*Allocate the line meter type specific extended data*/
     lv_lmeter_ext_t * ext = lv_obj_allocate_ext_attr(new_lmeter, sizeof(lv_lmeter_ext_t));
@@ -250,10 +250,10 @@ static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_desig
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
         lv_lmeter_ext_t * ext = lv_obj_get_ext_attr(lmeter);
-        lv_style_t * style    = lv_obj_get_style(lmeter);
+        const lv_style_t * style    = lv_obj_get_style(lmeter);
         lv_opa_t opa_scale    = lv_obj_get_opa_scale(lmeter);
         lv_style_t style_tmp;
-        memcpy(&style_tmp, style, sizeof(lv_style_t));
+        lv_style_copy(&style_tmp, style);
 
 #if LV_USE_GROUP
         lv_group_t * g = lv_obj_get_group(lmeter);
@@ -340,10 +340,10 @@ static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * par
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     } else if(sign == LV_SIGNAL_STYLE_CHG) {
-        lv_obj_refresh_ext_size(lmeter);
-    } else if(sign == LV_SIGNAL_REFR_EXT_SIZE) {
-        lv_style_t * style = lv_lmeter_get_style(lmeter);
-        lmeter->ext_size   = LV_MATH_MAX(lmeter->ext_size, style->line.width);
+        lv_obj_refresh_ext_draw_pad(lmeter);
+    } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+        const lv_style_t * style = lv_lmeter_get_style(lmeter);
+        lmeter->ext_draw_pad   = LV_MATH_MAX(lmeter->ext_draw_pad, style->line.width);
     } else if(sign == LV_SIGNAL_GET_TYPE) {
         lv_obj_type_t * buf = param;
         uint8_t i;
