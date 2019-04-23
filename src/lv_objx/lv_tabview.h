@@ -45,6 +45,8 @@ extern "C" {
 enum {
     LV_TABVIEW_BTNS_POS_TOP,
     LV_TABVIEW_BTNS_POS_BOTTOM,
+    LV_TABVIEW_BTNS_POS_LEFT,
+    LV_TABVIEW_BTNS_POS_RIGHT
 };
 typedef uint8_t lv_tabview_btns_pos_t;
 
@@ -66,7 +68,7 @@ typedef struct
     uint8_t drag_hor : 1;
     uint8_t scroll_ver : 1;
     uint8_t btns_hide : 1;
-    lv_tabview_btns_pos_t btns_pos : 1;
+    lv_tabview_btns_pos_t btns_pos : 2;
 } lv_tabview_ext_t;
 
 enum {
@@ -142,7 +144,7 @@ void lv_tabview_set_anim_time(lv_obj_t * tabview, uint16_t anim_time);
  * @param type which style should be set
  * @param style pointer to the new style
  */
-void lv_tabview_set_style(lv_obj_t * tabview, lv_tabview_style_t type, lv_style_t * style);
+void lv_tabview_set_style(lv_obj_t * tabview, lv_tabview_style_t type, const lv_style_t * style);
 
 /**
  * Set the position of tab select buttons
@@ -203,7 +205,7 @@ uint16_t lv_tabview_get_anim_time(const lv_obj_t * tabview);
  * @param type which style should be get
  * @return style pointer to a style
  */
-lv_style_t * lv_tabview_get_style(const lv_obj_t * tabview, lv_tabview_style_t type);
+const lv_style_t * lv_tabview_get_style(const lv_obj_t * tabview, lv_tabview_style_t type);
 
 /**
  * Get position of tab select buttons

@@ -31,7 +31,7 @@ static bool lv_bar_design(lv_obj_t * bar, const lv_area_t * mask, lv_design_mode
 static lv_res_t lv_bar_signal(lv_obj_t * bar, lv_signal_t sign, void * param);
 
 static void lv_bar_animate(void * bar, int32_t value);
-static void lv_bar_anim_ready(void * bar);
+static void lv_bar_anim_ready(lv_anim_t * a);
 
 /**********************
  *  STATIC VARIABLES
@@ -62,8 +62,8 @@ lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_bar);
     if(new_bar == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_bar);
-    if(ancestor_design_f == NULL) ancestor_design_f = lv_obj_get_design_func(new_bar);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_bar);
+    if(ancestor_design_f == NULL) ancestor_design_f = lv_obj_get_design_cb(new_bar);
 
     /*Allocate the object type specific extended data*/
     lv_bar_ext_t * ext = lv_obj_allocate_ext_attr(new_bar, sizeof(lv_bar_ext_t));
@@ -158,9 +158,9 @@ void lv_bar_set_value(lv_obj_t * bar, int16_t value, bool anim)
         a.var            = bar;
         a.start          = LV_BAR_ANIM_STATE_START;
         a.end            = LV_BAR_ANIM_STATE_END;
-        a.fp             = (lv_anim_fp_t)lv_bar_animate;
-        a.path           = lv_anim_path_linear;
-        a.end_cb         = lv_bar_anim_ready;
+        a.exec_cb             = (lv_anim_exec_cb_t)lv_bar_animate;
+        a.path_cb           = lv_anim_path_linear;
+        a.ready_cb         = lv_bar_anim_ready;
         a.act_time       = 0;
         a.time           = ext->anim_time;
         a.playback       = 0;
@@ -215,7 +215,7 @@ void lv_bar_set_sym(lv_obj_t * bar, bool en)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_bar_set_style(lv_obj_t * bar, lv_bar_style_t type, lv_style_t * style)
+void lv_bar_set_style(lv_obj_t * bar, lv_bar_style_t type, const lv_style_t * style)
 {
     lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
 
@@ -223,7 +223,7 @@ void lv_bar_set_style(lv_obj_t * bar, lv_bar_style_t type, lv_style_t * style)
         case LV_BAR_STYLE_BG: lv_obj_set_style(bar, style); break;
         case LV_BAR_STYLE_INDIC:
             ext->style_indic = style;
-            lv_obj_refresh_ext_size(bar);
+            lv_obj_refresh_ext_draw_pad(bar);
             break;
     }
 }
@@ -286,9 +286,9 @@ bool lv_bar_get_sym(lv_obj_t * bar)
  * @param type which style should be get
  * @return style pointer to a style
  */
-lv_style_t * lv_bar_get_style(const lv_obj_t * bar, lv_bar_style_t type)
+const lv_style_t * lv_bar_get_style(const lv_obj_t * bar, lv_bar_style_t type)
 {
-    lv_style_t * style = NULL;
+    const lv_style_t * style = NULL;
     lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
 
     switch(type) {
@@ -329,7 +329,7 @@ static bool lv_bar_design(lv_obj_t * bar, const lv_area_t * mask, lv_design_mode
          * At value = 100% the indicator can cover to whole background and the focused style won't
          * be visible*/
         if(lv_obj_is_focused(bar)) {
-            lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
+            const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
             lv_style_t style_tmp;
             lv_style_copy(&style_tmp, style_bg);
             style_tmp.body.border.width = 0;
@@ -342,7 +342,7 @@ static bool lv_bar_design(lv_obj_t * bar, const lv_area_t * mask, lv_design_mode
 
         if(ext->cur_value != ext->min_value || ext->sym ||
            ext->anim_start != LV_BAR_ANIM_STATE_INV) {
-            lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
+            const lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
             lv_area_t indic_area;
             lv_area_copy(&indic_area, &bar->coords);
             indic_area.x1 += style_indic->body.padding.left;
@@ -431,7 +431,7 @@ static bool lv_bar_design(lv_obj_t * bar, const lv_area_t * mask, lv_design_mode
         /*Draw the border*/
         if(lv_obj_is_focused(bar)) {
             lv_opa_t opa_scale    = lv_obj_get_opa_scale(bar);
-            lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
+            const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
             lv_style_t style_tmp;
             lv_style_copy(&style_tmp, style_bg);
             style_tmp.body.opa          = LV_OPA_TRANSP;
@@ -458,10 +458,11 @@ static lv_res_t lv_bar_signal(lv_obj_t * bar, lv_signal_t sign, void * param)
     res = ancestor_signal(bar, sign, param);
     if(res != LV_RES_OK) return res;
 
-    if(sign == LV_SIGNAL_REFR_EXT_SIZE) {
-        lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
-        if(style_indic->body.shadow.width > bar->ext_size)
-            bar->ext_size = style_indic->body.shadow.width;
+
+    if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+        const lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
+        if(style_indic->body.shadow.width > bar->ext_draw_pad)
+            bar->ext_draw_pad = style_indic->body.shadow.width;
     } else if(sign == LV_SIGNAL_GET_TYPE) {
         lv_obj_type_t * buf = param;
         uint8_t i;
@@ -481,11 +482,11 @@ static void lv_bar_animate(void * bar, int32_t value)
     lv_obj_invalidate(bar);
 }
 
-static void lv_bar_anim_ready(void * bar)
+static void lv_bar_anim_ready(lv_anim_t * a)
 {
-    lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
+    lv_bar_ext_t * ext = lv_obj_get_ext_attr(a->var);
     ext->anim_state    = LV_BAR_ANIM_STATE_INV;
-    lv_bar_set_value(bar, ext->anim_end, false);
+    lv_bar_set_value(a->var, ext->anim_end, false);
 }
 
 #endif

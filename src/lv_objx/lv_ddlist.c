@@ -43,7 +43,9 @@ static lv_res_t lv_ddlist_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void * 
 static lv_res_t release_handler(lv_obj_t * ddlist);
 static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en);
 static void lv_ddlist_pos_current_option(lv_obj_t * ddlist);
-static void lv_ddlist_anim_cb(lv_obj_t * ddlist);
+static void lv_ddlist_refr_width(lv_obj_t* ddlist);
+static void lv_ddlist_anim_ready_cb(lv_anim_t * a);
+static void lv_ddlist_anim_finish(lv_obj_t* ddlist);
 static void lv_ddlist_adjust_height(lv_obj_t * ddlist, int32_t height);
 
 /**********************
@@ -77,10 +79,10 @@ lv_obj_t * lv_ddlist_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_ddlist);
     if(new_ddlist == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_ddlist);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_ddlist);
     if(ancestor_scrl_signal == NULL)
-        ancestor_scrl_signal = lv_obj_get_signal_func(lv_page_get_scrl(new_ddlist));
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_ddlist);
+        ancestor_scrl_signal = lv_obj_get_signal_cb(lv_page_get_scrl(new_ddlist));
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_ddlist);
 
     /*Allocate the drop down list type specific extended data*/
     lv_ddlist_ext_t * ext = lv_obj_allocate_ext_attr(new_ddlist, sizeof(lv_ddlist_ext_t));
@@ -171,11 +173,26 @@ void lv_ddlist_set_options(lv_obj_t * ddlist, const char * options)
     for(i = 0; options[i] != '\0'; i++) {
         if(options[i] == '\n') ext->option_cnt++;
     }
-    ext->option_cnt++; /*Last option in the at row*/
+    ext->option_cnt++; /*Last option has no `\n`*/
     ext->sel_opt_id     = 0;
     ext->sel_opt_id_ori = 0;
 
     lv_label_set_text(ext->label, options);
+
+    lv_ddlist_refr_width(ddlist);
+
+    switch(lv_label_get_align(ext->label)) {
+    case LV_LABEL_ALIGN_LEFT:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
+        break;
+    case LV_LABEL_ALIGN_CENTER:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_CENTER, 0, 0);
+        break;
+    case LV_LABEL_ALIGN_RIGHT:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0);
+        break;
+    }
+
     lv_ddlist_refr_size(ddlist, false);
 }
 
@@ -220,15 +237,9 @@ void lv_ddlist_set_fix_height(lv_obj_t * ddlist, lv_coord_t h)
  * @param ddlist pointer to a drop down list
  * @param fit fit mode from `lv_fit_t` (Typically `LV_FIT_NONE` or `LV_FIT_TIGHT`)
  */
-void lv_ddlist_set_fit(lv_obj_t * ddlist, lv_fit_t fit)
+void lv_ddlist_set_hor_fit(lv_obj_t * ddlist, lv_fit_t fit)
 {
-    lv_cont_set_fit2(ddlist, fit, LV_FIT_NONE);
-
-    if(fit == LV_FIT_NONE) {
-        lv_page_set_scrl_fit2(ddlist, LV_FIT_FLOOD, LV_FIT_NONE);
-    } else {
-        lv_page_set_scrl_fit2(ddlist, LV_FIT_TIGHT, LV_FIT_NONE);
-    }
+    lv_cont_set_fit2(ddlist, fit, lv_cont_get_fit_bottom(ddlist));
 
     lv_ddlist_refr_size(ddlist, false);
 }
@@ -280,17 +291,20 @@ void lv_ddlist_set_anim_time(lv_obj_t * ddlist, uint16_t anim_time)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_ddlist_set_style(lv_obj_t * ddlist, lv_ddlist_style_t type, lv_style_t * style)
+void lv_ddlist_set_style(lv_obj_t * ddlist, lv_ddlist_style_t type, const lv_style_t * style)
 {
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     switch(type) {
-        case LV_DDLIST_STYLE_BG: lv_page_set_style(ddlist, LV_PAGE_STYLE_BG, style); break;
+        case LV_DDLIST_STYLE_BG:
+            lv_page_set_style(ddlist, LV_PAGE_STYLE_BG, style);
+            lv_ddlist_refr_width(ddlist);
+            break;
         case LV_DDLIST_STYLE_SB: lv_page_set_style(ddlist, LV_PAGE_STYLE_SB, style); break;
         case LV_DDLIST_STYLE_SEL:
             ext->sel_style  = style;
             lv_obj_t * scrl = lv_page_get_scrl(ddlist);
-            lv_obj_refresh_ext_size(scrl); /*Because of the wider selected rectangle*/
+            lv_obj_refresh_ext_draw_pad(scrl); /*Because of the wider selected rectangle*/
             break;
     }
 }
@@ -300,6 +314,18 @@ void lv_ddlist_set_align(lv_obj_t * ddlist, lv_label_align_t align)
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     lv_label_set_align(ext->label, align);
+    switch(align) {
+    case LV_LABEL_ALIGN_LEFT:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
+        break;
+    case LV_LABEL_ALIGN_CENTER:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_CENTER, 0, 0);
+        break;
+    case LV_LABEL_ALIGN_RIGHT:
+        lv_obj_align(ext->label, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0);
+        break;
+    }
+
 }
 /*=====================
  * Getter functions
@@ -409,7 +435,7 @@ uint16_t lv_ddlist_get_anim_time(const lv_obj_t * ddlist)
  * @param type which style should be get
  * @return style pointer to a style
  */
-lv_style_t * lv_ddlist_get_style(const lv_obj_t * ddlist, lv_ddlist_style_t type)
+const lv_style_t * lv_ddlist_get_style(const lv_obj_t * ddlist, lv_ddlist_style_t type)
 {
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
@@ -517,9 +543,9 @@ static bool lv_ddlist_design(lv_obj_t * ddlist, const lv_area_t * mask, lv_desig
         lv_opa_t opa_scale    = lv_obj_get_opa_scale(ddlist);
         /*If the list is opened draw a rectangle under the selected item*/
         if(ext->opened != 0 || ext->force_sel) {
-            lv_style_t * style     = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
-            const lv_font_t * font = style->text.font;
-            lv_coord_t font_h      = lv_font_get_height(font);
+            const lv_style_t * style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
+            const lv_font_t * font   = style->text.font;
+            lv_coord_t font_h        = lv_font_get_height(font);
 
             /*Draw the selected*/
             lv_area_t rect_area;
@@ -542,9 +568,9 @@ static bool lv_ddlist_design(lv_obj_t * ddlist, const lv_area_t * mask, lv_desig
 
         /*Redraw only in opened state*/
         if(ext->opened || ext->force_sel) {
-            lv_style_t * style     = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
-            const lv_font_t * font = style->text.font;
-            lv_coord_t font_h      = lv_font_get_height(font);
+            const lv_style_t * style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
+            const lv_font_t * font   = style->text.font;
+            lv_coord_t font_h        = lv_font_get_height(font);
 
             lv_area_t area_sel;
             area_sel.y1 = ext->label->coords.y1;
@@ -558,7 +584,7 @@ static bool lv_ddlist_design(lv_obj_t * ddlist, const lv_area_t * mask, lv_desig
             bool area_ok;
             area_ok = lv_area_intersect(&mask_sel, mask, &area_sel);
             if(area_ok) {
-                lv_style_t * sel_style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_SEL);
+                const lv_style_t * sel_style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_SEL);
                 lv_style_t new_style;
                 lv_style_copy(&new_style, style);
                 new_style.text.color = sel_style->text.color;
@@ -573,10 +599,10 @@ static bool lv_ddlist_design(lv_obj_t * ddlist, const lv_area_t * mask, lv_desig
         else {
             /*Draw a arrow in ddlist if enabled*/
             if(ext->draw_arrow) {
-                lv_style_t * style     = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
-                const lv_font_t * font = style->text.font;
-                lv_style_t * sel_style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
-                lv_coord_t font_h      = lv_font_get_height(font);
+                const lv_style_t * style     = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
+                const lv_font_t * font       = style->text.font;
+                const lv_style_t * sel_style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
+                lv_coord_t font_h            = lv_font_get_height(font);
                 lv_style_t new_style;
                 lv_style_copy(&new_style, style);
                 new_style.text.color = sel_style->text.color;
@@ -728,13 +754,13 @@ static lv_res_t lv_ddlist_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void * 
 
     lv_obj_t * ddlist = lv_obj_get_parent(scrl);
 
-    if(sign == LV_SIGNAL_REFR_EXT_SIZE) {
+    if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         /*TODO review this*/
         /* Because of the wider selected rectangle ext. size
          * In this way by dragging the scrollable part the wider rectangle area can be redrawn too*/
-        lv_style_t * style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
+        const lv_style_t * style = lv_ddlist_get_style(ddlist, LV_DDLIST_STYLE_BG);
         lv_coord_t hpad    = LV_MATH_MAX(style->body.padding.left, style->body.padding.right);
-        if(scrl->ext_size < hpad) scrl->ext_size = hpad;
+        if(scrl->ext_draw_pad < hpad) scrl->ext_draw_pad = hpad;
     } else if(sign == LV_SIGNAL_RELEASED) {
         if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
             release_handler(ddlist);
@@ -823,21 +849,26 @@ static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en)
 #if LV_USE_ANIMATION == 0
     anim_en = false;
 #endif
-    lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
-    lv_style_t * style    = lv_obj_get_style(ddlist);
+    lv_ddlist_ext_t * ext    = lv_obj_get_ext_attr(ddlist);
+    const lv_style_t * style = lv_obj_get_style(ddlist);
     lv_coord_t new_height;
-    if(ext->opened) { /*Open the list*/
-        if(ext->fix_height == 0)
+
+    /*Open the list*/
+    if(ext->opened) {
+        if(ext->fix_height == 0) {
             new_height = lv_obj_get_height(lv_page_get_scrl(ddlist)) + style->body.padding.top +
                          style->body.padding.bottom;
-        else
+        } else {
             new_height = ext->fix_height;
+        }
 
-    } else { /*Close the list*/
-        const lv_font_t * font   = style->text.font;
-        lv_style_t * label_style = lv_obj_get_style(ext->label);
-        lv_coord_t font_h        = lv_font_get_height(font);
-        new_height               = font_h + 2 * label_style->text.line_space;
+    }
+    /*Close the list*/
+    else {
+        const lv_font_t * font         = style->text.font;
+        const lv_style_t * label_style = lv_obj_get_style(ext->label);
+        lv_coord_t font_h              = lv_font_get_height(font);
+        new_height                     = font_h + 2 * label_style->text.line_space;
 
         lv_page_set_sb_mode(ddlist, LV_SB_MODE_HIDE);
     }
@@ -847,16 +878,21 @@ static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en)
         lv_ddlist_pos_current_option(ddlist);
         if(ext->opened) lv_page_set_sb_mode(ddlist, LV_SB_MODE_UNHIDE);
 #if LV_USE_ANIMATION
-        lv_anim_del(ddlist, (lv_anim_fp_t)lv_obj_set_height); /*If an animation is in progress then
+        lv_anim_del(ddlist, (lv_anim_exec_cb_t)lv_ddlist_adjust_height); /*If an animation is in progress then
                                                                  it will overwrite this changes*/
+
+        /*Force animation complete to fix highlight selection*/
+        lv_ddlist_anim_finish(ddlist);
+
+
     } else {
         lv_anim_t a;
         a.var            = ddlist;
         a.start          = lv_obj_get_height(ddlist);
         a.end            = new_height;
-        a.fp             = (lv_anim_fp_t)lv_ddlist_adjust_height;
-        a.path           = lv_anim_path_linear;
-        a.end_cb         = (lv_anim_cb_t)lv_ddlist_anim_cb;
+        a.exec_cb         = (lv_anim_exec_cb_t)lv_ddlist_adjust_height;
+        a.path_cb        = lv_anim_path_linear;
+        a.ready_cb       = lv_ddlist_anim_ready_cb;
         a.act_time       = 0;
         a.time           = ext->anim_time;
         a.playback       = 0;
@@ -873,16 +909,24 @@ static void lv_ddlist_refr_size(lv_obj_t * ddlist, bool anim_en)
 /**
  * Position the list and remove the selection highlight if it's closed.
  * Called at end of list animation.
- * @param ddlist pointer to a drop down list
+ * @param a pointer to the animation
  */
-static void lv_ddlist_anim_cb(lv_obj_t * ddlist)
+static void lv_ddlist_anim_ready_cb(lv_anim_t * a)
+{
+    lv_obj_t * ddlist = a->var;
+    lv_ddlist_anim_finish(ddlist);
+}
+
+/**
+ * Clean up after the open animation
+ * @param ddlist
+ */
+static void lv_ddlist_anim_finish(lv_obj_t* ddlist)
 {
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     lv_ddlist_pos_current_option(ddlist);
-
     ext->force_sel = 0; /*Turn off drawing of selection*/
-
     if(ext->opened) lv_page_set_sb_mode(ddlist, LV_SB_MODE_UNHIDE);
 }
 
@@ -904,18 +948,32 @@ static void lv_ddlist_adjust_height(lv_obj_t * ddlist, int32_t height)
  */
 static void lv_ddlist_pos_current_option(lv_obj_t * ddlist)
 {
-    lv_ddlist_ext_t * ext    = lv_obj_get_ext_attr(ddlist);
-    lv_style_t * style       = lv_obj_get_style(ddlist);
-    const lv_font_t * font   = style->text.font;
-    lv_coord_t font_h        = lv_font_get_height(font);
-    lv_style_t * label_style = lv_obj_get_style(ext->label);
-    lv_obj_t * scrl          = lv_page_get_scrl(ddlist);
+    lv_ddlist_ext_t * ext          = lv_obj_get_ext_attr(ddlist);
+    const lv_style_t * style       = lv_obj_get_style(ddlist);
+    const lv_font_t * font         = style->text.font;
+    lv_coord_t font_h              = lv_font_get_height(font);
+    const lv_style_t * label_style = lv_obj_get_style(ext->label);
+    lv_obj_t * scrl                = lv_page_get_scrl(ddlist);
 
     lv_coord_t h       = lv_obj_get_height(ddlist);
     lv_coord_t line_y1 = ext->sel_opt_id * (font_h + label_style->text.line_space) +
                          ext->label->coords.y1 - scrl->coords.y1;
 
     lv_obj_set_y(scrl, -line_y1 + (h - font_h) / 2);
+    lv_obj_invalidate(ddlist);
+}
+
+/**
+ * Be sure the width of the scrollable exactly fits the ddlist
+ * @param ddlist pointer to a ddlist
+ */
+static void lv_ddlist_refr_width(lv_obj_t* ddlist)
+{
+    /*Set the TIGHT fit horizontally the set the width to the content*/
+    lv_page_set_scrl_fit2(ddlist, LV_FIT_TIGHT, lv_page_get_scrl_fit_bottom(ddlist));
+
+    /*Revert FILL fit to fill the parent with the options area. It allows to RIGHT/CENTER align the text*/
+    lv_page_set_scrl_fit2(ddlist, LV_FIT_FILL, lv_page_get_scrl_fit_bottom(ddlist));
 }
 
 #endif

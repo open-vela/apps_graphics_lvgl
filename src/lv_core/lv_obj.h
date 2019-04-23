@@ -42,11 +42,15 @@ extern "C" {
 #error "LittlevGL: LV_ANTIALIAS can be only 0 or 1"
 #endif
 
+#define LV_MAX_ANCESTOR_NUM 8
+
 #define LV_ANIM_IN 0x00       /*Animation to show an object. 'OR' it with lv_anim_builtin_t*/
 #define LV_ANIM_OUT 0x80      /*Animation to hide an object. 'OR' it with lv_anim_builtin_t*/
 #define LV_ANIM_DIR_MASK 0x80 /*ANIM_IN/ANIM_OUT mask*/
 
-#define LV_MAX_ANCESTOR_NUM 8
+#define LV_EXT_CLICK_AREA_OFF   0
+#define LV_EXT_CLICK_AREA_TINY  1
+#define LV_EXT_CLICK_AREA_FULL  2
 
 /**********************
  *      TYPEDEFS
@@ -81,8 +85,6 @@ enum {
                                      `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
     LV_EVENT_CLICKED,             /*Called on release if not dragged (regardless to long press)*/
     LV_EVENT_RELEASED,            /*Called in every cases when the object has been released*/
-    LV_EVENT_LONG_HOVER_IN,       /*TODO*/
-    LV_EVENT_LONG_HOVER_OUT,      /*TODO*/
     LV_EVENT_DRAG_BEGIN,
     LV_EVENT_DRAG_END,
     LV_EVENT_DRAG_THROW_BEGIN,
@@ -94,6 +96,7 @@ enum {
     LV_EVENT_REFRESH,
     LV_EVENT_APPLY,  /*"Ok", "Apply" or similar specific button has clicked*/
     LV_EVENT_CANCEL, /*"Close", "Cancel" or similar specific button has clicked*/
+    LV_EVENT_DELETE,
 };
 typedef uint8_t lv_event_t;
 
@@ -106,7 +109,7 @@ enum {
     LV_SIGNAL_CORD_CHG,
     LV_SIGNAL_PARENT_SIZE_CHG,
     LV_SIGNAL_STYLE_CHG,
-    LV_SIGNAL_REFR_EXT_SIZE,
+    LV_SIGNAL_REFR_EXT_DRAW_PAD,
     LV_SIGNAL_GET_TYPE,
 
     _LV_SIGNAL_FEEDBACK_SECTION_START,
@@ -156,7 +159,7 @@ enum {
 };
 typedef uint8_t lv_align_t;
 
-#if LV_OBJ_REALIGN
+#if LV_USE_OBJ_REALIGN
 typedef struct
 {
     const struct _lv_obj_t * base;
@@ -168,6 +171,14 @@ typedef struct
                                 `lv_obj_align_origo`*/
 } lv_reailgn_t;
 #endif
+
+enum {
+    LV_DRAG_DIR_HOR = 0x1,
+    LV_DRAG_DIR_VER = 0x2,
+    LV_DRAG_DIR_ALL = 0x3, /* Should be the bitwise OR of the above */
+};
+
+typedef uint8_t lv_drag_dir_t;
 
 typedef struct _lv_obj_t
 {
@@ -181,27 +192,39 @@ typedef struct _lv_obj_t
     lv_design_cb_t design_cb; /*Object type specific design function*/
 
     void * ext_attr;      /*Object type specific extended data*/
-    lv_style_t * style_p; /*Pointer to the object's style*/
+    const lv_style_t * style_p; /*Pointer to the object's style*/
 
 #if LV_USE_GROUP != 0
     void * group_p; /*Pointer to the group of the object*/
 #endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+    uint8_t ext_click_pad_hor;
+    uint8_t ext_click_pad_ver;
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+    lv_area_t ext_click_pad;
+#endif
+
     /*Attributes and states*/
-    uint8_t click : 1;       /*1: Can be pressed by an input device*/
-    uint8_t drag : 1;        /*1: Enable the dragging*/
-    uint8_t drag_throw : 1;  /*1: Enable throwing with drag*/
-    uint8_t drag_parent : 1; /*1: Parent will be dragged instead*/
-    uint8_t hidden : 1;      /*1: Object is hidden*/
-    uint8_t top : 1; /*1: If the object or its children is clicked it goes to the foreground*/
-    uint8_t opa_scale_en : 1; /*1: opa_scale is set*/
-    uint8_t parent_event : 1; /*1: Send the object's events to the parent too. */
+    uint8_t click           :1; /*1: Can be pressed by an input device*/
+    uint8_t drag            :1; /*1: Enable the dragging*/
+    uint8_t drag_throw      :1; /*1: Enable throwing with drag*/
+    uint8_t drag_parent     :1; /*1: Parent will be dragged instead*/
+    uint8_t hidden          :1; /*1: Object is hidden*/
+    uint8_t top             :1; /*1: If the object or its children is clicked it goes to the foreground*/
+    uint8_t opa_scale_en    :1; /*1: opa_scale is set*/
+    uint8_t parent_event    :1; /*1: Send the object's events to the parent too. */
+    lv_drag_dir_t drag_dir : 2; /* Which directions the object can be dragged in */
+    uint8_t reserved        :6; /*Reserved for future use*/
     uint8_t protect;          /*Automatically happening actions can be prevented. 'OR'ed values from
                                  `lv_protect_t`*/
     lv_opa_t opa_scale; /*Scale down the opacity by this factor. Effects all children as well*/
 
-    lv_coord_t
-        ext_size; /*EXTtend the size of the object in every direction. E.g. for shadow drawing*/
-#if LV_OBJ_REALIGN
+    lv_coord_t ext_draw_pad; /*EXTtend the size in every direction for drawing. */
+    
+#if LV_USE_OBJ_REALIGN
     lv_reailgn_t realign;
 #endif
 
@@ -389,6 +412,28 @@ void lv_obj_realign(lv_obj_t * obj);
  */
 void lv_obj_set_auto_realign(lv_obj_t * obj, bool en);
 
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+/**
+ * Set the size of an extended clickable area
+ * @param obj pointer to an object
+ * @param w extended width to both sides
+ * @param h extended height to both sides
+ */
+void lv_obj_set_ext_click_area(lv_obj_t * obj, uint8_t w, uint8_t h);
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+/**
+ * Set the size of an extended clickable area
+ * @param obj pointer to an object
+ * @param left extended clickable are on the left [px]
+ * @param right extended clickable are on the right [px]
+ * @param top extended clickable are on the top [px]
+ * @param bottom extended clickable are on the bottom [px]
+ */
+void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right, lv_coord_t top, lv_coord_t bottom);
+#endif
+
 /*---------------------
  * Appearance set
  *--------------------*/
@@ -398,7 +443,7 @@ void lv_obj_set_auto_realign(lv_obj_t * obj, bool en);
  * @param obj pointer to an object
  * @param style_p pointer to the new style
  */
-void lv_obj_set_style(lv_obj_t * obj, lv_style_t * style);
+void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style);
 
 /**
  * Notify an object about its style is modified
@@ -445,6 +490,13 @@ void lv_obj_set_top(lv_obj_t * obj, bool en);
  * @param en true: make the object dragable
  */
 void lv_obj_set_drag(lv_obj_t * obj, bool en);
+
+/**
+ * Set the directions an object can be dragged in
+ * @param obj pointer to an object
+ * @param drag_dir bitwise OR of allowed drag directions
+ */
+void lv_obj_set_drag_dir(lv_obj_t * obj, lv_drag_dir_t drag_dir);
 
 /**
  * Enable the throwing of an object after is is dragged
@@ -500,9 +552,9 @@ void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot);
  * Set a an event handler function for an object.
  * Used by the user to react on event which happens with the object.
  * @param obj pointer to an object
- * @param cb the new event function
+ * @param event_cb the new event function
  */
-void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t cb);
+void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb);
 
 /**
  * Send an event to the object
@@ -523,23 +575,23 @@ const void * lv_event_get_data(void);
  * Set the a signal function of an object. Used internally by the library.
  * Always call the previous signal function in the new.
  * @param obj pointer to an object
- * @param cb the new signal function
+ * @param signal_cb the new signal function
  */
-void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t cb);
+void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
 
 /**
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
  */
-void lv_obj_send_signal(lv_obj_t * obj, lv_signal_t signal, void * param);
+void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
 
 /**
  * Set a new design function for an object
  * @param obj pointer to an object
- * @param cb the new design function
+ * @param design_cb the new design function
  */
-void lv_obj_set_design_cb(lv_obj_t * obj, lv_design_cb_t cb);
+void lv_obj_set_design_cb(lv_obj_t * obj, lv_design_cb_t design_cb);
 
 /*----------------
  * Other set
@@ -557,19 +609,20 @@ void * lv_obj_allocate_ext_attr(lv_obj_t * obj, uint16_t ext_size);
  * Send a 'LV_SIGNAL_REFR_EXT_SIZE' signal to the object
  * @param obj pointer to an object
  */
-void lv_obj_refresh_ext_size(lv_obj_t * obj);
+void lv_obj_refresh_ext_draw_pad(lv_obj_t * obj);
 
 #if LV_USE_ANIMATION
+
 /**
  * Animate an object
  * @param obj pointer to an object to animate
  * @param type type of animation from 'lv_anim_builtin_t'. 'OR' it with ANIM_IN or ANIM_OUT
  * @param time time of animation in milliseconds
  * @param delay delay before the animation in milliseconds
- * @param cb a function to call when the animation is ready
+ * @param ready_cb a function to call when the animation is ready
  */
 void lv_obj_animate(lv_obj_t * obj, lv_anim_builtin_t type, uint16_t time, uint16_t delay,
-                    void (*cb)(lv_obj_t *));
+                    lv_anim_ready_cb_t ready_cb);
 #endif
 
 /*=======================
@@ -680,18 +733,45 @@ lv_coord_t lv_obj_get_width_fit(lv_obj_t * obj);
 lv_coord_t lv_obj_get_height_fit(lv_obj_t * obj);
 
 /**
- * Get the extended size attribute of an object
- * @param obj pointer to an object
- * @return the extended size attribute
- */
-lv_coord_t lv_obj_get_ext_size(const lv_obj_t * obj);
-
-/**
  * Get the automatic realign property of the object.
  * @param obj pointer to an object
  * @return  true: auto realign is enabled; false: auto realign is disabled
  */
 bool lv_obj_get_auto_realign(lv_obj_t * obj);
+
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+/**
+ * Get the horizontal padding of extended clickable area
+ * @param obj pointer to an object
+ * @return the horizontal padding
+ */
+uint8_t lv_obj_get_ext_click_pad_hor(const lv_obj_t * obj);
+
+/**
+ * Get the vertical padding of extended clickable area
+ * @param obj pointer to an object
+ * @return the vertical padding
+ */
+uint8_t lv_obj_get_ext_click_pad_ver(const lv_obj_t * obj);
+
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+/**
+ * Get the horizontal padding of extended clickable area
+ * @param obj pointer to an object
+ * @return the horizontal padding
+ */
+const lv_area_t * lv_obj_get_ext_click_pad(const lv_obj_t * obj);
+#endif
+
+/**
+ * Get the extended size attribute of an object
+ * @param obj pointer to an object
+ * @return the extended size attribute
+ */
+lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj);
 
 /*-----------------
  * Appearance get
@@ -702,7 +782,7 @@ bool lv_obj_get_auto_realign(lv_obj_t * obj);
  * @param obj pointer to an object
  * @return pointer to a style
  */
-lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
+const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
 
 /*-----------------
  * Attribute get
@@ -735,6 +815,13 @@ bool lv_obj_get_top(const lv_obj_t * obj);
  * @return true: the object is dragable
  */
 bool lv_obj_get_drag(const lv_obj_t * obj);
+
+/**
+ * Get the directions an object can be dragged
+ * @param obj pointer to an object
+ * @return bitwise OR of allowed directions an object can be dragged in
+ */
+lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj);
 
 /**
  * Get the drag throw enable attribute of an object
@@ -791,14 +878,21 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
  * @param obj pointer to an object
  * @return the signal function
  */
-lv_signal_cb_t lv_obj_get_signal_func(const lv_obj_t * obj);
+lv_signal_cb_t lv_obj_get_signal_cb(const lv_obj_t * obj);
 
 /**
  * Get the design function of an object
  * @param obj pointer to an object
  * @return the design function
  */
-lv_design_cb_t lv_obj_get_design_func(const lv_obj_t * obj);
+lv_design_cb_t lv_obj_get_design_cb(const lv_obj_t * obj);
+
+/**
+ * Get the event function of an object
+ * @param obj pointer to an object
+ * @return the event function
+ */
+lv_event_cb_t lv_obj_get_event_cb(const lv_obj_t * obj);
 
 /*------------------
  * Other get
@@ -827,6 +921,14 @@ void lv_obj_get_type(lv_obj_t * obj, lv_obj_type_t * buf);
  * @return pointer to the user data
  */
 lv_obj_user_data_t * lv_obj_get_user_data(lv_obj_t * obj);
+
+/**
+ * Set the object's user data. The data will be copied.
+ * @param obj pointer to an object
+ * @param data user data
+ */
+void lv_obj_set_user_data(lv_obj_t * obj, lv_obj_user_data_t data);
+
 #endif
 
 #if LV_USE_GROUP

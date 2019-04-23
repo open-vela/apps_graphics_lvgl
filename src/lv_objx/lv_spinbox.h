@@ -38,9 +38,6 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-/*callback on value change*/
-typedef void (*lv_spinbox_value_changed_cb_t)(lv_obj_t * spinbox, int32_t new_value);
-
 /*Data of spinbox*/
 typedef struct
 {
@@ -140,7 +137,7 @@ void lv_spinbox_set_padding_left(lv_obj_t * spinbox, uint8_t padding);
  * @param type which style should be get
  * @return style pointer to the style
  */
-static inline lv_style_t * lv_spinbox_get_style(lv_obj_t * spinbox, lv_spinbox_style_t type)
+static inline const lv_style_t * lv_spinbox_get_style(lv_obj_t * spinbox, lv_spinbox_style_t type)
 {
     return lv_ta_get_style(spinbox, type);
 }

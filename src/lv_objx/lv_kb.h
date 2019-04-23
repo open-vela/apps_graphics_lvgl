@@ -124,7 +124,7 @@ static inline void lv_kb_set_map(lv_obj_t * kb, const char * map[])
  * @param ctrl_map pointer to an array of `lv_btn_ctrl_t` control bytes.
  *                 See: `lv_btnm_set_ctrl_map` for more details.
  */
-static inline void lv_kb_set_ctrl_map(lv_obj_t * kb, const lv_btnm_ctrl_t * ctrl_map)
+static inline void lv_kb_set_ctrl_map(lv_obj_t * kb, const lv_btnm_ctrl_t ctrl_map[])
 {
     lv_btnm_set_ctrl_map(kb, ctrl_map);
 }
@@ -135,7 +135,7 @@ static inline void lv_kb_set_ctrl_map(lv_obj_t * kb, const lv_btnm_ctrl_t * ctrl
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_kb_set_style(lv_obj_t * kb, lv_kb_style_t type, lv_style_t * style);
+void lv_kb_set_style(lv_obj_t * kb, lv_kb_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -163,12 +163,22 @@ lv_kb_mode_t lv_kb_get_mode(const lv_obj_t * kb);
 bool lv_kb_get_cursor_manage(const lv_obj_t * kb);
 
 /**
+ * Get the current map of a keyboard
+ * @param kb pointer to a keyboard object
+ * @return the current map
+ */
+static inline const char ** lv_kb_get_map_array(const lv_obj_t * kb)
+{
+    return lv_btnm_get_map_array(kb);
+}
+
+/**
  * Get a style of a keyboard
  * @param kb pointer to a keyboard object
  * @param type which style should be get
  * @return style pointer to a style
  */
-lv_style_t * lv_kb_get_style(const lv_obj_t * kb, lv_kb_style_t type);
+const lv_style_t * lv_kb_get_style(const lv_obj_t * kb, lv_kb_style_t type);
 
 /*=====================
  * Other functions
