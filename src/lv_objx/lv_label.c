@@ -97,7 +97,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->txt_sel_start = LV_LABEL_TEXT_SEL_OFF;
     ext->txt_sel_end   = LV_LABEL_TEXT_SEL_OFF;
 #endif
-    ext->dot.tmp_ptr = NULL;
+    ext->dot_tmp_ptr = NULL;
     ext->dot_tmp_alloc = 0;
 
     lv_obj_set_design_cb(new_label, lv_label_design);
@@ -130,12 +130,12 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
             memcpy(ext->text, copy_ext->text, lv_mem_get_size(copy_ext->text));
         }
 
-        if(copy_ext->dot_tmp_alloc && copy_ext->dot.tmp_ptr ){
-            int len = strlen(copy_ext->dot.tmp_ptr);
-            lv_label_set_dot_tmp(new_label, ext->dot.tmp_ptr, len);
+        if(copy_ext->dot_tmp_alloc && copy_ext->dot_tmp_ptr ){
+            int len = strlen(copy_ext->dot_tmp_ptr);
+            lv_label_set_dot_tmp(new_label, ext->dot_tmp_ptr, len);
         }
         else{
-            memcpy(ext->dot.tmp, copy_ext->dot.tmp, sizeof(ext->dot.tmp));
+            memcpy(ext->dot_tmp, copy_ext->dot_tmp, sizeof(ext->dot_tmp));
         }
         ext->dot_tmp_alloc = copy_ext->dot_tmp_alloc;
         ext->dot_end = copy_ext->dot_end;
@@ -264,10 +264,10 @@ void lv_label_set_long_mode(lv_obj_t * label, lv_label_long_mode_t long_mode)
 
 #if LV_USE_ANIMATION
     /*Delete the old animation (if exists)*/
-    lv_anim_del(label, (lv_anim_exec_cb_t)lv_obj_set_x);
-    lv_anim_del(label, (lv_anim_exec_cb_t)lv_obj_set_y);
-    lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_x);
-    lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_y);
+    lv_anim_del(label, (lv_anim_fp_t)lv_obj_set_x);
+    lv_anim_del(label, (lv_anim_fp_t)lv_obj_set_y);
+    lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_x);
+    lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_y);
 #endif
     ext->offset.x = 0;
     ext->offset.y = 0;
@@ -457,7 +457,7 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint16_t index, lv_point_t 
     lv_coord_t max_w         = lv_obj_get_width(label);
     const lv_style_t * style = lv_obj_get_style(label);
     const lv_font_t * font   = style->text.font;
-    uint8_t letter_height    = lv_font_get_height(font);
+    uint8_t letter_height    = lv_font_get_line_height(font);
     lv_coord_t y             = 0;
     lv_txt_flag_t flag       = LV_TXT_FLAG_NONE;
 
@@ -530,7 +530,7 @@ uint16_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos)
     lv_coord_t max_w         = lv_obj_get_width(label);
     const lv_style_t * style = lv_obj_get_style(label);
     const lv_font_t * font   = style->text.font;
-    uint8_t letter_height    = lv_font_get_height(font);
+    uint8_t letter_height    = lv_font_get_line_height(font);
     lv_coord_t y             = 0;
     lv_txt_flag_t flag       = LV_TXT_FLAG_NONE;
 
@@ -635,7 +635,7 @@ bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos)
     lv_coord_t max_w         = lv_obj_get_width(label);
     const lv_style_t * style = lv_obj_get_style(label);
     const lv_font_t * font   = style->text.font;
-    uint8_t letter_height    = lv_font_get_height(font);
+    uint8_t letter_height    = lv_font_get_line_height(font);
     lv_coord_t y             = 0;
     lv_txt_flag_t flag       = LV_TXT_FLAG_NONE;
 
@@ -846,7 +846,7 @@ static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_
             /*Draw the text again below the original to make an circular effect */
             if(size.y > lv_obj_get_height(label)) {
                 ofs.x = ext->offset.x;
-                ofs.y = ext->offset.y + size.y + lv_font_get_height(style->text.font);
+                ofs.y = ext->offset.y + size.y + lv_font_get_line_height(style->text.font);
                 lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ofs,
                         lv_label_get_text_sel_start(label), lv_label_get_text_sel_end(label));
             }
@@ -948,8 +948,8 @@ static void lv_label_refr_text(lv_obj_t * label)
         anim.repeat   = 1;
         anim.playback = 1;
         anim.start    = 0;
-        anim.ready_cb   = NULL;
-        anim.path_cb     = lv_anim_path_linear;
+        anim.end_cb   = NULL;
+        anim.path     = lv_anim_path_linear;
         anim.playback_pause =
             (((lv_font_get_width(style->text.font, ' ') + style->text.letter_space) * 1000) /
              ext->anim_speed) * LV_LABEL_WAIT_CHAR_COUNT;
@@ -959,24 +959,24 @@ static void lv_label_refr_text(lv_obj_t * label)
         bool hor_anim = false;
         if(size.x > lv_obj_get_width(label)) {
             anim.end  = lv_obj_get_width(label) - size.x;
-            anim.exec_cb   = (lv_anim_exec_cb_t)lv_label_set_offset_x;
+            anim.fp   = (lv_anim_fp_t)lv_label_set_offset_x;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
             hor_anim = true;
         } else {
             /*Delete the offset animation if not required*/
-            lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_x);
+            lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_x);
             ext->offset.x = 0;
         }
 
         if(size.y > lv_obj_get_height(label) && hor_anim == false) {
-            anim.end  = lv_obj_get_height(label) - size.y - (lv_font_get_height(font));
-            anim.exec_cb   = (lv_anim_exec_cb_t)lv_label_set_offset_y;
+            anim.end  = lv_obj_get_height(label) - size.y - (lv_font_get_line_height(font));
+            anim.fp   = (lv_anim_fp_t)lv_label_set_offset_y;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
         } else {
             /*Delete the offset animation if not required*/
-            lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_y);
+            lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_y);
             ext->offset.y = 0;
         }
 #endif
@@ -992,32 +992,32 @@ static void lv_label_refr_text(lv_obj_t * label)
         anim.act_time       = 
             -(((lv_font_get_width(style->text.font, ' ') + style->text.letter_space) * 1000) /
              ext->anim_speed) * LV_LABEL_WAIT_CHAR_COUNT;
-        anim.ready_cb         = NULL;
-        anim.path_cb           = lv_anim_path_linear;
+        anim.end_cb         = NULL;
+        anim.path           = lv_anim_path_linear;
         anim.playback_pause = 0;
         anim.repeat_pause   = 0;
 
         bool hor_anim = false;
         if(size.x > lv_obj_get_width(label)) {
             anim.end  = -size.x - lv_font_get_width(font, ' ') * LV_LABEL_WAIT_CHAR_COUNT;
-            anim.exec_cb   = (lv_anim_exec_cb_t)lv_label_set_offset_x;
+            anim.fp   = (lv_anim_fp_t)lv_label_set_offset_x;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
             hor_anim = true;
         } else {
             /*Delete the offset animation if not required*/
-            lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_x);
+            lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_x);
             ext->offset.x = 0;
         }
 
         if(size.y > lv_obj_get_height(label) && hor_anim == false) {
-            anim.end  = -size.y - (lv_font_get_height(font));
-            anim.exec_cb   = (lv_anim_exec_cb_t)lv_label_set_offset_y;
+            anim.end  = -size.y - (lv_font_get_line_height(font));
+            anim.fp   = (lv_anim_fp_t)lv_label_set_offset_y;
             anim.time = lv_anim_speed_to_time(ext->anim_speed, anim.start, anim.end);
             lv_anim_create(&anim);
         } else {
             /*Delete the offset animation if not required*/
-            lv_anim_del(label, (lv_anim_exec_cb_t)lv_label_set_offset_y);
+            lv_anim_del(label, (lv_anim_fp_t)lv_label_set_offset_y);
             ext->offset.y = 0;
         }
 #endif
@@ -1033,7 +1033,7 @@ static void lv_label_refr_text(lv_obj_t * label)
                   (lv_font_get_width(style->text.font, '.') + style->text.letter_space) *
                       LV_LABEL_DOT_NUM; /*Shrink with dots*/
             p.y = lv_obj_get_height(label);
-            p.y -= p.y % (lv_font_get_height(style->text.font) +
+            p.y -= p.y % (lv_font_get_line_height(style->text.font) +
                           style->text.line_space); /*Round down to the last line*/
             p.y -= style->text.line_space;         /*Trim the last line space*/
             uint32_t letter_id = lv_label_get_letter_on(label, &p);
@@ -1119,19 +1119,19 @@ static bool lv_label_set_dot_tmp(lv_obj_t *label, char *data, uint16_t len){
     if( len > sizeof(char *) ){
         /* Memory needs to be allocated. Allocates an additional byte
          * for a NULL-terminator so it can be copied. */
-        ext->dot.tmp_ptr = lv_mem_alloc(len + 1);
-        if( ext->dot.tmp_ptr == NULL ){
+        ext->dot_tmp_ptr = lv_mem_alloc(len + 1);
+        if( ext->dot_tmp_ptr == NULL ){
             LV_LOG_ERROR("Failed to allocate memory for dot_tmp_ptr");
             return false;
         }
-        memcpy(ext->dot.tmp_ptr, data, len);
-        ext->dot.tmp_ptr[len]='\0';
+        memcpy(ext->dot_tmp_ptr, data, len);
+        ext->dot_tmp_ptr[len]='\0';
         ext->dot_tmp_alloc = true;
     }
     else {
         /* Characters can be directly stored in object */
         ext->dot_tmp_alloc = false;
-        memcpy(ext->dot.tmp, data, len);
+        memcpy(ext->dot_tmp, data, len);
     }
     return true;
 }
@@ -1144,10 +1144,10 @@ static bool lv_label_set_dot_tmp(lv_obj_t *label, char *data, uint16_t len){
 static char * lv_label_get_dot_tmp(lv_obj_t *label){
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if( ext->dot_tmp_alloc ){
-        return ext->dot.tmp_ptr;
+        return ext->dot_tmp_ptr;
     }
     else{
-        return ext->dot.tmp;
+        return ext->dot_tmp;
     }
 }
 
@@ -1158,11 +1158,11 @@ static char * lv_label_get_dot_tmp(lv_obj_t *label){
  */
 static void lv_label_dot_tmp_free(lv_obj_t *label){
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-    if( ext->dot_tmp_alloc && ext->dot.tmp_ptr ){
-        lv_mem_free(ext->dot.tmp_ptr);
+    if( ext->dot_tmp_alloc && ext->dot_tmp_ptr ){
+        lv_mem_free(ext->dot_tmp_ptr);
     }
     ext->dot_tmp_alloc = false;
-    ext->dot.tmp_ptr = NULL;
+    ext->dot_tmp_ptr = NULL;
 }
 
 #endif
