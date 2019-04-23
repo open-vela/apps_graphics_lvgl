@@ -36,7 +36,7 @@
  **********************/
 static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param);
 static void mbox_realign(lv_obj_t * mbox);
-static void lv_mbox_close_ready_cb(lv_anim_t * a);
+static void lv_mbox_close_end_cb(lv_obj_t * mbox);
 static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event);
 
 /**********************
@@ -204,12 +204,12 @@ void lv_mbox_start_auto_close(lv_obj_t * mbox, uint16_t delay)
         /*Add shrinking animations*/
         lv_obj_animate(mbox, LV_ANIM_GROW_H | LV_ANIM_OUT, ext->anim_time, delay, NULL);
         lv_obj_animate(mbox, LV_ANIM_GROW_V | LV_ANIM_OUT, ext->anim_time, delay,
-                       lv_mbox_close_ready_cb);
+                       lv_mbox_close_end_cb);
 
         /*Disable fit to let shrinking work*/
         lv_cont_set_fit(mbox, LV_FIT_NONE);
     } else {
-        lv_obj_animate(mbox, LV_ANIM_NONE, ext->anim_time, delay, lv_mbox_close_ready_cb);
+        lv_obj_animate(mbox, LV_ANIM_NONE, ext->anim_time, delay, lv_mbox_close_end_cb);
     }
 #else
     (void)delay; /*Unused*/
@@ -483,7 +483,7 @@ static void mbox_realign(lv_obj_t * mbox)
     if(ext->btnm) {
         const lv_style_t * btn_bg_style  = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_BG);
         const lv_style_t * btn_rel_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_REL);
-        lv_coord_t font_h                = lv_font_get_height(btn_rel_style->text.font);
+        lv_coord_t font_h                = lv_font_get_line_height(btn_rel_style->text.font);
         lv_obj_set_size(ext->btnm, w,
                         font_h + btn_rel_style->body.padding.top +
                             btn_rel_style->body.padding.bottom + btn_bg_style->body.padding.top +
@@ -491,9 +491,9 @@ static void mbox_realign(lv_obj_t * mbox)
     }
 }
 
-static void lv_mbox_close_ready_cb(lv_anim_t * a)
+static void lv_mbox_close_end_cb(lv_obj_t * mbox)
 {
-    lv_obj_del(a->var);
+    lv_obj_del(mbox);
 }
 
 static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event)

@@ -158,7 +158,7 @@ void lv_draw_fill(const lv_area_t * cords_p, const lv_area_t * mask_p, lv_color_
     else if(opa == LV_OPA_COVER) {
         /*Use hw fill if present*/
         if(disp->driver.mem_fill_cb) {
-            disp->driver.mem_fill_cb(&disp->driver, vdb->buf_act, &vdb->area, &vdb_rel_a, color);
+            disp->driver.mem_fill_cb(vdb->buf_act, &vdb->area, &vdb_rel_a, color);
         }
         /*Use hw blend if present and the area is not too small*/
         else if(lv_area_get_height(&vdb_rel_a) > VFILL_HW_ACC_SIZE_LIMIT &&
@@ -175,7 +175,7 @@ void lv_draw_fill(const lv_area_t * cords_p, const lv_area_t * mask_p, lv_color_
             /*Blend the filled line to every line VDB line-by-line*/
             lv_coord_t row;
             for(row = vdb_rel_a.y1; row <= vdb_rel_a.y2; row++) {
-                disp->driver.mem_blend_cb(&disp->driver, &vdb_buf_tmp[vdb_rel_a.x1], color_array_tmp, w, opa);
+                disp->driver.mem_blend_cb(&vdb_buf_tmp[vdb_rel_a.x1], color_array_tmp, w, opa);
                 vdb_buf_tmp += vdb_width;
             }
 
@@ -200,7 +200,7 @@ void lv_draw_fill(const lv_area_t * cords_p, const lv_area_t * mask_p, lv_color_
             }
             lv_coord_t row;
             for(row = vdb_rel_a.y1; row <= vdb_rel_a.y2; row++) {
-                disp->driver.mem_blend_cb(&disp->driver, &vdb_buf_tmp[vdb_rel_a.x1], color_array_tmp, w, opa);
+                disp->driver.mem_blend_cb(&vdb_buf_tmp[vdb_rel_a.x1], color_array_tmp, w, opa);
                 vdb_buf_tmp += vdb_width;
             }
 
@@ -243,7 +243,7 @@ void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * mask_p, const lv
     lv_coord_t pos_x = pos_p->x;
     lv_coord_t pos_y = pos_p->y;
     uint8_t letter_w = lv_font_get_real_width(font_p, letter);
-    uint8_t letter_h = lv_font_get_height(font_p);
+    uint8_t letter_h = lv_font_get_line_height(font_p);
     uint8_t bpp      = lv_font_get_bpp(font_p, letter); /*Bit per pixel (1,2, 4 or 8)*/
     const uint8_t * bpp_opa_table;
     uint8_t mask_init;
@@ -273,7 +273,7 @@ void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * mask_p, const lv
         default: return; /*Invalid bpp. Can't render the letter*/
     }
 
-    const uint8_t * map_p = lv_font_get_bitmap(font_p, letter);
+    const uint8_t * map_p = lv_font_get_glyph_bitmap(font_p, letter);
 
     if(map_p == NULL) return;
 
@@ -441,7 +441,7 @@ void lv_draw_map(const lv_area_t * cords_p, const lv_area_t * mask_p, const uint
                 if(disp->driver.mem_blend_cb == false) {
                     sw_mem_blend(vdb_buf_tmp, (lv_color_t *)map_p, map_useful_w, opa);
                 } else {
-                    disp->driver.mem_blend_cb(&disp->driver, vdb_buf_tmp, (lv_color_t *)map_p, map_useful_w, opa);
+                    disp->driver.mem_blend_cb(vdb_buf_tmp, (lv_color_t *)map_p, map_useful_w, opa);
                 }
 #else
                 sw_mem_blend(vdb_buf_tmp, (lv_color_t *)map_p, map_useful_w, opa);
