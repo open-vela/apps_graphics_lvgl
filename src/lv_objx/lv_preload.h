@@ -47,12 +47,6 @@ enum {
 };
 typedef uint8_t lv_preload_type_t;
 
-enum {
-    LV_PRELOAD_DIR_FORWARD,
-    LV_PRELOAD_DIR_BACKWARD,
-};
-typedef uint8_t lv_preload_dir_t;
-
 /*Data of pre loader*/
 typedef struct
 {
@@ -60,8 +54,7 @@ typedef struct
     /*New data for this type */
     uint16_t arc_length;         /*Length of the spinning indicator in degree*/
     uint16_t time;               /*Time of one round*/
-    lv_preload_type_t anim_type:1; /*Type of the arc animation*/
-    lv_preload_dir_t anim_dir:1;   /*Animation Direction*/
+    lv_preload_type_t anim_type; /*Type of the arc animation*/
 } lv_preload_ext_t;
 
 /*Styles*/
@@ -111,21 +104,14 @@ void lv_preload_set_spin_time(lv_obj_t * preload, uint16_t time);
  * @param type which style should be set
  * @param style pointer to a style
  *  */
-void lv_preload_set_style(lv_obj_t * preload, lv_preload_style_t type, const lv_style_t * style);
+void lv_preload_set_style(lv_obj_t * preload, lv_preload_style_t type, lv_style_t * style);
 
 /**
- * Set the animation type of a preloader.
+ * Set the animation type of a preloadeer.
  * @param preload pointer to pre loader object
  * @param type animation type of the preload
  *  */
-void lv_preload_set_anim_type(lv_obj_t * preload, lv_preload_type_t type);
-
-/**
- * Set the animation direction of a preloader
- * @param preload pointer to pre loader object
- * @param direction animation direction of the preload
- */
-void lv_preload_set_anim_dir(lv_obj_t * preload, lv_preload_dir_t dir);
+void lv_preload_set_animation_type(lv_obj_t * preload, lv_preload_type_t type);
 
 /*=====================
  * Getter functions
@@ -149,21 +135,14 @@ uint16_t lv_preload_get_spin_time(const lv_obj_t * preload);
  * @param type which style should be get
  * @return style pointer to the style
  *  */
-const lv_style_t * lv_preload_get_style(const lv_obj_t * preload, lv_preload_style_t type);
+lv_style_t * lv_preload_get_style(const lv_obj_t * preload, lv_preload_style_t type);
 
 /**
- * Get the animation type of a preloader.
+ * Get the animation type of a preloadeer.
  * @param preload pointer to pre loader object
  * @return animation type
  *  */
-lv_preload_type_t lv_preload_get_anim_type(lv_obj_t * preload);
-
-/**
- * Get the animation direction of a preloader
- * @param preload pointer to pre loader object
- * @return animation direction
- */
-lv_preload_dir_t lv_preload_get_anim_dir(lv_obj_t * preload);
+lv_preload_type_t lv_preload_get_animation_type(lv_obj_t * preload);
 
 /*=====================
  * Other functions
@@ -175,7 +154,7 @@ lv_preload_dir_t lv_preload_get_anim_dir(lv_obj_t * preload);
  * @param type which style should be get
  * @return style pointer to the style
  *  */
-void lv_preload_spinner_anim(void * ptr, int32_t val);
+void lv_preload_spinner_animation(void * ptr, int32_t val);
 
 /**********************
  *      MACROS

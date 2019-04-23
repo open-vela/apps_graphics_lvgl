@@ -36,7 +36,7 @@
  **********************/
 static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param);
 static void mbox_realign(lv_obj_t * mbox);
-static void lv_mbox_close_ready_cb(lv_anim_t * a);
+static void lv_mbox_close_end_cb(lv_obj_t * mbox);
 static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event);
 
 /**********************
@@ -68,7 +68,7 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_mbox);
     if(new_mbox == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_mbox);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_mbox);
 
     /*Allocate the message box type specific extended data*/
     lv_mbox_ext_t * ext = lv_obj_allocate_ext_attr(new_mbox, sizeof(lv_mbox_ext_t));
@@ -204,12 +204,12 @@ void lv_mbox_start_auto_close(lv_obj_t * mbox, uint16_t delay)
         /*Add shrinking animations*/
         lv_obj_animate(mbox, LV_ANIM_GROW_H | LV_ANIM_OUT, ext->anim_time, delay, NULL);
         lv_obj_animate(mbox, LV_ANIM_GROW_V | LV_ANIM_OUT, ext->anim_time, delay,
-                       lv_mbox_close_ready_cb);
+                       lv_mbox_close_end_cb);
 
         /*Disable fit to let shrinking work*/
         lv_cont_set_fit(mbox, LV_FIT_NONE);
     } else {
-        lv_obj_animate(mbox, LV_ANIM_NONE, ext->anim_time, delay, lv_mbox_close_ready_cb);
+        lv_obj_animate(mbox, LV_ANIM_NONE, ext->anim_time, delay, lv_mbox_close_end_cb);
     }
 #else
     (void)delay; /*Unused*/
@@ -236,7 +236,7 @@ void lv_mbox_stop_auto_close(lv_obj_t * mbox)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_mbox_set_style(lv_obj_t * mbox, lv_mbox_style_t type, const lv_style_t * style)
+void lv_mbox_set_style(lv_obj_t * mbox, lv_mbox_style_t type, lv_style_t * style)
 {
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
@@ -336,9 +336,9 @@ uint16_t lv_mbox_get_anim_time(const lv_obj_t * mbox)
  * @param type which style should be get
  * @return style pointer to a style
  */
-const lv_style_t * lv_mbox_get_style(const lv_obj_t * mbox, lv_mbox_style_t type)
+lv_style_t * lv_mbox_get_style(const lv_obj_t * mbox, lv_mbox_style_t type)
 {
-    const lv_style_t * style  = NULL;
+    lv_style_t * style  = NULL;
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
     switch(type) {
@@ -473,7 +473,7 @@ static void mbox_realign(lv_obj_t * mbox)
 {
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
-    const lv_style_t * style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BG);
+    lv_style_t * style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BG);
     lv_coord_t w = lv_obj_get_width(mbox) - style->body.padding.left - style->body.padding.right;
 
     if(ext->text) {
@@ -481,9 +481,9 @@ static void mbox_realign(lv_obj_t * mbox)
     }
 
     if(ext->btnm) {
-        const lv_style_t * btn_bg_style  = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_BG);
-        const lv_style_t * btn_rel_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_REL);
-        lv_coord_t font_h                = lv_font_get_height(btn_rel_style->text.font);
+        lv_style_t * btn_bg_style  = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_BG);
+        lv_style_t * btn_rel_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_REL);
+        lv_coord_t font_h          = lv_font_get_height(btn_rel_style->text.font);
         lv_obj_set_size(ext->btnm, w,
                         font_h + btn_rel_style->body.padding.top +
                             btn_rel_style->body.padding.bottom + btn_bg_style->body.padding.top +
@@ -491,9 +491,9 @@ static void mbox_realign(lv_obj_t * mbox)
     }
 }
 
-static void lv_mbox_close_ready_cb(lv_anim_t * a)
+static void lv_mbox_close_end_cb(lv_obj_t * mbox)
 {
-    lv_obj_del(a->var);
+    lv_obj_del(mbox);
 }
 
 static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event)

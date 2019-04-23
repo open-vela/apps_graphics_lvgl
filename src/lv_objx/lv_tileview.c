@@ -72,10 +72,10 @@ lv_obj_t * lv_tileview_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_tileview_ext_t * ext = lv_obj_allocate_ext_attr(new_tileview, sizeof(lv_tileview_ext_t));
     lv_mem_assert(ext);
     if(ext == NULL) return NULL;
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_tileview);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_tileview);
     if(ancestor_scrl_signal == NULL)
-        ancestor_scrl_signal = lv_obj_get_signal_cb(lv_page_get_scrl(new_tileview));
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_tileview);
+        ancestor_scrl_signal = lv_obj_get_signal_func(lv_page_get_scrl(new_tileview));
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_tileview);
 
     /*Initialize the allocated 'ext' */
     ext->anim_time = LV_TILEVIEW_DEF_ANIM_TIME;
@@ -211,9 +211,9 @@ void lv_tileview_set_tile_act(lv_obj_t * tileview, lv_coord_t x, lv_coord_t y, b
 
         lv_anim_t a;
         a.var            = scrl;
-        a.exec_cb             = (lv_anim_exec_cb_t)lv_obj_set_x;
-        a.path_cb           = lv_anim_path_linear;
-        a.ready_cb         = NULL;
+        a.fp             = (lv_anim_fp_t)lv_obj_set_x;
+        a.path           = lv_anim_path_linear;
+        a.end_cb         = NULL;
         a.act_time       = 0;
         a.time           = ext->anim_time;
         a.playback       = 0;
@@ -230,7 +230,7 @@ void lv_tileview_set_tile_act(lv_obj_t * tileview, lv_coord_t x, lv_coord_t y, b
         if(y_coord != y_act) {
             a.start = y_act;
             a.end   = y_coord;
-            a.exec_cb    = (lv_anim_exec_cb_t)lv_obj_set_y;
+            a.fp    = (lv_anim_fp_t)lv_obj_set_y;
             lv_anim_create(&a);
         }
 #endif
@@ -249,7 +249,7 @@ void lv_tileview_set_tile_act(lv_obj_t * tileview, lv_coord_t x, lv_coord_t y, b
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, const lv_style_t * style)
+void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, lv_style_t * style)
 {
 
     switch(type) {
@@ -271,9 +271,9 @@ void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, const 
  * @param type which style should be get
  * @return style pointer to the style
  */
-const lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_t type)
+lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_t type)
 {
-    const lv_style_t * style = NULL;
+    lv_style_t * style = NULL;
     switch(type) {
         case LV_TILEVIEW_STYLE_BG: style = lv_obj_get_style(tileview); break;
         default: style = NULL;
@@ -339,8 +339,8 @@ static lv_res_t lv_tileview_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, void 
     res = ancestor_scrl_signal(scrl, sign, param);
     if(res != LV_RES_OK) return res;
 
-    lv_obj_t * tileview         = lv_obj_get_parent(scrl);
-    const lv_style_t * style_bg = lv_tileview_get_style(tileview, LV_TILEVIEW_STYLE_BG);
+    lv_obj_t * tileview   = lv_obj_get_parent(scrl);
+    lv_style_t * style_bg = lv_tileview_get_style(tileview, LV_TILEVIEW_STYLE_BG);
 
     /*Apply constraint on moving of the tileview*/
     if(sign == LV_SIGNAL_CORD_CHG) {

@@ -236,9 +236,7 @@ static void line_draw_skew(line_draw_t * main_line, bool dir_ori, const lv_area_
     lv_opa_t opa = opa_scale == LV_OPA_COVER
                        ? style->line.opa
                        : (uint16_t)((uint16_t)style->line.opa * opa_scale) >> 8;
-#if LV_ANTIALIAS
     bool aa = lv_disp_get_antialiasing(lv_refr_get_disp_refreshing());
-#endif
     lv_point_t vect_main, vect_norm;
     vect_main.x = main_line->p2.x - main_line->p1.x;
     vect_main.y = main_line->p2.y - main_line->p1.y;
@@ -438,8 +436,8 @@ static void line_draw_skew(line_draw_t * main_line, bool dir_ori, const lv_area_
 #if LV_ANTIALIAS
 
     /*Shift the anti aliasing on the edges (-1, 1 or 0 (zero only in case width == 0))*/
-    lv_coord_t aa_shift1 = 0;
-    lv_coord_t aa_shift2 = 0;
+    lv_coord_t aa_shift1;
+    lv_coord_t aa_shift2;
     if(aa) {
         if(main_line->hor == false) {
             if(main_line->sx < 0) {

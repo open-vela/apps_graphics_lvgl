@@ -104,7 +104,7 @@ void lv_roller_set_visible_row_count(lv_obj_t * roller, uint8_t row_cnt);
  */
 static inline void lv_roller_set_hor_fit(lv_obj_t * roller, lv_fit_t fit)
 {
-    lv_ddlist_set_hor_fit(roller, fit);
+    lv_ddlist_set_fit(roller, fit);
 }
 
 /**
@@ -123,7 +123,7 @@ static inline void lv_roller_set_anim_time(lv_obj_t * roller, uint16_t anim_time
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_roller_set_style(lv_obj_t * roller, lv_roller_style_t type, const lv_style_t * style);
+void lv_roller_set_style(lv_obj_t * roller, lv_roller_style_t type, lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -187,7 +187,7 @@ bool lv_roller_get_hor_fit(const lv_obj_t * roller);
  * @param type which style should be get
  * @return style pointer to a style
  *  */
-const lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_t type);
+lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_t type);
 
 /**********************
  *      MACROS

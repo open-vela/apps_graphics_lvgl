@@ -36,7 +36,7 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param);
 
 #if LV_USE_ANIMATION && LV_BTN_INK_EFFECT
 static void lv_btn_ink_effect_anim(lv_obj_t * btn, int32_t val);
-static void lv_btn_ink_effect_anim_ready(lv_anim_t * a);
+static void lv_btn_ink_effect_anim_ready(void * p);
 #endif
 
 /**********************
@@ -79,8 +79,8 @@ lv_obj_t * lv_btn_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_btn);
     if(new_btn == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_btn);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_btn);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_func(new_btn);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_func(new_btn);
 
     /*Allocate the extended data*/
     lv_btn_ext_t * ext = lv_obj_allocate_ext_attr(new_btn, sizeof(lv_btn_ext_t));
@@ -254,7 +254,7 @@ void lv_btn_set_ink_out_time(lv_obj_t * btn, uint16_t time)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, const lv_style_t * style)
+void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, lv_style_t * style)
 {
     lv_btn_ext_t * ext = lv_obj_get_ext_attr(btn);
 
@@ -350,9 +350,9 @@ uint16_t lv_btn_get_ink_out_time(const lv_obj_t * btn)
  * @param type which style should be get
  * @return style pointer to a style
  */
-const lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type)
+lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type)
 {
-    const lv_style_t * style = NULL;
+    lv_style_t * style = NULL;
     lv_btn_ext_t * ext = lv_obj_get_ext_attr(btn);
 
     switch(type) {
@@ -502,7 +502,7 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
 #if LV_USE_ANIMATION && LV_BTN_INK_EFFECT
         /*Forget the old inked button*/
         if(ink_obj != NULL && ink_obj != btn) {
-            lv_anim_del(ink_obj, (lv_anim_exec_cb_t)lv_btn_ink_effect_anim);
+            lv_anim_del(ink_obj, (lv_anim_fp_t)lv_btn_ink_effect_anim);
             lv_obj_invalidate(ink_obj);
             ink_obj = NULL;
         }
@@ -517,9 +517,9 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
             a.var            = btn;
             a.start          = 0;
             a.end            = LV_BTN_INK_VALUE_MAX;
-            a.exec_cb             = (lv_anim_exec_cb_t)lv_btn_ink_effect_anim;
-            a.path_cb           = lv_anim_path_linear;
-            a.ready_cb         = lv_btn_ink_effect_anim_ready;
+            a.fp             = (lv_anim_fp_t)lv_btn_ink_effect_anim;
+            a.path           = lv_anim_path_linear;
+            a.end_cb         = lv_btn_ink_effect_anim_ready;
             a.act_time       = 0;
             a.time           = ext->ink_in_time;
             a.playback       = 0;
@@ -586,9 +586,9 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
             a.var            = ink_obj;
             a.start          = LV_BTN_INK_VALUE_MAX;
             a.end            = 0;
-            a.exec_cb             = (lv_anim_exec_cb_t)lv_btn_ink_effect_anim;
-            a.path_cb           = lv_anim_path_linear;
-            a.ready_cb         = lv_btn_ink_effect_anim_ready;
+            a.fp             = (lv_anim_fp_t)lv_btn_ink_effect_anim;
+            a.path           = lv_anim_path_linear;
+            a.end_cb         = lv_btn_ink_effect_anim_ready;
             a.act_time       = 0;
             a.time           = ext->ink_out_time;
             a.playback       = 0;
@@ -624,7 +624,7 @@ static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_CLEANUP) {
 #if LV_USE_ANIMATION && LV_BTN_INK_EFFECT
         if(btn == ink_obj) {
-            lv_anim_del(ink_obj, (lv_anim_exec_cb_t)lv_btn_ink_effect_anim);
+            lv_anim_del(ink_obj, (lv_anim_fp_t)lv_btn_ink_effect_anim);
             ink_obj = NULL;
         }
 #endif
@@ -657,11 +657,11 @@ static void lv_btn_ink_effect_anim(lv_obj_t * btn, int32_t val)
 
 /**
  * Called to clean up when the ink animation is ready
- * @param a unused
+ * @param p unused
  */
-static void lv_btn_ink_effect_anim_ready(lv_anim_t * a)
+static void lv_btn_ink_effect_anim_ready(void * p)
 {
-    (void) a;  /*Unused*/
+    (void)p; /*Unused*/
 
     lv_btn_ext_t * ext   = lv_obj_get_ext_attr(ink_obj);
     lv_btn_state_t state = lv_btn_get_state(ink_obj);
@@ -675,9 +675,9 @@ static void lv_btn_ink_effect_anim_ready(lv_anim_t * a)
         a.var            = ink_obj;
         a.start          = LV_BTN_INK_VALUE_MAX;
         a.end            = 0;
-        a.exec_cb        = (lv_anim_exec_cb_t)lv_btn_ink_effect_anim;
-        a.path_cb        = lv_anim_path_linear;
-        a.ready_cb       = lv_btn_ink_effect_anim_ready;
+        a.fp             = (lv_anim_fp_t)lv_btn_ink_effect_anim;
+        a.path           = lv_anim_path_linear;
+        a.end_cb         = lv_btn_ink_effect_anim_ready;
         a.act_time       = -ext->ink_wait_time;
         a.time           = ext->ink_out_time;
         a.playback       = 0;

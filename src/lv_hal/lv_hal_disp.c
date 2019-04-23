@@ -87,16 +87,16 @@ void lv_disp_drv_init(lv_disp_drv_t * driver)
  *             the image to the display in the background.
  *             It lets LittlevGL to render next frame into the other buffer while previous is being
  * sent. Set to `NULL` if unused.
- * @param size_in_px_cnt size of the `buf1` and `buf2` in pixel count.
+ * @param size size of the `buf1` and `buf2` in pixel count.
  */
-void lv_disp_buf_init(lv_disp_buf_t * disp_buf, void * buf1, void * buf2, uint32_t size_in_px_cnt)
+void lv_disp_buf_init(lv_disp_buf_t * disp_buf, void * buf1, void * buf2, uint32_t size)
 {
     memset(disp_buf, 0, sizeof(lv_disp_buf_t));
 
     disp_buf->buf1    = buf1;
     disp_buf->buf2    = buf2;
     disp_buf->buf_act = disp_buf->buf1;
-    disp_buf->size    = size_in_px_cnt;
+    disp_buf->size    = size;
 }
 
 /**
@@ -124,13 +124,13 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
     disp_def = disp; /*Temporarily change the default screen to create the default screens on the
                         new display*/
 
-    disp->inv_p = 0;
-
     disp->act_scr   = lv_obj_create(NULL, NULL); /*Create a default screen on the display*/
     disp->top_layer = lv_obj_create(NULL, NULL); /*Create top layer on the display*/
     disp->sys_layer = lv_obj_create(NULL, NULL); /*Create top layer on the display*/
     lv_obj_set_style(disp->top_layer, &lv_style_transp);
     lv_obj_set_style(disp->sys_layer, &lv_style_transp);
+
+    disp->inv_p = 0;
 
     lv_obj_invalidate(disp->act_scr);
 

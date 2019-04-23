@@ -40,9 +40,6 @@
 static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param);
 static lv_res_t lv_list_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param);
 static void lv_list_btn_single_selected(lv_obj_t * btn);
-static bool lv_list_is_list_btn(lv_obj_t * list_btn);
-static bool lv_list_is_list_img(lv_obj_t * list_btn);
-static bool lv_list_is_list_label(lv_obj_t * list_btn);
 
 /**********************
  *  STATIC VARIABLES
@@ -82,7 +79,7 @@ lv_obj_t * lv_list_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_mem_assert(new_list);
     if(new_list == NULL) return NULL;
 
-    if(ancestor_page_signal == NULL) ancestor_page_signal = lv_obj_get_signal_cb(new_list);
+    if(ancestor_page_signal == NULL) ancestor_page_signal = lv_obj_get_signal_func(new_list);
 
     lv_list_ext_t * ext = lv_obj_allocate_ext_attr(new_list, sizeof(lv_list_ext_t));
     lv_mem_assert(ext);
@@ -192,7 +189,7 @@ lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt,
     liste = lv_btn_create(list, NULL);
 
     /*Save the original signal function because it will be required in `lv_list_btn_signal`*/
-    if(ancestor_btn_signal == NULL) ancestor_btn_signal = lv_obj_get_signal_cb(liste);
+    if(ancestor_btn_signal == NULL) ancestor_btn_signal = lv_obj_get_signal_func(liste);
 
     /*Set the default styles*/
     lv_btn_set_style(liste, LV_BTN_STYLE_REL, ext->styles_btn[LV_BTN_STATE_REL]);
@@ -215,7 +212,7 @@ lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt,
         lv_img_set_src(img, img_src);
         lv_obj_set_style(img, ext->style_img);
         lv_obj_set_click(img, false);
-        if(img_signal == NULL) img_signal = lv_obj_get_signal_cb(img);
+        if(img_signal == NULL) img_signal = lv_obj_get_signal_func(img);
     }
 #endif
     if(txt != NULL) {
@@ -226,7 +223,7 @@ lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt,
         lv_obj_set_click(label, false);
         lv_label_set_long_mode(label, LV_LABEL_LONG_ROLL_CIRC);
         lv_obj_set_width(label, liste->coords.x2 - label->coords.x1 - btn_hor_pad);
-        if(label_signal == NULL) label_signal = lv_obj_get_signal_cb(label);
+        if(label_signal == NULL) label_signal = lv_obj_get_signal_func(label);
     }
 #if LV_USE_GROUP
     /* If this is the first item to be added to the list and the list is
@@ -342,7 +339,7 @@ void lv_list_set_anim_time(lv_obj_t * list, uint16_t anim_time)
  * @param type which style should be set
  * @param style pointer to a style
  */
-void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, const lv_style_t * style)
+void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, lv_style_t * style)
 {
     lv_list_ext_t * ext           = lv_obj_get_ext_attr(list);
     lv_btn_style_t btn_style_refr = LV_BTN_STYLE_REL;
@@ -429,7 +426,7 @@ lv_obj_t * lv_list_get_btn_label(const lv_obj_t * btn)
     lv_obj_t * label = lv_obj_get_child(btn, NULL);
     if(label == NULL) return NULL;
 
-    while(lv_list_is_list_label(label) == false) {
+    while(label->signal_cb != label_signal) {
         label = lv_obj_get_child(btn, label);
         if(label == NULL) break;
     }
@@ -448,7 +445,7 @@ lv_obj_t * lv_list_get_btn_img(const lv_obj_t * btn)
     lv_obj_t * img = lv_obj_get_child(btn, NULL);
     if(img == NULL) return NULL;
 
-    while(lv_list_is_list_img(img) == false) {
+    while(img->signal_cb != img_signal) {
         img = lv_obj_get_child(btn, img);
         if(img == NULL) break;
     }
@@ -476,7 +473,7 @@ lv_obj_t * lv_list_get_prev_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(lv_list_is_list_btn(btn) == false) {
+    while(btn->signal_cb != lv_list_btn_signal) {
         btn = lv_obj_get_child(scrl, btn);
         if(btn == NULL) break;
     }
@@ -501,7 +498,7 @@ lv_obj_t * lv_list_get_next_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child_back(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(lv_list_is_list_btn(btn) == false) {
+    while(btn->signal_cb != lv_list_btn_signal) {
         btn = lv_obj_get_child_back(scrl, btn);
         if(btn == NULL) break;
     }
@@ -575,9 +572,9 @@ uint16_t lv_list_get_anim_time(const lv_obj_t * list)
  * @param type which style should be get
  * @return style pointer to a style
  *  */
-const lv_style_t * lv_list_get_style(const lv_obj_t * list, lv_list_style_t type)
+lv_style_t * lv_list_get_style(const lv_obj_t * list, lv_list_style_t type)
 {
-    const lv_style_t * style  = NULL;
+    lv_style_t * style  = NULL;
     lv_list_ext_t * ext = lv_obj_get_ext_attr(list);
 
     switch(type) {
@@ -627,9 +624,9 @@ void lv_list_up(const lv_obj_t * list)
                     a.var            = scrl;
                     a.start          = lv_obj_get_y(scrl);
                     a.end            = new_y;
-                    a.exec_cb             = (lv_anim_exec_cb_t)lv_obj_set_y;
-                    a.path_cb           = lv_anim_path_linear;
-                    a.ready_cb         = NULL;
+                    a.fp             = (lv_anim_fp_t)lv_obj_set_y;
+                    a.path           = lv_anim_path_linear;
+                    a.end_cb         = NULL;
                     a.act_time       = 0;
                     a.time           = LV_LIST_DEF_ANIM_TIME;
                     a.playback       = 0;
@@ -670,9 +667,9 @@ void lv_list_down(const lv_obj_t * list)
                 a.var            = scrl;
                 a.start          = lv_obj_get_y(scrl);
                 a.end            = new_y;
-                a.exec_cb             = (lv_anim_exec_cb_t)lv_obj_set_y;
-                a.path_cb           = lv_anim_path_linear;
-                a.ready_cb         = NULL;
+                a.fp             = (lv_anim_fp_t)lv_obj_set_y;
+                a.path           = lv_anim_path_linear;
+                a.end_cb         = NULL;
                 a.act_time       = 0;
                 a.time           = LV_LIST_DEF_ANIM_TIME;
                 a.playback       = 0;
@@ -745,24 +742,20 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
              * button*/
             if(btn) {
                 if(sign == LV_SIGNAL_PRESSED) {
-                    res = lv_event_send(btn, LV_EVENT_PRESSED, NULL);
+                    lv_event_send(btn, LV_EVENT_PRESSED, NULL);
                 } else if(sign == LV_SIGNAL_PRESSING) {
-                    res = lv_event_send(btn, LV_EVENT_PRESSING, NULL);
+                    lv_event_send(btn, LV_EVENT_PRESSING, NULL);
                 } else if(sign == LV_SIGNAL_LONG_PRESS) {
-                    res = lv_event_send(btn, LV_EVENT_LONG_PRESSED, NULL);
+                    lv_event_send(btn, LV_EVENT_LONG_PRESSED, NULL);
                 } else if(sign == LV_SIGNAL_LONG_PRESS_REP) {
-                    res = lv_event_send(btn, LV_EVENT_LONG_PRESSED_REPEAT, NULL);
+                    lv_event_send(btn, LV_EVENT_LONG_PRESSED_REPEAT, NULL);
                 } else if(sign == LV_SIGNAL_RELEASED) {
                     ext->last_sel = btn;
-                    if(indev->proc.long_pr_sent == 0) {
-                        res = lv_event_send(btn, LV_EVENT_SHORT_CLICKED, NULL);
-                    }
-                    if(lv_indev_is_dragging(indev) == false && res == LV_RES_OK) {
-                        res = lv_event_send(btn, LV_EVENT_CLICKED, NULL);
-                    }
-                    if(res == LV_RES_OK) {
-                        res = lv_event_send(btn, LV_EVENT_RELEASED, NULL);
-                    }
+                    if(indev->proc.long_pr_sent == 0)
+                        lv_event_send(btn, LV_EVENT_SHORT_CLICKED, NULL);
+                    if(lv_indev_is_dragging(indev) == false)
+                        lv_event_send(btn, LV_EVENT_CLICKED, NULL);
+                    lv_event_send(btn, LV_EVENT_RELEASED, NULL);
                 }
             }
         }
@@ -939,60 +932,6 @@ static void lv_list_btn_single_selected(lv_obj_t * btn)
         }
         e = lv_list_get_next_btn(list, e);
     } while(e != NULL);
-}
-
-/**
- * Check if this is really a list button or another object.
- * @param list_btn List button
- */
-static bool lv_list_is_list_btn(lv_obj_t * list_btn)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_btn, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_btn"))
-            return true;
-    }
-    return false;
-}
-
-/**
- * Check if this is really a list label or another object.
- * @param list_label List label
- */
-static bool lv_list_is_list_label(lv_obj_t * list_label)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_label, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_label"))
-            return true;
-    }
-    return false;
-}
-
-/**
- * Check if this is really a list image or another object.
- * @param list_image List image
- */
-static bool lv_list_is_list_img(lv_obj_t * list_img)
-{
-    lv_obj_type_t type;
-
-    lv_obj_get_type(list_img, &type);
-    uint8_t cnt;
-    for(cnt = 0; cnt < LV_MAX_ANCESTOR_NUM; cnt++) {
-        if(type.type[cnt] == NULL) break;
-        if(!strcmp(type.type[cnt], "lv_img"))
-            return true;
-    }
-    return false;
 }
 
 #endif
