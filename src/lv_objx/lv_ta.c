@@ -48,7 +48,6 @@ static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void 
 static void cursor_blink_anim(lv_obj_t * ta, uint8_t show);
 static void pwd_char_hider_anim(lv_obj_t * ta, int32_t x);
 #endif
-static void pwd_char_hider_anim_ready(lv_anim_t * a);
 static void pwd_char_hider(lv_obj_t * ta);
 static bool char_is_accepted(lv_obj_t * ta, uint32_t c);
 static void get_cursor_style(lv_obj_t * ta, lv_style_t * style_res);
@@ -253,7 +252,7 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
         a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
         a.time           = LV_TA_PWD_SHOW_TIME;
         a.act_time       = 0;
-        a.ready_cb         = pwd_char_hider_anim_ready;
+        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
         a.start          = 0;
         a.end            = 1;
         a.repeat         = 0;
@@ -333,7 +332,7 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
         a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
         a.time           = LV_TA_PWD_SHOW_TIME;
         a.act_time       = 0;
-        a.ready_cb       = pwd_char_hider_anim_ready;
+        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
         a.start          = 0;
         a.end            = 1;
         a.repeat         = 0;
@@ -457,7 +456,7 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
     /*Don't let 'width == 0' because the cursor will not be visible*/
     if(lv_obj_get_width(ext->label) == 0) {
         const lv_style_t * style = lv_obj_get_style(ext->label);
-        lv_obj_set_width(ext->label, lv_font_get_width(style->text.font, ' '));
+        lv_obj_set_width(ext->label, lv_font_get_glyph_width(style->text.font, ' ', '\0'));
     }
 
     if(ext->pwd_mode != 0) {
@@ -470,10 +469,10 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
         /*Auto hide characters*/
         lv_anim_t a;
         a.var            = ta;
-        a.exec_cb        = (lv_anim_exec_cb_t)pwd_char_hider_anim;
+        a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
         a.time           = LV_TA_PWD_SHOW_TIME;
         a.act_time       = 0;
-        a.ready_cb       = pwd_char_hider_anim_ready;
+        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
         a.start          = 0;
         a.end            = 1;
         a.repeat         = 0;
@@ -549,7 +548,7 @@ void lv_ta_set_cursor_pos(lv_obj_t * ta, int16_t pos)
     lv_obj_get_coords(ext->label, &label_cords);
 
     /*Check the top*/
-    lv_coord_t font_h = lv_font_get_height(font_p);
+    lv_coord_t font_h = lv_font_get_line_height(font_p);
     if(lv_obj_get_y(label_par) + cur_pos.y < 0) {
         lv_obj_set_y(label_par, -cur_pos.y + style->body.padding.top);
     }
@@ -665,7 +664,7 @@ void lv_ta_set_one_line(lv_obj_t * ta, bool en)
         const lv_style_t * style_ta    = lv_obj_get_style(ta);
         const lv_style_t * style_scrl  = lv_obj_get_style(lv_page_get_scrl(ta));
         const lv_style_t * style_label = lv_obj_get_style(ext->label);
-        lv_coord_t font_h              = lv_font_get_height(style_label->text.font);
+        lv_coord_t font_h              = lv_font_get_line_height(style_label->text.font);
 
         ext->one_line = 1;
         lv_page_set_scrl_fit2(ta, LV_FIT_TIGHT, LV_FIT_FLOOD);
@@ -1051,7 +1050,7 @@ void lv_ta_cursor_down(lv_obj_t * ta)
     /*Increment the y with one line and keep the valid x*/
     const lv_style_t * label_style = lv_obj_get_style(ext->label);
     const lv_font_t * font_p       = label_style->text.font;
-    lv_coord_t font_h              = lv_font_get_height(font_p);
+    lv_coord_t font_h              = lv_font_get_line_height(font_p);
     pos.y += font_h + label_style->text.line_space + 1;
     pos.x = ext->cursor.valid_x;
 
@@ -1082,7 +1081,7 @@ void lv_ta_cursor_up(lv_obj_t * ta)
     /*Decrement the y with one line and keep the valid x*/
     const lv_style_t * label_style = lv_obj_get_style(ext->label);
     const lv_font_t * font         = label_style->text.font;
-    lv_coord_t font_h              = lv_font_get_height(font);
+    lv_coord_t font_h              = lv_font_get_line_height(font);
     pos.y -= font_h + label_style->text.line_space - 1;
     pos.x = ext->cursor.valid_x;
 
@@ -1224,7 +1223,7 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
             if(ext->one_line) {
                 /*In one line mode refresh the Text Area height because 'vpad' can modify it*/
                 const lv_style_t * style_label = lv_obj_get_style(ext->label);
-                lv_coord_t font_h              = lv_font_get_height(style_label->text.font);
+                lv_coord_t font_h              = lv_font_get_line_height(style_label->text.font);
                 lv_obj_set_height(
                     ta, font_h + style_ta->body.padding.top + style_ta->body.padding.bottom +
                             style_scrl->body.padding.top + style_scrl->body.padding.bottom);
@@ -1354,7 +1353,7 @@ static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void 
     if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         /*Set ext. size because the cursor might be out of this object*/
         const lv_style_t * style_label = lv_obj_get_style(ext->label);
-        lv_coord_t font_h        = lv_font_get_height(style_label->text.font);
+        lv_coord_t font_h        = lv_font_get_line_height(style_label->text.font);
         scrl->ext_draw_pad = LV_MATH_MAX(scrl->ext_draw_pad, style_label->text.line_space + font_h);
     } else if(sign == LV_SIGNAL_CORD_CHG) {
         /*Set the label width according to the text area width*/
@@ -1418,17 +1417,6 @@ static void pwd_char_hider_anim(lv_obj_t * ta, int32_t x)
 }
 
 #endif
-
-
-/**
- * Call when an animation is ready to convert all characters to '*'
- * @param a pointer to the animation
- */
-static void pwd_char_hider_anim_ready(lv_anim_t * a)
-{
-    lv_obj_t * ta = a->var;
-    pwd_char_hider(ta);
-}
 
 /**
  * Hide all characters (convert them to '*')
@@ -1533,13 +1521,15 @@ static void refr_cursor_area(lv_obj_t * ta)
 
     uint32_t letter = lv_txt_encoded_next(&txt[byte_pos], NULL);
 
-    lv_coord_t letter_h = lv_font_get_height(label_style->text.font);
+    lv_coord_t letter_h = lv_font_get_line_height(label_style->text.font);
+
     /*Set letter_w (set not 0 on non printable but valid chars)*/
     lv_coord_t letter_w;
     if(letter == '\0' || letter == '\n' || letter == '\r') {
-        letter_w = lv_font_get_width(label_style->text.font, ' ');
+        letter_w = lv_font_get_glyph_width(label_style->text.font, ' ', '\0');
     } else {
-        letter_w = lv_font_get_width(label_style->text.font, letter);
+        /*`letter_next` parameter is '\0' to ignore kerning*/
+        letter_w = lv_font_get_glyph_width(label_style->text.font, letter, '\0');
     }
 
     lv_point_t letter_pos;
@@ -1557,9 +1547,9 @@ static void refr_cursor_area(lv_obj_t * ta)
         }
 
         if(letter == '\0' || letter == '\n' || letter == '\r') {
-            letter_w = lv_font_get_width(label_style->text.font, ' ');
+            letter_w = lv_font_get_glyph_width(label_style->text.font, ' ', '\0');
         } else {
-            letter_w = lv_font_get_width(label_style->text.font, letter);
+            letter_w = lv_font_get_glyph_width(label_style->text.font, letter, '\0');
         }
     }
 

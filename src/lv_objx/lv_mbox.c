@@ -202,43 +202,14 @@ void lv_mbox_start_auto_close(lv_obj_t * mbox, uint16_t delay)
 
     if(ext->anim_time != 0) {
         /*Add shrinking animations*/
-        lv_anim_t a;
-        a.var = mbox;
-        a.start = lv_obj_get_height(mbox);
-        a.end = 0;
-        a.exec_cb = (lv_anim_exec_cb_t)lv_obj_set_height;
-        a.path_cb = lv_anim_path_linear;
-        a.ready_cb = NULL;
-        a.act_time = -delay;
-        a.time = ext->anim_time;
-        a.playback = 0;
-        a.playback_pause = 0;
-        a.repeat = 0;
-        a.repeat_pause = 0;
-        lv_anim_create(&a);
-
-        a.start = lv_obj_get_width(mbox);
-        a.ready_cb = lv_mbox_close_ready_cb;
-        lv_anim_create(&a);
+        lv_obj_animate(mbox, LV_ANIM_GROW_H | LV_ANIM_OUT, ext->anim_time, delay, NULL);
+        lv_obj_animate(mbox, LV_ANIM_GROW_V | LV_ANIM_OUT, ext->anim_time, delay,
+                       lv_mbox_close_ready_cb);
 
         /*Disable fit to let shrinking work*/
         lv_cont_set_fit(mbox, LV_FIT_NONE);
     } else {
-        /*Create an animation to delete the mbox `delay` ms later*/
-        lv_anim_t a;
-        a.var = mbox;
-        a.start = 0;
-        a.end = 1;
-        a.exec_cb = (lv_anim_exec_cb_t)NULL;
-        a.path_cb = lv_anim_path_linear;
-        a.ready_cb = lv_mbox_close_ready_cb;
-        a.act_time = -delay;
-        a.time = 0;
-        a.playback = 0;
-        a.playback_pause = 0;
-        a.repeat = 0;
-        a.repeat_pause = 0;
-        lv_anim_create(&a);
+        lv_obj_animate(mbox, LV_ANIM_NONE, ext->anim_time, delay, lv_mbox_close_ready_cb);
     }
 #else
     (void)delay; /*Unused*/
@@ -512,7 +483,7 @@ static void mbox_realign(lv_obj_t * mbox)
     if(ext->btnm) {
         const lv_style_t * btn_bg_style  = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_BG);
         const lv_style_t * btn_rel_style = lv_mbox_get_style(mbox, LV_MBOX_STYLE_BTN_REL);
-        lv_coord_t font_h                = lv_font_get_height(btn_rel_style->text.font);
+        lv_coord_t font_h                = lv_font_get_line_height(btn_rel_style->text.font);
         lv_obj_set_size(ext->btnm, w,
                         font_h + btn_rel_style->body.padding.top +
                             btn_rel_style->body.padding.bottom + btn_bg_style->body.padding.top +
@@ -527,7 +498,7 @@ static void lv_mbox_close_ready_cb(lv_anim_t * a)
 
 static void lv_mbox_default_event_cb(lv_obj_t * mbox, lv_event_t event)
 {
-    if(event != LV_EVENT_SELECTED) return;
+    if(event != LV_EVENT_CLICKED) return;
 
     uint16_t btn_id = lv_mbox_get_active_btn(mbox);
     if(btn_id == LV_BTNM_BTN_NONE) return;
