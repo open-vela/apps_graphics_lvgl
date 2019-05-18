@@ -74,8 +74,14 @@ lv_group_t * lv_group_create(void)
     group->refocus_policy = LV_GROUP_REFOCUS_POLICY_PREV;
     group->wrap           = 1;
 
-#if LV_USE_USER_DATA
+#if LV_USE_USER_DATA_SINGLE
     memset(&group->user_data, 0, sizeof(lv_group_user_data_t));
+#endif
+
+#if LV_USE_USER_DATA_MULTI
+    memset(&group->focus_user_data, 0, sizeof(lv_group_user_data_t));
+    memset(&group->style_mod_user_data, 0, sizeof(lv_group_user_data_t));
+    memset(&group->style_mod_edit_user_data, 0, sizeof(lv_group_user_data_t));
 #endif
 
     /*Initialize style modification callbacks from current theme*/
@@ -279,15 +285,7 @@ lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c)
     lv_obj_t * act = lv_group_get_focused(group);
     if(act == NULL) return LV_RES_OK;
 
-    lv_res_t res;
-
-    res = act->signal_cb(act, LV_SIGNAL_CONTROL, &c);
-    if(res != LV_RES_OK) return res;
-
-    res = lv_event_send(act, LV_EVENT_KEY, &c);
-    if(res != LV_RES_OK) return res;
-
-    return res;
+    return act->signal_cb(act, LV_SIGNAL_CONTROL, &c);
 }
 
 /**
@@ -403,7 +401,7 @@ lv_obj_t * lv_group_get_focused(const lv_group_t * group)
     return *group->obj_focus;
 }
 
-#if LV_USE_USER_DATA
+#if LV_USE_USER_DATA_SINGLE
 /**
  * Get a pointer to the group's user data
  * @param group pointer to an group
@@ -671,7 +669,10 @@ static void obj_to_foreground(lv_obj_t * obj)
 
     if(last_top != NULL) {
         /*Move the last_top object to the foreground*/
-        lv_obj_move_foreground(last_top);
+        lv_obj_t * par = lv_obj_get_parent(last_top);
+        /*After list change it will be the new head*/
+        lv_ll_chg_list(&par->child_ll, &par->child_ll, last_top);
+        lv_obj_invalidate(last_top);
     }
 }
 
