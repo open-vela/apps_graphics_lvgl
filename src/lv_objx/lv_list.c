@@ -288,8 +288,7 @@ void lv_list_set_single_mode(lv_obj_t * list, bool mode)
 /**
  * Make a button selected
  * @param list pointer to a list object
- * @param btn pointer to a button to select
- *            NULL to not select any buttons
+ * @param btn pointer to a button to selectthe
  */
 void lv_list_set_btn_selected(lv_obj_t * list, lv_obj_t * btn)
 {
@@ -304,9 +303,6 @@ void lv_list_set_btn_selected(lv_obj_t * list, lv_obj_t * btn)
     }
 
     ext->selected_btn = btn;
-
-    /*Don't forgat whci hbutton was selected.
-     * It will be restored when the list is focused.*/
     if(btn != NULL) {
         ext->last_sel = btn;
     }
@@ -586,8 +582,8 @@ const lv_style_t * lv_list_get_style(const lv_obj_t * list, lv_list_style_t type
 
     switch(type) {
         case LV_LIST_STYLE_BG: style = lv_page_get_style(list, LV_PAGE_STYLE_BG); break;
-        case LV_LIST_STYLE_SCRL: style = lv_page_get_style(list, LV_PAGE_STYLE_SCRL); break;
-        case LV_LIST_STYLE_SB: style = lv_page_get_style(list, LV_PAGE_STYLE_SB); break;
+        case LV_LIST_STYLE_SCRL: style = lv_page_get_style(list, LV_PAGE_STYLE_SB); break;
+        case LV_LIST_STYLE_SB: style = lv_page_get_style(list, LV_PAGE_STYLE_SCRL); break;
         case LV_LIST_STYLE_EDGE_FLASH:
             style = lv_page_get_style(list, LV_PAGE_STYLE_EDGE_FLASH);
             break;
