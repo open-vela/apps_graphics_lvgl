@@ -27,7 +27,7 @@
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_log_print_g_cb_t custom_print_cb;
+static void (*print_cb)(lv_log_level_t, const char *, uint32_t, const char *);
 
 /**********************
  *      MACROS
@@ -38,14 +38,14 @@ static lv_log_print_g_cb_t custom_print_cb;
  **********************/
 
 /**
- * Register custom print/write function to call when a log is added.
- * It can format its "File path", "Line number" and "Description" as required
- * and send the formatted log message to a consol or serial port.
- * @param print_cb a function pointer to print a log
+ * Register custom print (or anything else) function to call when log is added
+ * @param f a function pointer:
+ *          `void my_print (lv_log_level_t level, const char * file, uint32_t line, const char *
+ * dsc)`
  */
-void lv_log_register_print_cb(lv_log_print_g_cb_t print_cb)
+void lv_log_register_print(void f(lv_log_level_t, const char *, uint32_t, const char *))
 {
-    custom_print_cb = print_cb;
+    print_cb = f;
 }
 
 /**
@@ -65,7 +65,7 @@ void lv_log_add(lv_log_level_t level, const char * file, int line, const char * 
         static const char * lvl_prefix[] = {"Trace", "Info", "Warn", "Error"};
         printf("%s: %s \t(%s #%d)\n", lvl_prefix[level], dsc, file, line);
 #else
-        if(custom_print_cb) custom_print_cb(level, file, line, dsc);
+        if(print_cb) print_cb(level, file, line, dsc);
 #endif
     }
 }
