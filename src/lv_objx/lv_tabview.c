@@ -18,7 +18,7 @@
  *      DEFINES
  *********************/
 #if LV_USE_ANIMATION
-#ifndef LV_TABVIEW_ANIM_TIME
+#ifndef LV_TABVIEW_DEF_ANIM_TIME
 #define LV_TABVIEW_DEF_ANIM_TIME                                                                   \
     300 /*Animation time of focusing to the a list element [ms] (0: no animation)  */
 #endif
@@ -1023,7 +1023,7 @@ static void tabview_realign(lv_obj_t * tabview)
         switch(ext->btns_pos) {
             case LV_TABVIEW_BTNS_POS_TOP:
             case LV_TABVIEW_BTNS_POS_BOTTOM:
-                btns_size = lv_font_get_line_height(style_btn_rel->text.font) +
+                btns_size = lv_font_get_height(style_btn_rel->text.font) +
                             style_btn_rel->body.padding.top +
                             style_btn_rel->body.padding.bottom +
                             style_btn_bg->body.padding.top + style_btn_bg->body.padding.bottom;
@@ -1031,7 +1031,7 @@ static void tabview_realign(lv_obj_t * tabview)
                 break;
             case LV_TABVIEW_BTNS_POS_LEFT:
             case LV_TABVIEW_BTNS_POS_RIGHT:
-                btns_size = lv_font_get_glyph_width(style_btn_rel->text.font, 'A', '\0') +
+                btns_size = lv_font_get_width(style_btn_rel->text.font, 0x0041) + // 'A'
                             style_btn_rel->body.padding.left +
                             style_btn_rel->body.padding.right +
                             style_btn_bg->body.padding.left + style_btn_bg->body.padding.right;
