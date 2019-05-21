@@ -52,15 +52,11 @@ typedef struct
 {
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
+    uint16_t anim_time;                              /*Scroll animation time*/
     const lv_style_t * styles_btn[LV_BTN_STATE_NUM]; /*Styles of the list element buttons*/
     const lv_style_t * style_img;                    /*Style of the list element images on buttons*/
-    uint16_t size;                                   /*the number of items(buttons) in the list*/
-#if LV_USE_ANIMATION
-    uint16_t anim_time;                              /*Scroll animation time*/
-#endif
-
-    uint8_t single_mode:1;                                /* whether single selected mode is enabled */
-
+    uint32_t size;                                   /*the number of items(buttons) in the list*/
+    bool single_mode;                                /* whether single selected mode is enabled */
 #if LV_USE_GROUP
     lv_obj_t * last_sel; /* The last selected button. It will be reverted when the list is focused again */
     lv_obj_t * selected_btn; /* The button is currently being selected*/
@@ -120,7 +116,7 @@ lv_obj_t * lv_list_add(lv_obj_t * list, const void * img_src, const char * txt,
  * lv_list_ext_t.size
  * @return true: successfully deleted
  */
-bool lv_list_remove(const lv_obj_t * list, uint16_t index);
+bool lv_list_remove(const lv_obj_t * list, uint32_t index);
 
 /*=====================
  * Setter functions
@@ -249,7 +245,7 @@ int32_t lv_list_get_btn_index(const lv_obj_t * list, const lv_obj_t * btn);
  * @param list pointer to a list object
  * @return the number of buttons in the list
  */
-uint16_t lv_list_get_size(const lv_obj_t * list);
+uint32_t lv_list_get_size(const lv_obj_t * list);
 
 #if LV_USE_GROUP
 /**

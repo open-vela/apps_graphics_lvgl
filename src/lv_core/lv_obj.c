@@ -378,13 +378,8 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
 
     /*Delete from the group*/
 #if LV_USE_GROUP
-    bool was_focused = false;
     lv_group_t * group = lv_obj_get_group(obj);
-
-    if(group) {
-        if(lv_group_get_focused(group) == obj) was_focused = true;
-        lv_group_remove_obj(obj);
-    }
+    if(group) lv_group_remove_obj(obj);
 #endif
 
     /*Remove the animations from this object*/
@@ -432,7 +427,7 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
         }
 
 #if LV_USE_GROUP
-        if(indev->group == group && was_focused) {
+        if(indev->group == group && obj == lv_indev_get_obj_act() ) {
             lv_indev_reset(indev);
         }
 #endif
@@ -2051,12 +2046,12 @@ static bool lv_obj_design(lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mo
 {
     if(mode == LV_DESIGN_COVER_CHK) {
 
-        /*Most trivial test. The mask is fully  IN the object? If no it surely not covers it*/
+        /*Most trivial test. Is the mask fully IN the object? If no it surely doesn't cover it*/
         if(lv_area_is_in(mask_p, &obj->coords) == false) return false;
 
         /*Can cover the area only if fully solid (no opacity)*/
         const lv_style_t * style = lv_obj_get_style(obj);
-        if(style->body.opa != LV_OPA_COVER) return false;
+        if(style->body.opa < LV_OPA_MAX) return false;
 
         /* Because of the radius it is not sure the area is covered
          * Check the areas where there is no radius*/
@@ -2197,14 +2192,10 @@ static void delete_children(lv_obj_t * obj)
      * the object still has access to all children during the
      * LV_SIGNAL_DEFOCUS call*/
 #if LV_USE_GROUP
-    bool was_focused = false;
     lv_group_t * group = lv_obj_get_group(obj);
-
-    if(group) {
-        if(lv_group_get_focused(obj->group_p) == obj) was_focused = true;
-        lv_group_remove_obj(obj);
-    }
+    if(group) lv_group_remove_obj(obj);
 #endif
+
 
     while(i != NULL) {
         /*Get the next object before delete this*/
@@ -2239,7 +2230,7 @@ static void delete_children(lv_obj_t * obj)
             indev->proc.types.pointer.last_pressed = NULL;
         }
 #if LV_USE_GROUP
-        if(indev->group == group && was_focused) {
+        if(indev->group == group && obj == lv_indev_get_obj_act() ) {
             lv_indev_reset(indev);
         }
 #endif
