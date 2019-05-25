@@ -6,7 +6,6 @@ CSRCS += lv_draw_line.c
 CSRCS += lv_draw_img.c
 CSRCS += lv_draw_arc.c
 CSRCS += lv_draw_triangle.c
-CSRCS += lv_img_decoder.c
 
 DEPPATH += --dep-path $(LVGL_DIR)/lvgl/src/lv_draw
 VPATH += :$(LVGL_DIR)/lvgl/src/lv_draw

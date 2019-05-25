@@ -8,7 +8,6 @@
  *********************/
 #include "lv_obj.h"
 #include "../lv_misc/lv_mem.h"
-#include "../lv_misc/lv_anim.h"
 
 /*********************
  *      DEFINES
@@ -27,12 +26,22 @@
 /**********************
  *      TYPEDEFS
  **********************/
+#if LV_USE_ANIMATION
+typedef struct
+{
+    lv_style_t style_start; /*Save not only pointers because can be same as 'style_anim' then it
+                               will be modified too*/
+    lv_style_t style_end;
+    lv_style_t * style_anim;
+    lv_anim_ready_cb_t ready_cb;
+} lv_style_anim_dsc_t;
+#endif
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 #if LV_USE_ANIMATION
-static void style_animator(lv_style_anim_dsc_t * dsc, lv_anim_value_t val);
+static void style_animator(lv_style_anim_dsc_t * dsc, int32_t val);
 static void style_animation_common_end_cb(lv_anim_t * a);
 #endif
 
@@ -277,38 +286,44 @@ void lv_style_mix(const lv_style_t * start, const lv_style_t * end, lv_style_t *
 
 #if LV_USE_ANIMATION
 
-
-void lv_style_anim_init(lv_anim_t * a)
+/**
+ * Create an animation from a pre-configured 'lv_style_anim_t' variable
+ * @param anim pointer to a pre-configured 'lv_style_anim_t' variable (will be copied)
+ * @return pointer to a descriptor. Really this variable will be animated. (Can be used in
+ * `lv_anim_del(dsc, NULL)`)
+ */
+void * lv_style_anim_create(lv_style_anim_t * anim)
 {
-    lv_anim_init(a);
-    a->start          = 0;
-    a->end            = STYLE_MIX_MAX;
-    a->exec_cb        = (lv_anim_exec_cb_t)style_animator;
-    a->path_cb        = lv_anim_path_linear;
-    a->ready_cb       = style_animation_common_end_cb;
+    lv_style_anim_dsc_t * dsc;
+    dsc = lv_mem_alloc(sizeof(lv_style_anim_dsc_t));
+    lv_mem_assert(dsc);
+    if(dsc == NULL) return NULL;
 
-   lv_style_anim_dsc_t * dsc;
-   dsc = lv_mem_alloc(sizeof(lv_style_anim_dsc_t));
-   lv_mem_assert(dsc);
-   if(dsc == NULL) return;
-   dsc->ready_cb = NULL;
-   dsc->style_anim = NULL;
-   lv_style_copy(&dsc->style_start, &lv_style_plain);
-   lv_style_copy(&dsc->style_end, &lv_style_plain);
+    dsc->style_anim = anim->style_anim;
+    memcpy(&dsc->style_start, anim->style_start, sizeof(lv_style_t));
+    memcpy(&dsc->style_end, anim->style_end, sizeof(lv_style_t));
+    memcpy(dsc->style_anim, anim->style_start, sizeof(lv_style_t));
+    dsc->ready_cb = anim->ready_cb;
 
-   a->var            = (void *)dsc;
+    lv_anim_t a;
+    a.var            = (void *)dsc;
+    a.start          = 0;
+    a.end            = STYLE_MIX_MAX;
+    a.exec_cb        = (lv_anim_exec_cb_t)style_animator;
+    a.path_cb        = lv_anim_path_linear;
+    a.ready_cb       = style_animation_common_end_cb;
+    a.act_time       = anim->act_time;
+    a.time           = anim->time;
+    a.playback       = anim->playback;
+    a.playback_pause = anim->playback_pause;
+    a.repeat         = anim->repeat;
+    a.repeat_pause   = anim->repeat_pause;
 
+    lv_anim_create(&a);
+
+    return dsc;
 }
 
-void lv_style_anim_set_styles(lv_anim_t * a, lv_style_t * to_anim, const lv_style_t * start, const lv_style_t * end)
-{
-
-    lv_style_anim_dsc_t * dsc = a->var;
-    dsc->style_anim = to_anim;
-    memcpy(&dsc->style_start, start, sizeof(lv_style_t));
-    memcpy(&dsc->style_end, end, sizeof(lv_style_t));
-    memcpy(dsc->style_anim, start, sizeof(lv_style_t));
-}
 #endif
 /**********************
  *   STATIC FUNCTIONS
@@ -317,9 +332,9 @@ void lv_style_anim_set_styles(lv_anim_t * a, lv_style_t * to_anim, const lv_styl
 /**
  * Used by the style animations to set the values of a style according to start and end style.
  * @param dsc the 'animated variable' set by lv_style_anim_create()
- * @param val the current state of the animation between 0 and LV_ANIM_RESOLUTION
+ * @param val the current state of the animation between 0 and LV_STYLE_ANIM_RES
  */
-static void style_animator(lv_style_anim_dsc_t * dsc, lv_anim_value_t val)
+static void style_animator(lv_style_anim_dsc_t * dsc, int32_t val)
 {
     const lv_style_t * start = &dsc->style_start;
     const lv_style_t * end   = &dsc->style_end;
