@@ -68,11 +68,8 @@ typedef struct
         char tmp[ sizeof(char *) ];    /* Directly store the characters if <=4 characters */
     } dot;
     uint16_t dot_end;       /*The text end position in dot mode (Handled by the library)*/
-    lv_point_t offset;      /*Text draw position offset*/
-
-#if LV_USE_ANIMATION
     uint16_t anim_speed;    /*Speed of scroll and roll animation in px/sec unit*/
-#endif
+    lv_point_t offset;      /*Text draw position offset*/
 
 #if LV_LABEL_TEXT_SEL
     uint16_t txt_sel_start;    /*Left-most selection character*/

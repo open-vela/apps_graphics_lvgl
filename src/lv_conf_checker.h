@@ -204,11 +204,14 @@
 #define LV_IMG_CF_ALPHA     1
 #endif
 
-/*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
-
 /*1: Add a `user_data` to drivers and objects*/
-#ifndef LV_USE_USER_DATA
-#define LV_USE_USER_DATA 1
+#ifndef LV_USE_USER_DATA_SINGLE
+#define LV_USE_USER_DATA_SINGLE 1
+#endif
+
+/*1: Add separate `user_data` for every callback*/
+#ifndef LV_USE_USER_DATA_MULTI
+#define LV_USE_USER_DATA_MULTI  0
 #endif
 
 /*=====================
@@ -230,6 +233,7 @@
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN
 #endif
+
 
 /* 1: Variable length array is supported*/
 #ifndef LV_COMPILER_VLA_SUPPORTED
@@ -601,7 +605,7 @@
 #define LV_USE_PAGE     1
 #endif
 
-/*Preload (dependencies: lv_arc, lv_anim)*/
+/*Preload (dependencies: lv_arc)*/
 #ifndef LV_USE_PRELOAD
 #define LV_USE_PRELOAD      1
 #endif
@@ -653,11 +657,11 @@
 #define LV_USE_TA       1
 #endif
 #if LV_USE_TA != 0
-#ifndef LV_TA_DEF_CURSOR_BLINK_TIME
-#  define LV_TA_DEF_CURSOR_BLINK_TIME 400     /*ms*/
+#ifndef LV_TA_CURSOR_BLINK_TIME
+#  define LV_TA_CURSOR_BLINK_TIME 400     /*ms*/
 #endif
-#ifndef LV_TA_DEF_PWD_SHOW_TIME
-#  define LV_TA_DEF_PWD_SHOW_TIME     1500    /*ms*/
+#ifndef LV_TA_PWD_SHOW_TIME
+#  define LV_TA_PWD_SHOW_TIME     1500    /*ms*/
 #endif
 #endif
 
