@@ -99,12 +99,17 @@ typedef struct _disp_drv_t
                         const lv_area_t * fill_area, lv_color_t color);
 #endif
 
-    /*On CHROMA_KEYED images this color will be transparent.
-     * `LV_COLOR_TRANSP` by default. (lv_conf.h)*/
-    lv_color_t color_chroma_key;
-
-#if LV_USE_USER_DATA
+#if LV_USE_USER_DATA_SINGLE
     lv_disp_drv_user_data_t user_data;
+#endif
+
+#if LV_USE_USER_DATA_MULTI
+    lv_disp_drv_user_data_t flush_user_data;
+    lv_disp_drv_user_data_t mem_blend_user_data;
+    lv_disp_drv_user_data_t mem_fill_user_data;
+    lv_disp_drv_user_data_t rounder_user_data;
+    lv_disp_drv_user_data_t set_px_user_data;
+    lv_disp_drv_user_data_t monitor_user_data;
 #endif
 
 } lv_disp_drv_t;
