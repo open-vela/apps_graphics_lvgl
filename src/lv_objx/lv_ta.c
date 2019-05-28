@@ -22,12 +22,12 @@
  *********************/
 /*Test configuration*/
 
-#ifndef LV_TA_CURSOR_BLINK_TIME
-#define LV_TA_CURSOR_BLINK_TIME 400 /*ms*/
+#ifndef LV_TA_DEF_CURSOR_BLINK_TIME
+#define LV_TA_DEF_CURSOR_BLINK_TIME 400 /*ms*/
 #endif
 
-#ifndef LV_TA_PWD_SHOW_TIME
-#define LV_TA_PWD_SHOW_TIME 1500 /*ms*/
+#ifndef LV_TA_DEF_PWD_SHOW_TIME
+#define LV_TA_DEF_PWD_SHOW_TIME 1500 /*ms*/
 #endif
 
 #define LV_TA_DEF_WIDTH (2 * LV_DPI)
@@ -45,8 +45,9 @@ static bool lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t * mask, lv_
 static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param);
 static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void * param);
 #if LV_USE_ANIMATION
-static void cursor_blink_anim(lv_obj_t * ta, uint8_t show);
-static void pwd_char_hider_anim(lv_obj_t * ta, int32_t x);
+static void cursor_blink_anim(lv_obj_t * ta, lv_anim_value_t show);
+static void pwd_char_hider_anim(lv_obj_t * ta, lv_anim_value_t x);
+static void pwd_char_hider_anim_ready(lv_anim_t * a);
 #endif
 static void pwd_char_hider(lv_obj_t * ta);
 static bool char_is_accepted(lv_obj_t * ta, uint32_t c);
@@ -101,9 +102,11 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->cursor.state   = 1;
     ext->pwd_mode       = 0;
     ext->pwd_tmp        = NULL;
+    ext->pwd_show_time  = LV_TA_DEF_PWD_SHOW_TIME;
     ext->accapted_chars = NULL;
     ext->max_length     = 0;
     ext->cursor.style   = NULL;
+    ext->cursor.blink_time = LV_TA_DEF_CURSOR_BLINK_TIME;
     ext->cursor.pos     = 0;
     ext->cursor.type    = LV_CURSOR_LINE;
     ext->cursor.valid_x = 0;
@@ -111,6 +114,11 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->text_sel_en    = 0;
     ext->label          = NULL;
     ext->placeholder    = NULL;
+
+#if LV_USE_ANIMATION
+    ext->pwd_show_time = 0;
+    ext->cursor.blink_time = 0;
+#endif
 
     lv_obj_set_signal_cb(new_ta, lv_ta_signal);
     lv_obj_set_signal_cb(lv_page_get_scrl(new_ta), lv_ta_scrollable_signal);
@@ -161,21 +169,23 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
     }
 
 #if LV_USE_ANIMATION
-    /*Create a cursor blinker animation*/
-    lv_anim_t a;
-    a.var            = new_ta;
-    a.exec_cb             = (lv_anim_exec_cb_t)cursor_blink_anim;
-    a.time           = LV_TA_CURSOR_BLINK_TIME;
-    a.act_time       = 0;
-    a.ready_cb         = NULL;
-    a.start          = 1;
-    a.end            = 0;
-    a.repeat         = 1;
-    a.repeat_pause   = 0;
-    a.playback       = 1;
-    a.playback_pause = 0;
-    a.path_cb           = lv_anim_path_step;
-    lv_anim_create(&a);
+    if(ext->cursor.blink_time) {
+        /*Create a cursor blinker animation*/
+        lv_anim_t a;
+        a.var            = new_ta;
+        a.exec_cb        = (lv_anim_exec_cb_t)cursor_blink_anim;
+        a.time           = ext->cursor.blink_time;
+        a.act_time       = 0;
+        a.ready_cb       = NULL;
+        a.start          = 1;
+        a.end            = 0;
+        a.repeat         = 1;
+        a.repeat_pause   = 0;
+        a.playback       = 1;
+        a.playback_pause = 0;
+        a.path_cb           = lv_anim_path_step;
+        lv_anim_create(&a);
+    }
 #endif
 
     LV_LOG_INFO("text area created");
@@ -245,14 +255,14 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, (const char *)letter_buf);
 
-#if LV_USE_ANIMATION && LV_TA_PWD_SHOW_TIME > 0
+#if LV_USE_ANIMATION
         /*Auto hide characters*/
         lv_anim_t a;
         a.var            = ta;
-        a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
-        a.time           = LV_TA_PWD_SHOW_TIME;
+        a.exec_cb        = (lv_anim_exec_cb_t)pwd_char_hider_anim;
+        a.time           = ext->pwd_show_time;
         a.act_time       = 0;
-        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
+        a.ready_cb       = pwd_char_hider_anim_ready;
         a.start          = 0;
         a.end            = 1;
         a.repeat         = 0;
@@ -261,6 +271,7 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
         a.playback_pause = 0;
         a.path_cb           = lv_anim_path_step;
         lv_anim_create(&a);
+
 #else
         pwd_char_hider(ta);
 #endif
@@ -325,22 +336,22 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, txt);
 
-#if LV_USE_ANIMATION && LV_TA_PWD_SHOW_TIME > 0
-        /*Auto hide characters*/
-        lv_anim_t a;
-        a.var            = ta;
-        a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
-        a.time           = LV_TA_PWD_SHOW_TIME;
-        a.act_time       = 0;
-        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
-        a.start          = 0;
-        a.end            = 1;
-        a.repeat         = 0;
-        a.repeat_pause   = 0;
-        a.playback       = 0;
-        a.playback_pause = 0;
-        a.path_cb           = lv_anim_path_step;
-        lv_anim_create(&a);
+#if LV_USE_ANIMATION
+    /*Auto hide characters*/
+    lv_anim_t a;
+    a.var            = ta;
+    a.exec_cb        = (lv_anim_exec_cb_t)pwd_char_hider_anim;
+    a.time           = ext->pwd_show_time;
+    a.act_time       = 0;
+    a.ready_cb       = pwd_char_hider_anim_ready;
+    a.start          = 0;
+    a.end            = 1;
+    a.repeat         = 0;
+    a.repeat_pause   = 0;
+    a.playback       = 0;
+    a.playback_pause = 0;
+    a.path_cb           = lv_anim_path_step;
+    lv_anim_create(&a);
 #else
         pwd_char_hider(ta);
 #endif
@@ -465,22 +476,22 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
         if(ext->pwd_tmp == NULL) return;
         strcpy(ext->pwd_tmp, txt);
 
-#if LV_USE_ANIMATION && LV_TA_PWD_SHOW_TIME > 0
-        /*Auto hide characters*/
-        lv_anim_t a;
-        a.var            = ta;
-        a.exec_cb             = (lv_anim_exec_cb_t)pwd_char_hider_anim;
-        a.time           = LV_TA_PWD_SHOW_TIME;
-        a.act_time       = 0;
-        a.ready_cb         = (lv_anim_ready_cb_t)pwd_char_hider;
-        a.start          = 0;
-        a.end            = 1;
-        a.repeat         = 0;
-        a.repeat_pause   = 0;
-        a.playback       = 0;
-        a.playback_pause = 0;
-        a.path_cb           = lv_anim_path_step;
-        lv_anim_create(&a);
+#if LV_USE_ANIMATION
+    /*Auto hide characters*/
+    lv_anim_t a;
+    a.var            = ta;
+    a.exec_cb        = (lv_anim_exec_cb_t)pwd_char_hider_anim;
+    a.time           = ext->pwd_show_time;
+    a.act_time       = 0;
+    a.ready_cb       = pwd_char_hider_anim_ready;
+    a.start          = 0;
+    a.end            = 1;
+    a.repeat         = 0;
+    a.repeat_pause   = 0;
+    a.playback       = 0;
+    a.playback_pause = 0;
+    a.path_cb           = lv_anim_path_step;
+    lv_anim_create(&a);
 #else
         pwd_char_hider(ta);
 #endif
@@ -572,21 +583,23 @@ void lv_ta_set_cursor_pos(lv_obj_t * ta, int16_t pos)
     ext->cursor.valid_x = cur_pos.x;
 
 #if LV_USE_ANIMATION
-    /*Reset cursor blink animation*/
-    lv_anim_t a;
-    a.var            = ta;
-    a.exec_cb             = (lv_anim_exec_cb_t)cursor_blink_anim;
-    a.time           = LV_TA_CURSOR_BLINK_TIME;
-    a.act_time       = 0;
-    a.ready_cb         = NULL;
-    a.start          = 1;
-    a.end            = 0;
-    a.repeat         = 1;
-    a.repeat_pause   = 0;
-    a.playback       = 1;
-    a.playback_pause = 0;
-    a.path_cb           = lv_anim_path_step;
-    lv_anim_create(&a);
+    if(ext->cursor.blink_time) {
+        /*Reset cursor blink animation*/
+        lv_anim_t a;
+        a.var            = ta;
+        a.exec_cb        = (lv_anim_exec_cb_t)cursor_blink_anim;
+        a.time           = ext->cursor.blink_time;
+        a.act_time       = 0;
+        a.ready_cb       = NULL;
+        a.start          = 1;
+        a.end            = 0;
+        a.repeat         = 1;
+        a.repeat_pause   = 0;
+        a.playback       = 1;
+        a.playback_pause = 0;
+        a.path_cb           = lv_anim_path_step;
+        lv_anim_create(&a);
+    }
 #endif
 
     refr_cursor_area(ta);
@@ -808,6 +821,60 @@ void lv_ta_set_text_sel(lv_obj_t * ta, bool en)
 #endif
 }
 
+/**
+ * Set how long show the password before changing it to '*'
+ * @param ta pointer to Text area
+ * @param time show time in milliseconds. 0: hide immediately.
+ */
+void lv_ta_set_pwd_show_time(lv_obj_t * ta, uint16_t time)
+{
+#if LV_USE_ANIMATION == 0
+    time = 0;
+#endif
+
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+    ext->pwd_show_time = time;
+}
+
+/**
+ * Set cursor blink animation time
+ * @param ta pointer to Text area
+ * @param time blink period. 0: disable blinking
+ */
+void lv_ta_set_cursor_blink_time(lv_obj_t * ta, uint16_t time)
+{
+#if LV_USE_ANIMATION == 0
+    time = 0;
+#endif
+
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+    ext->cursor.blink_time = time;
+
+#if LV_USE_ANIMATION
+    if(ext->cursor.blink_time) {
+        /*Reset cursor blink animation*/
+        lv_anim_t a;
+        a.var            = ta;
+        a.exec_cb        = (lv_anim_exec_cb_t)cursor_blink_anim;
+        a.time           = ext->cursor.blink_time;
+        a.act_time       = 0;
+        a.ready_cb       = NULL;
+        a.start          = 1;
+        a.end            = 0;
+        a.repeat         = 1;
+        a.repeat_pause   = 0;
+        a.playback       = 1;
+        a.playback_pause = 0;
+        a.path_cb           = lv_anim_path_step;
+        lv_anim_create(&a);
+    } else {
+        ext->cursor.state = 1;
+    }
+#else
+    ext->cursor.state = 1;
+#endif
+}
+
 /*=====================
  * Getter functions
  *====================*/
@@ -986,6 +1053,29 @@ bool lv_ta_get_text_sel_en(lv_obj_t * ta)
     (void) ta; /*Unused*/
     return false;
 #endif
+}
+
+/**
+ * Set how long show the password before changing it to '*'
+ * @param ta pointer to Text area
+ * @return show time in milliseconds. 0: hide immediately.
+ */
+uint16_t lv_ta_get_pwd_show_time(lv_obj_t * ta)
+{
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+
+    return ext->pwd_show_time;
+}
+
+/**
+ * Set cursor blink animation time
+ * @param ta pointer to Text area
+ * @return time blink period. 0: disable blinking
+ */
+uint16_t lv_ta_get_cursor_blink_time(lv_obj_t * ta)
+{
+    lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
+    return ext->cursor.blink_time;
 }
 
 /*=====================
@@ -1385,7 +1475,7 @@ static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void 
  * @param ta pointer to a text area
  * @param hide 1: hide the cursor, 0: show it
  */
-static void cursor_blink_anim(lv_obj_t * ta, uint8_t show)
+static void cursor_blink_anim(lv_obj_t * ta, lv_anim_value_t show)
 {
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(show != ext->cursor.state) {
@@ -1410,12 +1500,21 @@ static void cursor_blink_anim(lv_obj_t * ta, uint8_t show)
  * @param ta unused
  * @param x unused
  */
-static void pwd_char_hider_anim(lv_obj_t * ta, int32_t x)
+static void pwd_char_hider_anim(lv_obj_t * ta, lv_anim_value_t x)
 {
     (void)ta;
     (void)x;
 }
 
+/**
+ * Call when an animation is ready to convert all characters to '*'
+ * @param a pointer to the animation
+ */
+static void pwd_char_hider_anim_ready(lv_anim_t * a)
+{
+    lv_obj_t * ta = a->var;
+    pwd_char_hider(ta);
+}
 #endif
 
 /**

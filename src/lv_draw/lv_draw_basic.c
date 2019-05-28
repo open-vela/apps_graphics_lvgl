@@ -128,7 +128,9 @@ void lv_draw_fill(const lv_area_t * cords_p, const lv_area_t * mask_p, lv_color_
     union_ok = lv_area_intersect(&res_a, cords_p, mask_p);
 
     /*If there are common part of the three area then draw to the vdb*/
-    if(union_ok == false) return;
+    if(union_ok == false) {
+        return;
+    }
 
     lv_disp_t * disp    = lv_refr_get_disp_refreshing();
     lv_disp_buf_t * vdb = lv_disp_get_buf(disp);
@@ -292,6 +294,7 @@ void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * mask_p, const lv
     lv_coord_t col, row;
     uint8_t col_bit;
     uint8_t col_byte_cnt;
+
     uint8_t width_byte_scr = g.box_w >> 3; /*Width in bytes (on the screen finally) (e.g. w = 11 -> 2 bytes wide)*/
     if(g.box_w & 0x7) width_byte_scr++;
     uint8_t width_byte_bpp = (g.box_w * g.bpp) >> 3; /*Letter width in byte. Real width in the font*/
@@ -332,13 +335,16 @@ void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * mask_p, const lv
                     disp->driver.set_px_cb(&disp->driver, (uint8_t *)vdb->buf_act, vdb_width,
                                            (col + pos_x) - vdb->area.x1,
                                            (row + pos_y) - vdb->area.y1, color, px_opa);
-                } else {
+                } else if (vdb_buf_tmp->full != color.full) {
+                    if(px_opa > LV_OPA_MAX) *vdb_buf_tmp = color;
+                    else if(px_opa > LV_OPA_MIN) {
 #if LV_COLOR_SCREEN_TRANSP == 0
-                    *vdb_buf_tmp = lv_color_mix(color, *vdb_buf_tmp, px_opa);
+                        *vdb_buf_tmp = lv_color_mix(color, *vdb_buf_tmp, px_opa);
 #else
-                    *vdb_buf_tmp =
-                        color_mix_2_alpha(*vdb_buf_tmp, (*vdb_buf_tmp).alpha, color, px_opa);
+                        *vdb_buf_tmp =
+                                color_mix_2_alpha(*vdb_buf_tmp, (*vdb_buf_tmp).alpha, color, px_opa);
 #endif
+                    }
                 }
             }
 
@@ -455,7 +461,6 @@ void lv_draw_map(const lv_area_t * cords_p, const lv_area_t * mask_p, const uint
 
     /*In the other cases every pixel need to be checked one-by-one*/
     else {
-        lv_color_t chroma_key_color = LV_COLOR_TRANSP;
         lv_coord_t col;
         lv_color_t last_img_px  = LV_COLOR_BLACK;
         lv_color_t recolored_px = lv_color_mix(recolor, last_img_px, recolor_opa);
@@ -486,7 +491,7 @@ void lv_draw_map(const lv_area_t * cords_p, const lv_area_t * mask_p, const uint
                 }
 
                 /*Handle chroma key*/
-                if(chroma_key && px_color.full == chroma_key_color.full) continue;
+                if(chroma_key && px_color.full == disp->driver.color_chroma_key.full) continue;
 
                 /*Re-color the pixel if required*/
                 if(recolor_opa != LV_OPA_TRANSP) {

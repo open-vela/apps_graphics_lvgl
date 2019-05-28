@@ -17,7 +17,7 @@
  *      DEFINES
  *********************/
 #if LV_USE_ANIMATION
-#ifndef LV_ROLLER_ANIM_TIME
+#ifndef LV_ROLLER_DEF_ANIM_TIME
 #define LV_ROLLER_DEF_ANIM_TIME 200 /*ms*/
 #endif
 #else
@@ -38,7 +38,9 @@ static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * par
 static void refr_position(lv_obj_t * roller, bool anim_en);
 static void refr_height(lv_obj_t * roller);
 static void inf_normalize(void * roller_scrl);
+#if LV_USE_ANIMATION
 static void scroll_anim_ready_cb(lv_anim_t * a);
+#endif
 static void draw_bg(lv_obj_t * roller, const lv_area_t * mask);
 
 /**********************
@@ -407,7 +409,9 @@ static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * par
            lv_obj_get_height(roller) != lv_area_get_height(param)) {
 
             refr_height(roller);
+#if LV_USE_ANIMATION
             lv_anim_del(lv_page_get_scrl(roller), (lv_anim_exec_cb_t)lv_obj_set_y);
+#endif
             lv_ddlist_set_selected(roller, ext->ddlist.sel_opt_id);
             refr_position(roller, false);
         }
@@ -506,7 +510,8 @@ static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, 
         lv_coord_t label_y1   = ext->ddlist.label->coords.y1 - roller->coords.y1;
         lv_coord_t label_unit = font_h + style_label->text.line_space;
         lv_coord_t mid        = (roller->coords.y2 - roller->coords.y1) / 2;
-        id                    = (mid - label_y1 + style_label->text.line_space / 2) / label_unit;
+
+        id = (mid - label_y1 + style_label->text.line_space / 2) / label_unit;
 
         if(id < 0) id = 0;
         if(id >= ext->ddlist.option_cnt) id = ext->ddlist.option_cnt - 1;
@@ -515,18 +520,24 @@ static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, 
         ext->ddlist.sel_opt_id_ori = id;
         res                        = lv_event_send(roller, LV_EVENT_VALUE_CHANGED, &id);
         if(res != LV_RES_OK) return res;
-    } else if(sign == LV_SIGNAL_RELEASED) {
-        /*If picked an option by clicking then set it*/
+    }
+    /*If picked an option by clicking then set it*/
+    else if(sign == LV_SIGNAL_RELEASED) {
         if(!lv_indev_is_dragging(indev)) {
             id = ext->ddlist.sel_opt_id;
 #if LV_USE_GROUP
+            /*In edit mode go to navigate mode if an option is selected*/
             lv_group_t * g = lv_obj_get_group(roller);
             bool editing   = lv_group_get_editing(g);
             if(editing)
-                lv_group_set_editing(
-                    g, false); /*In edit mode go to navigate mode if an option is selected*/
+                lv_group_set_editing(g, false);
 #endif
         }
+    }
+    else if(sign == LV_SIGNAL_PRESSED) {
+#if LV_USE_ANIMATION
+        lv_anim_del(roller_scrl, (lv_anim_exec_cb_t)lv_obj_set_y);
+#endif
     }
 
     /*Position the scrollable according to the new selected option*/
@@ -609,7 +620,11 @@ static void refr_position(lv_obj_t * roller, bool anim_en)
 
     /* Normally the animtaion's `end_cb` sets correct position of the roller is infinite.
      * But without animations do it manually*/
-    if(anim_en == false || ext->ddlist.anim_time == 0) {
+    if(anim_en == false 
+#if LV_USE_ANIMATION
+            || ext->ddlist.anim_time == 0
+#endif
+            ) {
         inf_normalize(roller_scrl);
     }
 
@@ -618,7 +633,11 @@ static void refr_position(lv_obj_t * roller, bool anim_en)
                          ext->ddlist.label->coords.y1 - roller_scrl->coords.y1;
     lv_coord_t new_y = -line_y1 + (h - font_h) / 2;
 
-    if(ext->ddlist.anim_time == 0 || anim_en == false) {
+    if( anim_en == false 
+#if LV_USE_ANIMATION
+            || ext->ddlist.anim_time == 0
+#endif
+            ) {
         lv_obj_set_y(roller_scrl, new_y);
     } else {
 #if LV_USE_ANIMATION
@@ -659,7 +678,9 @@ static void refr_height(lv_obj_t * roller)
     lv_obj_set_height(lv_page_get_scrl(roller),
             lv_obj_get_height(ext->ddlist.label) + lv_obj_get_height(roller));
     lv_obj_align(ext->ddlist.label, NULL, obj_align, 0, 0);
+#if LV_USE_ANIMATION
     lv_anim_del(lv_page_get_scrl(roller), (lv_anim_exec_cb_t)lv_obj_set_y);
+#endif
     lv_ddlist_set_selected(roller, ext->ddlist.sel_opt_id);
 }
 
@@ -694,9 +715,11 @@ static void inf_normalize(void * scrl)
     }
 }
 
+#if LV_USE_ANIMATION
 static void scroll_anim_ready_cb(lv_anim_t * a)
 {
     inf_normalize(a->var);
 }
+#endif
 
 #endif
