@@ -145,11 +145,11 @@ typedef void * lv_group_user_data_t;
 /* 1: Enable alpha indexed images */
 #define LV_IMG_CF_ALPHA     1
 
-/*1: Add a `user_data` to drivers and objects*/
-#define LV_USE_USER_DATA_SINGLE 1
+/*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
+typedef void * lv_img_decoder_user_data_t;
 
-/*1: Add separate `user_data` for every callback*/
-#define LV_USE_USER_DATA_MULTI  0
+/*1: Add a `user_data` to drivers and objects*/
+#define LV_USE_USER_DATA 1
 
 /*=====================
  *  Compiler settings
@@ -164,7 +164,6 @@ typedef void * lv_group_user_data_t;
  * 4 or 8 byte boundary. This alignment will be explicitly applied where needed.
  * E.g. __attribute__((aligned(4))) */
 #define LV_ATTRIBUTE_MEM_ALIGN
-
 
 /* 1: Variable length array is supported*/
 #define LV_COMPILER_VLA_SUPPORTED            1
@@ -395,7 +394,7 @@ typedef void * lv_obj_user_data_t;
 /*Page (dependencies: lv_cont)*/
 #define LV_USE_PAGE     1
 
-/*Preload (dependencies: lv_arc)*/
+/*Preload (dependencies: lv_arc, lv_anim)*/
 #define LV_USE_PRELOAD      1
 #if LV_USE_PRELOAD != 0
 #  define LV_PRELOAD_DEF_ARC_LENGTH   60      /*[deg]*/
@@ -425,8 +424,8 @@ typedef void * lv_obj_user_data_t;
 /*Text area (dependencies: lv_label, lv_page)*/
 #define LV_USE_TA       1
 #if LV_USE_TA != 0
-#  define LV_TA_CURSOR_BLINK_TIME 400     /*ms*/
-#  define LV_TA_PWD_SHOW_TIME     1500    /*ms*/
+#  define LV_TA_DEF_CURSOR_BLINK_TIME 400     /*ms*/
+#  define LV_TA_DEF_PWD_SHOW_TIME     1500    /*ms*/
 #endif
 
 /*Table (dependencies: lv_label)*/
