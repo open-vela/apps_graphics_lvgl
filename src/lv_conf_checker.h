@@ -8,8 +8,6 @@
 #define  LV_CONF_CHECKER_H
 /* clang-format off */
 
-#include <stdint.h>
-
 /*====================
    Graphical settings
  *====================*/
@@ -67,8 +65,6 @@
 #ifndef LV_DPI
 #define LV_DPI              100     /*[px]*/
 #endif
-
-/* Type of coordinates. Should be `int16_t` (or `int32_t` for extreme cases) */
 
 /*=========================
    Memory manager settings
@@ -200,19 +196,19 @@
 
 /* 1: Enable indexed (palette) images */
 #ifndef LV_IMG_CF_INDEXED
-#define LV_IMG_CF_INDEXED       1
+#define LV_IMG_CF_INDEXED   1
 #endif
 
 /* 1: Enable alpha indexed images */
 #ifndef LV_IMG_CF_ALPHA
-#define LV_IMG_CF_ALPHA         1
+#define LV_IMG_CF_ALPHA     1
 #endif
 
 /*Declare the type of the user data of image decoder (can be e.g. `void *`, `int`, `struct`)*/
 
 /*1: Add a `user_data` to drivers and objects*/
 #ifndef LV_USE_USER_DATA
-#define LV_USE_USER_DATA        1
+#define LV_USE_USER_DATA 1
 #endif
 
 /*=====================
@@ -233,12 +229,6 @@
  * E.g. __attribute__((aligned(4))) */
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN
-#endif
-
-/* Attribute to mark large constant arrays for example
- * font's bitmaps */
-#ifndef LV_ATTRIBUTE_LARGE_CONST
-#define LV_ATTRIBUTE_LARGE_CONST
 #endif
 
 /* 1: Variable length array is supported*/
@@ -332,40 +322,78 @@
  *    FONT USAGE
  *===================*/
 
-/* The built-in fonts contains the ASCII range and some Symbols with  4 bit-per-pixel.
- * The symbols are available via `LV_SYMBOL_...` defines
- * More info about fonts: https://docs.littlevgl.com/#Fonts
- * To create a new font go to: https://littlevgl.com/ttf-font-to-c-array
- */
-#ifndef LV_FONT_ROBOTO_12
-#define LV_FONT_ROBOTO_12    0
+/* More info about fonts: https://docs.littlevgl.com/#Fonts
+ * To enable a built-in font use 1,2,4 or 8 values
+ * which will determine the bit-per-pixel. Higher value means smoother fonts */
+#ifndef LV_USE_FONT_DEJAVU_10
+#define LV_USE_FONT_DEJAVU_10              4
 #endif
-#ifndef LV_FONT_ROBOTO_16
-#define LV_FONT_ROBOTO_16    1
+#ifndef LV_USE_FONT_DEJAVU_10_LATIN_SUP
+#define LV_USE_FONT_DEJAVU_10_LATIN_SUP    4
 #endif
-#ifndef LV_FONT_ROBOTO_22
-#define LV_FONT_ROBOTO_22    0
+#ifndef LV_USE_FONT_DEJAVU_10_CYRILLIC
+#define LV_USE_FONT_DEJAVU_10_CYRILLIC     4
 #endif
-#ifndef LV_FONT_ROBOTO_28
-#define LV_FONT_ROBOTO_28    0
+#ifndef LV_USE_FONT_SYMBOL_10
+#define LV_USE_FONT_SYMBOL_10              4
+#endif
+
+#ifndef LV_USE_FONT_DEJAVU_20
+#define LV_USE_FONT_DEJAVU_20              4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_20_LATIN_SUP
+#define LV_USE_FONT_DEJAVU_20_LATIN_SUP    4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_20_CYRILLIC
+#define LV_USE_FONT_DEJAVU_20_CYRILLIC     4
+#endif
+#ifndef LV_USE_FONT_SYMBOL_20
+#define LV_USE_FONT_SYMBOL_20              4
+#endif
+
+#ifndef LV_USE_FONT_DEJAVU_30
+#define LV_USE_FONT_DEJAVU_30              4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_30_LATIN_SUP
+#define LV_USE_FONT_DEJAVU_30_LATIN_SUP    4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_30_CYRILLIC
+#define LV_USE_FONT_DEJAVU_30_CYRILLIC     4
+#endif
+#ifndef LV_USE_FONT_SYMBOL_30
+#define LV_USE_FONT_SYMBOL_30              4
+#endif
+
+#ifndef LV_USE_FONT_DEJAVU_40
+#define LV_USE_FONT_DEJAVU_40              4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_40_LATIN_SUP
+#define LV_USE_FONT_DEJAVU_40_LATIN_SUP    4
+#endif
+#ifndef LV_USE_FONT_DEJAVU_40_CYRILLIC
+#define LV_USE_FONT_DEJAVU_40_CYRILLIC     4
+#endif
+#ifndef LV_USE_FONT_SYMBOL_40
+#define LV_USE_FONT_SYMBOL_40              4
+#endif
+
+#ifndef LV_USE_FONT_MONOSPACE_8
+#define LV_USE_FONT_MONOSPACE_8            1
 #endif
 
 /* Optionally declare your custom fonts here.
  * You can use these fonts as default font too
  * and they will be available globally. E.g.
  * #define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(my_font_1) \
- *                                LV_FONT_DECLARE(my_font_2)
+ *                                LV_FONT_DECLARE(my_font_2) \
  */
 #ifndef LV_FONT_CUSTOM_DECLARE
 #define LV_FONT_CUSTOM_DECLARE
 #endif
 
-/*Always set a default font from the built-in fonts*/
 #ifndef LV_FONT_DEFAULT
-#define LV_FONT_DEFAULT        &lv_font_roboto_16
+#define LV_FONT_DEFAULT        &lv_font_dejavu_20     /*Always set a default font from the built-in fonts*/
 #endif
-
-/*Declare the type of the user data of fonts (can be e.g. `void *`, `int`, `struct`)*/
 
 /*=================
  *  Text settings
