@@ -44,7 +44,7 @@ enum {
     LV_INDEV_TYPE_NONE,    /*Show uninitialized state*/
     LV_INDEV_TYPE_POINTER, /*Touch pad, mouse, external button*/
     LV_INDEV_TYPE_KEYPAD,  /*Keypad or keyboard*/
-    LV_INDEV_TYPE_BUTTON,  /*External (hardware button) which is assinged to a specific point of the
+    LV_INDEV_TYPE_BUTTON,  /*External (hardware button) which is assigned to a specific point of the
                               screen*/
     LV_INDEV_TYPE_ENCODER, /*Encoder with only Left, Right turn and a Button*/
 };
@@ -53,7 +53,6 @@ typedef uint8_t lv_indev_type_t;
 /*States for input devices*/
 enum { LV_INDEV_STATE_REL = 0, LV_INDEV_STATE_PR };
 typedef uint8_t lv_indev_state_t;
-
 
 /*Data type when an input device is read */
 typedef struct
@@ -64,7 +63,6 @@ typedef struct
     int16_t enc_diff; /*For LV_INDEV_TYPE_ENCODER number of steps since the previous read*/
 
     lv_indev_state_t state; /*LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
-
 } lv_indev_data_t;
 
 /*Initialized by the user and registered by 'lv_indev_add()'*/
@@ -78,7 +76,8 @@ typedef struct _lv_indev_drv_t
      * Return 'true' if there is still data to be read (buffered)*/
     bool (*read_cb)(struct _lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 
-    /*Called when an action happened on the input device.*/
+    /* Called when an action happened on the input device.
+     * The second parameter is the event from `lv_event_t`*/
     void (*feedback_cb)(struct _lv_indev_drv_t *, uint8_t);
 
 #if LV_USE_USER_DATA
@@ -117,9 +116,9 @@ typedef struct _lv_indev_proc_t
             lv_point_t vect;
             lv_point_t drag_sum; /*Count the dragged pixels to check LV_INDEV_DEF_DRAG_LIMIT*/
             lv_point_t drag_throw_vect;
-            struct _lv_obj_t * act_obj;  /*The object being pressed*/
-            struct _lv_obj_t * last_obj; /*The last obejct which was pressed (used by dragthrow and
-                                            other post-release event)*/
+            struct _lv_obj_t * act_obj;      /*The object being pressed*/
+            struct _lv_obj_t * last_obj;     /*The last obejct which was pressed (used by dragthrow and
+                                                other post-release event)*/
             struct _lv_obj_t * last_pressed; /*The lastly pressed object*/
 
             /*Flags*/
