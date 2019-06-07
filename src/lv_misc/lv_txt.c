@@ -104,8 +104,9 @@ uint32_t (*lv_txt_get_encoded_length)(const char *)            = lv_txt_iso8859_
  * @param max_width max with of the text (break the lines to fit this size) Set CORD_MAX to avoid
  * line breaks
  */
-void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font, lv_coord_t letter_space,
-                     lv_coord_t line_space, lv_coord_t max_width, lv_txt_flag_t flag)
+void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font,
+                     lv_coord_t letter_space, lv_coord_t line_space, lv_coord_t max_width,
+                     lv_txt_flag_t flag)
 {
     size_res->x = 0;
     size_res->y = 0;
@@ -118,16 +119,18 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
     uint32_t line_start     = 0;
     uint32_t new_line_start = 0;
     lv_coord_t act_line_length;
-    uint8_t letter_height = lv_font_get_line_height(font);
+    uint8_t letter_height = lv_font_get_height(font);
 
     /*Calc. the height and longest line*/
     while(text[line_start] != '\0') {
-        new_line_start += lv_txt_get_next_line(&text[line_start], font, letter_space, max_width, flag);
+        new_line_start +=
+            lv_txt_get_next_line(&text[line_start], font, letter_space, max_width, flag);
         size_res->y += letter_height;
         size_res->y += line_space;
 
         /*Calculate the the longest line*/
-        act_line_length = lv_txt_get_width(&text[line_start], new_line_start - line_start, font, letter_space, flag);
+        act_line_length = lv_txt_get_width(&text[line_start], new_line_start - line_start, font,
+                                           letter_space, flag);
 
         size_res->x = LV_MATH_MAX(act_line_length, size_res->x);
         line_start  = new_line_start;
@@ -156,8 +159,8 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
  * @return the index of the first char of the new line (in byte index not letter index. With UTF-8
  * they are different)
  */
-uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord_t letter_space, lv_coord_t max_width,
-                              lv_txt_flag_t flag)
+uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord_t letter_space,
+                              lv_coord_t max_width, lv_txt_flag_t flag)
 {
     if(txt == NULL) return 0;
     if(font == NULL) return 0;
@@ -170,13 +173,11 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
     uint32_t n_char_since_last_break = 0; /* Used count word length of long words */
     uint32_t last_break              = NO_BREAK_FOUND;
     lv_txt_cmd_state_t cmd_state     = LV_TXT_CMD_STATE_WAIT;
-    uint32_t letter;
-    uint32_t letter_next;
+    uint32_t letter                  = 0;
 
     while(txt[i] != '\0') {
         lv_coord_t letter_width;
-        letter      = lv_txt_encoded_next(txt, &i);
-        letter_next = lv_txt_encoded_next(&txt[i], NULL);
+        letter = lv_txt_encoded_next(txt, &i);
 
         /*Handle the recolor command*/
         if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
@@ -187,15 +188,15 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
 
         /*Check for new line chars*/
         if(letter == '\n' || letter == '\r') {
-            uint32_t i_tmp = i;
-            uint32_t n     = lv_txt_encoded_next(txt, &i_tmp);
-            if(letter == '\r' && n == '\n') i = i_tmp;
+            uint32_t i_tmp       = i;
+            uint32_t letter_next = lv_txt_encoded_next(txt, &i_tmp);
+            if(letter == '\r' && letter_next == '\n') i = i_tmp;
 
             return i; /*Return with the first letter of the next line*/
 
         } else { /*Check the actual length*/
             n_char_since_last_break++;
-            letter_width = lv_font_get_glyph_width(font, letter, letter_next);
+            letter_width = lv_font_get_width(font, letter);
             cur_w += letter_width;
 
             /* Get the length of the current work and determine best place
@@ -209,12 +210,12 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
                         i = last_break;
                     } else {
                         uint32_t i_tmp = i;
-                        /*ignore the first letter_space after the break char */
-                        cur_w -= w_at_last_break + letter_space;
+                        cur_w -=
+                            w_at_last_break +
+                            letter_space; /*ignore the first letter_space after the break char */
                         bool other = true;
                         while(txt[i_tmp] != '\0') {
-                            letter      = lv_txt_encoded_next(txt, &i_tmp);
-                            letter_next = lv_txt_encoded_next(&txt[i_tmp], NULL);
+                            letter = lv_txt_encoded_next(txt, &i_tmp);
 
                             /*Handle the recolor command*/
                             if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
@@ -230,7 +231,8 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
                                     uint32_t char_remain;
                                     lv_txt_encoded_prev(txt, &i);
                                     for(char_remain = n_char_since_last_break - n_char_fit;
-                                        char_remain < LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN; char_remain++) {
+                                        char_remain < LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN;
+                                        char_remain++) {
                                         lv_txt_encoded_prev(txt, &i);
                                     }
                                 } else {
@@ -240,7 +242,7 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
                                 break;
                             }
                             n_char_since_last_break++;
-                            lv_coord_t letter_width2 = lv_font_get_glyph_width(font, letter, letter_next);
+                            lv_coord_t letter_width2 = lv_font_get_width(font, letter);
                             cur_w += letter_width2;
                             if(cur_w > max_width) {
                                 /* Current letter already exceeds, return previous */
@@ -258,7 +260,8 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
                                 uint32_t char_remain;
                                 lv_txt_encoded_prev(txt, &i);
                                 for(char_remain = n_char_since_last_break - n_char_fit;
-                                    char_remain < LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN; char_remain++) {
+                                    char_remain < LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN;
+                                    char_remain++) {
                                     lv_txt_encoded_prev(txt, &i);
                                 }
                             } else {
@@ -310,8 +313,8 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font, lv_coord
  * @param flags settings for the text from 'txt_flag_t' enum
  * @return length of a char_num long text
  */
-lv_coord_t lv_txt_get_width(const char * txt, uint16_t length, const lv_font_t * font, lv_coord_t letter_space,
-                            lv_txt_flag_t flag)
+lv_coord_t lv_txt_get_width(const char * txt, uint16_t length, const lv_font_t * font,
+                            lv_coord_t letter_space, lv_txt_flag_t flag)
 {
     if(txt == NULL) return 0;
     if(font == NULL) return 0;
@@ -320,19 +323,17 @@ lv_coord_t lv_txt_get_width(const char * txt, uint16_t length, const lv_font_t *
     lv_coord_t width             = 0;
     lv_txt_cmd_state_t cmd_state = LV_TXT_CMD_STATE_WAIT;
     uint32_t letter;
-    uint32_t letter_next;
 
     if(length != 0) {
         while(i < length) {
-            letter      = lv_txt_encoded_next(txt, &i);
-            letter_next = lv_txt_encoded_next(&txt[i], NULL);
+            letter = lv_txt_encoded_next(txt, &i);
             if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
                 if(lv_txt_is_cmd(&cmd_state, letter) != false) {
                     continue;
                 }
             }
 
-            lv_coord_t char_width = lv_font_get_glyph_width(font, letter, letter_next);
+            lv_coord_t char_width = lv_font_get_width(font, letter);
             if(char_width > 0) {
                 width += char_width;
                 width += letter_space;
@@ -399,7 +400,8 @@ void lv_txt_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
     uint32_t old_len = strlen(txt_buf);
     uint32_t ins_len = strlen(ins_txt);
     uint32_t new_len = ins_len + old_len;
-    pos              = lv_txt_encoded_get_byte_id(txt_buf, pos); /*Convert to byte index instead of letter index*/
+    pos =
+        lv_txt_encoded_get_byte_id(txt_buf, pos); /*Convert to byte index instead of letter index*/
 
     /*Copy the second part into the end to make place to text to insert*/
     uint32_t i;
@@ -687,9 +689,10 @@ static uint32_t lv_txt_utf8_get_length(const char * txt)
  */
 static uint8_t lv_txt_iso8859_1_size(const char * str)
 {
-    (void)str; /*Unused*/
+    (void) str;         /*Unused*/
     return 1;
 }
+
 
 /**
  * Convert an Unicode letter to ISO8859-1.
@@ -698,10 +701,8 @@ static uint8_t lv_txt_iso8859_1_size(const char * str)
  */
 static uint32_t lv_txt_unicode_to_iso8859_1(uint32_t letter_uni)
 {
-    if(letter_uni < 128)
-        return letter_uni;
-    else
-        return ' ';
+    if(letter_uni < 128) return letter_uni;
+    else return ' ';
 }
 
 /**
@@ -725,9 +726,9 @@ static uint32_t lv_txt_iso8859_1_conv_wc(uint32_t c)
  */
 static uint32_t lv_txt_iso8859_1_next(const char * txt, uint32_t * i)
 {
-    if(i == NULL) return txt[1]; /*Get the next char */
+    if(i == NULL) return txt[1];    /*Get the next char */
 
-    uint8_t letter = txt[*i];
+    uint8_t letter = txt[*i] ;
     (*i)++;
     return letter;
 }
@@ -740,10 +741,10 @@ static uint32_t lv_txt_iso8859_1_next(const char * txt, uint32_t * i)
  */
 static uint32_t lv_txt_iso8859_1_prev(const char * txt, uint32_t * i)
 {
-    if(i == NULL) return *(txt - 1); /*Get the prev. char */
+    if(i == NULL) return *(txt - 1);   /*Get the prev. char */
 
     (*i)--;
-    uint8_t letter = txt[*i];
+    uint8_t letter = txt[*i] ;
 
     return letter;
 }
@@ -757,9 +758,10 @@ static uint32_t lv_txt_iso8859_1_prev(const char * txt, uint32_t * i)
  */
 static uint32_t lv_txt_iso8859_1_get_byte_id(const char * txt, uint32_t utf8_id)
 {
-    (void)txt;      /*Unused*/
-    return utf8_id; /*In Non encoded no difference*/
+    (void) txt;         /*Unused*/
+    return utf8_id;     /*In Non encoded no difference*/
 }
+
 
 /**
  * Convert a byte index (in an ISO8859-1 text) to character index.
@@ -770,8 +772,8 @@ static uint32_t lv_txt_iso8859_1_get_byte_id(const char * txt, uint32_t utf8_id)
  */
 static uint32_t lv_txt_iso8859_1_get_char_id(const char * txt, uint32_t byte_id)
 {
-    (void)txt;      /*Unused*/
-    return byte_id; /*In Non encoded no difference*/
+    (void) txt;         /*Unused*/
+    return byte_id;     /*In Non encoded no difference*/
 }
 
 /**
