@@ -71,35 +71,26 @@ Choose a project with your favourite IDE:
 ### Porting to an embedded hardware
 In the most simple case you need to do these steps:
 1. Copy `lv_conf_templ.h` as `lv_conf.h` next to `lvgl` and set at least `LV_HOR_RES`, `LV_VER_RES` and `LV_COLOR_DEPTH`. 
-2. Call `lv_tick_inc(x)` every `x` milliseconds **in a Timer or Task** (`x` should be between 1 and 10). It is required for the internal timing of LittlevGL.
+2. Call `lv_tick_inc(x)` every `x` milliseconds **in a Timer or Task** (`x` should be between 1 and 10). It is required for the internal timing of LittlevGL. **It's very important that you don't call `lv_task_handler` in the same loop.**
 3. Call `lv_init()`
-4. Create a buffer for LittlevGL
-```c
-static lv_disp_buf_t disp_buf;
-static lv_color_t buf[LV_HOR_RES_MAX * 10];                     /*Declare a buffer for 10 lines*/
-lv_disp_buf_init(&disp_buf, buf, NULL, LV_HOR_RES_MAX * 10);    /*Initialize the display buffer*/
-```
-4. Implement and register a function which can **copy a pixel array** to an area of your diplay:
+4. Register a function which can **copy a pixel array** to an area of the screen:
 ```c
 lv_disp_drv_t disp_drv;               /*Descriptor of a display driver*/
 lv_disp_drv_init(&disp_drv);          /*Basic initialization*/
-disp_drv.hor_res = 480;               /*Set the horizontal resolution*/
-disp_drv.ver_res = 320;               /*Set the vertical resolution*/
-disp_drv.flush_cb = my_disp_flush;    /*Set your driver function*/
-disp_drv.buffer = &disp_buf;          /*Assign the buffer to teh display*/
+disp_drv.disp_flush = disp_flush;     /*Set your driver function*/
 lv_disp_drv_register(&disp_drv);      /*Finally register the driver*/
     
-void my_disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * color_p)
+void disp_flush(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p)
 {
     int32_t x, y;
-    for(y = area->y1; y <= area->y2; y++) {
-        for(x = area->x1; x <= area->x2; x++) {
-            set_pixel(x, y, *color_p);  /* Put a pixel to the display.*/
+    for(y = y1; y <= y2; y++) {
+        for(x = x1; x <= x2; x++) {
+            sep_pixel(x, y, *color_p);  /* Put a pixel to the display.*/
             color_p++;
         }
     }
 
-    lv_disp_flush_ready(disp);                  /* Tell you are ready with the flushing*/
+    lv_flush_ready();                  /* Tell you are ready with the flushing*/
 }
     
 ```
@@ -107,10 +98,10 @@ void my_disp_flush(lv_disp_t * disp, const lv_area_t * area, lv_color_t * color_
 ```c
 lv_indev_drv_init(&indev_drv);             /*Descriptor of a input device driver*/
 indev_drv.type = LV_INDEV_TYPE_POINTER;    /*Touch pad is a pointer-like device*/
-indev_drv.read_cb = my_touchpad_read;      /*Set your driver function*/
+indev_drv.read = touchpad_read;            /*Set your driver function*/
 lv_indev_drv_register(&indev_drv);         /*Finally register the driver*/
 
-bool my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
+bool touchpad_read(lv_indev_data_t * data)
 {
     static lv_coord_t last_x = 0;
     static lv_coord_t last_y = 0;
@@ -126,9 +117,9 @@ bool my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
     return false; /*Return `false` because we are not buffering and no more data to read*/
 }
 ```
-6. Call `lv_task_handler()` periodically every few milliseconds in the main `while(1)` loop, in Timer interrupt or in an Operation system task. It will redraw the screen if required, handle input devices etc.
+6. Call `lv_task_handler()` periodically every few milliseconds in the main `while(1)` loop, in Timer interrupt or in an Operation system task. It will redraw the screen if required, handle input devices etc. **It's very important that you don't call `lv_tick_inc` in the same loop.**
 
-For a detailed description check the [Documentation](https://docs.littlevgl.com/#Porting) or the [Porting examples](https://github.com/littlevgl/lvgl/tree/multi-disp/lv_porting).
+For a detailed description check the [Documentation](https://docs.littlevgl.com/#Porting) or the [Porting tutorial](https://github.com/littlevgl/lv_examples/blob/master/lv_tutorial/0_porting/lv_tutorial_porting.c)
  
  
 ### Code examples
@@ -203,7 +194,7 @@ lv.scr_load(scr)
 Check out the [Documentation](https://docs.littlevgl.com/) for more!
 
 ### Contributing
-To ask questions please use the [Forum](https://forum.littlevgl.com).
+To ask questions please use the [Forum](https://forumtest.littlevgl.com).
 FOr development related things (bug reports, feature suggestions) use [GitHub's Issue tracker](https://github.com/littlevgl/lvgl/issues). 
 You can contribute in several ways:
 - **Answer other's question** in the Forum
