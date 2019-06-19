@@ -28,6 +28,11 @@
 #define LV_PAGE_END_ANIM_TIME 300
 #define LV_PAGE_END_ANIM_WAIT_TIME 300
 
+#if LV_USE_ANIMATION == 0
+#undef LV_PAGE_DEF_ANIM_TIME
+#define LV_PAGE_DEF_ANIM_TIME 0 /*No animation*/
+#endif
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -96,6 +101,7 @@ lv_obj_t * lv_page_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->edge_flash.right_ip  = 0;
     ext->edge_flash.state     = 0;
     ext->edge_flash.style     = &lv_style_plain_color;
+    ext->anim_time = LV_PAGE_DEF_ANIM_TIME;
 #endif
     ext->arrow_scroll   = 0;
     ext->scroll_prop    = 0;
@@ -212,8 +218,8 @@ void lv_page_set_sb_mode(lv_obj_t * page, lv_sb_mode_t sb_mode)
  */
 void lv_page_set_anim_time(lv_obj_t * page, uint16_t anim_time)
 {
-#if LV_USE_ANIMATION
     lv_page_ext_t * ext = lv_obj_get_ext_attr(page);
+#if LV_USE_ANIMATION
     ext->anim_time = anim_time;
 #endif
 
@@ -313,6 +319,7 @@ uint16_t lv_page_get_anim_time(const lv_obj_t * page)
     lv_page_ext_t * ext = lv_obj_get_ext_attr(page);
     return ext->anim_time;
 #else
+    (void) page;   /*Unused*/
     return 0;
 #endif
 }
@@ -639,6 +646,8 @@ void lv_page_start_edge_flash(lv_obj_t * page)
         a.repeat_pause   = 0;
         lv_anim_create(&a);
     }
+#else
+    (void) page;   /*Unused*/
 #endif
 }
 
@@ -1100,8 +1109,7 @@ static void scrl_def_event_cb(lv_obj_t * scrl, lv_event_t event)
     /*clang-format off*/
     if(event == LV_EVENT_PRESSED || event == LV_EVENT_PRESSING || event == LV_EVENT_PRESS_LOST ||
        event == LV_EVENT_RELEASED || event == LV_EVENT_SHORT_CLICKED || event == LV_EVENT_CLICKED ||
-       event == LV_EVENT_LONG_PRESSED || event == LV_EVENT_LONG_PRESSED_REPEAT || event == LV_EVENT_FOCUSED ||
-       event == LV_EVENT_DEFOCUSED || event == LV_EVENT_DRAG_BEGIN || event == LV_EVENT_DRAG_END || event == LV_EVENT_DRAG_THROW_BEGIN) {
+       event == LV_EVENT_LONG_PRESSED || event == LV_EVENT_LONG_PRESSED_REPEAT) {
         lv_event_send(page, event, lv_event_get_data());
     }
     /*clang-format on*/
