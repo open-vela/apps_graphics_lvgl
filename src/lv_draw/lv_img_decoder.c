@@ -36,7 +36,7 @@ typedef struct
  **********************/
 
 static lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * src, lv_img_header_t * header);
-static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc);
+static const uint8_t * lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc);
 static lv_res_t lv_img_decoder_built_in_read_line(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc, lv_coord_t x,
                                                   lv_coord_t y, lv_coord_t len, uint8_t * buf);
 static void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc);
@@ -116,35 +116,30 @@ lv_res_t lv_img_decoder_get_info(const char * src, lv_img_header_t * header)
  *  2) Variable: Pointer to an `lv_img_dsc_t` variable
  *  3) Symbol: E.g. `LV_SYMBOL_OK`
  * @param style the style of the image
- * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
- *         LV_RES_INV: none of the registered image decoders were able to open the image.
+ * @return LV_IMG_DECODER_OPEN_FAIL: can open the image
+ *         NULL: the image is opened but `lv_img_decoder_read_line` needs to be used to get the info line by line
+ *         Else: a pointer to a buffer which holds the uncompressed pixels of the image
  */
-lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, const lv_style_t * style)
+const uint8_t * lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, const lv_style_t * style)
 {
     dsc->style     = style;
     dsc->src       = src;
     dsc->src_type  = lv_img_src_get_type(src);
     dsc->user_data = NULL;
 
-    lv_res_t res;
-    res = lv_img_decoder_get_info(src, &dsc->header);
-    if(res != LV_RES_OK) return LV_RES_INV;
+    lv_res_t header_res;
+    header_res = lv_img_decoder_get_info(src, &dsc->header);
+    if(header_res != LV_RES_OK) return LV_IMG_DECODER_OPEN_FAIL;
 
+    const uint8_t * res = NULL;
     lv_img_decoder_t * d;
     LV_LL_READ(LV_GC_ROOT(_lv_img_defoder_ll), d)
     {
-        res = LV_RES_INV;
-        dsc->error_msg = NULL;
-        dsc->img_data = NULL;
+        res          = NULL;
         dsc->decoder = d;
-
         if(d->open_cb) res = d->open_cb(d, dsc);
 
-        if(res == LV_RES_OK) break;
-    }
-
-    if(res == LV_RES_INV) {
-        memset(dsc, 0, sizeof(lv_img_decoder_dsc_t));
+        if(res != LV_IMG_DECODER_OPEN_FAIL) break;
     }
 
     return res;
@@ -291,20 +286,16 @@ static lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const v
     return LV_RES_OK;
 }
 
-static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc)
+static const uint8_t * lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder_dsc_t * dsc)
 {
     /*Open the file if it's a file*/
     if(dsc->src_type == LV_IMG_SRC_FILE) {
 #if LV_USE_FILESYSTEM
-
-        /*Support only "*.bin" files*/
-        if(strcmp(lv_fs_get_ext(dsc->src), "bin")) return LV_RES_INV;
-
         lv_fs_file_t f;
         lv_fs_res_t res = lv_fs_open(&f, dsc->src, LV_FS_MODE_RD);
         if(res != LV_FS_RES_OK) {
             LV_LOG_WARN("Built-in image decoder can't open the file");
-            return LV_RES_INV;
+            return LV_IMG_DECODER_OPEN_FAIL;
         }
 
         /*If the file was open successfully save the file descriptor*/
@@ -328,7 +319,7 @@ static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_
 
 #else
         LV_LOG_WARN("Image built-in decoder cannot read file because LV_USE_FILESYSTEM = 0");
-        return LV_RES_INV;
+        return LV_IMG_DECODER_OPEN_FAIL;
 #endif
     }
 
@@ -338,12 +329,11 @@ static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_
         if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
             /* In case of uncompressed formats the image stored in the ROM/RAM.
              * So simply give its pointer*/
-            dsc->img_data = ((lv_img_dsc_t *)dsc->src)->data;
-            return LV_RES_OK;
+            return ((lv_img_dsc_t *)dsc->src)->data;
         } else {
+
             /*If it's a file it need to be read line by line later*/
-            dsc->img_data = NULL;
-            return LV_RES_OK;
+            return NULL;
         }
     }
     /*Process indexed images. Build a palette*/
@@ -372,42 +362,44 @@ static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_
             lv_mem_assert(user_data->f);
 #endif
         }
+#if LV_USE_FILESYSTEM
+        lv_color32_t palette_tmp[256];
+#endif
+        lv_color32_t * palette_p;
 
         if(dsc->src_type == LV_IMG_SRC_FILE) {
             /*Read the palette from file*/
 #if LV_USE_FILESYSTEM
             lv_fs_seek(user_data->f, 4); /*Skip the header*/
-            lv_fs_read(user_data->f, user_data->palette, palette_size * sizeof(lv_color_t), NULL);
+            lv_fs_read(user_data->f, palette_tmp, palette_size * sizeof(lv_color_t), NULL);
+            palette_p = palette_tmp;
 #else
             LV_LOG_WARN("Image built-in decoder can read the palette because LV_USE_FILESYSTEM = 0");
-            return LV_RES_INV;
+            return LV_IMG_DECODER_OPEN_FAIL;
 #endif
         } else {
             /*The palette begins in the beginning of the image data. Just point to it.*/
-            lv_color32_t * palette_p = (lv_color32_t *)((lv_img_dsc_t *)dsc->src)->data;
-
-            uint32_t i;
-            for(i = 0; i < palette_size; i++) {
-                user_data->palette[i] = lv_color_make(palette_p[i].ch.red, palette_p[i].ch.green, palette_p[i].ch.blue);
-            }
+            palette_p = (lv_color32_t *)((lv_img_dsc_t *)dsc->src)->data;
         }
 
-        dsc->img_data = NULL;
-        return LV_RES_OK;
+        uint32_t i;
+        for(i = 0; i < palette_size; i++) {
+            user_data->palette[i] = lv_color_make(palette_p[i].ch.red, palette_p[i].ch.green, palette_p[i].ch.blue);
+        }
+        return NULL;
 #else
         LV_LOG_WARN("Indexed (palette) images are not enabled in lv_conf.h. See LV_IMG_CF_INDEXED");
-        return LV_RES_INV;
+        return LV_IMG_DECODER_OPEN_FAIL;
 #endif
     }
     /*Alpha indexed images. */
     else if(cf == LV_IMG_CF_ALPHA_1BIT || cf == LV_IMG_CF_ALPHA_2BIT || cf == LV_IMG_CF_ALPHA_4BIT ||
             cf == LV_IMG_CF_ALPHA_8BIT) {
 #if LV_IMG_CF_ALPHA
-        dsc->img_data = NULL;
-        return LV_RES_OK; /*Nothing to process*/
+        return NULL; /*Nothing to process*/
 #else
         LV_LOG_WARN("Alpha indexed images are not enabled in lv_conf.h. See LV_IMG_CF_ALPHA");
-        return LV_RES_INV;
+        return LV_IMG_DECODER_OPEN_FAIL;
 #endif
     }
     /*Unknown format. Can't decode it.*/
@@ -416,7 +408,7 @@ static lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_
         lv_img_decoder_built_in_close(decoder, dsc);
 
         LV_LOG_WARN("Image decoder open: unknown color format")
-        return LV_RES_INV;
+        return LV_IMG_DECODER_OPEN_FAIL;
     }
 }
 
@@ -443,7 +435,7 @@ static lv_res_t lv_img_decoder_built_in_read_line(lv_img_decoder_t * decoder, lv
         res = lv_img_decoder_built_in_line_indexed(dsc, x, y, len, buf);
     } else {
         LV_LOG_WARN("Built-in image decoder read not supports the color format");
-        return LV_RES_INV;
+        return false;
     }
 
     return res;
