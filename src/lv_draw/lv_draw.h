@@ -35,6 +35,10 @@ extern "C" {
  * GLOBAL PROTOTYPES
  **********************/
 
+void * lv_draw_get_buf(uint32_t size);
+
+void lv_draw_free_buf(void);
+
 #if LV_ANTIALIAS
 
 /**
