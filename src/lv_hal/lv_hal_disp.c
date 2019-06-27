@@ -71,6 +71,7 @@ void lv_disp_drv_init(lv_disp_drv_t * driver)
     driver->screen_transp = 1;
 #endif
 
+
 #if LV_USE_GPU
     driver->gpu_blend_cb = NULL;
     driver->gpu_fill_cb  = NULL;

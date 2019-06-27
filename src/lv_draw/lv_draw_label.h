@@ -23,23 +23,22 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-/* Store some info to speed up drawing of very large texts
+/** Store some info to speed up drawing of very large texts
  * It takes a lot of time to get the first visible character because
  * all the previous characters needs to be checked to calculate the positions.
  * This structure stores an earlier (e.g. at -1000 px) coordinate and the index of that line.
  * Therefore the calculations can start from here.*/
-typedef struct
-{
-    /*Index of the line at `y` coordinate*/
+typedef struct {
+	/** Index of the line at `y` coordinate*/
     int32_t line_start;
 
-    /*Give the `y` coordinate of the first letter at `line start` index. Relative to the label's coordinates*/
+    /** Give the `y` coordinate of the first letter at `line start` index. Relative to the label's coordinates*/
     int32_t y;
 
-    /*The 'y1' coordinate of the label when the hint was saved.
+    /** The 'y1' coordinate of the label when the hint was saved.
      * Used to invalidate the hint if the label has moved too much. */
     int32_t coord_y;
-} lv_draw_label_hint_t;
+}lv_draw_label_hint_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -58,8 +57,7 @@ typedef struct
  * @param sel_end end index of selected area (`LV_LABEL_TXT_SEL_OFF` if none)
  */
 void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, const lv_style_t * style, lv_opa_t opa_scale,
-                   const char * txt, lv_txt_flag_t flag, lv_point_t * offset, uint16_t sel_start, uint16_t sel_end,
-                   lv_draw_label_hint_t * hint);
+                   const char * txt, lv_txt_flag_t flag, lv_point_t * offset, uint16_t sel_start, uint16_t sel_end, lv_draw_label_hint_t * hint);
 
 /**********************
  *      MACROS

@@ -27,7 +27,6 @@
  **********************/
 static lv_theme_t theme;
 static lv_style_t def;
-static lv_style_t scr;
 
 /*Static style definitions*/
 static lv_style_t sb;
@@ -55,12 +54,6 @@ static void basic_init(void)
 {
     lv_style_copy(&def, &lv_style_pretty); /*Initialize the default style*/
 
-    lv_style_copy(&scr, &def);
-    scr.body.padding.bottom = 0;
-    scr.body.padding.top    = 0;
-    scr.body.padding.left   = 0;
-    scr.body.padding.right  = 0;
-
     lv_style_copy(&sb, &lv_style_pretty_color);
     sb.body.grad_color     = sb.body.main_color;
     sb.body.padding.right  = sb.body.padding.right / 2; /*Make closer to the edges*/
@@ -71,7 +64,6 @@ static void basic_init(void)
     plain_bordered.body.border.color = lv_color_hex3(0xbbb);
 
     theme.style.bg    = &lv_style_plain;
-    theme.style.scr   = &scr;
     theme.style.panel = &lv_style_pretty;
 }
 
@@ -345,12 +337,12 @@ static void win_init(void)
 {
 #if LV_USE_WIN != 0
 
-    theme.style.win.bg      = &plain_bordered;
-    theme.style.win.sb      = &sb;
-    theme.style.win.header  = &lv_style_plain_color;
+    theme.style.win.bg           = &plain_bordered;
+    theme.style.win.sb           = &sb;
+    theme.style.win.header       = &lv_style_plain_color;
     theme.style.win.content = &lv_style_transp;
-    theme.style.win.btn.rel = &lv_style_btn_rel;
-    theme.style.win.btn.pr  = &lv_style_btn_pr;
+    theme.style.win.btn.rel      = &lv_style_btn_rel;
+    theme.style.win.btn.pr       = &lv_style_btn_pr;
 #endif
 }
 
