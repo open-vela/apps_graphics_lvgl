@@ -66,12 +66,13 @@ typedef struct
     lv_coord_t btn_size;              /*Size of the control buttons (square)*/
 } lv_win_ext_t;
 
+/** Window styles. */
 enum {
-    LV_WIN_STYLE_BG,
-    LV_WIN_STYLE_CONTENT,
-    LV_WIN_STYLE_SB,
-    LV_WIN_STYLE_HEADER,
-    LV_WIN_STYLE_BTN_REL,
+    LV_WIN_STYLE_BG, /**< Window object background style. */
+    LV_WIN_STYLE_CONTENT, /**< Window content style. */
+    LV_WIN_STYLE_SB, /**< Window scrollbar style. */
+    LV_WIN_STYLE_HEADER, /**< Window titlebar background style. */
+    LV_WIN_STYLE_BTN_REL, /**< Same meaning as ordinary button styles. */
     LV_WIN_STYLE_BTN_PR,
 };
 typedef uint8_t lv_win_style_t;
@@ -227,6 +228,7 @@ uint16_t lv_win_get_anim_time(const lv_obj_t * win);
  * @return the width of the content area
  */
 lv_coord_t lv_win_get_width(lv_obj_t * win);
+
 
 /**
  * Get a style of a window

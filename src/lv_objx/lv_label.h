@@ -38,27 +38,27 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-/*Long mode behaviors. Used in 'lv_label_ext_t' */
+/** Long mode behaviors. Used in 'lv_label_ext_t' */
 enum {
-    LV_LABEL_LONG_EXPAND,     /*Expand the object size to the text size*/
-    LV_LABEL_LONG_BREAK,      /*Keep the object width, break the too long lines and expand the object
-                                 height*/
-    LV_LABEL_LONG_DOT,        /*Keep the size and write dots at the end if the text is too long*/
-    LV_LABEL_LONG_SROLL,      /*Keep the size and roll the text back and forth*/
-    LV_LABEL_LONG_SROLL_CIRC, /*Keep the size and roll the text circularly*/
-    LV_LABEL_LONG_CROP,       /*Keep the size and crop the text out of it*/
+    LV_LABEL_LONG_EXPAND,    /**< Expand the object size to the text size*/
+    LV_LABEL_LONG_BREAK,     /**< Keep the object width, break the too long lines and expand the object
+                                height*/
+    LV_LABEL_LONG_DOT,       /**< Keep the size and write dots at the end if the text is too long*/
+    LV_LABEL_LONG_SROLL,      /**< Keep the size and roll the text back and forth*/
+    LV_LABEL_LONG_SROLL_CIRC, /**< Keep the size and roll the text circularly*/
+    LV_LABEL_LONG_CROP,      /**< Keep the size and crop the text out of it*/
 };
 typedef uint8_t lv_label_long_mode_t;
 
-/*Label align policy*/
+/** Label align policy*/
 enum {
-    LV_LABEL_ALIGN_LEFT,
-    LV_LABEL_ALIGN_CENTER,
-    LV_LABEL_ALIGN_RIGHT,
+    LV_LABEL_ALIGN_LEFT, /**< Align text to left */
+    LV_LABEL_ALIGN_CENTER, /**< Align text to center */
+    LV_LABEL_ALIGN_RIGHT, /**< Align text to right */
 };
 typedef uint8_t lv_label_align_t;
 
-/*Data of label*/
+/** Data of label*/
 typedef struct
 {
     /*Inherited from 'base_obj' so no inherited ext.*/ /*Ext. of ancestor*/
@@ -73,7 +73,7 @@ typedef struct
     uint16_t dot_end;  /*The text end position in dot mode (Handled by the library)*/
     lv_point_t offset; /*Text draw position offset*/
 
-    lv_draw_label_hint_t hint; /*Used to buffer info about large text*/
+    lv_draw_label_hint_t hint;	/*Used to buffer info about large text*/
 #if LV_USE_ANIMATION
     uint16_t anim_speed; /*Speed of scroll and roll animation in px/sec unit*/
 #endif
@@ -93,7 +93,7 @@ typedef struct
                                   characters */
 } lv_label_ext_t;
 
-/*Styles*/
+/** Label styles*/
 enum {
     LV_LABEL_STYLE_MAIN,
 };
@@ -184,7 +184,7 @@ void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed);
  */
 static inline void lv_label_set_style(lv_obj_t * label, lv_label_style_t type, const lv_style_t * style)
 {
-    (void)type; /*Unused*/
+    (void) type; /*Unused*/
     lv_obj_set_style(label, style);
 }
 
@@ -282,7 +282,7 @@ bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos);
  */
 static inline const lv_style_t * lv_label_get_style(const lv_obj_t * label, lv_label_style_t type)
 {
-    (void)type; /*Unused*/
+    (void) type;    /*Unused*/
     return lv_obj_get_style(label);
 }
 

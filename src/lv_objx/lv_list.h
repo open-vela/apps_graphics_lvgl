@@ -52,9 +52,9 @@ typedef struct
 {
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
-    const lv_style_t * styles_btn[_LV_BTN_STATE_NUM]; /*Styles of the list element buttons*/
-    const lv_style_t * style_img;                     /*Style of the list element images on buttons*/
-    uint16_t size;                                    /*the number of items(buttons) in the list*/
+    const lv_style_t * styles_btn[LV_BTN_STATE_NUM]; /*Styles of the list element buttons*/
+    const lv_style_t * style_img;                    /*Style of the list element images on buttons*/
+    uint16_t size;                                   /*the number of items(buttons) in the list*/
 
     uint8_t single_mode : 1; /* whether single selected mode is enabled */
 
@@ -64,12 +64,13 @@ typedef struct
 #endif
 } lv_list_ext_t;
 
+/** List styles. */
 enum {
-    LV_LIST_STYLE_BG,
-    LV_LIST_STYLE_SCRL,
-    LV_LIST_STYLE_SB,
-    LV_LIST_STYLE_EDGE_FLASH,
-    LV_LIST_STYLE_BTN_REL,
+    LV_LIST_STYLE_BG, /**< List background style */
+    LV_LIST_STYLE_SCRL, /**< List scrollable area style. */
+    LV_LIST_STYLE_SB, /**< List scrollbar style. */
+    LV_LIST_STYLE_EDGE_FLASH, /**< List edge flash style. */
+    LV_LIST_STYLE_BTN_REL, /**< Same meaning as the ordinary button styles. */
     LV_LIST_STYLE_BTN_PR,
     LV_LIST_STYLE_BTN_TGL_REL,
     LV_LIST_STYLE_BTN_TGL_PR,
