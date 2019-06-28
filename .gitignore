@@ -1,5 +1,3 @@
 **/*.o
 **/*.swp
 **/*.swo
-tags
-docs/api_doc
