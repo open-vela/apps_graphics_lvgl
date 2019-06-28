@@ -66,10 +66,9 @@ typedef struct
     const lv_style_t * style_indic; /*Style of the indicator*/
 } lv_bar_ext_t;
 
-/** Bar styles. */
 enum {
-    LV_BAR_STYLE_BG, /** Bar background style. */
-    LV_BAR_STYLE_INDIC, /** Bar fill area style. */
+    LV_BAR_STYLE_BG,
+    LV_BAR_STYLE_INDIC,
 };
 typedef uint8_t lv_bar_style_t;
 

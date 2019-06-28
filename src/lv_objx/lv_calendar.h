@@ -31,9 +31,6 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-/**
- * Represents a date on the calendar object (platform-agnostic).
- */
 typedef struct
 {
     uint16_t year;
@@ -66,16 +63,16 @@ typedef struct
     const lv_style_t * style_today_box;
 } lv_calendar_ext_t;
 
-/** Calendar styles*/
+/*Styles*/
 enum {
-    LV_CALENDAR_STYLE_BG, /**< Background and "normal" date numbers style */
-    LV_CALENDAR_STYLE_HEADER, /** Calendar header style */
-    LV_CALENDAR_STYLE_HEADER_PR, /** Calendar header style (when pressed) */
-    LV_CALENDAR_STYLE_DAY_NAMES, /** Day name style */
-    LV_CALENDAR_STYLE_HIGHLIGHTED_DAYS, /** Highlighted day style */ 
-    LV_CALENDAR_STYLE_INACTIVE_DAYS, /** Inactive day style */
-    LV_CALENDAR_STYLE_WEEK_BOX, /** Week highlight style */
-    LV_CALENDAR_STYLE_TODAY_BOX, /** Today highlight style */
+    LV_CALENDAR_STYLE_BG, /*Also the style of the "normal" date numbers*/
+    LV_CALENDAR_STYLE_HEADER,
+    LV_CALENDAR_STYLE_HEADER_PR,
+    LV_CALENDAR_STYLE_DAY_NAMES,
+    LV_CALENDAR_STYLE_HIGHLIGHTED_DAYS,
+    LV_CALENDAR_STYLE_INACTIVE_DAYS,
+    LV_CALENDAR_STYLE_WEEK_BOX,
+    LV_CALENDAR_STYLE_TODAY_BOX,
 };
 typedef uint8_t lv_calendar_style_t;
 
