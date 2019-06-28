@@ -33,9 +33,6 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-/**
- * Errors in the filesystem module.
- */
 enum {
     LV_FS_RES_OK = 0,
     LV_FS_RES_HW_ERR,     /*Low level hardware error*/
@@ -53,9 +50,6 @@ enum {
 };
 typedef uint8_t lv_fs_res_t;
 
-/**
- * Filesystem mode.
- */
 enum {
     LV_FS_MODE_WR = 0x01,
     LV_FS_MODE_RD = 0x02,
@@ -86,7 +80,7 @@ typedef struct _lv_fs_drv_t
     lv_fs_res_t (*dir_close_cb)(struct _lv_fs_drv_t * drv, void * rddir_p);
 
 #if LV_USE_USER_DATA
-    lv_fs_drv_user_data_t user_data; /**< Custom file user data */
+    lv_fs_drv_user_data_t user_data;
 #endif
 } lv_fs_drv_t;
 
