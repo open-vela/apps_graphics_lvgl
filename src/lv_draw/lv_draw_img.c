@@ -425,6 +425,48 @@ lv_img_src_t lv_img_src_get_type(const void * src)
     return img_src_type;
 }
 
+lv_img_dsc_t *lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
+{
+    /* Allocate image descriptor */
+    lv_img_dsc_t *dsc = lv_mem_alloc(sizeof(lv_img_dsc_t));
+    if(dsc == NULL)
+        return NULL;
+    
+    memset(dsc, 0, sizeof(lv_img_dsc_t));
+    
+    /* Get image data size */
+    dsc->data_size = lv_img_buf_get_img_size(w, h, cf);
+    if(dsc->data_size == 0) {
+        lv_mem_free(dsc);
+        return NULL;
+    }
+    
+    /* Allocate raw buffer */
+    dsc->data = lv_mem_alloc(dsc->data_size);
+    if(dsc->data == NULL) {
+        lv_mem_free(dsc);
+        return NULL;
+    }
+    memset(dsc->data, 0, dsc->data_size);
+    
+    /* Fill in header */
+    dsc->header.always_zero = 0;
+    dsc->header.w = w;
+    dsc->header.h = h;
+    dsc->header.cf = cf;
+    return dsc;
+}
+
+void lv_img_buf_free(lv_img_dsc_t *dsc)
+{
+    if(dsc != NULL) {
+        if(dsc->data != NULL)
+            lv_mem_free(dsc->data);
+        
+        lv_mem_free(dsc);
+    }
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
