@@ -573,7 +573,6 @@ void lv_list_up(const lv_obj_t * list)
     lv_obj_t * scrl = lv_page_get_scrl(list);
     lv_obj_t * e;
     lv_obj_t * e_prev = NULL;
-
     e                 = lv_list_get_prev_btn(list, NULL);
     while(e != NULL) {
         if(e->coords.y2 <= list->coords.y2) {
