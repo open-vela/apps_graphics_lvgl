@@ -1,7 +1,7 @@
 <h1 align="center"> LittlevGL - Open-source Embedded GUI Library</h1>
 <p align="center">
 <a href="https://github.com/littlevgl/lvgl/blob/master/LICENCE.txt"><img src="https://img.shields.io/badge/licence-MIT-blue.svg"></a>
-<a href="https://github.com/littlevgl/lvgl/releases/tag/v6.0"><img src="https://img.shields.io/badge/version-6.0-blue.svg"></a>
+<a href="https://github.com/littlevgl/lvgl/releases/tag/v5.3"><img src="https://img.shields.io/badge/version-5.3-blue.svg"></a>
 <br>
 <img src="https://littlevgl.com/github/cover_ori_reduced_2.gif">
 </p>
@@ -13,17 +13,21 @@ LittlevGL provides everything you need to create a Graphical User Interface (GUI
 <h4 align="center">
 <a href="https://littlevgl.com">Website </a> &middot; 
 <a href="https://littlevgl.com/live-demo">Live demo</a> &middot; 
-<a href="https://docs.littlevgl.com/en/html/get-started/pc-simulator.html">Simulator</a> &middot; 
-<a href="https://forum.littlevgl.com">Forum</a> &middot; 
+<a href="https://docs.littlevgl.com/#PC-simulator">Simulator</a> &middot; 
 <a href="https://docs.littlevgl.com/">Docs</a> &middot;
 <a href="https://blog.littlevgl.com/">Blog</a>
 </h4>
 
+<!--
+<p align="center">
+:star: Star the project if you like it! And share with your friends <a href="https://twitter.com/intent/tweet?text=LittlevGL%20is%20a%20free%20and%20open%20source%20embedded%20GUI%20library%20with%20easy-to-use%20graphical%20elements,%20beautiful%20visual%20effects%20and%20low%20memory%20footprint.&url=https://littlevgl.com/&hashtags=littlevgl,embedded,gui,free,opensource"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"></a>
+</p>
+-->
+
 ### Features
 * **Powerful building blocks** buttons, charts, lists, sliders, images, etc.
 * **Advanced graphics** with animations, anti-aliasing, opacity, smooth scrolling
-* **Simultaneously use various input devices** touchscreen, mouse, keyboard, encoder, buttons, etc.
-* **Simultaneously use multiple displays** i.e. monochrome and color display
+* **Various input devices** touch pad, mouse, keyboard, encoder, buttons, etc.
 * **Multi-language support** with UTF-8 encoding
 * **Fully customizable** graphical elements
 * **Hardware independent** to use with any microcontroller or display
@@ -40,8 +44,9 @@ LittlevGL provides everything you need to create a Graphical User Interface (GUI
 Basically, every modern controller - which is able to drive a display - is suitable to run LittlevGL. The minimal requirements:
 - **16, 32 or 64-bit** microcontroller or processor
 - **&gt; 16 MHz** clock speed
-- **&gt; 16 kB RAM** for static data, dynamic data (heap), stack and display buffer (> 32 kB is recommended)
-- **&gt; 64 kB flash** program memory (> 180 kB is recommended)
+- **&gt; 8 kB RAM for static data** and **&gt; 2 KB RAM for dynamic data** (graphical objects)
+- **&gt; 64 kB flash** program memory
+- **Optionally ~1/10 screen sized memory** for buffered drawing (on 240 × 320, 16-bit colors it's 15 kB)
 
 Just to mention some **platforms**:
 - STM32F1, STM32F3, [STM32F4](https://blog.littlevgl.com/2017-07-15/stm32f429_disco_port), [STM32F7](https://github.com/littlevgl/stm32f746_disco_no_os_sw4stm32)
@@ -66,7 +71,7 @@ Choose a project with your favourite IDE:
 ### Porting to an embedded hardware
 In the most simple case you need to do these steps:
 1. Copy `lv_conf_templ.h` as `lv_conf.h` next to `lvgl` and set at least `LV_HOR_RES`, `LV_VER_RES` and `LV_COLOR_DEPTH`. 
-2. Call `lv_tick_inc(x)` every `x` milliseconds **in a Timer or Task** (`x` should be between 1 and 10). It is required for the internal timing of LittlevGL. **It's very important that you don't call `lv_task_handler` in the same loop.**
+2. Call `lv_tick_inc(x)` every `x` milliseconds **in a Timer or Task** (`x` should be between 1 and 10). It is required for the internal timing of LittlevGL.
 3. Call `lv_init()`
 4. Create a buffer for LittlevGL
 ```c
@@ -121,9 +126,9 @@ bool my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
     return false; /*Return `false` because we are not buffering and no more data to read*/
 }
 ```
-6. Call `lv_task_handler()` periodically every few milliseconds in the main `while(1)` loop, in Timer interrupt or in an Operation system task. It will redraw the screen if required, handle input devices etc. **It's very important that you don't call `lv_tick_inc` in the same loop.**
+6. Call `lv_task_handler()` periodically every few milliseconds in the main `while(1)` loop, in Timer interrupt or in an Operation system task. It will redraw the screen if required, handle input devices etc.
 
-For a detailed description check the [Documentation](https://docs.littlevgl.com/en/html/porting/index.html) or the [Porting examples](https://github.com/littlevgl/lvgl/tree/master/lv_porting).
+For a detailed description check the [Documentation](https://docs.littlevgl.com/#Porting) or the [Porting examples](https://github.com/littlevgl/lvgl/tree/multi-disp/lv_porting).
  
  
 ### Code examples
@@ -199,7 +204,7 @@ Check out the [Documentation](https://docs.littlevgl.com/) for more!
 
 ### Contributing
 To ask questions please use the [Forum](https://forum.littlevgl.com).
-For development related things (bug reports, feature suggestions) use [GitHub's Issue tracker](https://github.com/littlevgl/lvgl/issues). 
+FOr development related things (bug reports, feature suggestions) use [GitHub's Issue tracker](https://github.com/littlevgl/lvgl/issues). 
 You can contribute in several ways:
 - **Answer other's question** in the Forum
 - **Report and/or fix bugs** using the issue tracker and in Pull-request
