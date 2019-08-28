@@ -2,21 +2,7 @@
 <p align="center">
 <a href="https://github.com/littlevgl/lvgl/blob/master/LICENCE.txt"><img src="https://img.shields.io/badge/licence-MIT-blue.svg"></a>
 <a href="https://github.com/littlevgl/lvgl/releases/tag/v6.0"><img src="https://img.shields.io/badge/version-6.0-blue.svg"></a>
-</p>
-  
-<h2 align="center">Shape the future of LittlevGL</h2>
-
-<p align="center">
-<a href="https://www.esurveycreator.com/s/littlevgl-2019"><img src="https://littlevgl.com/external/survey.png"></a>
-</p>
-
-<p align="center">
-It takes only 5 minutes to tell some information about how you use LittlevGL, what you like about it, what should be improved and the future directions you find reasonable.
-</p>
-
----
-
-<p align="center">
+<br>
 <img src="https://littlevgl.com/github/cover_ori_reduced_2.gif">
 </p>
 
@@ -144,7 +130,7 @@ indev_drv.type = LV_INDEV_TYPE_POINTER;    /*Touch pad is a pointer-like device*
 indev_drv.read_cb = my_touchpad_read;      /*Set your driver function*/
 lv_indev_drv_register(&indev_drv);         /*Finally register the driver*/
 
-bool my_touchpad_read(lv_indev_drv_t * indev_driver, lv_indev_data_t * data)
+bool my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
 {
     static lv_coord_t last_x = 0;
     static lv_coord_t last_y = 0;
