@@ -28,7 +28,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, void * param);
 static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * param);
 static void refr_position(lv_obj_t * roller, lv_anim_enable_t animen);
@@ -176,9 +176,17 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
 void lv_roller_set_align(lv_obj_t * roller, lv_label_align_t align)
 {
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
-    lv_mem_assert(ext);
-    if(ext->ddlist.label == NULL) return; /*Probably the roller is being deleted if the label is NULL.*/
-    lv_label_set_align(ext->ddlist.label, align);
+
+    lv_obj_t * label = ext->ddlist.label;
+
+    if(label == NULL) return; /*Probably the roller is being deleted if the label is NULL.*/
+    lv_label_set_align(label, align);
+
+    switch(lv_label_get_align(label)) {
+        case LV_LABEL_ALIGN_LEFT: lv_obj_align(label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0); break;
+        case LV_LABEL_ALIGN_CENTER: lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0); break;
+        case LV_LABEL_ALIGN_RIGHT: lv_obj_align(label, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0); break;
+    }
 }
 
 /**
@@ -295,22 +303,22 @@ const lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_
 /**
  * Handle the drawing related tasks of the rollers
  * @param roller pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        draw_bg(roller, clip_area);
+        draw_bg(roller, mask);
 
         const lv_style_t * style = lv_roller_get_style(roller, LV_ROLLER_STYLE_BG);
         lv_opa_t opa_scale       = lv_obj_get_opa_scale(roller);
@@ -328,7 +336,7 @@ static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * cli
         rect_area.x1 = roller_coords.x1;
         rect_area.x2 = roller_coords.x2;
 
-        lv_draw_rect(&rect_area, clip_area, ext->ddlist.sel_style, opa_scale);
+        lv_draw_rect(&rect_area, mask, ext->ddlist.sel_style, opa_scale);
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
@@ -347,7 +355,7 @@ static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * cli
         rect_area.x2 = roller->coords.x2;
         lv_area_t mask_sel;
         bool area_ok;
-        area_ok = lv_area_intersect(&mask_sel, clip_area, &rect_area);
+        area_ok = lv_area_intersect(&mask_sel, mask, &rect_area);
         if(area_ok) {
             const lv_style_t * sel_style = lv_roller_get_style(roller, LV_ROLLER_STYLE_SEL);
             lv_style_t new_style;
@@ -371,7 +379,7 @@ static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * cli
         }
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -498,7 +506,7 @@ static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, 
     lv_coord_t font_h              = lv_font_get_line_height(font);
 
     if(sign == LV_SIGNAL_DRAG_END) {
-        /*If dragged then align the list to there be an element in the middle*/
+        /*If dragged then align the list to have an element in the middle*/
         lv_coord_t label_y1   = ext->ddlist.label->coords.y1 - roller->coords.y1;
         lv_coord_t label_unit = font_h + style_label->text.line_space;
         lv_coord_t mid        = (roller->coords.y2 - roller->coords.y1) / 2;
