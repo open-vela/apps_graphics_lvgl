@@ -28,7 +28,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_slider_design(lv_obj_t * slider, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_slider_signal(lv_obj_t * slider, lv_signal_t sign, void * param);
 
 /**********************
@@ -215,18 +215,18 @@ const lv_style_t * lv_slider_get_style(const lv_obj_t * slider, lv_slider_style_
 /**
  * Handle the drawing related tasks of the sliders
  * @param slider pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_slider_design(lv_obj_t * slider, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -272,7 +272,7 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
         }
 
 #if LV_USE_GROUP == 0
-        lv_draw_rect(&area_bg, clip_area, style_bg, lv_obj_get_opa_scale(slider));
+        lv_draw_rect(&area_bg, mask, style_bg, lv_obj_get_opa_scale(slider));
 #else
         /* Draw the borders later if the slider is focused.
          * At value = 100% the indicator can cover to whole background and the focused style won't
@@ -281,9 +281,9 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             lv_style_t style_tmp;
             lv_style_copy(&style_tmp, style_bg);
             style_tmp.body.border.width = 0;
-            lv_draw_rect(&area_bg, clip_area, &style_tmp, opa_scale);
+            lv_draw_rect(&area_bg, mask, &style_tmp, opa_scale);
         } else {
-            lv_draw_rect(&area_bg, clip_area, style_bg, opa_scale);
+            lv_draw_rect(&area_bg, mask, style_bg, opa_scale);
         }
 #endif
 
@@ -316,6 +316,8 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
 
         /*If dragged draw to the drag position*/
         if(ext->drag_value != LV_SLIDER_NOT_PRESSED) cur_value = ext->drag_value;
+        bool sym = false;
+        if(ext->bar.sym && ext->bar.min_value < 0 && ext->bar.max_value > 0) sym = true;
 
         if(slider_w >= slider_h) {
             lv_coord_t indic_w = lv_area_get_width(&area_indic);
@@ -335,11 +337,23 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             {
                 area_indic.x2 = (int32_t)((int32_t)indic_w * (cur_value - min_value)) / (max_value - min_value);
             }
+
             area_indic.x2 = area_indic.x1 + area_indic.x2 - 1;
+            if(sym) {
+                /*Calculate the coordinate of the zero point*/
+                lv_coord_t zero;
+                zero = area_indic.x1 + (-ext->bar.min_value * slider_w) / (ext->bar.max_value - ext->bar.min_value);
+                if(area_indic.x2 > zero)
+                    area_indic.x1 = zero;
+                else {
+                    area_indic.x1 = area_indic.x2;
+                    area_indic.x2 = zero;
+                }
+            }
 
             /*Draw the indicator but don't draw an ugly 1px wide rectangle on the left on min.
              * value*/
-            if(area_indic.x1 != area_indic.x2) lv_draw_rect(&area_indic, clip_area, style_indic, opa_scale);
+            if(area_indic.x1 != area_indic.x2) lv_draw_rect(&area_indic, mask, style_indic, opa_scale);
 
         } else {
             lv_coord_t indic_h = lv_area_get_height(&area_indic);
@@ -359,11 +373,24 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             {
                 area_indic.y1 = (int32_t)((int32_t)indic_h * (cur_value - min_value)) / (max_value - min_value);
             }
+
             area_indic.y1 = area_indic.y2 - area_indic.y1 + 1;
+
+            if(sym) {
+                /*Calculate the coordinate of the zero point*/
+                lv_coord_t zero;
+                zero = area_indic.y2 - (-ext->bar.min_value * slider_h) / (ext->bar.max_value - ext->bar.min_value);
+                if(area_indic.y1 < zero)
+                    area_indic.y2 = zero;
+                else {
+                    area_indic.y2 = area_indic.y1;
+                    area_indic.y1 = zero;
+                }
+            }
 
             /*Draw the indicator but don't draw an ugly 1px height rectangle on the bottom on min.
              * value*/
-            if(area_indic.x1 != area_indic.x2) lv_draw_rect(&area_indic, clip_area, style_indic, opa_scale);
+            if(area_indic.x1 != area_indic.x2) lv_draw_rect(&area_indic, mask, style_indic, opa_scale);
         }
 
         /*Before the knob add the border if required*/
@@ -376,7 +403,7 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             lv_style_copy(&style_tmp, style_bg);
             style_tmp.body.opa          = LV_OPA_TRANSP;
             style_tmp.body.shadow.width = 0;
-            lv_draw_rect(&area_bg, clip_area, &style_tmp, opa_scale);
+            lv_draw_rect(&area_bg, mask, &style_tmp, opa_scale);
         }
 #endif
 
@@ -386,7 +413,12 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
 
         if(slider_w >= slider_h) {
             if(ext->knob_in == 0) {
-                knob_area.x1 = area_indic.x2 - slider_h / 2;
+                if(sym == false) {
+                    knob_area.x1 = area_indic.x2 - slider_h / 2;
+                } else {
+                    if(cur_value > 0) knob_area.x1 = area_indic.x2 - slider_h / 2;
+                    else knob_area.x1 = area_indic.x1 - slider_h / 2;
+                }
                 knob_area.x2 = knob_area.x1 + slider_h - 1;
             } else {
 #if LV_USE_ANIMATION
@@ -415,7 +447,12 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             knob_area.y2 = slider->coords.y2;
         } else {
             if(ext->knob_in == 0) {
-                knob_area.y1 = area_indic.y1 - slider_w / 2;
+                if(sym == false) {
+                    knob_area.y1 = area_indic.y1 - slider_w / 2;
+                } else {
+                    if(cur_value > 0)  knob_area.y1 = area_indic.y1 - slider_w / 2;
+                    else  knob_area.y1 = area_indic.y2 - slider_w / 2;
+                }
                 knob_area.y2 = knob_area.y1 + slider_w - 1;
             } else {
 #if LV_USE_ANIMATION
@@ -442,13 +479,13 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
             knob_area.x1 = slider->coords.x1;
             knob_area.x2 = slider->coords.x2;
         }
-        lv_draw_rect(&knob_area, clip_area, style_knob, opa_scale);
+        lv_draw_rect(&knob_area, mask, style_knob, opa_scale);
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**

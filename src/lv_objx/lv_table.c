@@ -25,7 +25,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_table_design(lv_obj_t * table, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_table_signal(lv_obj_t * table, lv_signal_t sign, void * param);
 static lv_coord_t get_row_height(lv_obj_t * table, uint16_t row_id);
 static void refr_size(lv_obj_t * table);
@@ -106,8 +106,8 @@ lv_obj_t * lv_table_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->cell_style[1]        = copy_ext->cell_style[1];
         ext->cell_style[2]        = copy_ext->cell_style[2];
         ext->cell_style[3]        = copy_ext->cell_style[3];
-        ext->col_cnt              = copy_ext->col_cnt;
-        ext->row_cnt              = copy_ext->row_cnt;
+        lv_table_set_row_cnt(new_table, copy_ext->row_cnt);
+        lv_table_set_col_cnt(new_table, copy_ext->col_cnt);
 
         /*Refresh the style with new signal function*/
         lv_obj_refresh_style(new_table);
@@ -584,22 +584,22 @@ const lv_style_t * lv_table_get_style(const lv_obj_t * table, lv_table_style_t t
 /**
  * Handle the drawing related tasks of the tables
  * @param table pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_table_design(lv_obj_t * table, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        ancestor_scrl_design(table, clip_area, mode);
+        ancestor_scrl_design(table, mask, mode);
 
         lv_table_ext_t * ext        = lv_obj_get_ext_attr(table);
         const lv_style_t * bg_style = lv_obj_get_style(table);
@@ -654,7 +654,7 @@ static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_
                     }
                 }
 
-                lv_draw_rect(&cell_area, clip_area, cell_style, opa_scale);
+                lv_draw_rect(&cell_area, mask, cell_style, opa_scale);
 
                 if(ext->cell_data[cell]) {
 
@@ -688,7 +688,7 @@ static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_
 
                     lv_area_t label_mask;
                     bool label_mask_ok;
-                    label_mask_ok = lv_area_intersect(&label_mask, clip_area, &cell_area);
+                    label_mask_ok = lv_area_intersect(&label_mask, mask, &cell_area);
                     if(label_mask_ok) {
                         lv_draw_label(&txt_area, &label_mask, cell_style, opa_scale, ext->cell_data[cell] + 1,
                                       txt_flags, NULL, -1, -1, NULL);
@@ -708,7 +708,7 @@ static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_
 
                             p1.y = txt_area.y1 + txt_size.y + cell_style->text.line_space / 2;
                             p2.y = txt_area.y1 + txt_size.y + cell_style->text.line_space / 2;
-                            lv_draw_line(&p1, &p2, clip_area, cell_style, opa_scale);
+                            lv_draw_line(&p1, &p2, mask, cell_style, opa_scale);
 
                             ext->cell_data[cell][i] = '\n';
                         }
@@ -724,7 +724,7 @@ static lv_design_res_t lv_table_design(lv_obj_t * table, const lv_area_t * clip_
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -752,6 +752,8 @@ static lv_res_t lv_table_signal(lv_obj_t * table, lv_signal_t sign, void * param
                 ext->cell_data[cell] = NULL;
             }
         }
+        if(ext->cell_data != NULL)
+            lv_mem_free(ext->cell_data);
     } else if(sign == LV_SIGNAL_GET_TYPE) {
         lv_obj_type_t * buf = param;
         uint8_t i;

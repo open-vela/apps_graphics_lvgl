@@ -41,8 +41,8 @@
  *  STATIC PROTOTYPES
  **********************/
 static void lv_page_sb_refresh(lv_obj_t * page);
-static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_area, lv_design_mode_t mode);
-static lv_design_res_t lv_scrl_design(lv_obj_t * scrl, const lv_area_t * clisp_area, lv_design_mode_t mode);
+static bool lv_page_design(lv_obj_t * page, const lv_area_t * mask, lv_design_mode_t mode);
+static bool lv_scrl_design(lv_obj_t * scrl, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_page_signal(lv_obj_t * page, lv_signal_t sign, void * param);
 static lv_res_t lv_page_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void * param);
 static void scrl_def_event_cb(lv_obj_t * scrl, lv_event_t event);
@@ -108,7 +108,6 @@ lv_obj_t * lv_page_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Init the new page object*/
     if(copy == NULL) {
-        ext->bg.masked = 0;
         ext->scrl = lv_cont_create(new_page, NULL);
         lv_obj_set_signal_cb(ext->scrl, lv_page_scrollable_signal);
         lv_obj_set_design_cb(ext->scrl, lv_scrl_design);
@@ -631,17 +630,17 @@ void lv_page_start_edge_flash(lv_obj_t * page)
 /**
  * Handle the drawing related tasks of the pages
  * @param page pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_page_design(lv_obj_t * page, const lv_area_t * mask, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
-        return ancestor_design(page, clip_area, mode);
+        return ancestor_design(page, mask, mode);
     }
     /*Cache page bg style for temporary modification*/
     const lv_style_t * style = lv_page_get_style(page, LV_PAGE_STYLE_BG);
@@ -651,20 +650,13 @@ static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_ar
     if(mode == LV_DESIGN_DRAW_MAIN) {
         /*Draw without border*/
         style_tmp.body.border.width = 0;
-        lv_draw_rect(&page->coords, clip_area, &style_tmp, lv_obj_get_opa_scale(page));
+        lv_draw_rect(&page->coords, mask, &style_tmp, lv_obj_get_opa_scale(page));
 
-        lv_page_ext_t * ext = lv_obj_get_ext_attr(page);
-        if(ext->bg.masked) {
-            const lv_style_t * style = lv_page_get_style(page, LV_PAGE_STYLE_BG);
-            lv_draw_mask_param_t mp;
-            lv_draw_mask_radius_init(&mp, &page->coords, style->body.radius, false);
-            lv_draw_mask_add(&mp, page + 4);
-        }
     } else if(mode == LV_DESIGN_DRAW_POST) {
         /*Draw only a border*/
         style_tmp.body.shadow.width = 0;
         style_tmp.body.opa          = LV_OPA_TRANSP;
-        lv_draw_rect(&page->coords, clip_area, &style_tmp, lv_obj_get_opa_scale(page));
+        lv_draw_rect(&page->coords, mask, &style_tmp, lv_obj_get_opa_scale(page));
 
         lv_page_ext_t * ext = lv_obj_get_ext_attr(page);
 
@@ -677,7 +669,7 @@ static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_ar
             sb_area.y1 += page->coords.y1;
             sb_area.x2 += page->coords.x1;
             sb_area.y2 += page->coords.y1;
-            lv_draw_rect(&sb_area, clip_area, ext->sb.style, lv_obj_get_opa_scale(page));
+            lv_draw_rect(&sb_area, mask, ext->sb.style, lv_obj_get_opa_scale(page));
         }
 
         if(ext->sb.ver_draw && (ext->sb.mode & LV_SB_MODE_HIDE) == 0) {
@@ -687,7 +679,7 @@ static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_ar
             sb_area.y1 += page->coords.y1;
             sb_area.x2 += page->coords.x1;
             sb_area.y2 += page->coords.y1;
-            lv_draw_rect(&sb_area, clip_area, ext->sb.style, lv_obj_get_opa_scale(page));
+            lv_draw_rect(&sb_area, mask, ext->sb.style, lv_obj_get_opa_scale(page));
         }
 
 #if LV_USE_ANIMATION
@@ -726,33 +718,29 @@ static lv_design_res_t lv_page_design(lv_obj_t * page, const lv_area_t * clip_ar
                 flash_style.body.radius = LV_RADIUS_CIRCLE;
                 uint32_t opa            = (flash_style.body.opa * ext->edge_flash.state) / LV_PAGE_END_FLASH_SIZE;
                 flash_style.body.opa    = opa;
-                lv_draw_rect(&flash_area, clip_area, &flash_style, lv_obj_get_opa_scale(page));
+                lv_draw_rect(&flash_area, mask, &flash_style, lv_obj_get_opa_scale(page));
             }
-        }
-
-        if(ext->bg.masked) {
-            lv_draw_mask_remove_custom(page + 4);
         }
 #endif
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
  * Handle the drawing related tasks of the scrollable object
  * @param scrl pointer to an object
- * @param clisp_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_scrl_design(lv_obj_t * scrl, const lv_area_t * clisp_area, lv_design_mode_t mode)
+static bool lv_scrl_design(lv_obj_t * scrl, const lv_area_t * mask, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
-        return ancestor_design(scrl, clisp_area, mode);
+        return ancestor_design(scrl, mask, mode);
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
 #if LV_USE_GROUP
         /* If the page is focused in a group and
@@ -778,16 +766,16 @@ static lv_design_res_t lv_scrl_design(lv_obj_t * scrl, const lv_area_t * clisp_a
             }
         }
 #endif
-        ancestor_design(scrl, clisp_area, mode);
+        ancestor_design(scrl, mask, mode);
 
 #if LV_USE_GROUP
         scrl->style_p = style_scrl_ori; /*Revert the style*/
 #endif
     } else if(mode == LV_DESIGN_DRAW_POST) {
-        ancestor_design(scrl, clisp_area, mode);
+        ancestor_design(scrl, mask, mode);
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
