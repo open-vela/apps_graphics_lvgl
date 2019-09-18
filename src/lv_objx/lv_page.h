@@ -86,8 +86,9 @@ typedef struct
 
     uint16_t anim_time; /*Scroll animation time*/
 #endif
-    lv_obj_t * scroll_prop_obj;          /*Pointer to child page from where the scroll is being propagated */
-    uint8_t scroll_prop :1;    /*The direction of the scroll propagation*/
+
+    uint8_t scroll_prop : 1;    /*1: Propagate the scrolling the the parent if the edge is reached*/
+    uint8_t scroll_prop_ip : 1; /*1: Scroll propagation is in progress (used by the library)*/
 } lv_page_ext_t;
 
 enum {
@@ -398,12 +399,10 @@ void lv_page_scroll_ver(lv_obj_t * page, lv_coord_t dist);
 
 /**
  * Not intended to use directly by the user but by other object types internally.
- * Start an edge flash animation.
+ * Start an edge flash animation. Exactly one `ext->edge_flash.xxx_ip` should be set
  * @param page
- * @param edge the edge to flash. Can be `LV_PAGE_EDGE_LEFT/RIGHT/TOP/BOTTOM`
  */
-void lv_page_start_edge_flash(lv_obj_t * page, lv_page_edge_t edge);
-
+void lv_page_start_edge_flash(lv_obj_t * page);
 /**********************
  *      MACROS
  **********************/

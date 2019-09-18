@@ -13,7 +13,6 @@
 #include "../lv_core/lv_group.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_math.h"
-#include "../lv_misc/lv_printf.h"
 
 /*********************
  *      DEFINES
@@ -35,7 +34,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_label_signal(lv_obj_t * label, lv_signal_t sign, void * param);
-static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_mode_t mode);
 static void lv_label_refr_text(lv_obj_t * label);
 static void lv_label_revert_dots(lv_obj_t * label);
 
@@ -200,51 +199,6 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
         strcpy(ext->text, text);
         ext->static_txt = 0; /*Now the text is dynamically allocated*/
     }
-
-    lv_label_refr_text(label);
-}
-
-/**
- * Set a new formatted text for a label. Memory will be allocated to store the text by the label.
- * @param label pointer to a label object
- * @param fmt `printf`-like format
- */
-void lv_label_set_text_fmt(lv_obj_t * label, const char * fmt, ...)
-{
-    lv_obj_invalidate(label);
-
-    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-
-    /*If text is NULL then refresh */
-    if(fmt == NULL) {
-        lv_label_refr_text(label);
-        return;
-    }
-
-    if(ext->text != NULL && ext->static_txt == 0) {
-            lv_mem_free(ext->text);
-            ext->text = NULL;
-    }
-
-    va_list ap, ap2;
-    va_start(ap, fmt);
-    va_copy(ap2, ap);
-
-    /*Allocate space for the new text by using trick from C99 standard section 7.19.6.12 */
-    uint32_t len = lv_vsnprintf(NULL, 0, fmt, ap);
-
-    va_end(ap);
-    
-
-    ext->text = lv_mem_alloc(len+1);
-    lv_mem_assert(ext->text);
-    if(ext->text == NULL) return;
-    ext->text[len-1] = 0; /* Ensure NULL termination */
-
-    lv_vsnprintf(ext->text, len+1, fmt, ap2);
-
-    va_end(ap2);
-    ext->static_txt = 0; /*Now the text is dynamically allocated*/
 
     lv_label_refr_text(label);
 }
@@ -850,18 +804,18 @@ void lv_label_cut_text(lv_obj_t * label, uint32_t pos, uint32_t cnt)
 /**
  * Handle the drawing related tasks of the labels
  * @param label pointer to a label object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /* A label never covers an area */
     if(mode == LV_DESIGN_COVER_CHK)
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     else if(mode == LV_DESIGN_DRAW_MAIN) {
         lv_area_t coords;
         const lv_style_t * style = lv_obj_get_style(label);
@@ -871,7 +825,7 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
 #if LV_USE_GROUP
         lv_group_t * g = lv_obj_get_group(label);
         if(lv_group_get_focused(g) == label) {
-            lv_draw_rect(&coords, clip_area, style, opa_scale);
+            lv_draw_rect(&coords, mask, style, opa_scale);
         }
 #endif
 
@@ -885,7 +839,7 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
             bg.y1 -= style->body.padding.top;
             bg.y2 += style->body.padding.bottom;
 
-            lv_draw_rect(&bg, clip_area, style, lv_obj_get_opa_scale(label));
+            lv_draw_rect(&bg, mask, style, lv_obj_get_opa_scale(label));
         }
 
         /*TEST: draw a background for the label*/
@@ -918,7 +872,7 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
         /*Just for compatibility*/
         lv_draw_label_hint_t * hint = NULL;
 #endif
-        lv_draw_label(&coords, clip_area, style, opa_scale, ext->text, flag, &ext->offset,
+        lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ext->offset,
                               lv_label_get_text_sel_start(label), lv_label_get_text_sel_end(label), hint);
 
 
@@ -935,7 +889,7 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
                         lv_font_get_glyph_width(style->text.font, ' ', ' ') * LV_LABEL_WAIT_CHAR_COUNT;
                 ofs.y = ext->offset.y;
 
-                lv_draw_label(&coords, clip_area, style, opa_scale, ext->text, flag, &ofs,
+                lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ofs,
                               lv_label_get_text_sel_start(label), lv_label_get_text_sel_end(label), NULL);
             }
 
@@ -943,12 +897,12 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
             if(size.y > lv_obj_get_height(label)) {
                 ofs.x = ext->offset.x;
                 ofs.y = ext->offset.y + size.y + lv_font_get_line_height(style->text.font);
-                lv_draw_label(&coords, clip_area, style, opa_scale, ext->text, flag, &ofs,
+                lv_draw_label(&coords, mask, style, opa_scale, ext->text, flag, &ofs,
                               lv_label_get_text_sel_start(label), lv_label_get_text_sel_end(label), NULL);
             }
         }
     }
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**

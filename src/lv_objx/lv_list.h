@@ -159,9 +159,9 @@ static inline void lv_list_set_sb_mode(lv_obj_t * list, lv_sb_mode_t mode)
  * @param list pointer to a List
  * @param en true or false to enable/disable scroll propagation
  */
-static inline void lv_list_set_scroll_propagation(lv_obj_t * list, lv_drag_dir_t dir)
+static inline void lv_list_set_scroll_propagation(lv_obj_t * list, bool en)
 {
-    lv_page_set_scroll_propagation(list, dir);
+    lv_page_set_scroll_propagation(list, en);
 }
 
 /**
@@ -191,13 +191,6 @@ static inline void lv_list_set_anim_time(lv_obj_t * list, uint16_t anim_time)
  * @param style pointer to a style
  */
 void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, const lv_style_t * style);
-
-/**
- * Set layout of a list
- * @param list pointer to a list object
- * @param layout which layout should be used
- */
-void lv_list_set_layout(lv_obj_t * list, lv_layout_t layout);
 
 /*=====================
  * Getter functions
@@ -268,13 +261,6 @@ uint16_t lv_list_get_size(const lv_obj_t * list);
  */
 lv_obj_t * lv_list_get_btn_selected(const lv_obj_t * list);
 #endif
-
-/**
- * Get layout of a list
- * @param list pointer to a list object
- * @return layout of the list object
- */
-lv_layout_t lv_list_get_layout(lv_obj_t * list);
 
 /**
  * Get the scroll bar mode of a list
