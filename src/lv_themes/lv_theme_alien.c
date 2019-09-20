@@ -85,6 +85,7 @@ static void basic_init(void)
     def.body.border.opa     = LV_OPA_COVER;
     def.body.shadow.color   = LV_COLOR_SILVER;
     def.body.shadow.width   = 0;
+    def.body.shadow.type    = LV_SHADOW_FULL;
 
     def.text.color        = lv_color_hex3(0xDDD);
     def.text.font         = _font;
@@ -823,7 +824,7 @@ static void win_init(void)
     header.body.border.opa     = panel.body.border.opa;
     header.body.border.width   = panel.body.border.width;
     header.body.border.color   = lv_color_hsv_to_rgb(_hue, 20, 80);
-    header.body.border.part    = LV_BORDER_PART_BOTTOM;
+    header.body.border.part    = LV_BORDER_BOTTOM;
     header.text.color          = lv_color_hsv_to_rgb(_hue, 5, 100);
     header.image.color         = lv_color_hsv_to_rgb(_hue, 5, 100);
 
