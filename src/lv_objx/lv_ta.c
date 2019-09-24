@@ -9,6 +9,7 @@
 #include "lv_ta.h"
 #if LV_USE_TA != 0
 #include <string.h>
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_core/lv_refr.h"
 #include "../lv_draw/lv_draw.h"
@@ -85,7 +86,7 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_ta = lv_page_create(par, copy);
-    lv_mem_assert(new_ta);
+    LV_ASSERT_MEM(new_ta);
     if(new_ta == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_ta);
@@ -95,7 +96,7 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Allocate the object type specific extended data*/
     lv_ta_ext_t * ext = lv_obj_allocate_ext_attr(new_ta, sizeof(lv_ta_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->cursor.state      = 1;
@@ -162,6 +163,23 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->cursor.pos        = copy_ext->cursor.pos;
         ext->cursor.valid_x    = copy_ext->cursor.valid_x;
         ext->cursor.type       = copy_ext->cursor.type;
+
+        if(ext->pwd_mode != 0) pwd_char_hider( new_ta);
+
+        if(copy_ext->placeholder != NULL)
+            ext->placeholder = lv_label_create(new_ta, copy_ext->placeholder);
+        else
+            ext->placeholder = NULL;
+
+        if(copy_ext->pwd_tmp) {
+            uint16_t len = lv_mem_get_size(copy_ext->pwd_tmp);
+            ext->pwd_tmp = lv_mem_alloc(len);
+            LV_ASSERT_MEM(ext->pwd_tmp);
+            if(ext->pwd_tmp == NULL) return NULL;
+
+            memcpy(ext->pwd_tmp, copy_ext->pwd_tmp, len);
+        }
+
         if(copy_ext->one_line) lv_ta_set_one_line(new_ta, true);
 
         lv_ta_set_style(new_ta, LV_TA_STYLE_CURSOR, lv_ta_get_style(copy, LV_TA_STYLE_CURSOR));
@@ -250,7 +268,7 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
     if(ext->pwd_mode != 0) {
 
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + 2); /*+2: the new char + \0 */
-        lv_mem_assert(ext->pwd_tmp);
+        LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, (const char *)letter_buf);
@@ -331,7 +349,7 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
 
     if(ext->pwd_mode != 0) {
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + strlen(txt) + 1);
-        lv_mem_assert(ext->pwd_tmp);
+        LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, txt);
@@ -410,7 +428,7 @@ void lv_ta_del_char(lv_obj_t * ta)
         lv_txt_cut(ext->pwd_tmp, ext->cursor.pos - 1, lv_txt_encoded_size(&label_txt[byte_pos]));
 
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + 1);
-        lv_mem_assert(ext->pwd_tmp);
+        LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
     }
 
@@ -472,7 +490,7 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
 
     if(ext->pwd_mode != 0) {
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(txt) + 1);
-        lv_mem_assert(ext->pwd_tmp);
+        LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
         strcpy(ext->pwd_tmp, txt);
 
@@ -646,13 +664,14 @@ void lv_ta_set_pwd_mode(lv_obj_t * ta, bool en)
         char * txt   = lv_label_get_text(ext->label);
         uint16_t len = strlen(txt);
         ext->pwd_tmp = lv_mem_alloc(len + 1);
-        lv_mem_assert(ext->pwd_tmp);
+        LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         strcpy(ext->pwd_tmp, txt);
 
         uint16_t i;
-        for(i = 0; i < len; i++) {
+        uint16_t encoded_len = lv_txt_get_encoded_length(txt); 
+        for(i = 0; i < encoded_len; i++) {
             txt[i] = '*'; /*All char to '*'*/
         }
         txt[i] = '\0';
@@ -917,7 +936,7 @@ const char * lv_ta_get_placeholder_text(lv_obj_t * ta)
 
     const char * txt = NULL;
 
-    if(ext->placeholder) txt = lv_label_get_text(ext->label);
+    if(ext->placeholder) txt = lv_label_get_text(ext->placeholder);
 
     return txt;
 }

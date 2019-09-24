@@ -9,6 +9,7 @@
 #include "lv_preload.h"
 #if LV_USE_PRELOAD != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_draw/lv_draw_rect.h"
 #include "../lv_draw/lv_draw_arc.h"
@@ -66,12 +67,12 @@ lv_obj_t * lv_preload_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of pre loader*/
     lv_obj_t * new_preload = lv_arc_create(par, copy);
-    lv_mem_assert(new_preload);
+    LV_ASSERT_MEM(new_preload);
     if(new_preload == NULL) return NULL;
 
     /*Allocate the pre loader type specific extended data*/
     lv_preload_ext_t * ext = lv_obj_allocate_ext_attr(new_preload, sizeof(lv_preload_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_preload);
@@ -220,9 +221,10 @@ void lv_preload_set_type(lv_obj_t * preload, lv_preload_type_t type)
             lv_anim_create(&b);
             break;
         }
+        case LV_PRELOAD_TYPE_CONSTANT_ARC:
         case LV_PRELOAD_TYPE_SPINNING_ARC:
         default: {
-            ext->anim_type = LV_PRELOAD_TYPE_SPINNING_ARC;
+            ext->anim_type = type;
             lv_anim_t a;
             a.var = preload;
             if(ext->anim_dir == LV_PRELOAD_DIR_FORWARD) {
@@ -234,7 +236,8 @@ void lv_preload_set_type(lv_obj_t * preload, lv_preload_type_t type)
                 a.end   = 360;
             }
             a.exec_cb        = (lv_anim_exec_xcb_t)lv_preload_spinner_anim;
-            a.path_cb        = lv_anim_path_ease_in_out;
+            a.path_cb        = (LV_PRELOAD_TYPE_CONSTANT_ARC == type ?
+                                lv_anim_path_linear : lv_anim_path_ease_in_out);
             a.ready_cb       = NULL;
             a.act_time       = 0;
             a.time           = ext->time;

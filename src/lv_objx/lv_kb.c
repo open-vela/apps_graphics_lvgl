@@ -10,8 +10,9 @@
 #include "lv_kb.h"
 #if LV_USE_KB != 0
 
-#include "lv_ta.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
+#include "lv_ta.h"
 
 /*********************
  *      DEFINES
@@ -32,7 +33,7 @@ static lv_res_t lv_kb_signal(lv_obj_t * kb, lv_signal_t sign, void * param);
  **********************/
 static lv_signal_cb_t ancestor_signal;
 /* clang-format off */
-static const char * kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "Bksp", "\n",
+static const char * kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", LV_SYMBOL_BACKSPACE, "\n",
                                    "ABC", "a", "s", "d", "f", "g", "h", "j", "k", "l", "Enter", "\n",
                                    "_", "-", "z", "x", "c", "v", "b", "n", "m", ".", ",", ":", "\n",
                                    LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
@@ -43,7 +44,7 @@ static const lv_btnm_ctrl_t kb_ctrl_lc_map[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
-static const char * kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "Bksp", "\n",
+static const char * kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", LV_SYMBOL_BACKSPACE, "\n",
                                    "abc", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Enter", "\n",
                                    "_", "-", "Z", "X", "C", "V", "B", "N", "M", ".", ",", ":", "\n",
                                    LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
@@ -54,7 +55,7 @@ static const lv_btnm_ctrl_t kb_ctrl_uc_map[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
-static const char * kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", "Bksp", "\n",
+static const char * kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
                                      "abc", "+", "-", "/", "*", "=", "%", "!", "?", "#", "<", ">", "\n",
                                      "\\",  "@", "$", "(", ")", "{", "}", "[", "]", ";", "\"", "'", "\n",
                                      LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
@@ -67,7 +68,7 @@ static const lv_btnm_ctrl_t kb_ctrl_spec_map[] = {
 
 static const char * kb_map_num[] = {"1", "2", "3", LV_SYMBOL_CLOSE, "\n",
                                     "4", "5", "6", LV_SYMBOL_OK, "\n",
-                                    "7", "8", "9", "Bksp", "\n",
+                                    "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
                                     "+/-", "0", ".", LV_SYMBOL_LEFT, LV_SYMBOL_RIGHT, ""};
 
 static const lv_btnm_ctrl_t kb_ctrl_num_map[] = {
@@ -97,14 +98,14 @@ lv_obj_t * lv_kb_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of keyboard*/
     lv_obj_t * new_kb = lv_btnm_create(par, copy);
-    lv_mem_assert(new_kb);
+    LV_ASSERT_MEM(new_kb);
     if(new_kb == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_kb);
 
     /*Allocate the keyboard type specific extended data*/
     lv_kb_ext_t * ext = lv_obj_allocate_ext_attr(new_kb, sizeof(lv_kb_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
@@ -376,7 +377,7 @@ void lv_kb_def_event_cb(lv_obj_t * kb, lv_event_t event)
         lv_ta_cursor_left(ext->ta);
     else if(strcmp(txt, LV_SYMBOL_RIGHT) == 0)
         lv_ta_cursor_right(ext->ta);
-    else if(strcmp(txt, "Bksp") == 0)
+    else if(strcmp(txt, LV_SYMBOL_BACKSPACE) == 0)
         lv_ta_del_char(ext->ta);
     else if(strcmp(txt, "+/-") == 0) {
         uint16_t cur        = lv_ta_get_cursor_pos(ext->ta);
