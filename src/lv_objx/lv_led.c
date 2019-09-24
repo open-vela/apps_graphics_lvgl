@@ -9,7 +9,6 @@
 #include "lv_led.h"
 #if LV_USE_LED != 0
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_draw/lv_draw.h"
 
@@ -57,7 +56,7 @@ lv_obj_t * lv_led_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor basic object*/
     lv_obj_t * new_led = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_led);
+    lv_mem_assert(new_led);
     if(new_led == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_led);
@@ -65,7 +64,7 @@ lv_obj_t * lv_led_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Allocate the object type specific extended data*/
     lv_led_ext_t * ext = lv_obj_allocate_ext_attr(new_led, sizeof(lv_led_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     ext->bright = LV_LED_BRIGHT_ON;

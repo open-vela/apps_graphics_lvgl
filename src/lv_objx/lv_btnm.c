@@ -9,7 +9,6 @@
 #include "lv_btnm.h"
 #if LV_USE_BTNM != 0
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_core/lv_refr.h"
@@ -71,14 +70,14 @@ lv_obj_t * lv_btnm_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_btnm = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_btnm);
+    lv_mem_assert(new_btnm);
     if(new_btnm == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_btnm);
 
     /*Allocate the object type specific extended data*/
     lv_btnm_ext_t * ext = lv_obj_allocate_ext_attr(new_btnm, sizeof(lv_btnm_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     ext->btn_cnt                          = 0;
@@ -939,9 +938,9 @@ static void allocate_btn_areas_and_controls(const lv_obj_t * btnm, const char **
     }
 
     ext->button_areas = lv_mem_alloc(sizeof(lv_area_t) * btn_cnt);
-    LV_ASSERT_MEM(ext->button_areas);
+    lv_mem_assert(ext->button_areas);
     ext->ctrl_bits = lv_mem_alloc(sizeof(lv_btnm_ctrl_t) * btn_cnt);
-    LV_ASSERT_MEM(ext->ctrl_bits);
+    lv_mem_assert(ext->ctrl_bits);
     if(ext->button_areas == NULL || ext->ctrl_bits == NULL) btn_cnt = 0;
 
     memset(ext->ctrl_bits, 0, sizeof(lv_btnm_ctrl_t) * btn_cnt);
