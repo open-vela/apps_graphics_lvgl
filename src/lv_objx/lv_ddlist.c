@@ -9,7 +9,6 @@
 #include "lv_ddlist.h"
 #if LV_USE_DDLIST != 0
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_core/lv_indev.h"
@@ -75,7 +74,7 @@ lv_obj_t * lv_ddlist_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor drop down list*/
     lv_obj_t * new_ddlist = lv_page_create(par, copy);
-    LV_ASSERT_MEM(new_ddlist);
+    lv_mem_assert(new_ddlist);
     if(new_ddlist == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_ddlist);
@@ -84,7 +83,7 @@ lv_obj_t * lv_ddlist_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Allocate the drop down list type specific extended data*/
     lv_ddlist_ext_t * ext = lv_obj_allocate_ext_attr(new_ddlist, sizeof(lv_ddlist_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
@@ -581,14 +580,9 @@ static bool lv_ddlist_design(lv_obj_t * ddlist, const lv_area_t * mask, lv_desig
                 new_style.text.color = sel_style->text.color;
                 new_style.text.opa   = sel_style->text.opa;
                 lv_area_t area_arrow;
-                lv_coord_t arrow_width = lv_txt_get_width(LV_SYMBOL_DOWN, strlen(LV_SYMBOL_DOWN), sel_style->text.font, 0, 0);
-                if(lv_label_get_align(ext->label) != LV_LABEL_ALIGN_RIGHT) {
-                    area_arrow.x2 = ddlist->coords.x2 - style->body.padding.right;
-                    area_arrow.x1 = area_arrow.x2 - arrow_width;
-                } else {
-                    area_arrow.x1 = ddlist->coords.x1 + style->body.padding.left;
-                    area_arrow.x2 = area_arrow.x1 + arrow_width;
-                }
+                area_arrow.x2 = ddlist->coords.x2 - style->body.padding.right;
+                area_arrow.x1 = area_arrow.x2 -
+                                lv_txt_get_width(LV_SYMBOL_DOWN, strlen(LV_SYMBOL_DOWN), sel_style->text.font, 0, 0);
 
                 area_arrow.y1 = ddlist->coords.y1 + style->text.line_space;
                 area_arrow.y2 = area_arrow.y1 + font_h;
