@@ -9,7 +9,6 @@
  *********************/
 #include <stddef.h>
 #include "lv_task.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_hal/lv_hal_tick.h"
 #include "lv_gc.h"
 
@@ -174,7 +173,7 @@ lv_task_t * lv_task_create_basic(void)
     /*It's the first task*/
     if(NULL == tmp) {
         new_task = lv_ll_ins_head(&LV_GC_ROOT(_lv_task_ll));
-        LV_ASSERT_NO_MEM(new_task);
+        lv_mem_assert(new_task);
         if(new_task == NULL) return NULL;
     }
     /*Insert the new task to proper place according to its priority*/
@@ -182,7 +181,7 @@ lv_task_t * lv_task_create_basic(void)
         do {
             if(tmp->prio <= DEF_PRIO) {
                 new_task = lv_ll_ins_prev(&LV_GC_ROOT(_lv_task_ll), tmp);
-                LV_ASSERT_NO_MEM(new_task);
+                lv_mem_assert(new_task);
                 if(new_task == NULL) return NULL;
                 break;
             }
@@ -192,7 +191,7 @@ lv_task_t * lv_task_create_basic(void)
         /*Only too high priority tasks were found. Add the task to the end*/
         if(tmp == NULL) {
             new_task = lv_ll_ins_tail(&LV_GC_ROOT(_lv_task_ll));
-            LV_ASSERT_NO_MEM(new_task);
+            lv_mem_assert(new_task);
             if(new_task == NULL) return NULL;
         }
     }
@@ -224,7 +223,7 @@ lv_task_t * lv_task_create_basic(void)
 lv_task_t * lv_task_create(lv_task_cb_t task_cb, uint32_t period, lv_task_prio_t prio, void * user_data)
 {
     lv_task_t * new_task = lv_task_create_basic();
-    LV_ASSERT_NO_MEM(new_task);
+    lv_mem_assert(new_task);
     if(new_task == NULL) return NULL;
 
     lv_task_set_cb(new_task, task_cb);
