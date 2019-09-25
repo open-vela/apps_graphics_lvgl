@@ -10,13 +10,17 @@
 #if LV_USE_LABEL != 0
 
 #include "../lv_core/lv_obj.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_math.h"
+#include "../lv_misc/lv_printf.h"
 
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_label"
+
 /*Test configurations*/
 #ifndef LV_LABEL_DEF_SCROLL_SPEED
 #define LV_LABEL_DEF_SCROLL_SPEED (25)
@@ -72,7 +76,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create a basic object*/
     lv_obj_t * new_label = lv_obj_create(par, copy);
-    lv_mem_assert(new_label);
+    LV_ASSERT_MEM(new_label);
     if(new_label == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_label);
@@ -81,7 +85,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_obj_allocate_ext_attr(new_label, sizeof(lv_label_ext_t));
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(new_label);
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->text       = NULL;
@@ -135,7 +139,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
         /*In DOT mode save the text byte-to-byte because a '\0' can be in the middle*/
         if(copy_ext->long_mode == LV_LABEL_LONG_DOT) {
             ext->text = lv_mem_realloc(ext->text, lv_mem_get_size(copy_ext->text));
-            lv_mem_assert(ext->text);
+            LV_ASSERT_MEM(ext->text);
             if(ext->text == NULL) return NULL;
             memcpy(ext->text, copy_ext->text, lv_mem_get_size(copy_ext->text));
         }
@@ -169,6 +173,8 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_label_set_text(lv_obj_t * label, const char * text)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_obj_invalidate(label);
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
@@ -179,10 +185,12 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
         return;
     }
 
+    LV_ASSERT_STR(text);
+
     if(ext->text == text) {
         /*If set its own text then reallocate it (maybe its size changed)*/
         ext->text = lv_mem_realloc(ext->text, strlen(ext->text) + 1);
-        lv_mem_assert(ext->text);
+        LV_ASSERT_MEM(ext->text);
         if(ext->text == NULL) return;
     } else {
         /*Allocate space for the new text*/
@@ -193,12 +201,60 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
         }
 
         ext->text = lv_mem_alloc(len);
-        lv_mem_assert(ext->text);
+        LV_ASSERT_MEM(ext->text);
         if(ext->text == NULL) return;
 
         strcpy(ext->text, text);
         ext->static_txt = 0; /*Now the text is dynamically allocated*/
     }
+
+    lv_label_refr_text(label);
+}
+
+/**
+ * Set a new formatted text for a label. Memory will be allocated to store the text by the label.
+ * @param label pointer to a label object
+ * @param fmt `printf`-like format
+ */
+void lv_label_set_text_fmt(lv_obj_t * label, const char * fmt, ...)
+{
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_STR(fmt);
+
+    lv_obj_invalidate(label);
+
+    lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
+
+    /*If text is NULL then refresh */
+    if(fmt == NULL) {
+        lv_label_refr_text(label);
+        return;
+    }
+
+    if(ext->text != NULL && ext->static_txt == 0) {
+            lv_mem_free(ext->text);
+            ext->text = NULL;
+    }
+
+    va_list ap, ap2;
+    va_start(ap, fmt);
+    va_copy(ap2, ap);
+
+    /*Allocate space for the new text by using trick from C99 standard section 7.19.6.12 */
+    uint32_t len = lv_vsnprintf(NULL, 0, fmt, ap);
+
+    va_end(ap);
+    
+
+    ext->text = lv_mem_alloc(len+1);
+    LV_ASSERT_MEM(ext->text);
+    if(ext->text == NULL) return;
+    ext->text[len-1] = 0; /* Ensure NULL termination */
+
+    lv_vsnprintf(ext->text, len+1, fmt, ap2);
+
+    va_end(ap2);
+    ext->static_txt = 0; /*Now the text is dynamically allocated*/
 
     lv_label_refr_text(label);
 }
@@ -212,6 +268,8 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
  */
 void lv_label_set_array_text(lv_obj_t * label, const char * array, uint16_t size)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_obj_invalidate(label);
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
@@ -228,7 +286,7 @@ void lv_label_set_array_text(lv_obj_t * label, const char * array, uint16_t size
         ext->text = NULL;
     }
     ext->text = lv_mem_alloc(size + 1);
-    lv_mem_assert(ext->text);
+    LV_ASSERT_MEM(ext->text);
     if(ext->text == NULL) return;
 
     memcpy(ext->text, array, size);
@@ -246,6 +304,9 @@ void lv_label_set_array_text(lv_obj_t * label, const char * array, uint16_t size
  */
 void lv_label_set_static_text(lv_obj_t * label, const char * text)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_STR(text);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(ext->static_txt == 0 && ext->text != NULL) {
         lv_mem_free(ext->text);
@@ -269,6 +330,8 @@ void lv_label_set_static_text(lv_obj_t * label, const char * text)
  */
 void lv_label_set_long_mode(lv_obj_t * label, lv_label_long_mode_t long_mode)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
 
 #if LV_USE_ANIMATION
@@ -302,6 +365,8 @@ void lv_label_set_long_mode(lv_obj_t * label, lv_label_long_mode_t long_mode)
  */
 void lv_label_set_align(lv_obj_t * label, lv_label_align_t align)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(ext->align == align) return;
 
@@ -318,6 +383,8 @@ void lv_label_set_align(lv_obj_t * label, lv_label_align_t align)
  */
 void lv_label_set_recolor(lv_obj_t * label, bool en)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(ext->recolor == en) return;
 
@@ -334,6 +401,8 @@ void lv_label_set_recolor(lv_obj_t * label, bool en)
  */
 void lv_label_set_body_draw(lv_obj_t * label, bool en)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(ext->body_draw == en) return;
 
@@ -351,6 +420,8 @@ void lv_label_set_body_draw(lv_obj_t * label, bool en)
  */
 void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_USE_ANIMATION
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(ext->anim_speed == anim_speed) return;
@@ -368,6 +439,8 @@ void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed)
 
 void lv_label_set_text_sel_start(lv_obj_t * label, uint16_t index)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_LABEL_TEXT_SEL
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     ext->txt_sel_start   = index;
@@ -380,6 +453,8 @@ void lv_label_set_text_sel_start(lv_obj_t * label, uint16_t index)
 
 void lv_label_set_text_sel_end(lv_obj_t * label, uint16_t index)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_LABEL_TEXT_SEL
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     ext->txt_sel_end     = index;
@@ -401,6 +476,8 @@ void lv_label_set_text_sel_end(lv_obj_t * label, uint16_t index)
  */
 char * lv_label_get_text(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
 
     return ext->text;
@@ -413,6 +490,8 @@ char * lv_label_get_text(const lv_obj_t * label)
  */
 lv_label_long_mode_t lv_label_get_long_mode(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->long_mode;
 }
@@ -424,6 +503,8 @@ lv_label_long_mode_t lv_label_get_long_mode(const lv_obj_t * label)
  */
 lv_label_align_t lv_label_get_align(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->align;
 }
@@ -435,6 +516,8 @@ lv_label_align_t lv_label_get_align(const lv_obj_t * label)
  */
 bool lv_label_get_recolor(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->recolor == 0 ? false : true;
 }
@@ -446,6 +529,8 @@ bool lv_label_get_recolor(const lv_obj_t * label)
  */
 bool lv_label_get_body_draw(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->body_draw == 0 ? false : true;
 }
@@ -457,6 +542,8 @@ bool lv_label_get_body_draw(const lv_obj_t * label)
  */
 uint16_t lv_label_get_anim_speed(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_USE_ANIMATION
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->anim_speed;
@@ -475,6 +562,9 @@ uint16_t lv_label_get_anim_speed(const lv_obj_t * label)
  */
 void lv_label_get_letter_pos(const lv_obj_t * label, uint16_t index, lv_point_t * pos)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_NULL(pos);
+
     const char * txt         = lv_label_get_text(label);
     lv_label_ext_t * ext     = lv_obj_get_ext_attr(label);
     uint32_t line_start      = 0;
@@ -544,6 +634,9 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint16_t index, lv_point_t 
  */
 uint16_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_NULL(pos);
+
     const char * txt         = lv_label_get_text(label);
     lv_label_ext_t * ext     = lv_obj_get_ext_attr(label);
     uint32_t line_start      = 0;
@@ -626,6 +719,8 @@ uint16_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos)
  */
 uint16_t lv_label_get_text_sel_start(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_LABEL_TEXT_SEL
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->txt_sel_start;
@@ -643,6 +738,8 @@ uint16_t lv_label_get_text_sel_start(const lv_obj_t * label)
  */
 uint16_t lv_label_get_text_sel_end(const lv_obj_t * label)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
 #if LV_LABEL_TEXT_SEL
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     return ext->txt_sel_end;
@@ -660,6 +757,9 @@ uint16_t lv_label_get_text_sel_end(const lv_obj_t * label)
  */
 bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_NULL(pos);
+
     const char * txt         = lv_label_get_text(label);
     lv_label_ext_t * ext     = lv_obj_get_ext_attr(label);
     uint32_t line_start      = 0;
@@ -749,6 +849,9 @@ bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos)
  */
 void lv_label_ins_text(lv_obj_t * label, uint32_t pos, const char * txt)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+    LV_ASSERT_STR(txt);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
 
     /*Can not append to static text*/
@@ -761,7 +864,7 @@ void lv_label_ins_text(lv_obj_t * label, uint32_t pos, const char * txt)
     uint32_t ins_len = strlen(txt);
     uint32_t new_len = ins_len + old_len;
     ext->text        = lv_mem_realloc(ext->text, new_len + 1);
-    lv_mem_assert(ext->text);
+    LV_ASSERT_MEM(ext->text);
     if(ext->text == NULL) return;
 
     if(pos == LV_LABEL_POS_LAST) {
@@ -782,6 +885,8 @@ void lv_label_ins_text(lv_obj_t * label, uint32_t pos, const char * txt)
  */
 void lv_label_cut_text(lv_obj_t * label, uint32_t pos, uint32_t cnt)
 {
+    LV_ASSERT_OBJ(label, LV_OBJX_NAME);
+
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
 
     /*Can not append to static text*/
