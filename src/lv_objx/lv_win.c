@@ -9,6 +9,7 @@
 #include "lv_win.h"
 #if LV_USE_WIN != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_core/lv_disp.h"
 
@@ -51,14 +52,14 @@ lv_obj_t * lv_win_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_win = lv_obj_create(par, copy);
-    lv_mem_assert(new_win);
+    LV_ASSERT_MEM(new_win);
     if(new_win == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_win);
 
     /*Allocate the object type specific extended data*/
     lv_win_ext_t * ext = lv_obj_allocate_ext_attr(new_win, sizeof(lv_win_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->page          = NULL;
@@ -226,6 +227,18 @@ void lv_win_set_btn_size(lv_obj_t * win, lv_coord_t size)
     ext->btn_size = size;
 
     lv_win_realign(win);
+}
+
+/**
+ * Set the size of the content area.
+ * @param win pointer to a window object
+ * @param w width
+ * @param h height (the window will be higher with the height of the header)
+ */
+void lv_win_set_content_size(lv_obj_t * win, lv_coord_t w, lv_coord_t h)
+{
+    lv_win_ext_t * ext = lv_obj_get_ext_attr(win);
+    h += lv_obj_get_height(ext->header);
 }
 
 /**
