@@ -10,7 +10,6 @@
 #if LV_USE_TABVIEW != 0
 
 #include "lv_btnm.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_anim.h"
 #include "../lv_core/lv_disp.h"
@@ -18,8 +17,6 @@
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_tabview"
-
 #if LV_USE_ANIMATION
 #ifndef LV_TABVIEW_DEF_ANIM_TIME
 #define LV_TABVIEW_DEF_ANIM_TIME 300 /*Animation time of focusing to the a list element [ms] (0: no animation)  */
@@ -74,13 +71,13 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of tab*/
     lv_obj_t * new_tabview = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_tabview);
+    lv_mem_assert(new_tabview);
     if(new_tabview == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_tabview);
 
     /*Allocate the tab type specific extended data*/
     lv_tabview_ext_t * ext = lv_obj_allocate_ext_attr(new_tabview, sizeof(lv_tabview_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
@@ -106,7 +103,7 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Init the new tab tab*/
     if(copy == NULL) {
         ext->tab_name_ptr = lv_mem_alloc(sizeof(char *));
-        LV_ASSERT_MEM(ext->tab_name_ptr);
+        lv_mem_assert(ext->tab_name_ptr);
         if(ext->tab_name_ptr == NULL) return NULL;
         ext->tab_name_ptr[0] = "";
         ext->tab_cnt         = 0;
@@ -164,7 +161,7 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
 #endif
 
         ext->tab_name_ptr = lv_mem_alloc(sizeof(char *));
-        LV_ASSERT_MEM(ext->tab_name_ptr);
+        lv_mem_assert(ext->tab_name_ptr);
         if(ext->tab_name_ptr == NULL) return NULL;
         ext->tab_name_ptr[0] = "";
         lv_btnm_set_map(ext->btns, ext->tab_name_ptr);
@@ -191,13 +188,11 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
 
 /**
  * Delete all children of the scrl object, without deleting scrl child.
- * @param tabview pointer to an object
+ * @param obj pointer to an object
  */
-void lv_tabview_clean(lv_obj_t * tabview)
+void lv_tabview_clean(lv_obj_t * obj)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
-    lv_obj_t * scrl = lv_page_get_scrl(tabview);
+    lv_obj_t * scrl = lv_page_get_scrl(obj);
     lv_obj_clean(scrl);
 }
 
@@ -213,9 +208,6 @@ void lv_tabview_clean(lv_obj_t * tabview)
  */
 lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-    LV_ASSERT_STR(name);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
 
     /*Create the container page*/
@@ -233,7 +225,7 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
     /*Extend the button matrix map with the new name*/
     char * name_dm;
     name_dm = lv_mem_alloc(strlen(name) + 1); /*+1 for the the closing '\0' */
-    LV_ASSERT_MEM(name_dm);
+    lv_mem_assert(name_dm);
     if(name_dm == NULL) return NULL;
     strcpy(name_dm, name);
 
@@ -250,7 +242,7 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
             break;
     }
 
-    LV_ASSERT_MEM(ext->tab_name_ptr);
+    lv_mem_assert(ext->tab_name_ptr);
     if(ext->tab_name_ptr == NULL) return NULL;
 
     /* FIXME: It is not possible yet to switch tab button position from/to top/bottom from/to left/right at runtime.
@@ -336,8 +328,6 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
  */
 void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, lv_anim_enable_t anim)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
 #if LV_USE_ANIMATION == 0
     anim = LV_ANIM_OFF;
 #endif
@@ -462,8 +452,6 @@ void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, lv_anim_enable_t an
  */
 void lv_tabview_set_sliding(lv_obj_t * tabview, bool en)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     ext->slide_enable      = en == false ? 0 : 1;
 }
@@ -475,8 +463,6 @@ void lv_tabview_set_sliding(lv_obj_t * tabview, bool en)
  */
 void lv_tabview_set_anim_time(lv_obj_t * tabview, uint16_t anim_time)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
 #if LV_USE_ANIMATION
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     ext->anim_time         = anim_time;
@@ -494,8 +480,6 @@ void lv_tabview_set_anim_time(lv_obj_t * tabview, uint16_t anim_time)
  */
 void lv_tabview_set_style(lv_obj_t * tabview, lv_tabview_style_t type, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
 
     switch(type) {
@@ -533,8 +517,6 @@ void lv_tabview_set_style(lv_obj_t * tabview, lv_tabview_style_t type, const lv_
  */
 void lv_tabview_set_btns_pos(lv_obj_t * tabview, lv_tabview_btns_pos_t btns_pos)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
 
     ext->btns_pos = btns_pos;
@@ -548,8 +530,6 @@ void lv_tabview_set_btns_pos(lv_obj_t * tabview, lv_tabview_btns_pos_t btns_pos)
  */
 void lv_tabview_set_btns_hidden(lv_obj_t * tabview, bool en)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
 
     ext->btns_hide = en;
@@ -567,8 +547,6 @@ void lv_tabview_set_btns_hidden(lv_obj_t * tabview, bool en)
  */
 uint16_t lv_tabview_get_tab_act(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     return ext->tab_cur;
 }
@@ -580,8 +558,6 @@ uint16_t lv_tabview_get_tab_act(const lv_obj_t * tabview)
  */
 uint16_t lv_tabview_get_tab_count(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     return ext->tab_cnt;
 }
@@ -594,8 +570,6 @@ uint16_t lv_tabview_get_tab_count(const lv_obj_t * tabview)
  */
 lv_obj_t * lv_tabview_get_tab(const lv_obj_t * tabview, uint16_t id)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     uint16_t i             = 0;
     lv_obj_t * page        = lv_obj_get_child_back(ext->content, NULL);
@@ -617,8 +591,6 @@ lv_obj_t * lv_tabview_get_tab(const lv_obj_t * tabview, uint16_t id)
  */
 bool lv_tabview_get_sliding(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     return ext->slide_enable ? true : false;
 }
@@ -630,8 +602,6 @@ bool lv_tabview_get_sliding(const lv_obj_t * tabview)
  */
 uint16_t lv_tabview_get_anim_time(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
 #if LV_USE_ANIMATION
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     return ext->anim_time;
@@ -649,8 +619,6 @@ uint16_t lv_tabview_get_anim_time(const lv_obj_t * tabview)
  */
 const lv_style_t * lv_tabview_get_style(const lv_obj_t * tabview, lv_tabview_style_t type)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     const lv_style_t * style = NULL;
     lv_tabview_ext_t * ext   = lv_obj_get_ext_attr(tabview);
 
@@ -673,8 +641,6 @@ const lv_style_t * lv_tabview_get_style(const lv_obj_t * tabview, lv_tabview_sty
  */
 lv_tabview_btns_pos_t lv_tabview_get_btns_pos(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     return ext->btns_pos;
 }
@@ -686,8 +652,6 @@ lv_tabview_btns_pos_t lv_tabview_get_btns_pos(const lv_obj_t * tabview)
  */
 bool lv_tabview_get_btns_hidden(const lv_obj_t * tabview)
 {
-    LV_ASSERT_OBJ(tabview, LV_OBJX_NAME);
-
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
 
     return ext->btns_hide;
@@ -711,7 +675,6 @@ static lv_res_t lv_tabview_signal(lv_obj_t * tabview, lv_signal_t sign, void * p
     /* Include the ancient signal function */
     res = ancestor_signal(tabview, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_tabview_ext_t * ext = lv_obj_get_ext_attr(tabview);
     if(sign == LV_SIGNAL_CLEANUP) {
@@ -766,6 +729,13 @@ static lv_res_t lv_tabview_signal(lv_obj_t * tabview, lv_signal_t sign, void * p
     } else if(sign == LV_SIGNAL_GET_EDITABLE) {
         bool * editable = (bool *)param;
         *editable       = true;
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_tabview";
     }
 
     return res;
@@ -785,7 +755,6 @@ static lv_res_t tabpage_signal(lv_obj_t * tab_page, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = page_signal(tab_page, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, "");
 
     lv_obj_t * cont    = lv_obj_get_parent(tab_page);
     lv_obj_t * tabview = lv_obj_get_parent(cont);
@@ -816,7 +785,6 @@ static lv_res_t tabpage_scrl_signal(lv_obj_t * tab_scrl, lv_signal_t sign, void 
     /* Include the ancient signal function */
     res = page_scrl_signal(tab_scrl, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, "");
 
     lv_obj_t * tab_page = lv_obj_get_parent(tab_scrl);
     lv_obj_t * cont     = lv_obj_get_parent(tab_page);
