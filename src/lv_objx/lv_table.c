@@ -9,6 +9,7 @@
 #include "lv_table.h"
 #if LV_USE_TABLE != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_txt.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_draw/lv_draw_label.h"
@@ -17,6 +18,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_table"
 
 /**********************
  *      TYPEDEFS
@@ -56,12 +58,12 @@ lv_obj_t * lv_table_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of table*/
     lv_obj_t * new_table = lv_obj_create(par, copy);
-    lv_mem_assert(new_table);
+    LV_ASSERT_MEM(new_table);
     if(new_table == NULL) return NULL;
 
     /*Allocate the table type specific extended data*/
     lv_table_ext_t * ext = lv_obj_allocate_ext_attr(new_table, sizeof(lv_table_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_table);
     if(ancestor_scrl_design == NULL) ancestor_scrl_design = lv_obj_get_design_cb(new_table);
@@ -741,6 +743,7 @@ static lv_res_t lv_table_signal(lv_obj_t * table, lv_signal_t sign, void * param
     /* Include the ancient signal function */
     res = ancestor_signal(table, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(table, param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Free the cell texts*/
@@ -754,13 +757,6 @@ static lv_res_t lv_table_signal(lv_obj_t * table, lv_signal_t sign, void * param
         }
         if(ext->cell_data != NULL)
             lv_mem_free(ext->cell_data);
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_table";
     }
 
     return res;

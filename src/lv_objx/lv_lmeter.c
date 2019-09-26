@@ -9,6 +9,7 @@
 #include "lv_lmeter.h"
 #if LV_USE_LMETER != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_core/lv_group.h"
@@ -17,6 +18,8 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_lmeter"
+
 #define LV_LMETER_LINE_UPSCALE 5 /*2^x upscale of line to make rounding*/
 #define LV_LMETER_LINE_UPSCALE_MASK ((1 << LV_LMETER_LINE_UPSCALE) - 1)
 
@@ -57,14 +60,14 @@ lv_obj_t * lv_lmeter_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of line meter*/
     lv_obj_t * new_lmeter = lv_obj_create(par, copy);
-    lv_mem_assert(new_lmeter);
+    LV_ASSERT_MEM(new_lmeter);
     if(new_lmeter == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_lmeter);
 
     /*Allocate the line meter type specific extended data*/
     lv_lmeter_ext_t * ext = lv_obj_allocate_ext_attr(new_lmeter, sizeof(lv_lmeter_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
@@ -335,6 +338,7 @@ static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(lmeter, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(lmeter, param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
@@ -343,13 +347,6 @@ static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * par
     } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         const lv_style_t * style = lv_lmeter_get_style(lmeter, LV_LMETER_STYLE_MAIN);
         lmeter->ext_draw_pad     = LV_MATH_MAX(lmeter->ext_draw_pad, style->line.width);
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_lmeter";
     }
 
     return res;

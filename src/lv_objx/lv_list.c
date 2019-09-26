@@ -9,6 +9,7 @@
 #include "lv_list.h"
 #if LV_USE_LIST != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_anim.h"
@@ -17,6 +18,8 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_list"
+
 #define LV_LIST_LAYOUT_DEF LV_LAYOUT_COL_M
 
 #if LV_USE_ANIMATION == 0
@@ -69,13 +72,13 @@ lv_obj_t * lv_list_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor basic object*/
     lv_obj_t * new_list = lv_page_create(par, copy);
-    lv_mem_assert(new_list);
+    LV_ASSERT_MEM(new_list);
     if(new_list == NULL) return NULL;
 
     if(ancestor_page_signal == NULL) ancestor_page_signal = lv_obj_get_signal_cb(new_list);
 
     lv_list_ext_t * ext = lv_obj_allocate_ext_attr(new_list, sizeof(lv_list_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->style_img                        = NULL;
@@ -719,6 +722,7 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_page_signal(list, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(list, param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_RELEASED || sign == LV_SIGNAL_PRESSED || sign == LV_SIGNAL_PRESSING ||
        sign == LV_SIGNAL_LONG_PRESS || sign == LV_SIGNAL_LONG_PRESS_REP) {
@@ -848,13 +852,6 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
             }
         }
 #endif
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_list";
     }
     return res;
 }
@@ -873,6 +870,7 @@ static lv_res_t lv_list_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * para
     /* Include the ancient signal function */
     res = ancestor_btn_signal(btn, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(btn, param, "");
 
     if(sign == LV_SIGNAL_RELEASED) {
         lv_obj_t * list          = lv_obj_get_parent(lv_obj_get_parent(btn));

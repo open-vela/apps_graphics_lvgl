@@ -8,6 +8,7 @@
  *********************/
 #include <stdlib.h>
 #include "lv_canvas.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_core/lv_refr.h"
@@ -17,6 +18,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_canvas"
 
 /**********************
  *      TYPEDEFS
@@ -53,12 +55,12 @@ lv_obj_t * lv_canvas_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of canvas*/
     lv_obj_t * new_canvas = lv_img_create(par, copy);
-    lv_mem_assert(new_canvas);
+    LV_ASSERT_MEM(new_canvas);
     if(new_canvas == NULL) return NULL;
 
     /*Allocate the canvas type specific extended data*/
     lv_canvas_ext_t * ext = lv_obj_allocate_ext_attr(new_canvas, sizeof(lv_canvas_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_canvas);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_canvas);
@@ -790,16 +792,10 @@ static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(canvas, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(canvas, param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_canvas";
     }
 
     return res;

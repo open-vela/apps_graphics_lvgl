@@ -9,6 +9,7 @@
 #include "lv_arc.h"
 #if LV_USE_ARC != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_draw/lv_draw_arc.h"
 #include "../lv_themes/lv_theme.h"
@@ -16,6 +17,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_arc"
 
 /**********************
  *      TYPEDEFS
@@ -54,12 +56,12 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of arc*/
     lv_obj_t * new_arc = lv_obj_create(par, copy);
-    lv_mem_assert(new_arc);
+    LV_ASSERT_MEM(new_arc);
     if(new_arc == NULL) return NULL;
 
     /*Allocate the arc type specific extended data*/
     lv_arc_ext_t * ext = lv_obj_allocate_ext_attr(new_arc, sizeof(lv_arc_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_arc);
@@ -281,15 +283,10 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
     res = ancestor_signal(arc, sign, param);
     if(res != LV_RES_OK) return res;
 
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(arc, param, LV_OBJX_NAME);
+
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_arc";
     }
 
     return res;

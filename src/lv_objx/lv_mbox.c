@@ -9,6 +9,7 @@
 #include "lv_mbox.h"
 #if LV_USE_MBOX != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_anim.h"
@@ -17,6 +18,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_mbos"
 
 #if LV_USE_ANIMATION
 #ifndef LV_MBOX_CLOSE_ANIM_TIME
@@ -68,14 +70,14 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor message box*/
     lv_obj_t * new_mbox = lv_cont_create(par, copy);
-    lv_mem_assert(new_mbox);
+    LV_ASSERT_MEM(new_mbox);
     if(new_mbox == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_mbox);
 
     /*Allocate the message box type specific extended data*/
     lv_mbox_ext_t * ext = lv_obj_allocate_ext_attr(new_mbox, sizeof(lv_mbox_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->text = NULL;
@@ -441,6 +443,7 @@ static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(mbox, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(mbox, param, LV_OBJX_NAME);
 
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
     if(sign == LV_SIGNAL_CORD_CHG) {
@@ -476,13 +479,6 @@ static lv_res_t lv_mbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param)
             }
 #endif
         }
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_mbox";
     }
 
     return res;

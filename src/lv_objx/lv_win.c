@@ -9,12 +9,14 @@
 #include "lv_win.h"
 #if LV_USE_WIN != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_core/lv_disp.h"
 
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_win"
 
 /**********************
  *      TYPEDEFS
@@ -51,14 +53,14 @@ lv_obj_t * lv_win_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_win = lv_obj_create(par, copy);
-    lv_mem_assert(new_win);
+    LV_ASSERT_MEM(new_win);
     if(new_win == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_win);
 
     /*Allocate the object type specific extended data*/
     lv_win_ext_t * ext = lv_obj_allocate_ext_attr(new_win, sizeof(lv_win_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->page          = NULL;
@@ -479,6 +481,7 @@ static lv_res_t lv_win_signal(lv_obj_t * win, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(win, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(win, param, LV_OBJX_NAME);
 
     lv_win_ext_t * ext = lv_obj_get_ext_attr(win);
     if(sign == LV_SIGNAL_CHILD_CHG) { /*Move children to the page*/
@@ -510,13 +513,6 @@ static lv_res_t lv_win_signal(lv_obj_t * win, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_CONTROL) {
         /*Forward all the control signals to the page*/
         ext->page->signal_cb(ext->page, sign, param);
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_win";
     }
 
     return res;

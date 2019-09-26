@@ -9,6 +9,7 @@
 #include "lv_line.h"
 
 #if LV_USE_LINE != 0
+#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_misc/lv_math.h"
 #include <stdbool.h>
@@ -18,6 +19,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_line"
 
 /**********************
  *      TYPEDEFS
@@ -53,14 +55,14 @@ lv_obj_t * lv_line_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create a basic object*/
     lv_obj_t * new_line = lv_obj_create(par, copy);
-    lv_mem_assert(new_line);
+    LV_ASSERT_MEM(new_line);
     if(new_line == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_line);
 
     /*Extend the basic object to line object*/
     lv_line_ext_t * ext = lv_obj_allocate_ext_attr(new_line, sizeof(lv_line_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->point_num   = 0;
@@ -282,15 +284,9 @@ static lv_res_t lv_line_signal(lv_obj_t * line, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(line, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(line, param, LV_OBJX_NAME);
 
-    if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_line";
-    } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+   if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         const lv_style_t * style = lv_line_get_style(line, LV_LINE_STYLE_MAIN);
         if(line->ext_draw_pad < style->line.width) line->ext_draw_pad = style->line.width;
     }

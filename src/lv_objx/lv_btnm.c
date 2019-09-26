@@ -9,6 +9,7 @@
 #include "lv_btnm.h"
 #if LV_USE_BTNM != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_core/lv_refr.h"
@@ -18,6 +19,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_btnm"
 
 /**********************
  *      TYPEDEFS
@@ -70,14 +72,14 @@ lv_obj_t * lv_btnm_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_btnm = lv_obj_create(par, copy);
-    lv_mem_assert(new_btnm);
+    LV_ASSERT_MEM(new_btnm);
     if(new_btnm == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_btnm);
 
     /*Allocate the object type specific extended data*/
     lv_btnm_ext_t * ext = lv_obj_allocate_ext_attr(new_btnm, sizeof(lv_btnm_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     ext->btn_cnt                          = 0;
@@ -713,6 +715,7 @@ static lv_res_t lv_btnm_signal(lv_obj_t * btnm, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(btnm, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(btnm, param, LV_OBJX_NAME);
 
     lv_btnm_ext_t * ext = lv_obj_get_ext_attr(btnm);
     lv_point_t p;
@@ -897,15 +900,7 @@ static lv_res_t lv_btnm_signal(lv_obj_t * btnm, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_GET_EDITABLE) {
         bool * editable = (bool *)param;
         *editable       = true;
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_btnm";
     }
-
     return res;
 }
 
@@ -938,9 +933,9 @@ static void allocate_btn_areas_and_controls(const lv_obj_t * btnm, const char **
     }
 
     ext->button_areas = lv_mem_alloc(sizeof(lv_area_t) * btn_cnt);
-    lv_mem_assert(ext->button_areas);
+    LV_ASSERT_MEM(ext->button_areas);
     ext->ctrl_bits = lv_mem_alloc(sizeof(lv_btnm_ctrl_t) * btn_cnt);
-    lv_mem_assert(ext->ctrl_bits);
+    LV_ASSERT_MEM(ext->ctrl_bits);
     if(ext->button_areas == NULL || ext->ctrl_bits == NULL) btn_cnt = 0;
 
     memset(ext->ctrl_bits, 0, sizeof(lv_btnm_ctrl_t) * btn_cnt);
