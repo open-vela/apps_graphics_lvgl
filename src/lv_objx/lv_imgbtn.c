@@ -6,16 +6,12 @@
 /*********************
  *      INCLUDES
  *********************/
-
-#include "../lv_core/lv_debug.h"
 #include "lv_imgbtn.h"
-
 #if LV_USE_IMGBTN != 0
 
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_imgbtn"
 
 /**********************
  *      TYPEDEFS
@@ -24,7 +20,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_imgbtn_signal(lv_obj_t * imgbtn, lv_signal_t sign, void * param);
 static void refr_img(lv_obj_t * imgbtn);
 
@@ -55,12 +51,12 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of image button*/
     lv_obj_t * new_imgbtn = lv_btn_create(par, copy);
-    LV_ASSERT_MEM(new_imgbtn);
+    lv_mem_assert(new_imgbtn);
     if(new_imgbtn == NULL) return NULL;
 
     /*Allocate the image button type specific extended data*/
     lv_imgbtn_ext_t * ext = lv_obj_allocate_ext_attr(new_imgbtn, sizeof(lv_imgbtn_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_imgbtn);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_imgbtn);
@@ -116,8 +112,6 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     ext->img_src[state] = src;
@@ -140,8 +134,6 @@ void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src
 void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src_left, const void * src_mid,
                        const void * src_right)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     ext->img_src_left[state] = src_left;
@@ -161,8 +153,6 @@ void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src
  */
 void lv_imgbtn_set_style(lv_obj_t * imgbtn, lv_imgbtn_style_t type, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_btn_set_style(imgbtn, type, style);
 }
 
@@ -179,8 +169,6 @@ void lv_imgbtn_set_style(lv_obj_t * imgbtn, lv_imgbtn_style_t type, const lv_sty
  */
 const void * lv_imgbtn_get_src(lv_obj_t * imgbtn, lv_btn_state_t state)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     return ext->img_src[state];
@@ -195,8 +183,6 @@ const void * lv_imgbtn_get_src(lv_obj_t * imgbtn, lv_btn_state_t state)
  */
 const void * lv_imgbtn_get_src_left(lv_obj_t * imgbtn, lv_btn_state_t state)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     return ext->img_src_left[state];
@@ -210,8 +196,6 @@ const void * lv_imgbtn_get_src_left(lv_obj_t * imgbtn, lv_btn_state_t state)
  */
 const void * lv_imgbtn_get_src_middle(lv_obj_t * imgbtn, lv_btn_state_t state)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     return ext->img_src_mid[state];
@@ -225,8 +209,6 @@ const void * lv_imgbtn_get_src_middle(lv_obj_t * imgbtn, lv_btn_state_t state)
  */
 const void * lv_imgbtn_get_src_right(lv_obj_t * imgbtn, lv_btn_state_t state)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
 
     return ext->img_src_right[state];
@@ -242,8 +224,6 @@ const void * lv_imgbtn_get_src_right(lv_obj_t * imgbtn, lv_btn_state_t state)
  */
 const lv_style_t * lv_imgbtn_get_style(const lv_obj_t * imgbtn, lv_imgbtn_style_t type)
 {
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
     return lv_btn_get_style(imgbtn, type);
 }
 
@@ -262,21 +242,21 @@ const lv_style_t * lv_imgbtn_get_style(const lv_obj_t * imgbtn, lv_imgbtn_style_
 /**
  * Handle the drawing related tasks of the image buttons
  * @param imgbtn pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
         lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
-        lv_design_res_t cover = LV_DESIGN_RES_NOT_COVER;
+        bool cover            = false;
         if(ext->act_cf == LV_IMG_CF_TRUE_COLOR || ext->act_cf == LV_IMG_CF_RAW) {
-            cover = lv_area_is_in(clip_area, &imgbtn->coords) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
+            cover = lv_area_is_in(mask, &imgbtn->coords);
         }
 
         return cover;
@@ -291,7 +271,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
 
 #if LV_IMGBTN_TILED == 0
         const void * src = ext->img_src[state];
-        lv_draw_img(&imgbtn->coords, clip_area, src, style, opa_scale);
+        lv_draw_img(&imgbtn->coords, mask, src, style, opa_scale);
 #else
         const void * src;
         lv_img_header_t header;
@@ -307,7 +287,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
             coords.y1 = imgbtn->coords.y1;
             coords.x2 = coords.x1 + header.w - 1;
             coords.y2 = coords.y1 + header.h - 1;
-            lv_draw_img(&coords, clip_area, src, style, opa_scale);
+            lv_draw_img(&coords, mask, src, style, opa_scale);
         }
 
         src = ext->img_src_right[state];
@@ -318,7 +298,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
             coords.y1 = imgbtn->coords.y1;
             coords.x2 = imgbtn->coords.x2;
             coords.y2 = imgbtn->coords.y1 + header.h - 1;
-            lv_draw_img(&coords, clip_area, src, style, opa_scale);
+            lv_draw_img(&coords, mask, src, style, opa_scale);
         }
 
         src = ext->img_src_mid[state];
@@ -333,7 +313,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
             coords.y2 = imgbtn->coords.y1 + header.h - 1;
 
             for(i = 0; i < obj_w - right_w - left_w; i += header.w) {
-                lv_draw_img(&coords, clip_area, src, style, opa_scale);
+                lv_draw_img(&coords, mask, src, style, opa_scale);
                 coords.x1 = coords.x2 + 1;
                 coords.x2 += header.w;
             }
@@ -346,7 +326,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -363,7 +343,6 @@ static lv_res_t lv_imgbtn_signal(lv_obj_t * imgbtn, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(imgbtn, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_STYLE_CHG) {
         /* If the style changed then the button was clicked, released etc. so probably the state was
@@ -371,6 +350,13 @@ static lv_res_t lv_imgbtn_signal(lv_obj_t * imgbtn, lv_signal_t sign, void * par
         refr_img(imgbtn);
     } else if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_imgbtn";
     }
 
     return res;
