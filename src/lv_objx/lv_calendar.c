@@ -9,6 +9,7 @@
 #include "lv_calendar.h"
 #if LV_USE_CALENDAR != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_hal/lv_hal_indev.h"
 #include "../lv_misc/lv_utils.h"
@@ -19,6 +20,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_calendar"
 
 /**********************
  *      TYPEDEFS
@@ -77,12 +79,12 @@ lv_obj_t * lv_calendar_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of calendar*/
     lv_obj_t * new_calendar = lv_obj_create(par, copy);
-    lv_mem_assert(new_calendar);
+    LV_ASSERT_MEM(new_calendar);
     if(new_calendar == NULL) return NULL;
 
     /*Allocate the calendar type specific extended data*/
     lv_calendar_ext_t * ext = lv_obj_allocate_ext_attr(new_calendar, sizeof(lv_calendar_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_calendar);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_calendar);
@@ -454,6 +456,7 @@ static lv_res_t lv_calendar_signal(lv_obj_t * calendar, lv_signal_t sign, void *
     /* Include the ancient signal function */
     res = ancestor_signal(calendar, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(calendar, param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
@@ -542,13 +545,6 @@ static lv_res_t lv_calendar_signal(lv_obj_t * calendar, lv_signal_t sign, void *
             }
             lv_obj_invalidate(calendar);
         }
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set date*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_calendar";
     }
 
     return res;

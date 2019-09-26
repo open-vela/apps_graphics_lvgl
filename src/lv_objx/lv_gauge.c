@@ -9,6 +9,7 @@
 #include "lv_gauge.h"
 #if LV_USE_GAUGE != 0
 
+#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_txt.h"
@@ -20,6 +21,8 @@
 /*********************
  *      DEFINES
  *********************/
+#define LV_OBJX_NAME "lv_gauge"
+
 #define LV_GAUGE_DEF_NEEDLE_COLOR LV_COLOR_RED
 #define LV_GAUGE_DEF_LABEL_COUNT 6
 #define LV_GAUGE_DEF_LINE_COUNT 21 /*Should be: ((label_cnt - 1) * internal_lines) + 1*/
@@ -65,12 +68,12 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor gauge*/
     lv_obj_t * new_gauge = lv_lmeter_create(par, copy);
-    lv_mem_assert(new_gauge);
+    LV_ASSERT_MEM(new_gauge);
     if(new_gauge == NULL) return NULL;
 
     /*Allocate the gauge type specific extended data*/
     lv_gauge_ext_t * ext = lv_obj_allocate_ext_attr(new_gauge, sizeof(lv_gauge_ext_t));
-    lv_mem_assert(ext);
+    LV_ASSERT_MEM(ext);
     if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
@@ -140,7 +143,7 @@ void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_co
         }
 
         ext->values = lv_mem_realloc(ext->values, needle_cnt * sizeof(int16_t));
-        lv_mem_assert(ext->values);
+        LV_ASSERT_MEM(ext->values);
         if(ext->values == NULL) return;
 
         int16_t min = lv_gauge_get_min_value(gauge);
@@ -317,18 +320,12 @@ static lv_res_t lv_gauge_signal(lv_obj_t * gauge, lv_signal_t sign, void * param
     /* Include the ancient signal function */
     res = ancestor_signal(gauge, sign, param);
     if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(gauge, param, LV_OBJX_NAME);
 
     lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
     if(sign == LV_SIGNAL_CLEANUP) {
         lv_mem_free(ext->values);
         ext->values = NULL;
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_gauge";
     }
 
     return res;
