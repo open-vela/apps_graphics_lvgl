@@ -8,7 +8,6 @@
  *********************/
 #include <stdlib.h>
 #include "lv_canvas.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_core/lv_refr.h"
@@ -18,7 +17,6 @@
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_canvas"
 
 /**********************
  *      TYPEDEFS
@@ -28,27 +26,6 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * param);
-static void set_set_px_cb(lv_disp_drv_t * disp_drv, lv_img_cf_t cf);
-
-static void set_px_true_color_alpa(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha1(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-
-static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa);
-
-
 
 /**********************
  *  STATIC VARIABLES
@@ -76,12 +53,12 @@ lv_obj_t * lv_canvas_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor of canvas*/
     lv_obj_t * new_canvas = lv_img_create(par, copy);
-    LV_ASSERT_MEM(new_canvas);
+    lv_mem_assert(new_canvas);
     if(new_canvas == NULL) return NULL;
 
     /*Allocate the canvas type specific extended data*/
     lv_canvas_ext_t * ext = lv_obj_allocate_ext_attr(new_canvas, sizeof(lv_canvas_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_canvas);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_canvas);
@@ -134,9 +111,6 @@ lv_obj_t * lv_canvas_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_canvas_set_buffer(lv_obj_t * canvas, void * buf, lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(buf);
-
     lv_canvas_ext_t * ext = lv_obj_get_ext_attr(canvas);
 
     ext->dsc.header.cf = cf;
@@ -157,8 +131,6 @@ void lv_canvas_set_buffer(lv_obj_t * canvas, void * buf, lv_coord_t w, lv_coord_
  */
 void lv_canvas_set_px(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_color_t c)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     lv_canvas_ext_t * ext = lv_obj_get_ext_attr(canvas);
 
     lv_img_buf_set_px_color(&ext->dsc, x, y, c);
@@ -177,8 +149,6 @@ void lv_canvas_set_px(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_color_t 
  */
 void lv_canvas_set_palette(lv_obj_t * canvas, uint8_t id, lv_color_t c)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     lv_canvas_ext_t * ext = lv_obj_get_ext_attr(canvas);
 
     lv_img_buf_set_palette(&ext->dsc, id, c);
@@ -193,8 +163,6 @@ void lv_canvas_set_palette(lv_obj_t * canvas, uint8_t id, lv_color_t c)
  */
 void lv_canvas_set_style(lv_obj_t * canvas, lv_canvas_style_t type, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     switch(type) {
         case LV_CANVAS_STYLE_MAIN: lv_img_set_style(canvas, LV_IMG_STYLE_MAIN, style); break;
     }
@@ -213,8 +181,6 @@ void lv_canvas_set_style(lv_obj_t * canvas, lv_canvas_style_t type, const lv_sty
  */
 lv_color_t lv_canvas_get_px(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     lv_canvas_ext_t * ext    = lv_obj_get_ext_attr(canvas);
     const lv_style_t * style = lv_canvas_get_style(canvas, LV_CANVAS_STYLE_MAIN);
 
@@ -228,8 +194,6 @@ lv_color_t lv_canvas_get_px(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y)
  */
 lv_img_dsc_t * lv_canvas_get_img(lv_obj_t * canvas)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     lv_canvas_ext_t * ext = lv_obj_get_ext_attr(canvas);
 
     return &ext->dsc;
@@ -243,8 +207,6 @@ lv_img_dsc_t * lv_canvas_get_img(lv_obj_t * canvas)
  */
 const lv_style_t * lv_canvas_get_style(const lv_obj_t * canvas, lv_canvas_style_t type)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     const lv_style_t * style = NULL;
 
     switch(type) {
@@ -271,9 +233,6 @@ const lv_style_t * lv_canvas_get_style(const lv_obj_t * canvas, lv_canvas_style_
  */
 void lv_canvas_copy_buf(lv_obj_t * canvas, const void * to_copy, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(to_copy);
-
     lv_canvas_ext_t * ext = lv_obj_get_ext_attr(canvas);
     if(x + w >= ext->dsc.header.w || y + h >= ext->dsc.header.h) {
         LV_LOG_WARN("lv_canvas_copy_buf: x or y out of the canvas");
@@ -307,9 +266,6 @@ void lv_canvas_copy_buf(lv_obj_t * canvas, const void * to_copy, lv_coord_t x, l
 void lv_canvas_rotate(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, lv_coord_t offset_x, lv_coord_t offset_y,
                       int32_t pivot_x, int32_t pivot_y)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(img);
-
     lv_canvas_ext_t * ext_dst = lv_obj_get_ext_attr(canvas);
     const lv_style_t * style  = lv_canvas_get_style(canvas, LV_CANVAS_STYLE_MAIN);
     int32_t sinma             = lv_trigo_sin(-angle);
@@ -474,8 +430,6 @@ void lv_canvas_rotate(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, lv_c
  */
 void lv_canvas_fill_bg(lv_obj_t * canvas, lv_color_t color)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     uint32_t x = dsc->header.w * dsc->header.h;
@@ -499,9 +453,6 @@ void lv_canvas_fill_bg(lv_obj_t * canvas, lv_color_t color)
 void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h,
                          const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -531,10 +482,7 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
 #if LV_ANTIALIAS
-
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_TRANSP;
     if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
@@ -566,9 +514,6 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
 void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t max_w, const lv_style_t * style,
                          const char * txt, lv_label_align_t align)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -598,8 +543,6 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
     lv_disp_t * refr_ori = lv_refr_get_disp_refreshing();
     lv_refr_set_disp_refreshing(&disp);
 
@@ -625,9 +568,6 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  */
 void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const void * src, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -664,8 +604,6 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
     lv_disp_t * refr_ori = lv_refr_get_disp_refreshing();
     lv_refr_set_disp_refreshing(&disp);
 
@@ -683,9 +621,6 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
  */
 void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t * points, uint32_t point_cnt, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -708,8 +643,6 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t * points, uint32_t 
     disp.driver.buffer  = &disp_buf;
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
-
-    set_set_px_cb(&disp.driver, dsc->header.cf);
 
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
@@ -742,9 +675,6 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t * points, uint32_t 
  */
 void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t * points, uint32_t point_cnt, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -767,8 +697,6 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t * points, uint32
     disp.driver.buffer  = &disp_buf;
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
-
-    set_set_px_cb(&disp.driver, dsc->header.cf);
 
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
@@ -802,9 +730,6 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t * points, uint32
 void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t r, int32_t start_angle,
                         int32_t end_angle, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
-    LV_ASSERT_NULL(style);
-
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     /* Create a dummy display to fool the lv_draw function.
@@ -827,8 +752,6 @@ void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_
     disp.driver.buffer  = &disp_buf;
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
-
-    set_set_px_cb(&disp.driver, dsc->header.cf);
 
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
@@ -867,113 +790,19 @@ static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(canvas, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_canvas";
     }
 
     return res;
-}
-
-static void set_set_px_cb(lv_disp_drv_t * disp_drv, lv_img_cf_t cf)
-{
-    switch(cf) {
-        case LV_IMG_CF_TRUE_COLOR_ALPHA: disp_drv->set_px_cb = set_px_true_color_alpa; break;
-        case LV_IMG_CF_ALPHA_1BIT: disp_drv->set_px_cb = set_px_cb_alpha1; break;
-        case LV_IMG_CF_ALPHA_2BIT: disp_drv->set_px_cb = set_px_cb_alpha2; break;
-        case LV_IMG_CF_ALPHA_4BIT: disp_drv->set_px_cb = set_px_cb_alpha4; break;
-        case LV_IMG_CF_ALPHA_8BIT: disp_drv->set_px_cb = set_px_cb_alpha8; break;
-        default: disp_drv->set_px_cb = NULL;
-    }
-}
-
-static void set_px_cb_alpha1(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_1BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_2BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_4BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_8BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa)
-{
-
-    d->header.always_zero = 0;
-    d->header.h = LV_VER_RES_MAX;
-
-    uint8_t br = lv_color_brightness(color);
-    if(opa < LV_OPA_MAX) {
-        uint8_t bg = lv_img_buf_get_px_alpha(d, x, y);
-        br = (uint16_t)((uint16_t)br * opa + (bg * (255 - opa))) >> 8; //LV_MATH_MIN(opa + bg, 0xFF);
-    }
-
-    lv_img_buf_set_px_alpha(d, x, y, br);
-}
-
-
-static void set_px_true_color_alpa(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.always_zero = 0;
-    d.header.h = LV_VER_RES_MAX;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_TRUE_COLOR_ALPHA;
-
-    lv_color_t bg_color = lv_img_buf_get_px_color(&d, x, y, &lv_style_plain);
-    lv_opa_t bg_opa = lv_img_buf_get_px_alpha(&d, x, y);
-
-    lv_opa_t res_opa;
-    lv_color_t res_color;
-
-    lv_color_mix_with_alpha(bg_color, bg_opa, color, opa, &res_color, &res_opa);
-
-
-    lv_img_buf_set_px_alpha(&d, x, y, res_opa);
-    lv_img_buf_set_px_color(&d, x, y, res_color);
 }
 
 #endif

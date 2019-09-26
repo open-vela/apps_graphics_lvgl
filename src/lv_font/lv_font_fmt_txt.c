@@ -8,7 +8,6 @@
  *********************/
 #include "lv_font.h"
 #include "lv_font_fmt_txt.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_misc/lv_types.h"
 #include "../lv_misc/lv_log.h"
@@ -101,7 +100,7 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
 
         if(lv_mem_get_size(buf) < buf_size) {
             buf = lv_mem_realloc(buf, buf_size);
-            LV_ASSERT_MEM(buf);
+            lv_mem_assert(buf);
             if(buf == NULL) return NULL;
         }
 
@@ -301,8 +300,9 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
 
     rle_init(in, bpp);
 
-    uint8_t * line_buf1 = lv_draw_buf_get(w);
-    uint8_t * line_buf2 = lv_draw_buf_get(w);
+    uint8_t * line_buf = lv_draw_get_buf(w * 2);
+    uint8_t * line_buf1 = line_buf;
+    uint8_t * line_buf2 = line_buf + w;
 
     decompress_line(line_buf1, w);
 
@@ -322,9 +322,6 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
             wrp += wr_size;
         }
     }
-
-    lv_draw_buf_release(line_buf1);
-    lv_draw_buf_release(line_buf2);
 }
 
 /**
