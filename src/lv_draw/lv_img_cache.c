@@ -6,9 +6,8 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "../lv_core/lv_debug.h"
 #include "lv_img_cache.h"
-#include "lv_img_decoder.h"
-#include "lv_draw_img.h"
 #include "../lv_hal/lv_hal_tick.h"
 #include "../lv_misc/lv_gc.h"
 
@@ -81,15 +80,7 @@ lv_img_cache_entry_t * lv_img_cache_open(const void * src, const lv_style_t * st
     /*Is the image cached?*/
     lv_img_cache_entry_t * cached_src = NULL;
     for(i = 0; i < entry_cnt; i++) {
-        bool match = false;
-        lv_img_src_t src_type = lv_img_src_get_type(cache[i].dec_dsc.src);
-        if(src_type == LV_IMG_SRC_VARIABLE) {
-            if(cache[i].dec_dsc.src == src) match = true;
-        } else if(src_type == LV_IMG_SRC_FILE) {
-            if(strcmp(cache[i].dec_dsc.src, src) == 0) match = true;
-        }
-
-        if(match) {
+        if(cache[i].dec_dsc.src == src) {
             /* If opened increment its life.
              * Image difficult to open should live longer to keep avoid frequent their recaching.
              * Therefore increase `life` with `time_to_open`*/
@@ -162,7 +153,7 @@ void lv_img_cache_set_size(uint16_t new_entry_cnt)
 
     /*Reallocate the cache*/
     LV_GC_ROOT(_lv_img_cache_array) = lv_mem_alloc(sizeof(lv_img_cache_entry_t) * new_entry_cnt);
-    lv_mem_assert(LV_GC_ROOT(_lv_img_cache_array));
+    LV_ASSERT_MEM(LV_GC_ROOT(_lv_img_cache_array));
     if(LV_GC_ROOT(_lv_img_cache_array) == NULL) {
         entry_cnt = 0;
         return;
