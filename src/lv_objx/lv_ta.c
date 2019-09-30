@@ -9,7 +9,6 @@
 #include "lv_ta.h"
 #if LV_USE_TA != 0
 #include <string.h>
-#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_core/lv_refr.h"
 #include "../lv_draw/lv_draw.h"
@@ -21,9 +20,8 @@
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_ta"
-
 /*Test configuration*/
+
 #ifndef LV_TA_DEF_CURSOR_BLINK_TIME
 #define LV_TA_DEF_CURSOR_BLINK_TIME 400 /*ms*/
 #endif
@@ -87,7 +85,7 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor object*/
     lv_obj_t * new_ta = lv_page_create(par, copy);
-    LV_ASSERT_MEM(new_ta);
+    lv_mem_assert(new_ta);
     if(new_ta == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_ta);
@@ -97,7 +95,7 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Allocate the object type specific extended data*/
     lv_ta_ext_t * ext = lv_obj_allocate_ext_attr(new_ta, sizeof(lv_ta_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     ext->cursor.state      = 1;
@@ -175,7 +173,7 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
         if(copy_ext->pwd_tmp) {
             uint16_t len = lv_mem_get_size(copy_ext->pwd_tmp);
             ext->pwd_tmp = lv_mem_alloc(len);
-            LV_ASSERT_MEM(ext->pwd_tmp);
+            lv_mem_assert(ext->pwd_tmp);
             if(ext->pwd_tmp == NULL) return NULL;
 
             memcpy(ext->pwd_tmp, copy_ext->pwd_tmp, len);
@@ -226,8 +224,6 @@ lv_obj_t * lv_ta_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     uint32_t letter_buf[2];
@@ -271,7 +267,7 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
     if(ext->pwd_mode != 0) {
 
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + 2); /*+2: the new char + \0 */
-        LV_ASSERT_MEM(ext->pwd_tmp);
+        lv_mem_assert(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, (const char *)letter_buf);
@@ -316,9 +312,6 @@ void lv_ta_add_char(lv_obj_t * ta, uint32_t c)
  */
 void lv_ta_add_text(lv_obj_t * ta, const char * txt)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-    LV_ASSERT_NULL(txt);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     ta_insert_replace = NULL;
@@ -355,7 +348,7 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
 
     if(ext->pwd_mode != 0) {
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + strlen(txt) + 1);
-        LV_ASSERT_MEM(ext->pwd_tmp);
+        lv_mem_assert(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         lv_txt_ins(ext->pwd_tmp, ext->cursor.pos, txt);
@@ -398,8 +391,6 @@ void lv_ta_add_text(lv_obj_t * ta, const char * txt)
  */
 void lv_ta_del_char(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     uint16_t cur_pos  = ext->cursor.pos;
 
@@ -436,7 +427,7 @@ void lv_ta_del_char(lv_obj_t * ta)
         lv_txt_cut(ext->pwd_tmp, ext->cursor.pos - 1, lv_txt_encoded_size(&label_txt[byte_pos]));
 
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + 1);
-        LV_ASSERT_MEM(ext->pwd_tmp);
+        lv_mem_assert(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
     }
 
@@ -454,8 +445,6 @@ void lv_ta_del_char(lv_obj_t * ta)
  */
 void lv_ta_del_char_forward(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     uint16_t cp = lv_ta_get_cursor_pos(ta);
     lv_ta_set_cursor_pos(ta, cp + 1);
     if(cp != lv_ta_get_cursor_pos(ta)) lv_ta_del_char(ta);
@@ -472,9 +461,6 @@ void lv_ta_del_char_forward(lv_obj_t * ta)
  */
 void lv_ta_set_text(lv_obj_t * ta, const char * txt)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-    LV_ASSERT_NULL(txt);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     /*Clear the existing selection*/
@@ -503,7 +489,7 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
 
     if(ext->pwd_mode != 0) {
         ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(txt) + 1);
-        LV_ASSERT_MEM(ext->pwd_tmp);
+        lv_mem_assert(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
         strcpy(ext->pwd_tmp, txt);
 
@@ -540,9 +526,6 @@ void lv_ta_set_text(lv_obj_t * ta, const char * txt)
  */
 void lv_ta_set_placeholder_text(lv_obj_t * ta, const char * txt)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-    LV_ASSERT_NULL(txt);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     /*Create the placeholder label only when it is needed*/
@@ -570,8 +553,6 @@ void lv_ta_set_placeholder_text(lv_obj_t * ta, const char * txt)
  */
 void lv_ta_set_cursor_pos(lv_obj_t * ta, int16_t pos)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->cursor.pos == pos) return;
 
@@ -648,8 +629,6 @@ void lv_ta_set_cursor_pos(lv_obj_t * ta, int16_t pos)
  */
 void lv_ta_set_cursor_type(lv_obj_t * ta, lv_cursor_type_t cur_type)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->cursor.type == cur_type) return;
 
@@ -665,8 +644,6 @@ void lv_ta_set_cursor_type(lv_obj_t * ta, lv_cursor_type_t cur_type)
  */
 void lv_ta_set_cursor_click_pos(lv_obj_t * ta, bool en)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext     = lv_obj_get_ext_attr(ta);
     ext->cursor.click_pos = en ? 1 : 0;
 }
@@ -678,8 +655,6 @@ void lv_ta_set_cursor_click_pos(lv_obj_t * ta, bool en)
  */
 void lv_ta_set_pwd_mode(lv_obj_t * ta, bool en)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->pwd_mode == en) return;
 
@@ -688,7 +663,7 @@ void lv_ta_set_pwd_mode(lv_obj_t * ta, bool en)
         char * txt   = lv_label_get_text(ext->label);
         uint16_t len = strlen(txt);
         ext->pwd_tmp = lv_mem_alloc(len + 1);
-        LV_ASSERT_MEM(ext->pwd_tmp);
+        lv_mem_assert(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
         strcpy(ext->pwd_tmp, txt);
@@ -724,8 +699,6 @@ void lv_ta_set_pwd_mode(lv_obj_t * ta, bool en)
  */
 void lv_ta_set_one_line(lv_obj_t * ta, bool en)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->one_line == en) return;
 
@@ -767,8 +740,6 @@ void lv_ta_set_one_line(lv_obj_t * ta, bool en)
  */
 void lv_ta_set_text_align(lv_obj_t * ta, lv_label_align_t align)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     lv_obj_t * label  = lv_ta_get_label(ta);
     if(!ext->one_line) {
@@ -801,8 +772,6 @@ void lv_ta_set_text_align(lv_obj_t * ta, lv_label_align_t align)
  */
 void lv_ta_set_accepted_chars(lv_obj_t * ta, const char * list)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     ext->accapted_chars = list;
@@ -815,8 +784,6 @@ void lv_ta_set_accepted_chars(lv_obj_t * ta, const char * list)
  */
 void lv_ta_set_max_length(lv_obj_t * ta, uint16_t num)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     ext->max_length = num;
@@ -832,8 +799,6 @@ void lv_ta_set_max_length(lv_obj_t * ta, uint16_t num)
  */
 void lv_ta_set_insert_replace(lv_obj_t * ta, const char * txt)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     (void)ta; /*Unused*/
     ta_insert_replace = txt;
 }
@@ -846,8 +811,6 @@ void lv_ta_set_insert_replace(lv_obj_t * ta, const char * txt)
  */
 void lv_ta_set_style(lv_obj_t * ta, lv_ta_style_t type, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     switch(type) {
@@ -872,8 +835,6 @@ void lv_ta_set_style(lv_obj_t * ta, lv_ta_style_t type, const lv_style_t * style
  */
 void lv_ta_set_text_sel(lv_obj_t * ta, bool en)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_LABEL_TEXT_SEL
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
@@ -893,8 +854,6 @@ void lv_ta_set_text_sel(lv_obj_t * ta, bool en)
  */
 void lv_ta_set_pwd_show_time(lv_obj_t * ta, uint16_t time)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_USE_ANIMATION == 0
     time = 0;
 #endif
@@ -910,8 +869,6 @@ void lv_ta_set_pwd_show_time(lv_obj_t * ta, uint16_t time)
  */
 void lv_ta_set_cursor_blink_time(lv_obj_t * ta, uint16_t time)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_USE_ANIMATION == 0
     time = 0;
 #endif
@@ -955,8 +912,6 @@ void lv_ta_set_cursor_blink_time(lv_obj_t * ta, uint16_t time)
  */
 const char * lv_ta_get_text(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     const char * txt;
@@ -976,8 +931,6 @@ const char * lv_ta_get_text(const lv_obj_t * ta)
  */
 const char * lv_ta_get_placeholder_text(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     const char * txt = NULL;
@@ -994,8 +947,6 @@ const char * lv_ta_get_placeholder_text(lv_obj_t * ta)
  */
 lv_obj_t * lv_ta_get_label(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->label;
 }
@@ -1007,8 +958,6 @@ lv_obj_t * lv_ta_get_label(const lv_obj_t * ta)
  */
 uint16_t lv_ta_get_cursor_pos(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->cursor.pos;
 }
@@ -1020,8 +969,6 @@ uint16_t lv_ta_get_cursor_pos(const lv_obj_t * ta)
  */
 lv_cursor_type_t lv_ta_get_cursor_type(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->cursor.type;
 }
@@ -1033,8 +980,6 @@ lv_cursor_type_t lv_ta_get_cursor_type(const lv_obj_t * ta)
  */
 bool lv_ta_get_cursor_click_pos(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->cursor.click_pos ? true : false;
 }
@@ -1046,8 +991,6 @@ bool lv_ta_get_cursor_click_pos(lv_obj_t * ta)
  */
 bool lv_ta_get_pwd_mode(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->pwd_mode == 0 ? false : true;
 }
@@ -1059,8 +1002,6 @@ bool lv_ta_get_pwd_mode(const lv_obj_t * ta)
  */
 bool lv_ta_get_one_line(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->one_line == 0 ? false : true;
 }
@@ -1072,8 +1013,6 @@ bool lv_ta_get_one_line(const lv_obj_t * ta)
  */
 const char * lv_ta_get_accepted_chars(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     return ext->accapted_chars;
@@ -1086,8 +1025,6 @@ const char * lv_ta_get_accepted_chars(lv_obj_t * ta)
  */
 uint16_t lv_ta_get_max_length(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->max_length;
 }
@@ -1100,8 +1037,6 @@ uint16_t lv_ta_get_max_length(lv_obj_t * ta)
  */
 const lv_style_t * lv_ta_get_style(const lv_obj_t * ta, lv_ta_style_t type)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     const lv_style_t * style = NULL;
     lv_ta_ext_t * ext        = lv_obj_get_ext_attr(ta);
 
@@ -1126,8 +1061,6 @@ const lv_style_t * lv_ta_get_style(const lv_obj_t * ta, lv_ta_style_t type)
  */
 bool lv_ta_text_is_selected(const lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_LABEL_TEXT_SEL
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
@@ -1150,8 +1083,6 @@ bool lv_ta_text_is_selected(const lv_obj_t * ta)
  */
 bool lv_ta_get_text_sel_en(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_LABEL_TEXT_SEL
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->text_sel_en;
@@ -1168,8 +1099,6 @@ bool lv_ta_get_text_sel_en(lv_obj_t * ta)
  */
 uint16_t lv_ta_get_pwd_show_time(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     return ext->pwd_show_time;
@@ -1182,8 +1111,6 @@ uint16_t lv_ta_get_pwd_show_time(lv_obj_t * ta)
  */
 uint16_t lv_ta_get_cursor_blink_time(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     return ext->cursor.blink_time;
 }
@@ -1198,8 +1125,6 @@ uint16_t lv_ta_get_cursor_blink_time(lv_obj_t * ta)
  */
 void lv_ta_clear_selection(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
 #if LV_LABEL_TEXT_SEL
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
 
@@ -1219,8 +1144,6 @@ void lv_ta_clear_selection(lv_obj_t * ta)
  */
 void lv_ta_cursor_right(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     uint16_t cp = lv_ta_get_cursor_pos(ta);
     cp++;
     lv_ta_set_cursor_pos(ta, cp);
@@ -1232,8 +1155,6 @@ void lv_ta_cursor_right(lv_obj_t * ta)
  */
 void lv_ta_cursor_left(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     uint16_t cp = lv_ta_get_cursor_pos(ta);
     if(cp > 0) {
         cp--;
@@ -1247,8 +1168,6 @@ void lv_ta_cursor_left(lv_obj_t * ta)
  */
 void lv_ta_cursor_down(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     lv_point_t pos;
 
@@ -1279,8 +1198,6 @@ void lv_ta_cursor_down(lv_obj_t * ta)
  */
 void lv_ta_cursor_up(lv_obj_t * ta)
 {
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     lv_point_t pos;
 
@@ -1414,7 +1331,6 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(ta, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(sign == LV_SIGNAL_CLEANUP) {
@@ -1495,6 +1411,13 @@ static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_GET_EDITABLE) {
         bool * editable = (bool *)param;
         *editable       = true;
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_ta";
     } else if(sign == LV_SIGNAL_DEFOCUS) {
         lv_cursor_type_t cur_type;
         cur_type = lv_ta_get_cursor_type(ta);
@@ -1538,7 +1461,6 @@ static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void 
     /* Include the ancient signal function */
     res = scrl_signal(scrl, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, "");
 
     lv_obj_t * ta     = lv_obj_get_parent(scrl);
     lv_ta_ext_t * ext = lv_obj_get_ext_attr(ta);
