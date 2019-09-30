@@ -9,14 +9,12 @@
 #include "lv_cb.h"
 #if LV_USE_CB != 0
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_themes/lv_theme.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_cb"
 
 /**********************
  *      TYPEDEFS
@@ -57,14 +55,14 @@ lv_obj_t * lv_cb_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create the ancestor basic object*/
     lv_obj_t * new_cb = lv_btn_create(par, copy);
-    LV_ASSERT_MEM(new_cb);
+    lv_mem_assert(new_cb);
     if(new_cb == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_cb);
     if(ancestor_bg_design == NULL) ancestor_bg_design = lv_obj_get_design_cb(new_cb);
 
     lv_cb_ext_t * ext = lv_obj_allocate_ext_attr(new_cb, sizeof(lv_cb_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     ext->bullet = NULL;
@@ -128,8 +126,6 @@ lv_obj_t * lv_cb_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_cb_set_text(lv_obj_t * cb, const char * txt)
 {
-    LV_ASSERT_OBJ(cb, LV_OBJX_NAME);
-
     lv_cb_ext_t * ext = lv_obj_get_ext_attr(cb);
     lv_label_set_text(ext->label, txt);
 }
@@ -142,8 +138,6 @@ void lv_cb_set_text(lv_obj_t * cb, const char * txt)
  */
 void lv_cb_set_static_text(lv_obj_t * cb, const char * txt)
 {
-    LV_ASSERT_OBJ(cb, LV_OBJX_NAME);
-
     lv_cb_ext_t * ext = lv_obj_get_ext_attr(cb);
     lv_label_set_static_text(ext->label, txt);
 }
@@ -156,8 +150,6 @@ void lv_cb_set_static_text(lv_obj_t * cb, const char * txt)
  *  */
 void lv_cb_set_style(lv_obj_t * cb, lv_cb_style_t type, const lv_style_t * style)
 {
-    LV_ASSERT_OBJ(cb, LV_OBJX_NAME);
-
     lv_cb_ext_t * ext = lv_obj_get_ext_attr(cb);
 
     switch(type) {
@@ -187,8 +179,6 @@ void lv_cb_set_style(lv_obj_t * cb, lv_cb_style_t type, const lv_style_t * style
  */
 const char * lv_cb_get_text(const lv_obj_t * cb)
 {
-    LV_ASSERT_OBJ(cb, LV_OBJX_NAME);
-
     lv_cb_ext_t * ext = lv_obj_get_ext_attr(cb);
     return lv_label_get_text(ext->label);
 }
@@ -201,8 +191,6 @@ const char * lv_cb_get_text(const lv_obj_t * cb)
  *  */
 const lv_style_t * lv_cb_get_style(const lv_obj_t * cb, lv_cb_style_t type)
 {
-    LV_ASSERT_OBJ(cb, LV_OBJX_NAME);
-
     const lv_style_t * style = NULL;
     lv_cb_ext_t * ext        = lv_obj_get_ext_attr(cb);
 
@@ -312,7 +300,6 @@ static lv_res_t lv_cb_signal(lv_obj_t * cb, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(cb, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_cb_ext_t * ext = lv_obj_get_ext_attr(cb);
 
@@ -329,6 +316,13 @@ static lv_res_t lv_cb_signal(lv_obj_t * cb, lv_signal_t sign, void * param)
             /*Follow the backgrounds state with the bullet*/
             lv_btn_set_state(ext->bullet, lv_btn_get_state(cb));
         }
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_cb";
     }
 
     return res;
