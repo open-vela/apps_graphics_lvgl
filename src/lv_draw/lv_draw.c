@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "lv_draw.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_misc/lv_log.h"
 #include "../lv_misc/lv_math.h"
@@ -61,12 +60,12 @@ void * lv_draw_get_buf(uint32_t size)
 
     if(LV_GC_ROOT(_lv_draw_buf) == NULL) {
         LV_GC_ROOT(_lv_draw_buf) = lv_mem_alloc(size);
-        LV_ASSERT_MEM(LV_GC_ROOT(_lv_draw_buf));
+        lv_mem_assert(LV_GC_ROOT(_lv_draw_buf));
         return LV_GC_ROOT(_lv_draw_buf);
     }
 
     LV_GC_ROOT(_lv_draw_buf) = lv_mem_realloc(LV_GC_ROOT(_lv_draw_buf), size);
-    LV_ASSERT_MEM(LV_GC_ROOT(_lv_draw_buf));
+    lv_mem_assert(LV_GC_ROOT(_lv_draw_buf));
     return LV_GC_ROOT(_lv_draw_buf);
 }
 
