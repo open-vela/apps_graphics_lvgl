@@ -14,7 +14,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_draw/lv_draw_basic.h"
 #include "../lv_themes/lv_theme.h"
@@ -25,7 +24,6 @@
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_cont"
 
 /**********************
  *      TYPEDEFS
@@ -69,7 +67,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create a basic object*/
     lv_obj_t * new_cont = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_cont);
+    lv_mem_assert(new_cont);
     if(new_cont == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_cont);
@@ -78,7 +76,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(new_cont);
     if(ext == NULL) return NULL;
 
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     ext->fit_left   = LV_FIT_NONE;
     ext->fit_right  = LV_FIT_NONE;
     ext->fit_top    = LV_FIT_NONE;
@@ -128,8 +126,6 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_cont_set_layout(lv_obj_t * cont, lv_layout_t layout)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     if(ext->layout == layout) return;
 
@@ -150,8 +146,6 @@ void lv_cont_set_layout(lv_obj_t * cont, lv_layout_t layout)
  */
 void lv_cont_set_fit4(lv_obj_t * cont, lv_fit_t left, lv_fit_t right, lv_fit_t top, lv_fit_t bottom)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_obj_invalidate(cont);
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     if(ext->fit_left == left && ext->fit_right == right && ext->fit_top == top && ext->fit_bottom == bottom) {
@@ -178,8 +172,6 @@ void lv_cont_set_fit4(lv_obj_t * cont, lv_fit_t left, lv_fit_t right, lv_fit_t t
  */
 lv_layout_t lv_cont_get_layout(const lv_obj_t * cont)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     return ext->layout;
 }
@@ -191,8 +183,6 @@ lv_layout_t lv_cont_get_layout(const lv_obj_t * cont)
  */
 lv_fit_t lv_cont_get_fit_left(const lv_obj_t * cont)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     return ext->fit_left;
 }
@@ -204,8 +194,6 @@ lv_fit_t lv_cont_get_fit_left(const lv_obj_t * cont)
  */
 lv_fit_t lv_cont_get_fit_right(const lv_obj_t * cont)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     return ext->fit_right;
 }
@@ -217,8 +205,6 @@ lv_fit_t lv_cont_get_fit_right(const lv_obj_t * cont)
  */
 lv_fit_t lv_cont_get_fit_top(const lv_obj_t * cont)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     return ext->fit_top;
 }
@@ -230,8 +216,6 @@ lv_fit_t lv_cont_get_fit_top(const lv_obj_t * cont)
  */
 lv_fit_t lv_cont_get_fit_bottom(const lv_obj_t * cont)
 {
-    LV_ASSERT_OBJ(cont, LV_OBJX_NAME);
-
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
     return ext->fit_bottom;
 }
@@ -254,7 +238,6 @@ static lv_res_t lv_cont_signal(lv_obj_t * cont, lv_signal_t sign, void * param)
     /* Include the ancient signal function */
     res = ancestor_signal(cont, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_STYLE_CHG) { /*Recalculate the padding if the style changed*/
         lv_cont_refr_layout(cont);
@@ -271,6 +254,13 @@ static lv_res_t lv_cont_signal(lv_obj_t * cont, lv_signal_t sign, void * param)
         /*FLOOD and FILL fit needs to be refreshed if the parent size has changed*/
         lv_cont_refr_autofit(cont);
 
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_cont";
     }
 
     return res;
