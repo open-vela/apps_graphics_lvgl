@@ -30,7 +30,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * param);
 static lv_coord_t lv_lmeter_coord_round(int32_t x);
 
@@ -253,18 +253,18 @@ uint16_t lv_lmeter_get_scale_angle(const lv_obj_t * lmeter)
 /**
  * Handle the drawing related tasks of the line meters
  * @param lmeter pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -329,7 +329,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
                     lv_color_mix(style->body.grad_color, style->body.main_color, (255 * i) / ext->line_cnt);
             }
 
-            lv_draw_line(&p1, &p2, clip_area, &style_tmp, opa_scale);
+            lv_draw_line(&p1, &p2, mask, &style_tmp, opa_scale);
         }
 
     }
@@ -337,7 +337,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
