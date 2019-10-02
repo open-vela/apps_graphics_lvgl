@@ -115,6 +115,7 @@ static void btn_init(void)
     btn_rel.body.padding.right  = LV_DPI / 4;
     btn_rel.body.padding.top    = LV_DPI / 8;
     btn_rel.body.padding.bottom = LV_DPI / 8;
+    btn_rel.body.shadow.type    = LV_SHADOW_BOTTOM;
     btn_rel.body.shadow.color   = lv_color_hex3(0x111);
     btn_rel.body.shadow.width   = LV_DPI / 30;
     btn_rel.text.color          = lv_color_hex3(0xeee);
@@ -456,7 +457,7 @@ static void btnm_init(void)
     btnm_bg.body.border.width   = 1;
 
     lv_style_copy(&rel, theme.style.btn.rel);
-    rel.body.border.part  = LV_BORDER_PART_FULL | LV_BORDER_PART_INTERNAL;
+    rel.body.border.part  = LV_BORDER_FULL | LV_BORDER_INTERNAL;
     rel.body.border.width = 1;
     rel.body.radius       = 2;
 
@@ -571,7 +572,7 @@ static void list_init(void)
 
     lv_style_copy(&list_btn_rel, &bg);
     list_btn_rel.body.opa            = LV_OPA_TRANSP;
-    list_btn_rel.body.border.part    = LV_BORDER_PART_BOTTOM;
+    list_btn_rel.body.border.part    = LV_BORDER_BOTTOM;
     list_btn_rel.body.border.color   = lv_color_hsv_to_rgb(_hue, 10, 5);
     list_btn_rel.body.border.width   = 1;
     list_btn_rel.body.radius         = LV_DPI / 10;
