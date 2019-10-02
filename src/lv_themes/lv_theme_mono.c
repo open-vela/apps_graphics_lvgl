@@ -61,7 +61,7 @@ static void basic_init(void)
     def.body.border.color   = LV_COLOR_BLACK;
     def.body.border.width   = 1;
     def.body.border.opa     = LV_OPA_COVER;
-    def.body.border.part    = LV_BORDER_PART_FULL;
+    def.body.border.part    = LV_BORDER_FULL;
 
     def.text.font         = _font;
     def.text.color        = LV_COLOR_BLACK;
@@ -157,6 +157,7 @@ static void led_init(void)
     led.body.radius       = LV_RADIUS_CIRCLE;
     led.body.shadow.width = LV_DPI / 8;
     led.body.shadow.color = LV_COLOR_BLACK;
+    led.body.shadow.type  = LV_SHADOW_FULL;
 
     theme.style.led = &led;
 #endif
