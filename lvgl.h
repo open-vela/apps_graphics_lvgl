@@ -46,7 +46,6 @@ extern "C" {
 #include "src/lv_objx/lv_chart.h"
 #include "src/lv_objx/lv_table.h"
 #include "src/lv_objx/lv_cb.h"
-#include "src/lv_objx/lv_cpicker.h"
 #include "src/lv_objx/lv_bar.h"
 #include "src/lv_objx/lv_slider.h"
 #include "src/lv_objx/lv_led.h"
