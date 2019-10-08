@@ -7,7 +7,6 @@
  *      INCLUDES
  *********************/
 #include "lv_obj.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_mem.h"
 #include "../lv_misc/lv_anim.h"
 
@@ -90,11 +89,11 @@ void lv_style_init(void)
     lv_style_scr.body.shadow.color = LV_COLOR_GRAY;
     lv_style_scr.body.shadow.type  = LV_SHADOW_FULL;
     lv_style_scr.body.shadow.width = 0;
-
+    LV_FONT_DECLARE(lv_font_heb_16);
     lv_style_scr.text.opa          = LV_OPA_COVER;
     lv_style_scr.text.color        = lv_color_make(0x30, 0x30, 0x30);
     lv_style_scr.text.sel_color    = lv_color_make(0x55, 0x96, 0xd8);
-    lv_style_scr.text.font         = LV_FONT_DEFAULT;
+    lv_style_scr.text.font         = &lv_font_heb_16;//LV_FONT_DEFAULT;
     lv_style_scr.text.letter_space = 0;
     lv_style_scr.text.line_space   = 2;
 
@@ -106,12 +105,6 @@ void lv_style_init(void)
     lv_style_scr.line.color   = lv_color_make(0x20, 0x20, 0x20);
     lv_style_scr.line.width   = 2;
     lv_style_scr.line.rounded = 0;
-
-#if LV_USE_DEBUG
-#if LV_USE_ASSERT_STYLE
-    lv_style_scr.debug_sentinel = LV_STYLE_DEGUG_SENTINEL_VALUE;
-#endif
-#endif
 
     /*Plain style (by default near the same as the screen style)*/
     lv_style_copy(&lv_style_plain, &lv_style_scr);
@@ -294,7 +287,7 @@ void lv_style_anim_init(lv_anim_t * a)
 
     lv_style_anim_dsc_t * dsc;
     dsc = lv_mem_alloc(sizeof(lv_style_anim_dsc_t));
-    LV_ASSERT_MEM(dsc);
+    lv_mem_assert(dsc);
     if(dsc == NULL) return;
     dsc->ready_cb   = NULL;
     dsc->style_anim = NULL;
