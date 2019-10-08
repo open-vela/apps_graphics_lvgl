@@ -21,7 +21,6 @@ extern "C" {
 
 #if LV_USE_LABEL != 0
 
-#include <stdarg.h>
 #include "../lv_core/lv_obj.h"
 #include "../lv_font/lv_font.h"
 #include "../lv_font/lv_symbol_def.h"
@@ -34,10 +33,6 @@ extern "C" {
 #define LV_LABEL_DOT_NUM 3
 #define LV_LABEL_POS_LAST 0xFFFF
 #define LV_LABEL_TEXT_SEL_OFF 0xFFFF
-
-LV_EXPORT_CONST_INT(LV_LABEL_DOT_NUM);
-LV_EXPORT_CONST_INT(LV_LABEL_POS_LAST);
-LV_EXPORT_CONST_INT(LV_LABEL_TEXT_SEL_OFF);
 
 /**********************
  *      TYPEDEFS
@@ -60,7 +55,6 @@ enum {
     LV_LABEL_ALIGN_LEFT, /**< Align text to left */
     LV_LABEL_ALIGN_CENTER, /**< Align text to center */
     LV_LABEL_ALIGN_RIGHT, /**< Align text to right */
-    LV_LABEL_ALIGN_AUTO, /**< Use LEFT or RIGHT depending on the direction of the text (LTR/RTL)*/
 };
 typedef uint8_t lv_label_align_t;
 
@@ -69,17 +63,12 @@ typedef struct
 {
     /*Inherited from 'base_obj' so no inherited ext.*/ /*Ext. of ancestor*/
     /*New data for this type */
-    char * text;        /*Text of the label*/
-
-#if LV_USE_BIDI
-    char * text_ori;    /*The original text. With BiDi `text` stores the characters in "bidi" ordered text*/
-#endif
-
+    char * text; /*Text of the label*/
     union
     {
         char * tmp_ptr; /* Pointer to the allocated memory containing the character which are replaced by dots (Handled
                            by the library)*/
-        char tmp[LV_LABEL_DOT_NUM + 1]; /* Directly store the characters if <=4 characters */
+        char tmp[sizeof(char *)]; /* Directly store the characters if <=4 characters */
     } dot;
     uint16_t dot_end;  /*The text end position in dot mode (Handled by the library)*/
     lv_point_t offset; /*Text draw position offset*/
@@ -134,13 +123,6 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy);
  * @param text '\0' terminated character string. NULL to refresh with the current text.
  */
 void lv_label_set_text(lv_obj_t * label, const char * text);
-
-/**
- * Set a new formatted text for a label. Memory will be allocated to store the text by the label.
- * @param label pointer to a label object
- * @param fmt `printf`-like format
- */
-void lv_label_set_text_fmt(lv_obj_t * label, const char * fmt, ...);
 
 /**
  * Set a new text for a label from a character array. The array don't has to be '\0' terminated.
