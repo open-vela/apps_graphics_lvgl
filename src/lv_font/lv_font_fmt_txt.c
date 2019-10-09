@@ -138,9 +138,7 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
     /*Put together a glyph dsc*/
     const lv_font_fmt_txt_glyph_dsc_t * gdsc = &fdsc->glyph_dsc[gid];
 
-    int32_t kv = ((int32_t)((int32_t)kvalue * fdsc->kern_scale) >> 4);
-
-    uint32_t adv_w = gdsc->adv_w + kv;
+    uint32_t adv_w = gdsc->adv_w + ((int32_t)((int32_t)kvalue * fdsc->kern_scale) >> 4);
     adv_w  = (adv_w + (1 << 3)) >> 4;
 
     dsc_out->adv_w = adv_w;
