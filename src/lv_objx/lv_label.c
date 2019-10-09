@@ -14,7 +14,6 @@
 #include "../lv_core/lv_group.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_math.h"
-#include "../lv_misc/lv_bidi.h"
 #include "../lv_misc/lv_printf.h"
 
 /*********************
@@ -93,7 +92,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->static_txt = 0;
     ext->recolor    = 0;
     ext->body_draw  = 0;
-    ext->align      = LV_LABEL_ALIGN_AUTO;
+    ext->align      = LV_LABEL_ALIGN_LEFT;
     ext->dot_end    = LV_LABEL_DOT_END_INV;
     ext->long_mode  = LV_LABEL_LONG_EXPAND;
 #if LV_USE_ANIMATION
@@ -182,16 +181,7 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
 
     /*If text is NULL then refresh */
     if(text == NULL) {
-#if LV_USE_BIDI == 0
         lv_label_refr_text(label);
-#else
-        lv_bidi_dir_t base_dir = lv_obj_get_base_dir(label);
-        if(base_dir == LV_BIDI_DIR_AUTO) base_dir = lv_bidi_detect_base_dir(text);
-
-        lv_bidi_process(ext->text_ori, ext->text, base_dir);
-        lv_label_refr_text(label);
-#endif
-
         return;
     }
 
@@ -208,33 +198,14 @@ void lv_label_set_text(lv_obj_t * label, const char * text)
         if(ext->text != NULL && ext->static_txt == 0) {
             lv_mem_free(ext->text);
             ext->text = NULL;
-
-#if LV_USE_BIDI
-            lv_mem_free(ext->text_ori);
-            ext->text_ori = NULL;
-#endif
         }
 
         ext->text = lv_mem_alloc(len);
         LV_ASSERT_MEM(ext->text);
         if(ext->text == NULL) return;
 
-#if LV_USE_BIDI == 0
         strcpy(ext->text, text);
-#else
-        ext->text_ori = lv_mem_alloc(len);
-        LV_ASSERT_MEM(ext->text_ori);
-        if(ext->text_ori == NULL) return;
-
-        strcpy(ext->text_ori, text);
-
-        lv_bidi_dir_t base_dir = lv_obj_get_base_dir(label);
-        if(base_dir == LV_BIDI_DIR_AUTO) base_dir = lv_bidi_detect_base_dir(text);
-
-        lv_bidi_process(ext->text_ori, ext->text, base_dir);
-#endif
-        /*Now the text is dynamically allocated*/
-        ext->static_txt = 0;
+        ext->static_txt = 0; /*Now the text is dynamically allocated*/
     }
 
     lv_label_refr_text(label);
@@ -535,22 +506,7 @@ lv_label_align_t lv_label_get_align(const lv_obj_t * label)
     LV_ASSERT_OBJ(label, LV_OBJX_NAME);
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
-
-    lv_label_align_t align = ext->align;
-
-    if(align == LV_LABEL_ALIGN_AUTO) {
-#if LV_USE_BIDI
-        lv_bidi_dir_t base_dir = lv_obj_get_base_dir(label);
-        if(base_dir == LV_BIDI_DIR_AUTO) base_dir = lv_bidi_detect_base_dir(ext->text);
-
-        if(base_dir == LV_BIDI_DIR_LTR) align = LV_LABEL_ALIGN_LEFT;
-        else if (base_dir == LV_BIDI_DIR_RTL) align = LV_LABEL_ALIGN_RIGHT;
-#else
-        align = LV_LABEL_ALIGN_LEFT;
-#endif
-    }
-
-    return align;
+    return ext->align;
 }
 
 /**
@@ -991,13 +947,14 @@ static bool lv_label_design(lv_obj_t * label, const lv_area_t * mask, lv_design_
             lv_draw_rect(&bg, mask, style, lv_obj_get_opa_scale(label));
         }
 
-        lv_label_align_t align = lv_label_get_align(label);
+        /*TEST: draw a background for the label*/
+        // lv_draw_rect(&label->coords, mask, &lv_style_plain_color, LV_OPA_COVER);
 
         lv_txt_flag_t flag = LV_TXT_FLAG_NONE;
         if(ext->recolor != 0) flag |= LV_TXT_FLAG_RECOLOR;
         if(ext->expand != 0) flag |= LV_TXT_FLAG_EXPAND;
-        if(align == LV_LABEL_ALIGN_CENTER) flag |= LV_TXT_FLAG_CENTER;
-        if(align == LV_LABEL_ALIGN_RIGHT) flag |= LV_TXT_FLAG_RIGHT;
+        if(ext->align == LV_LABEL_ALIGN_CENTER) flag |= LV_TXT_FLAG_CENTER;
+        if(ext->align == LV_LABEL_ALIGN_RIGHT) flag |= LV_TXT_FLAG_RIGHT;
 
         /* In ROLL mode the CENTER and RIGHT are pointless so remove them.
          * (In addition they will result mis-alignment is this case)*/
@@ -1096,18 +1053,6 @@ static lv_res_t lv_label_signal(lv_obj_t * label, lv_signal_t sign, void * param
             label->ext_draw_pad = LV_MATH_MAX(label->ext_draw_pad, style->body.padding.top);
             label->ext_draw_pad = LV_MATH_MAX(label->ext_draw_pad, style->body.padding.bottom);
         }
-    }
-    else if(sign == LV_SIGNAL_BASE_DIR_CHG) {
-#if LV_USE_BIDI
-        if(ext->static_txt == 0) lv_label_set_text(label, NULL);
-#endif
-    } else if(sign == LV_SIGNAL_GET_TYPE) {
-        lv_obj_type_t * buf = param;
-        uint8_t i;
-        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
-            if(buf->type[i] == NULL) break;
-        }
-        buf->type[i] = "lv_label";
     }
 
     return res;
