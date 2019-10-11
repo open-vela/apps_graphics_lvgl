@@ -131,11 +131,6 @@ lv_obj_t * lv_ddlist_create(lv_obj_t * par, const lv_obj_t * copy)
             lv_ddlist_set_style(new_ddlist, LV_DDLIST_STYLE_SEL, &lv_style_plain_color);
             lv_ddlist_set_style(new_ddlist, LV_DDLIST_STYLE_SB, &lv_style_pretty_color);
         }
-
-        if(lv_obj_get_base_dir(new_ddlist) == LV_BIDI_DIR_RTL) {
-            lv_obj_set_x(new_ddlist, lv_obj_get_width(par) - lv_obj_get_width(new_ddlist));
-        }
-
     }
     /*Copy an existing drop down list*/
     else {
@@ -191,8 +186,7 @@ void lv_ddlist_set_options(lv_obj_t * ddlist, const char * options)
 
     lv_ddlist_refr_width(ddlist);
 
-    lv_label_align_t align = lv_label_get_align(ext->label);
-    switch(align) {
+    switch(lv_label_get_align(ext->label)) {
         case LV_LABEL_ALIGN_LEFT: lv_obj_align(ext->label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0); break;
         case LV_LABEL_ALIGN_CENTER: lv_obj_align(ext->label, NULL, LV_ALIGN_CENTER, 0, 0); break;
         case LV_LABEL_ALIGN_RIGHT: lv_obj_align(ext->label, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0); break;
@@ -667,15 +661,6 @@ static lv_res_t lv_ddlist_signal(lv_obj_t * ddlist, lv_signal_t sign, void * par
     lv_ddlist_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     if(sign == LV_SIGNAL_STYLE_CHG) {
-        lv_ddlist_refr_size(ddlist, 0);
-    } else if(sign == LV_SIGNAL_BASE_DIR_CHG) {
-        lv_label_align_t align = lv_label_get_align(ext->label);
-        switch(align) {
-            case LV_LABEL_ALIGN_LEFT: lv_obj_align(ext->label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0); break;
-            case LV_LABEL_ALIGN_CENTER: lv_obj_align(ext->label, NULL, LV_ALIGN_CENTER, 0, 0); break;
-            case LV_LABEL_ALIGN_RIGHT: lv_obj_align(ext->label, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0); break;
-        }
-
         lv_ddlist_refr_size(ddlist, 0);
     } else if(sign == LV_SIGNAL_CLEANUP) {
         ext->label = NULL;
