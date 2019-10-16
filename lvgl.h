@@ -34,6 +34,7 @@ extern "C" {
 
 #include "src/lv_font/lv_font.h"
 #include "src/lv_font/lv_font_fmt_txt.h"
+#include "src/lv_misc/lv_bidi.h"
 
 #include "src/lv_objx/lv_btn.h"
 #include "src/lv_objx/lv_imgbtn.h"
@@ -60,6 +61,7 @@ extern "C" {
 #include "src/lv_objx/lv_tabview.h"
 #include "src/lv_objx/lv_tileview.h"
 #include "src/lv_objx/lv_mbox.h"
+#include "src/lv_objx/lv_objmask.h"
 #include "src/lv_objx/lv_gauge.h"
 #include "src/lv_objx/lv_lmeter.h"
 #include "src/lv_objx/lv_sw.h"
