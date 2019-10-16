@@ -16,12 +16,11 @@
 
 #include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
-#include "../lv_draw/lv_draw_basic.h"
+#include "../lv_draw/lv_draw_mask.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_math.h"
-#include "../lv_misc/lv_bidi.h"
 
 /*********************
  *      DEFINES
@@ -35,6 +34,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static lv_design_res_t lv_cont_design(lv_obj_t * cont, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_cont_signal(lv_obj_t * cont, lv_signal_t sign, void * param);
 static void lv_cont_refr_layout(lv_obj_t * cont);
 static void lv_cont_layout_col(lv_obj_t * cont);
@@ -47,6 +47,7 @@ static void lv_cont_refr_autofit(lv_obj_t * cont);
 /**********************
  *  STATIC VARIABLES
  **********************/
+static lv_design_cb_t ancestor_design;
 static lv_signal_cb_t ancestor_signal;
 
 /**********************
@@ -74,6 +75,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
     if(new_cont == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_cont);
+    if(ancestor_design == NULL) ancestor_design= lv_obj_get_design_cb(new_cont);
 
     lv_obj_allocate_ext_attr(new_cont, sizeof(lv_cont_ext_t));
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(new_cont);
@@ -87,6 +89,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->layout     = LV_LAYOUT_OFF;
 
     lv_obj_set_signal_cb(new_cont, lv_cont_signal);
+    lv_obj_set_design_cb(new_cont, lv_cont_design);
 
     /*Init the new container*/
     if(copy == NULL) {
@@ -242,6 +245,41 @@ lv_fit_t lv_cont_get_fit_bottom(const lv_obj_t * cont)
  **********************/
 
 /**
+ * Handle the drawing related tasks of the drop down lists
+ * @param btn pointer to an object
+ * @param mask the object will be drawn only in this area
+ * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
+ *                                  (return 'true' if yes)
+ *             LV_DESIGN_DRAW: draw the object (always return 'true')
+ *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
+ * @param return an element of `lv_design_res_t`
+ */
+static lv_design_res_t lv_cont_design(lv_obj_t * cont, const lv_area_t * clip_area, lv_design_mode_t mode)
+{
+    if(mode == LV_DESIGN_COVER_CHK) {
+        lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
+        if(ext->masked) return LV_DESIGN_RES_MASKED;
+        else return ancestor_design(cont, clip_area, mode);
+    } else if(mode == LV_DESIGN_DRAW_MAIN) {
+        ancestor_design(cont, clip_area, mode);
+
+        lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
+        if(ext->masked) {
+            const lv_style_t * style = lv_cont_get_style(cont, LV_CONT_STYLE_MAIN);
+            lv_draw_mask_param_t mp;
+            lv_draw_mask_radius_init(&mp, &cont->coords, style->body.radius, false);
+            lv_draw_mask_add(&mp, cont + 4);
+        }
+    } else if(mode == LV_DESIGN_DRAW_POST) {
+        lv_cont_ext_t * ext = lv_obj_get_ext_attr(cont);
+        if(ext->masked) {
+            lv_draw_mask_remove_custom(cont + 4);
+        }
+    }
+
+    return LV_DESIGN_RES_OK;
+}
+/**
  * Signal function of the container
  * @param cont pointer to a container object
  * @param sign a signal type from lv_signal_t enum
@@ -365,23 +403,23 @@ static void lv_cont_layout_row(lv_obj_t * cont)
     lv_align_t align;
     const lv_style_t * style = lv_obj_get_style(cont);
     lv_coord_t vpad_corr;
-    lv_bidi_dir_t base_dir = lv_obj_get_base_dir(cont);
+
     switch(type) {
         case LV_LAYOUT_ROW_T:
             vpad_corr = style->body.padding.top;
-            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_TOP_RIGHT : LV_ALIGN_IN_TOP_LEFT;
+            align     = LV_ALIGN_IN_TOP_LEFT;
             break;
         case LV_LAYOUT_ROW_M:
             vpad_corr = 0;
-            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_RIGHT_MID: LV_ALIGN_IN_LEFT_MID;
+            align     = LV_ALIGN_IN_LEFT_MID;
             break;
         case LV_LAYOUT_ROW_B:
             vpad_corr = -style->body.padding.bottom;
-            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_BOTTOM_RIGHT: LV_ALIGN_IN_BOTTOM_LEFT;
+            align     = LV_ALIGN_IN_BOTTOM_LEFT;
             break;
         default:
             vpad_corr = 0;
-            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_TOP_RIGHT : LV_ALIGN_IN_TOP_LEFT;
+            align     = LV_ALIGN_IN_TOP_LEFT;
             break;
     }
 
@@ -390,19 +428,12 @@ static void lv_cont_layout_row(lv_obj_t * cont)
     lv_obj_set_protect(cont, LV_PROTECT_CHILD_CHG);
 
     /* Align the children */
-    lv_coord_t last_cord;
-    if(base_dir == LV_BIDI_DIR_RTL) last_cord = style->body.padding.right;
-    else last_cord = style->body.padding.left;
-
+    lv_coord_t last_cord = style->body.padding.left;
     LV_LL_READ_BACK(cont->child_ll, child)
     {
         if(lv_obj_get_hidden(child) != false || lv_obj_is_protected(child, LV_PROTECT_POS) != false) continue;
 
-//        last_cord -= lv_obj_get_width(child);
-
-        if(base_dir == LV_BIDI_DIR_RTL) lv_obj_align(child, cont, align, -last_cord, vpad_corr);
-        else lv_obj_align(child, cont, align, last_cord, vpad_corr);
-
+        lv_obj_align(child, cont, align, last_cord, vpad_corr);
         last_cord += lv_obj_get_width(child) + style->body.padding.inner;
     }
 
