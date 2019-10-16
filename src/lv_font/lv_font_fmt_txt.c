@@ -92,6 +92,7 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
 
         uint32_t gsize = gdsc->box_w * gdsc->box_h;
         if(gsize == 0) return NULL;
+
         uint32_t buf_size = gsize;
         switch(fdsc->bpp) {
         case 1: buf_size = gsize >> 3;  break;
@@ -139,9 +140,7 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
     /*Put together a glyph dsc*/
     const lv_font_fmt_txt_glyph_dsc_t * gdsc = &fdsc->glyph_dsc[gid];
 
-    int32_t kv = ((int32_t)((int32_t)kvalue * fdsc->kern_scale) >> 4);
-
-    uint32_t adv_w = gdsc->adv_w + kv;
+    uint32_t adv_w = gdsc->adv_w + ((int32_t)((int32_t)kvalue * fdsc->kern_scale) >> 4);
     adv_w  = (adv_w + (1 << 3)) >> 4;
 
     dsc_out->adv_w = adv_w;
@@ -304,8 +303,9 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
 
     rle_init(in, bpp);
 
-    uint8_t * line_buf1 = lv_draw_buf_get(w);
-    uint8_t * line_buf2 = lv_draw_buf_get(w);
+    uint8_t * line_buf = lv_draw_get_buf(w * 2);
+    uint8_t * line_buf1 = line_buf;
+    uint8_t * line_buf2 = line_buf + w;
 
     decompress_line(line_buf1, w);
 
@@ -325,9 +325,6 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
             wrp += wr_size;
         }
     }
-
-    lv_draw_buf_release(line_buf1);
-    lv_draw_buf_release(line_buf2);
 }
 
 /**

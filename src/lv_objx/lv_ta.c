@@ -42,8 +42,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_ta_design(lv_obj_t * ta, const lv_area_t * clip_area, lv_design_mode_t mode);
-static lv_design_res_t lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_ta_design(lv_obj_t * ta, const lv_area_t * mask, lv_design_mode_t mode);
+static bool lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_ta_signal(lv_obj_t * ta, lv_signal_t sign, void * param);
 static lv_res_t lv_ta_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, void * param);
 #if LV_USE_ANIMATION
@@ -1308,48 +1308,48 @@ void lv_ta_cursor_up(lv_obj_t * ta)
 /**
  * Handle the drawing related tasks of the text areas
  * @param ta pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW_MAIN: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_ta_design(lv_obj_t * ta, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_ta_design(lv_obj_t * ta, const lv_area_t * mask, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
         /*Return false if the object is not covers the mask_p area*/
-        return ancestor_design(ta, clip_area, mode);
+        return ancestor_design(ta, mask, mode);
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
         /*Draw the object*/
-        ancestor_design(ta, clip_area, mode);
+        ancestor_design(ta, mask, mode);
 
     } else if(mode == LV_DESIGN_DRAW_POST) {
-        ancestor_design(ta, clip_area, mode);
+        ancestor_design(ta, mask, mode);
     }
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
  * An extended scrollable design of the page. Calls the normal design function and draws a cursor.
  * @param scrl pointer to the scrollable part of the Text area
- * @param clip_area  the object will be drawn only in this area
+ * @param mask  the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW_MAIN: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
  * @return return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t * mask, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
         /*Return false if the object is not covers the mask_p area*/
-        return scrl_design(scrl, clip_area, mode);
+        return scrl_design(scrl, mask, mode);
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
         /*Draw the object*/
-        scrl_design(scrl, clip_area, mode);
+        scrl_design(scrl, mask, mode);
     } else if(mode == LV_DESIGN_DRAW_POST) {
-        scrl_design(scrl, clip_area, mode);
+        scrl_design(scrl, mask, mode);
 
         /*Draw the cursor*/
         lv_obj_t * ta     = lv_obj_get_parent(scrl);
@@ -1376,28 +1376,28 @@ static lv_design_res_t lv_ta_scrollable_design(lv_obj_t * scrl, const lv_area_t 
         lv_opa_t opa_scale = lv_obj_get_opa_scale(ta);
 
         if(ext->cursor.type == LV_CURSOR_LINE) {
-            lv_draw_rect(&cur_area, clip_area, &cur_style, opa_scale);
+            lv_draw_rect(&cur_area, mask, &cur_style, opa_scale);
         } else if(ext->cursor.type == LV_CURSOR_BLOCK) {
-            lv_draw_rect(&cur_area, clip_area, &cur_style, opa_scale);
+            lv_draw_rect(&cur_area, mask, &cur_style, opa_scale);
 
             char letter_buf[8] = {0};
             memcpy(letter_buf, &txt[ext->cursor.txt_byte_pos], lv_txt_encoded_size(&txt[ext->cursor.txt_byte_pos]));
 
             cur_area.x1 += cur_style.body.padding.left;
             cur_area.y1 += cur_style.body.padding.top;
-            lv_draw_label(&cur_area, clip_area, &cur_style, opa_scale, letter_buf, LV_TXT_FLAG_NONE, 0,
+            lv_draw_label(&cur_area, mask, &cur_style, opa_scale, letter_buf, LV_TXT_FLAG_NONE, 0,
                           LV_LABEL_TEXT_SEL_OFF, LV_LABEL_TEXT_SEL_OFF, NULL);
 
         } else if(ext->cursor.type == LV_CURSOR_OUTLINE) {
             cur_style.body.opa = LV_OPA_TRANSP;
             if(cur_style.body.border.width == 0) cur_style.body.border.width = 1; /*Be sure the border will be drawn*/
-            lv_draw_rect(&cur_area, clip_area, &cur_style, opa_scale);
+            lv_draw_rect(&cur_area, mask, &cur_style, opa_scale);
         } else if(ext->cursor.type == LV_CURSOR_UNDERLINE) {
-            lv_draw_rect(&cur_area, clip_area, &cur_style, opa_scale);
+            lv_draw_rect(&cur_area, mask, &cur_style, opa_scale);
         }
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -1850,53 +1850,53 @@ static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_
     lv_indev_get_vect(click_source, &vect_act);
 
     if(point_act.x < 0 || point_act.y < 0) return; /*Ignore event from keypad*/
-    lv_point_t rel_pos;
-    rel_pos.x = point_act.x - label_coords.x1;
-    rel_pos.y = point_act.y - label_coords.y1;
+    lv_point_t relative_position;
+    relative_position.x = point_act.x - label_coords.x1;
+    relative_position.y = point_act.y - label_coords.y1;
 
     lv_coord_t label_width = lv_obj_get_width(ext->label);
 
-    uint16_t char_id_at_click;
+    uint16_t index_of_char_at_position;
 
 #if LV_LABEL_TEXT_SEL
     lv_label_ext_t * ext_label = lv_obj_get_ext_attr(ext->label);
     bool click_outside_label;
     /*Check if the click happened on the left side of the area outside the label*/
-    if(rel_pos.x < 0) {
-        char_id_at_click = 0;
+    if(relative_position.x < 0) {
+        index_of_char_at_position = 0;
         click_outside_label       = true;
     }
     /*Check if the click happened on the right side of the area outside the label*/
-    else if(rel_pos.x >= label_width) {
-        char_id_at_click = LV_TA_CURSOR_LAST;
+    else if(relative_position.x >= label_width) {
+        index_of_char_at_position = LV_TA_CURSOR_LAST;
         click_outside_label       = true;
     } else {
-        char_id_at_click = lv_label_get_letter_on(ext->label, &rel_pos);
-        click_outside_label       = !lv_label_is_char_under_pos(ext->label, &rel_pos);
+        index_of_char_at_position = lv_label_get_letter_on(ext->label, &relative_position);
+        click_outside_label       = !lv_label_is_char_under_pos(ext->label, &relative_position);
     }
 
     if(ext->text_sel_en) {
         if(!ext->text_sel_in_prog && !click_outside_label && sign == LV_SIGNAL_PRESSED) {
             /*Input device just went down. Store the selection start position*/
-            ext->tmp_sel_start    = char_id_at_click;
+            ext->tmp_sel_start    = index_of_char_at_position;
             ext->tmp_sel_end      = LV_LABEL_TEXT_SEL_OFF;
             ext->text_sel_in_prog = 1;
             lv_obj_set_drag(lv_page_get_scrl(ta), false);
         } else if(ext->text_sel_in_prog && sign == LV_SIGNAL_PRESSING) {
             /*Input device may be moving. Store the end position */
-            ext->tmp_sel_end = char_id_at_click;
+            ext->tmp_sel_end = index_of_char_at_position;
         } else if(ext->text_sel_in_prog && (sign == LV_SIGNAL_PRESS_LOST || sign == LV_SIGNAL_RELEASED)) {
             /*Input device is released. Check if anything was selected.*/
             lv_obj_set_drag(lv_page_get_scrl(ta), true);
         }
     }
 
-    if(ext->text_sel_in_prog || sign == LV_SIGNAL_PRESSED) lv_ta_set_cursor_pos(ta, char_id_at_click);
+    if(ext->text_sel_in_prog || sign == LV_SIGNAL_PRESSED) lv_ta_set_cursor_pos(ta, index_of_char_at_position);
 
     if(ext->text_sel_in_prog) {
         /*If the selected area has changed then update the real values and*/
+        /*invalidate the text area.*/
 
-        /*Invalidate the text area.*/
         if(ext->tmp_sel_start > ext->tmp_sel_end) {
             if(ext_label->txt_sel_start != ext->tmp_sel_end || ext_label->txt_sel_end != ext->tmp_sel_start) {
                 ext_label->txt_sel_start = ext->tmp_sel_end;
@@ -1923,17 +1923,17 @@ static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_
     }
 #else
     /*Check if the click happened on the left side of the area outside the label*/
-    if(rel_pos.x < 0) {
-        char_id_at_click = 0;
+    if(relative_position.x < 0) {
+        index_of_char_at_position = 0;
     }
     /*Check if the click happened on the right side of the area outside the label*/
-    else if(rel_pos.x >= label_width) {
-        char_id_at_click = LV_TA_CURSOR_LAST;
+    else if(relative_position.x >= label_width) {
+        index_of_char_at_position = LV_TA_CURSOR_LAST;
     } else {
-        char_id_at_click = lv_label_get_letter_on(ext->label, &rel_pos);
+        index_of_char_at_position = lv_label_get_letter_on(ext->label, &relative_position);
     }
 
-    if(sign == LV_SIGNAL_PRESSED) lv_ta_set_cursor_pos(ta, char_id_at_click);
+    if(sign == LV_SIGNAL_PRESSED) lv_ta_set_cursor_pos(ta, index_of_char_at_position);
 #endif
 }
 
