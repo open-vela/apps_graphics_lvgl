@@ -16,11 +16,12 @@
 
 #include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
-#include "../lv_draw/lv_draw_basic.h"
+#include "../lv_draw/lv_draw_mask.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_math.h"
+#include "../lv_misc/lv_bidi.h"
 
 /*********************
  *      DEFINES
@@ -46,6 +47,7 @@ static void lv_cont_refr_autofit(lv_obj_t * cont);
 /**********************
  *  STATIC VARIABLES
  **********************/
+static lv_design_cb_t ancestor_design;
 static lv_signal_cb_t ancestor_signal;
 
 /**********************
@@ -73,6 +75,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
     if(new_cont == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_cont);
+    if(ancestor_design == NULL) ancestor_design= lv_obj_get_design_cb(new_cont);
 
     lv_obj_allocate_ext_attr(new_cont, sizeof(lv_cont_ext_t));
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(new_cont);
@@ -364,23 +367,23 @@ static void lv_cont_layout_row(lv_obj_t * cont)
     lv_align_t align;
     const lv_style_t * style = lv_obj_get_style(cont);
     lv_coord_t vpad_corr;
-
+    lv_bidi_dir_t base_dir = lv_obj_get_base_dir(cont);
     switch(type) {
         case LV_LAYOUT_ROW_T:
             vpad_corr = style->body.padding.top;
-            align     = LV_ALIGN_IN_TOP_LEFT;
+            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_TOP_RIGHT : LV_ALIGN_IN_TOP_LEFT;
             break;
         case LV_LAYOUT_ROW_M:
             vpad_corr = 0;
-            align     = LV_ALIGN_IN_LEFT_MID;
+            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_RIGHT_MID: LV_ALIGN_IN_LEFT_MID;
             break;
         case LV_LAYOUT_ROW_B:
             vpad_corr = -style->body.padding.bottom;
-            align     = LV_ALIGN_IN_BOTTOM_LEFT;
+            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_BOTTOM_RIGHT: LV_ALIGN_IN_BOTTOM_LEFT;
             break;
         default:
             vpad_corr = 0;
-            align     = LV_ALIGN_IN_TOP_LEFT;
+            align     = base_dir == LV_BIDI_DIR_RTL ? LV_ALIGN_IN_TOP_RIGHT : LV_ALIGN_IN_TOP_LEFT;
             break;
     }
 
@@ -389,12 +392,19 @@ static void lv_cont_layout_row(lv_obj_t * cont)
     lv_obj_set_protect(cont, LV_PROTECT_CHILD_CHG);
 
     /* Align the children */
-    lv_coord_t last_cord = style->body.padding.left;
+    lv_coord_t last_cord;
+    if(base_dir == LV_BIDI_DIR_RTL) last_cord = style->body.padding.right;
+    else last_cord = style->body.padding.left;
+
     LV_LL_READ_BACK(cont->child_ll, child)
     {
         if(lv_obj_get_hidden(child) != false || lv_obj_is_protected(child, LV_PROTECT_POS) != false) continue;
 
-        lv_obj_align(child, cont, align, last_cord, vpad_corr);
+//        last_cord -= lv_obj_get_width(child);
+
+        if(base_dir == LV_BIDI_DIR_RTL) lv_obj_align(child, cont, align, -last_cord, vpad_corr);
+        else lv_obj_align(child, cont, align, last_cord, vpad_corr);
+
         last_cord += lv_obj_get_width(child) + style->body.padding.inner;
     }
 
