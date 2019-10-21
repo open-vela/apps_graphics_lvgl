@@ -135,6 +135,7 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
 void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_color_t colors[])
 {
     LV_ASSERT_OBJ(gauge, LV_OBJX_NAME);
+    LV_ASSERT_NULL(colors);
 
     lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
 
@@ -389,7 +390,7 @@ static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask)
         label_cord.x2 = label_cord.x1 + label_size.x;
         label_cord.y2 = label_cord.y1 + label_size.y;
 
-        lv_draw_label(&label_cord, mask, style, opa_scale, scale_txt, LV_TXT_FLAG_NONE, NULL, -1, -1, NULL);
+        lv_draw_label(&label_cord, mask, style, opa_scale, scale_txt, LV_TXT_FLAG_NONE, NULL, -1, -1, NULL, lv_obj_get_base_dir(gauge));
     }
 }
 /**
