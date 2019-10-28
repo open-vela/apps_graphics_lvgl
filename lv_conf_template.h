@@ -199,10 +199,8 @@ typedef void * lv_img_decoder_user_data_t;
 /* Export integer constant to binding.
  * This macro is used with constants in the form of LV_<CONST> that
  * should also appear on lvgl binding API such as Micropython
- *
- * The default value just prevents a GCC warning.
  */
-#define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning
+#define LV_EXPORT_CONST_INT(int_value)
 
 /*===================
  *  HAL settings
@@ -437,6 +435,9 @@ typedef void * lv_obj_user_data_t;
 
 /*Container (dependencies: -*/
 #define LV_USE_CONT     1
+
+/*Color picker (dependencies: -*/
+#define LV_USE_CPICKER   1
 
 /*Drop down list (dependencies: lv_page, lv_label, lv_symbol_def.h)*/
 #define LV_USE_DDLIST    1

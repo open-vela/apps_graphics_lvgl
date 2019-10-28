@@ -75,8 +75,8 @@ enum {
     LV_OPA_COVER  = 255,
 };
 
-#define LV_OPA_MIN 16  /*Opacities below this will be transparent*/
-#define LV_OPA_MAX 251 /*Opacities above this will fully cover*/
+#define LV_OPA_MIN 5    /*Opacities below this will be transparent*/
+#define LV_OPA_MAX 250  /*Opacities above this will fully cover*/
 
 #if LV_COLOR_DEPTH == 1
 #define LV_COLOR_SIZE 8
@@ -303,66 +303,51 @@ static inline uint32_t lv_color_to32(lv_color_t color)
     ret.ch.alpha = 0xFF;
     return ret.full;
 #elif LV_COLOR_DEPTH == 16
-    /**
-     * The floating point math for conversion is:
-     *  valueto = valuefrom * ( (2^bitsto - 1) / (float)(2^bitsfrom - 1) )
-     * The faster integer math for conversion is:
-     *  valueto = ( valuefrom * multiplier + adder ) >> divisor
-     *   multiplier = FLOOR( ( (2^bitsto - 1) << divisor ) / (float)(2^bitsfrom - 1) )
-     * 
-     * Find the first divisor where ( adder >> divisor ) <= 0
-     * 
-     * 5-bit to 8-bit: ( 31 * multiplier + adder ) >> divisor = 255
-     * divisor  multiplier  adder  min (0)  max (31)
-     *       0           8      7        7       255
-     *       1          16     14        7       255
-     *       2          32     28        7       255
-     *       3          65     25        3       255
-     *       4         131     19        1       255
-     *       5         263      7        0       255
-     * 
-     * 6-bit to 8-bit: 255 = ( 63 * multiplier + adder ) >> divisor
-     * divisor  multiplier  adder  min (0)  max (63)
-     *       0           4      3        3       255
-     *       1           8      6        3       255
-     *       2          16     12        3       255
-     *       3          32     24        3       255
-     *       4          64     48        3       255
-     *       5         129     33        1       255
-     *       6         259      3        0       255
-     */
-    lv_color32_t ret;
-    ret.ch.red   = ( color.ch.red * 263 + 7 ) >> 5;
 #if LV_COLOR_16_SWAP == 0
-    ret.ch.green = ( color.ch.green * 259 + 3 ) >> 6;
-#else
-    ret.ch.green = (((color.ch.green_h << 3) + color.ch.green_l) * 259 + 3 ) >> 6;
-#endif
-    ret.ch.blue  = ( color.ch.blue * 263 + 7 ) >> 5;
+    lv_color32_t ret;
+    ret.ch.red   = color.ch.red * 8;   /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
+    ret.ch.green = color.ch.green * 4; /*(2^8 - 1)/(2^6 - 1) = 255/63 = 4*/
+    ret.ch.blue  = color.ch.blue * 8;  /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
     ret.ch.alpha = 0xFF;
     return ret.full;
+#else
+    lv_color32_t ret;
+    ret.ch.red   = color.ch.red * 8;                                 /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
+    ret.ch.green = ((color.ch.green_h << 3) + color.ch.green_l) * 4; /*(2^8 - 1)/(2^6 - 1) = 255/63 = 4*/
+    ret.ch.blue  = color.ch.blue * 8;                                /*(2^8 - 1)/(2^5 - 1) = 255/31 = 8*/
+    ret.ch.alpha = 0xFF;
+    return ret.full;
+#endif
 #elif LV_COLOR_DEPTH == 32
     return color.full;
 #endif
 }
 
+/**
+ * Mix two colors with a given ratio.
+ * @param c1
+ * @param c2
+ * @param mix The ratio of the colors. 0: full `c2`, 255: full `c1`, 127: half `c1` and half`c2`
+ * @return the mixed color
+ * @note 255 won't give clearly `c1`.
+ */
 static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 {
     lv_color_t ret;
 #if LV_COLOR_DEPTH != 1
     /*LV_COLOR_DEPTH == 8, 16 or 32*/
-    ret.ch.red = (uint16_t)((uint16_t)c1.ch.red * mix + (c2.ch.red * (255 - mix))) >> 8;
+    ret.ch.red = (uint16_t)((uint16_t)c1.ch.red * mix + (c2.ch.red * (256 - mix))) >> 8;
 #if LV_COLOR_DEPTH == 16 && LV_COLOR_16_SWAP
     /*If swapped Green is in 2 parts*/
     uint16_t g_1   = (c1.ch.green_h << 3) + c1.ch.green_l;
     uint16_t g_2   = (c2.ch.green_h << 3) + c2.ch.green_l;
-    uint16_t g_out = (uint16_t)((uint16_t)g_1 * mix + (g_2 * (255 - mix))) >> 8;
+    uint16_t g_out = (uint16_t)((uint16_t)g_1 * mix + (g_2 * (256 - mix))) >> 8;
     ret.ch.green_h = g_out >> 3;
     ret.ch.green_l = g_out & 0x7;
 #else
-    ret.ch.green = (uint16_t)((uint16_t)c1.ch.green * mix + (c2.ch.green * (255 - mix))) >> 8;
+    ret.ch.green = (uint16_t)((uint16_t)c1.ch.green * mix + (c2.ch.green * (256 - mix))) >> 8;
 #endif
-    ret.ch.blue = (uint16_t)((uint16_t)c1.ch.blue * mix + (c2.ch.blue * (255 - mix))) >> 8;
+    ret.ch.blue = (uint16_t)((uint16_t)c1.ch.blue * mix + (c2.ch.blue * (256 - mix))) >> 8;
 #if LV_COLOR_DEPTH == 32
     ret.ch.alpha = 0xFF;
 #endif
@@ -373,6 +358,66 @@ static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 
     return ret;
 }
+
+/**
+ * Mix two colors. Both color can have alpha value. It requires ARGB888 colors.
+ * @param bg_color background color
+ * @param bg_opa alpha of the background color
+ * @param fg_color foreground color
+ * @param fg_opa alpha of the foreground color
+ * @param res_color the result color
+ * @param res_opa the result opacity
+ */
+static inline void lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa, lv_color_t fg_color, lv_opa_t fg_opa, lv_color_t * res_color, lv_opa_t * res_opa)
+{
+    /* Pick the foreground if it's fully opaque or the Background is fully transparent*/
+    if(fg_opa > LV_OPA_MAX || bg_opa <= LV_OPA_MIN) {
+        res_color->full = fg_color.full;
+        *res_opa = fg_opa;
+    }
+    /*Transparent foreground: use the Background*/
+    else if(fg_opa <= LV_OPA_MIN) {
+        res_color->full = bg_color.full;
+        *res_opa = bg_opa;
+    }
+    /*Opaque background: use simple mix*/
+    else if(bg_opa >= LV_OPA_MAX) {
+        *res_color = lv_color_mix(fg_color, bg_color, fg_opa);
+        *res_opa = LV_OPA_COVER;
+    }
+    /*Both colors have alpha. Expensive calculation need to be applied*/
+    else {
+        /*Save the parameters and the result. If they will be asked again don't compute again*/
+        static lv_opa_t fg_opa_save     = 0;
+        static lv_opa_t bg_opa_save     = 0;
+        static lv_color_t fg_color_save = {{0}};
+        static lv_color_t bg_color_save = {{0}};
+        static lv_color_t res_color_saved = {{0}};
+        static lv_opa_t res_opa_saved = 0;
+
+        if(fg_opa != fg_opa_save || bg_opa != bg_opa_save || fg_color.full != fg_color_save.full ||
+                bg_color.full != bg_color_save.full) {
+            fg_opa_save        = fg_opa;
+            bg_opa_save        = bg_opa;
+            fg_color_save.full = fg_color.full;
+            bg_color_save.full = bg_color.full;
+            /*Info:
+             * https://en.wikipedia.org/wiki/Alpha_compositing#Analytical_derivation_of_the_over_operator*/
+            res_opa_saved = 255 - ((uint16_t)((uint16_t)(255 - fg_opa) * (255 - bg_opa)) >> 8);
+            if(res_opa_saved == 0) {
+                while(1)
+                    ;
+            }
+            lv_opa_t ratio = (uint16_t)((uint16_t)fg_opa * 255) / res_opa_saved;
+            res_color_saved  = lv_color_mix(fg_color, bg_color, ratio);
+
+        }
+
+        res_color->full = res_color_saved.full;
+        *res_opa = res_opa_saved;
+    }
+}
+
 
 /**
  * Get the brightness of a color
