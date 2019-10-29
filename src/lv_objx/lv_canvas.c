@@ -28,27 +28,6 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * param);
-static void set_set_px_cb(lv_disp_drv_t * disp_drv, lv_img_cf_t cf);
-
-static void set_px_true_color_alpa(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha1(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-
-static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa);
-
-void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa);
-
-
 
 /**********************
  *  STATIC VARIABLES
@@ -531,10 +510,7 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
 #if LV_ANTIALIAS
-
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_TRANSP;
     if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED &&
@@ -597,8 +573,6 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     disp.driver.buffer  = &disp_buf;
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
-
-    set_set_px_cb(&disp.driver, dsc->header.cf);
 
     lv_disp_t * refr_ori = lv_refr_get_disp_refreshing();
     lv_refr_set_disp_refreshing(&disp);
@@ -664,8 +638,6 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
     lv_disp_t * refr_ori = lv_refr_get_disp_refreshing();
     lv_refr_set_disp_refreshing(&disp);
 
@@ -709,8 +681,6 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t * points, uint32_t 
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_TRANSP;
@@ -725,11 +695,37 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t * points, uint32_t 
     lv_disp_t * refr_ori = lv_refr_get_disp_refreshing();
     lv_refr_set_disp_refreshing(&disp);
 
+    lv_style_t circle_style_tmp; /*If rounded...*/
+    if(style->line.rounded) {
+        lv_style_copy(&circle_style_tmp, style);
+        circle_style_tmp.body.radius     = LV_RADIUS_CIRCLE;
+        circle_style_tmp.body.main_color = style->line.color;
+        circle_style_tmp.body.grad_color = style->line.color;
+        circle_style_tmp.body.opa        = style->line.opa;
+    }
+    lv_area_t circle_area;
     uint32_t i;
     for(i = 0; i < point_cnt - 1; i++) {
         lv_draw_line(&points[i], &points[i + 1], &mask, style, LV_OPA_COVER);
+        
+        /*Draw circle on the joints if enabled*/
+        if(style->line.rounded) {
+            circle_area.x1 = points[i].x - ((style->line.width - 1) >> 1) - ((style->line.width - 1) & 0x1);
+            circle_area.y1 = points[i].y - ((style->line.width - 1) >> 1) - ((style->line.width - 1) & 0x1);
+            circle_area.x2 = points[i].x + ((style->line.width - 1) >> 1);
+            circle_area.y2 = points[i].y + ((style->line.width - 1) >> 1);
+            lv_draw_rect(&circle_area, &mask, &circle_style_tmp, LV_OPA_COVER);
+        }
     }
-
+    /*Draw circle on the last point too if enabled*/
+    if(style->line.rounded) {
+        circle_area.x1 = points[i].x - ((style->line.width - 1) >> 1) - ((style->line.width - 1) & 0x1);
+        circle_area.y1 = points[i].y - ((style->line.width - 1) >> 1) - ((style->line.width - 1) & 0x1);
+        circle_area.x2 = points[i].x + ((style->line.width - 1) >> 1);
+        circle_area.y2 = points[i].y + ((style->line.width - 1) >> 1);
+        lv_draw_rect(&circle_area, &mask, &circle_style_tmp, LV_OPA_COVER);
+    }
+    
     lv_refr_set_disp_refreshing(refr_ori);
 }
 
@@ -767,8 +763,6 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t * points, uint32
     disp.driver.buffer  = &disp_buf;
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
-
-    set_set_px_cb(&disp.driver, dsc->header.cf);
 
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
@@ -828,8 +822,6 @@ void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_
     disp.driver.hor_res = dsc->header.w;
     disp.driver.ver_res = dsc->header.h;
 
-    set_set_px_cb(&disp.driver, dsc->header.cf);
-
 #if LV_ANTIALIAS
     /*Disable anti-aliasing if drawing with transparent color to chroma keyed canvas*/
     lv_color_t ctransp = LV_COLOR_TRANSP;
@@ -874,106 +866,6 @@ static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * par
     }
 
     return res;
-}
-
-static void set_set_px_cb(lv_disp_drv_t * disp_drv, lv_img_cf_t cf)
-{
-    switch(cf) {
-        case LV_IMG_CF_TRUE_COLOR_ALPHA: disp_drv->set_px_cb = set_px_true_color_alpa; break;
-        case LV_IMG_CF_ALPHA_1BIT: disp_drv->set_px_cb = set_px_cb_alpha1; break;
-        case LV_IMG_CF_ALPHA_2BIT: disp_drv->set_px_cb = set_px_cb_alpha2; break;
-        case LV_IMG_CF_ALPHA_4BIT: disp_drv->set_px_cb = set_px_cb_alpha4; break;
-        case LV_IMG_CF_ALPHA_8BIT: disp_drv->set_px_cb = set_px_cb_alpha8; break;
-        default: disp_drv->set_px_cb = NULL;
-    }
-}
-
-static void set_px_cb_alpha1(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_1BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_2BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_4BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_ALPHA_8BIT;
-
-    set_px_alpha_generic(&d, x, y, color, opa);
-}
-
-void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, lv_color_t color, lv_opa_t opa)
-{
-
-    d->header.always_zero = 0;
-    d->header.h = LV_VER_RES_MAX;
-
-    uint8_t br = lv_color_brightness(color);
-    if(opa < LV_OPA_MAX) {
-        uint8_t bg = lv_img_buf_get_px_alpha(d, x, y);
-        br = (uint16_t)((uint16_t)br * opa + (bg * (255 - opa))) >> 8; //LV_MATH_MIN(opa + bg, 0xFF);
-    }
-
-    lv_img_buf_set_px_alpha(d, x, y, br);
-}
-
-
-static void set_px_true_color_alpa(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
-                      lv_color_t color, lv_opa_t opa)
-{
-    if(opa <= LV_OPA_MIN) return;
-    lv_img_dsc_t d;
-    d.data = buf;
-    d.header.always_zero = 0;
-    d.header.h = LV_VER_RES_MAX;
-    d.header.w = buf_w;
-    d.header.cf = LV_IMG_CF_TRUE_COLOR_ALPHA;
-
-    lv_color_t bg_color = lv_img_buf_get_px_color(&d, x, y, &lv_style_plain);
-    lv_opa_t bg_opa = lv_img_buf_get_px_alpha(&d, x, y);
-
-    lv_opa_t res_opa;
-    lv_color_t res_color;
-
-    lv_color_mix_with_alpha(bg_color, bg_opa, color, opa, &res_color, &res_opa);
-
-
-    lv_img_buf_set_px_alpha(&d, x, y, res_opa);
-    lv_img_buf_set_px_color(&d, x, y, res_color);
 }
 
 #endif
