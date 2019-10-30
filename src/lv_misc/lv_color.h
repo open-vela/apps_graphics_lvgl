@@ -96,13 +96,10 @@ enum {
 
 typedef union
 {
-    struct
-    {
-        uint8_t blue : 1;
-        uint8_t green : 1;
-        uint8_t red : 1;
-    } ch;
-    uint8_t full;
+    uint8_t blue : 1;
+    uint8_t green : 1;
+    uint8_t red : 1;
+    uint8_t full : 1;
 } lv_color1_t;
 
 typedef union
