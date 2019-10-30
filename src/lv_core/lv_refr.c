@@ -217,7 +217,7 @@ void lv_disp_refr_task(lv_task_t * task)
         }
     }
 
-    lv_draw_free_buf();
+    lv_draw_buf_free_all();
 
     LV_LOG_TRACE("lv_refr_task: ready");
 }
@@ -419,6 +419,10 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
     /*If this object is fully cover the draw area check the children too */
     if(lv_area_is_in(area_p, &obj->coords) && obj->hidden == 0) {
+
+        lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
+        if(design_res == LV_DESIGN_RES_MASKED) return NULL;
+
         lv_obj_t * i;
         LV_LL_READ(obj->child_ll, i)
         {
@@ -433,8 +437,11 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
         /*If no better children check this object*/
         if(found_p == NULL) {
             const lv_style_t * style = lv_obj_get_style(obj);
-            if(style->body.opa == LV_OPA_COVER && obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK) != false &&
-               lv_obj_get_opa_scale(obj) == LV_OPA_COVER) {
+            if(style->body.opa == LV_OPA_COVER && design_res == LV_DESIGN_RES_COVER &&
+               lv_obj_get_opa_scale(obj) == LV_OPA_COVER &&
+               style->body.blend_mode == LV_BLEND_MODE_NORMAL &&
+               style->body.border.blend_mode == LV_BLEND_MODE_NORMAL &&
+               style->image.blend_mode == LV_BLEND_MODE_NORMAL) {
                 found_p = obj;
             }
         }
