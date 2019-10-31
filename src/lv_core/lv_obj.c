@@ -19,6 +19,8 @@
 #include "../lv_misc/lv_async.h"
 #include "../lv_misc/lv_fs.h"
 #include "../lv_hal/lv_hal.h"
+#include "../lv_misc/lv_gc.h"
+#include "../lv_misc/lv_math.h"
 #include <stdint.h>
 #include <string.h>
 #include "../lv_misc/lv_gc.h"
@@ -52,9 +54,10 @@ static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coor
 static void report_style_mod_core(void * style_p, lv_obj_t * obj);
 static void refresh_children_style(lv_obj_t * obj);
 static void delete_children(lv_obj_t * obj);
+static void base_dir_refr_children(lv_obj_t * obj);
 static void lv_event_mark_deleted(lv_obj_t * obj);
 static void lv_obj_del_async_cb(void * obj);
-static bool lv_obj_design(lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
+static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param);
 
 /**********************
@@ -207,6 +210,16 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         new_obj->opa_scale_en = 0;
         new_obj->opa_scale    = LV_OPA_COVER;
         new_obj->parent_event = 0;
+#if LV_USE_BIDI
+#if LV_BIDI_BASE_DIR_DEF == LV_BIDI_DIR_LTR || LV_BIDI_BASE_DIR_DEF == LV_BIDI_DIR_RTL || LV_BIDI_BASE_DIR_DEF == LV_BIDI_DIR_AUTO
+        new_obj->base_dir     = LV_BIDI_BASE_DIR_DEF;
+#else
+#error "`LV_BIDI_BASE_DIR_DEF` should be `LV_BASE_DIR_LTR` or `LV_BASE_DIR_RTL` (See lv_conf.h)"
+#endif
+#else
+        new_obj->base_dir     = LV_BIDI_DIR_LTR;
+#endif
+
         new_obj->reserved     = 0;
 
         new_obj->ext_attr = NULL;
@@ -225,11 +238,22 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         new_obj->par = parent; /*Set the parent*/
         lv_ll_init(&(new_obj->child_ll), sizeof(lv_obj_t));
 
+#if LV_USE_BIDI
+        new_obj->base_dir     = LV_BIDI_DIR_INHERIT;
+#else
+        new_obj->base_dir     = LV_BIDI_DIR_LTR;
+#endif
+
         /*Set coordinates left top corner of parent*/
-        new_obj->coords.x1    = parent->coords.x1;
         new_obj->coords.y1    = parent->coords.y1;
-        new_obj->coords.x2    = parent->coords.x1 + LV_OBJ_DEF_WIDTH;
         new_obj->coords.y2    = parent->coords.y1 + LV_OBJ_DEF_HEIGHT;
+        if(lv_obj_get_base_dir(new_obj) == LV_BIDI_DIR_RTL) {
+            new_obj->coords.x2    = parent->coords.x2;
+            new_obj->coords.x1    = parent->coords.x2 - LV_OBJ_DEF_WIDTH;
+        } else {
+            new_obj->coords.x1    = parent->coords.x1;
+            new_obj->coords.x2    = parent->coords.x1 + LV_OBJ_DEF_WIDTH;
+        }
         new_obj->ext_draw_pad = 0;
 
 #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
@@ -283,7 +307,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         /*Set attributes*/
         new_obj->click        = 1;
         new_obj->drag         = 0;
-        new_obj->drag_dir     = LV_DRAG_DIR_ALL;
+        new_obj->drag_dir     = LV_DRAG_DIR_BOTH;
         new_obj->drag_throw   = 0;
         new_obj->drag_parent  = 0;
         new_obj->hidden       = 0;
@@ -292,6 +316,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         new_obj->opa_scale    = LV_OPA_COVER;
         new_obj->opa_scale_en = 0;
         new_obj->parent_event = 0;
+        new_obj->reserved     = 0;
 
         new_obj->ext_attr = NULL;
     }
@@ -556,15 +581,29 @@ void lv_obj_set_parent(lv_obj_t * obj, lv_obj_t * parent)
 
     lv_obj_invalidate(obj);
 
+    lv_obj_t * old_par = obj->par;
     lv_point_t old_pos;
-    old_pos.x = lv_obj_get_x(obj);
     old_pos.y = lv_obj_get_y(obj);
 
-    lv_obj_t * old_par = obj->par;
+    lv_bidi_dir_t new_base_dir = lv_obj_get_base_dir(parent);
+
+    if(new_base_dir != LV_BIDI_DIR_RTL) {
+        old_pos.x = lv_obj_get_x(obj);
+    } else {
+        old_pos.x = old_par->coords.x2 - obj->coords.x2;
+    }
 
     lv_ll_chg_list(&obj->par->child_ll, &parent->child_ll, obj, true);
     obj->par = parent;
-    lv_obj_set_pos(obj, old_pos.x, old_pos.y);
+
+
+    if(new_base_dir != LV_BIDI_DIR_RTL) {
+        lv_obj_set_pos(obj, old_pos.x, old_pos.y);
+    } else {
+        /*Align to the right in case of RTL base dir*/
+        lv_coord_t new_x = lv_obj_get_width(parent) - old_pos.x - lv_obj_get_width(obj);
+        lv_obj_set_pos(obj, new_x , old_pos.y);
+    }
 
     /*Notify the original parent because one of its children is lost*/
     old_par->signal_cb(old_par, LV_SIGNAL_CHILD_CHG, NULL);
@@ -725,8 +764,12 @@ void lv_obj_set_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
     lv_obj_get_coords(obj, &ori);
 
     /*Set the length and height*/
-    obj->coords.x2 = obj->coords.x1 + w - 1;
     obj->coords.y2 = obj->coords.y1 + h - 1;
+    if(lv_obj_get_base_dir(obj) == LV_BIDI_DIR_RTL) {
+        obj->coords.x1 = obj->coords.x2 - w + 1;
+    } else {
+        obj->coords.x2 = obj->coords.x1 + w - 1;
+    }
 
     /*Send a signal to the object with its new coordinates*/
     obj->signal_cb(obj, LV_SIGNAL_CORD_CHG, &ori);
@@ -1321,6 +1364,23 @@ void lv_obj_set_parent_event(lv_obj_t * obj, bool en)
     obj->parent_event = (en == true ? 1 : 0);
 }
 
+void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir)
+{
+    if(dir != LV_BIDI_DIR_LTR && dir != LV_BIDI_DIR_RTL &&
+       dir != LV_BIDI_DIR_AUTO && dir != LV_BIDI_DIR_INHERIT) {
+
+        LV_LOG_WARN("lv_obj_set_base_dir: invalid base dir");
+        return;
+    }
+
+    obj->base_dir = dir;
+    lv_signal_send(obj, LV_SIGNAL_BASE_DIR_CHG, NULL);
+
+    /* Notify the children about the parent base dir has changed.
+     * (The children might have `LV_BIDI_DIR_INHERIT`)*/
+    base_dir_refr_children(obj);
+}
+
 /**
  * Set the opa scale enable parameter (required to set opa_scale with `lv_obj_set_opa_scale()`)
  * @param obj pointer to an object
@@ -1722,13 +1782,13 @@ void lv_obj_get_inner_coords(const lv_obj_t * obj, lv_area_t * coords_p)
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
     const lv_style_t * style = lv_obj_get_style(obj);
-    if(style->body.border.part & LV_BORDER_LEFT) coords_p->x1 += style->body.border.width;
+    if(style->body.border.part & LV_BORDER_PART_LEFT) coords_p->x1 += style->body.border.width;
 
-    if(style->body.border.part & LV_BORDER_RIGHT) coords_p->x2 -= style->body.border.width;
+    if(style->body.border.part & LV_BORDER_PART_RIGHT) coords_p->x2 -= style->body.border.width;
 
-    if(style->body.border.part & LV_BORDER_TOP) coords_p->y1 += style->body.border.width;
+    if(style->body.border.part & LV_BORDER_PART_TOP) coords_p->y1 += style->body.border.width;
 
-    if(style->body.border.part & LV_BORDER_BOTTOM) coords_p->y2 -= style->body.border.width;
+    if(style->body.border.part & LV_BORDER_PART_BOTTOM) coords_p->y2 -= style->body.border.width;
 }
 
 /**
@@ -1742,8 +1802,11 @@ lv_coord_t lv_obj_get_x(const lv_obj_t * obj)
 
     lv_coord_t rel_x;
     lv_obj_t * parent = lv_obj_get_parent(obj);
-    rel_x             = obj->coords.x1 - parent->coords.x1;
-
+    if(parent) {
+        rel_x             = obj->coords.x1 - parent->coords.x1;
+    } else {
+        rel_x = obj->coords.x1;
+    }
     return rel_x;
 }
 
@@ -1758,8 +1821,11 @@ lv_coord_t lv_obj_get_y(const lv_obj_t * obj)
 
     lv_coord_t rel_y;
     lv_obj_t * parent = lv_obj_get_parent(obj);
-    rel_y             = obj->coords.y1 - parent->coords.y1;
-
+   if(parent) {
+       rel_y             = obj->coords.y1 - parent->coords.y1;
+   } else {
+       rel_y = obj->coords.y1;
+   }
     return rel_y;
 }
 
@@ -2068,6 +2134,25 @@ bool lv_obj_get_parent_event(const lv_obj_t * obj)
     return obj->parent_event == 0 ? false : true;
 }
 
+
+lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj)
+{
+#if LV_USE_BIDI
+    const lv_obj_t * parent = obj;
+
+    while(parent) {
+        if(parent->base_dir != LV_BIDI_DIR_INHERIT) return parent->base_dir;
+
+        parent = lv_obj_get_parent(parent);
+    }
+
+    return LV_BIDI_BASE_DIR_DEF;
+#else
+    return LV_BIDI_DIR_LTR;
+#endif
+}
+
+
 /**
  * Get the opa scale enable parameter
  * @param obj pointer to an object
@@ -2313,28 +2398,31 @@ static void lv_obj_del_async_cb(void * obj)
 /**
  * Handle the drawing related tasks of the base objects.
  * @param obj pointer to an object
- * @param mask the object will be drawn only in this area
+ * @param clip_area the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
- * @param return true/false, depends on 'mode'
+ * @param return an element of `lv_design_res_t`
  */
-static bool lv_obj_design(lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode)
+static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
-
         /*Most trivial test. Is the mask fully IN the object? If no it surely doesn't cover it*/
-        if(lv_area_is_in(mask_p, &obj->coords) == false) return false;
+        if(lv_area_is_in(clip_area, &obj->coords) == false) return LV_DESIGN_RES_NOT_COVER;
+
+
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) return LV_DESIGN_RES_MASKED;
+
 
         /*Can cover the area only if fully solid (no opacity)*/
-        const lv_style_t * style = lv_obj_get_style(obj);
-        if(style->body.opa < LV_OPA_MAX) return false;
+        if(style->body.opa < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
 
         /* Because of the radius it is not sure the area is covered
          * Check the areas where there is no radius*/
         lv_coord_t r = style->body.radius;
 
-        if(r == LV_RADIUS_CIRCLE) return false;
+        if(r == LV_RADIUS_CIRCLE) return LV_DESIGN_RES_NOT_COVER;
 
         lv_area_t area_tmp;
 
@@ -2342,20 +2430,35 @@ static bool lv_obj_design(lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mo
         lv_obj_get_coords(obj, &area_tmp);
         area_tmp.x1 += r;
         area_tmp.x2 -= r;
-        if(lv_area_is_in(mask_p, &area_tmp) == false) return false;
+        if(lv_area_is_in(clip_area, &area_tmp) == false) return LV_DESIGN_RES_NOT_COVER;
 
         /*Check vertically without radius*/
         lv_obj_get_coords(obj, &area_tmp);
         area_tmp.y1 += r;
         area_tmp.y2 -= r;
-        if(lv_area_is_in(mask_p, &area_tmp) == false) return false;
+        if(lv_area_is_in(clip_area, &area_tmp) == false) return LV_DESIGN_RES_NOT_COVER;
 
-    } else if(mode == LV_DESIGN_DRAW_MAIN) {
+        return  LV_DESIGN_RES_COVER;
+
+    }
+    else if(mode == LV_DESIGN_DRAW_MAIN) {
         const lv_style_t * style = lv_obj_get_style(obj);
-        lv_draw_rect(&obj->coords, mask_p, style, lv_obj_get_opa_scale(obj));
+        lv_draw_rect(&obj->coords, clip_area, style, lv_obj_get_opa_scale(obj));
+
+        if(style->body.corner_mask) {
+            lv_draw_mask_param_t mp;
+            lv_draw_mask_radius_init(&mp, &obj->coords, style->body.radius, false);
+            lv_draw_mask_add(&mp, obj + 4);
+        }
+    }
+    else if(mode == LV_DESIGN_DRAW_POST) {
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) {
+            lv_draw_mask_remove_custom(obj+ 4);
+        }
     }
 
-    return true;
+    return LV_DESIGN_RES_OK;
 }
 
 /**
@@ -2376,7 +2479,11 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         if(lv_obj_is_protected(obj, LV_PROTECT_CHILD_CHG) != false) res = LV_RES_INV;
     } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         const lv_style_t * style = lv_obj_get_style(obj);
-        if(style->body.shadow.width > obj->ext_draw_pad) obj->ext_draw_pad = style->body.shadow.width;
+        lv_coord_t shadow = (style->body.shadow.width >> 1) + 1;
+        shadow += style->body.shadow.spread;
+        shadow += LV_MATH_MAX(LV_MATH_ABS(style->body.shadow.offset.x), LV_MATH_ABS(style->body.shadow.offset.y));
+
+        if(shadow > obj->ext_draw_pad) obj->ext_draw_pad = shadow;
     } else if(sign == LV_SIGNAL_STYLE_CHG) {
         lv_obj_refresh_ext_draw_pad(obj);
     }
@@ -2511,6 +2618,22 @@ static void delete_children(lv_obj_t * obj)
     if(obj->ext_attr != NULL) lv_mem_free(obj->ext_attr);
     lv_mem_free(obj); /*Free the object itself*/
 }
+
+static void base_dir_refr_children(lv_obj_t * obj)
+{
+    lv_obj_t * child;
+    child = lv_obj_get_child(obj, NULL);
+
+    while(child) {
+        if(child->base_dir == LV_BIDI_DIR_INHERIT) {
+            lv_signal_send(child, LV_SIGNAL_BASE_DIR_CHG, NULL);
+            base_dir_refr_children(child);
+        }
+
+        child = lv_obj_get_child(obj, child);
+    }
+}
+
 
 static void lv_event_mark_deleted(lv_obj_t * obj)
 {
