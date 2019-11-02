@@ -8,11 +8,8 @@
  *********************/
 #include "lv_draw_img.h"
 #include "lv_img_cache.h"
-#include "../lv_hal/lv_hal_disp.h"
 #include "../lv_misc/lv_log.h"
-#include "../lv_core/lv_refr.h"
 #include "../lv_misc/lv_mem.h"
-#include "../lv_misc/lv_math.h"
 
 /*********************
  *      DEFINES
@@ -26,10 +23,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src,
-        const lv_style_t * style, lv_opa_t opa_scale);
-
-static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_opa_t opa,
-        bool chroma_key, bool alpha_byte, const lv_style_t * style);
+                                 const lv_style_t * style, lv_opa_t opa_scale);
 
 /**********************
  *  STATIC VARIABLES
@@ -52,7 +46,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
  * @param opa_scale scale down all opacities by the factor
  */
 void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, const lv_style_t * style,
-        lv_opa_t opa_scale)
+                 lv_opa_t opa_scale)
 {
     if(src == NULL) {
         LV_LOG_WARN("Image draw: src is NULL");
@@ -77,11 +71,12 @@ void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * 
  * @param dsc an image descriptor
  * @param x x coordinate of the point to get
  * @param y x coordinate of the point to get
- * @param color the color of the image. In case of `LV_IMG_CF_ALPHA_1/2/4/8` this color is used.
- * Not used in other cases.
+ * @param style style of the image. In case of `LV_IMG_CF_ALPHA_1/2/4/8` `style->image.color` shows
+ * the color. Can be `NULL` but for `ALPHA` images black will be returned. In other cases it is not
+ * used.
  * @return color of the point
  */
-lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t color)
+lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, const lv_style_t * style)
 {
     lv_color_t p_color = LV_COLOR_BLACK;
     if(x >= dsc->header.w) {
@@ -103,7 +98,7 @@ lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
     uint8_t * buf_u8 = (uint8_t *)dsc->data;
 
     if(dsc->header.cf == LV_IMG_CF_TRUE_COLOR || dsc->header.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED ||
-            dsc->header.cf == LV_IMG_CF_TRUE_COLOR_ALPHA) {
+       dsc->header.cf == LV_IMG_CF_TRUE_COLOR_ALPHA) {
         uint8_t px_size = lv_img_color_format_get_px_size(dsc->header.cf) >> 3;
         uint32_t px     = dsc->header.w * y * px_size + x * px_size;
         memcpy(&p_color, &buf_u8[px], sizeof(lv_color_t));
@@ -145,8 +140,11 @@ lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
         uint32_t px  = dsc->header.w * y + x;
         p_color.full = buf_u8[px];
     } else if(dsc->header.cf == LV_IMG_CF_ALPHA_1BIT || dsc->header.cf == LV_IMG_CF_ALPHA_2BIT ||
-            dsc->header.cf == LV_IMG_CF_ALPHA_4BIT || dsc->header.cf == LV_IMG_CF_ALPHA_8BIT) {
-            p_color = color;
+              dsc->header.cf == LV_IMG_CF_ALPHA_4BIT || dsc->header.cf == LV_IMG_CF_ALPHA_8BIT) {
+        if(style)
+            p_color = style->image.color;
+        else
+            p_color = LV_COLOR_BLACK;
     }
     return p_color;
 }
@@ -205,7 +203,7 @@ lv_opa_t lv_img_buf_get_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y)
         return opa_table[px_opa];
     } else if(dsc->header.cf == LV_IMG_CF_ALPHA_4BIT) {
         const uint8_t opa_table[16] = {0,  17, 34,  51, /*Opacity mapping with bpp = 4*/
-                68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
+                                       68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
 
         uint8_t bit = (x & 0x1) * 4;
         x           = x >> 1;
@@ -339,103 +337,6 @@ void lv_img_buf_set_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_
     }
 }
 
-bool lv_img_get_px_rotated(lv_img_dsc_t * img, uint16_t angle, lv_color_t color, lv_point_t * point, lv_point_t * pivot, lv_color_t * res_color, lv_opa_t * res_opa)
-{
-
-    int32_t sinma             = lv_trigo_sin(-angle);
-    int32_t cosma             = lv_trigo_sin(-angle + 90); /* cos */
-
-    /*Get the target point relative coordinates to the pivot*/
-    int32_t xt = point->x - pivot->x;
-    int32_t yt = point->y - pivot->y;
-
-    /*Get the source pixel from the upscaled image*/
-    int32_t xs = ((cosma * xt - sinma * yt) >> (LV_TRIGO_SHIFT - 8)) + pivot->x * 256;
-    int32_t ys = ((sinma * xt + cosma * yt) >> (LV_TRIGO_SHIFT - 8)) + pivot->y * 256;
-
-    /*Get the integer part of the source pixel*/
-    int xs_int = xs >> 8;
-    int ys_int = ys >> 8;
-
-    if(xs_int >= img->header.w) return false;
-    else if(xs_int < 0) return false;
-
-    if(ys_int >= img->header.h) return false;
-    else if(ys_int < 0) return false;
-
-    /*Get the fractional part of the source pixel*/
-    int xs_fract = xs & 0xff;
-    int ys_fract = ys & 0xff;
-
-    /* If the fractional < 0x70 mix the source pixel with the left/top pixel
-     * If the fractional > 0x90 mix the source pixel with the right/bottom pixel
-     * In the 0x70..0x90 range use the unchanged source pixel */
-
-    int xn;      /*x neightboor*/
-    lv_opa_t xr; /*x mix ratio*/
-    if(xs_fract < 0x70) {
-        xn = xs_int - 1;
-        xr = xs_fract * 2;
-    } else if(xs_fract > 0x90) {
-        xn = xs_int + 1;
-        xr = (0xFF - xs_fract) * 2;
-    } else {
-        xn = xs_int;
-        xr = 0xFF;
-    }
-
-    /*Handle under/overflow*/
-    if(xn >= img->header.w) return false;
-    else if(xn < 0) return false;
-
-    int yn;      /*y neightboor*/
-    lv_opa_t yr; /*y mix ratio*/
-    if(ys_fract < 0x70) {
-        yn = ys_int - 1;
-        yr = ys_fract * 2;
-    } else if(ys_fract > 0x90) {
-        yn = ys_int + 1;
-        yr = (0xFF - ys_fract) * 2;
-    } else {
-        yn = ys_int;
-        yr = 0xFF;
-    }
-
-    /*Handle under/overflow*/
-    if(yn >= img->header.h) return false;
-    else if(yn < 0) return false;
-
-    /*Get the mixture of the original source and the neightboor pixels in both directions*/
-    /*Get the mixture of the original source and the neightboor pixels in both directions*/
-    lv_color_t c_dest_int = lv_img_buf_get_px_color(img, xs_int, ys_int, color);
-
-    if(lv_img_color_format_is_chroma_keyed(img->header.cf)) {
-        lv_color_t ct = LV_COLOR_TRANSP;
-        if(c_dest_int.full == ct.full) return false;
-    }
-
-    lv_color_t c_dest_xn = lv_img_buf_get_px_color(img, xn, ys_int, color);
-    lv_color_t c_dest_yn = lv_img_buf_get_px_color(img, xs_int, yn, color);
-
-    lv_color_t x_dest    = lv_color_mix(c_dest_int, c_dest_xn, xr);
-    lv_color_t y_dest    = lv_color_mix(c_dest_int, c_dest_yn, yr);
-    *res_color = lv_color_mix(x_dest, y_dest, LV_OPA_50);
-
-    /*Get result pixel opacity*/
-    if(lv_img_color_format_has_alpha(img->header.cf)) {
-        lv_opa_t opa_int = lv_img_buf_get_px_alpha(img, xs_int, ys_int);
-        lv_opa_t opa_xn  = lv_img_buf_get_px_alpha(img, xn, ys_int);
-        lv_opa_t opa_yn  = lv_img_buf_get_px_alpha(img, xs_int, yn);
-        lv_opa_t opa_x   = (opa_int * xr + (opa_xn * (255 - xr))) >> 8;
-        lv_opa_t opa_y   = (opa_int * yr + (opa_yn * (255 - yr))) >> 8;
-
-        *res_opa = (opa_x + opa_y) / 2;
-        if(*res_opa <= LV_OPA_MIN) return false;
-    }
-
-    return true;
-}
-
 /**
  * Set the palette color of an indexed image. Valid only for `LV_IMG_CF_INDEXED1/2/4/8`
  * @param dsc pointer to an image descriptor
@@ -449,7 +350,7 @@ bool lv_img_get_px_rotated(lv_img_dsc_t * img, uint16_t angle, lv_color_t color,
 void lv_img_buf_set_palette(lv_img_dsc_t * dsc, uint8_t id, lv_color_t c)
 {
     if((dsc->header.cf == LV_IMG_CF_ALPHA_1BIT && id > 1) || (dsc->header.cf == LV_IMG_CF_ALPHA_2BIT && id > 3) ||
-            (dsc->header.cf == LV_IMG_CF_ALPHA_4BIT && id > 15) || (dsc->header.cf == LV_IMG_CF_ALPHA_8BIT)) {
+       (dsc->header.cf == LV_IMG_CF_ALPHA_4BIT && id > 15) || (dsc->header.cf == LV_IMG_CF_ALPHA_8BIT)) {
         LV_LOG_WARN("lv_img_buf_set_px_alpha: invalid 'id'");
         return;
     }
@@ -470,20 +371,20 @@ uint8_t lv_img_color_format_get_px_size(lv_img_cf_t cf)
     uint8_t px_size = 0;
 
     switch(cf) {
-    case LV_IMG_CF_UNKNOWN:
-    case LV_IMG_CF_RAW: px_size = 0; break;
-    case LV_IMG_CF_TRUE_COLOR:
-    case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED: px_size = LV_COLOR_SIZE; break;
-    case LV_IMG_CF_TRUE_COLOR_ALPHA: px_size = LV_IMG_PX_SIZE_ALPHA_BYTE << 3; break;
-    case LV_IMG_CF_INDEXED_1BIT:
-    case LV_IMG_CF_ALPHA_1BIT: px_size = 1; break;
-    case LV_IMG_CF_INDEXED_2BIT:
-    case LV_IMG_CF_ALPHA_2BIT: px_size = 2; break;
-    case LV_IMG_CF_INDEXED_4BIT:
-    case LV_IMG_CF_ALPHA_4BIT: px_size = 4; break;
-    case LV_IMG_CF_INDEXED_8BIT:
-    case LV_IMG_CF_ALPHA_8BIT: px_size = 8; break;
-    default: px_size = 0; break;
+        case LV_IMG_CF_UNKNOWN:
+        case LV_IMG_CF_RAW: px_size = 0; break;
+        case LV_IMG_CF_TRUE_COLOR:
+        case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED: px_size = LV_COLOR_SIZE; break;
+        case LV_IMG_CF_TRUE_COLOR_ALPHA: px_size = LV_IMG_PX_SIZE_ALPHA_BYTE << 3; break;
+        case LV_IMG_CF_INDEXED_1BIT:
+        case LV_IMG_CF_ALPHA_1BIT: px_size = 1; break;
+        case LV_IMG_CF_INDEXED_2BIT:
+        case LV_IMG_CF_ALPHA_2BIT: px_size = 2; break;
+        case LV_IMG_CF_INDEXED_4BIT:
+        case LV_IMG_CF_ALPHA_4BIT: px_size = 4; break;
+        case LV_IMG_CF_INDEXED_8BIT:
+        case LV_IMG_CF_ALPHA_8BIT: px_size = 8; break;
+        default: px_size = 0; break;
     }
 
     return px_size;
@@ -499,17 +400,17 @@ bool lv_img_color_format_is_chroma_keyed(lv_img_cf_t cf)
     bool is_chroma_keyed = false;
 
     switch(cf) {
-    case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED:
-    case LV_IMG_CF_RAW_CHROMA_KEYED:
+        case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED:
+        case LV_IMG_CF_RAW_CHROMA_KEYED:
 #if LV_INDEXED_CHROMA
-    case LV_IMG_CF_INDEXED_1BIT:
-    case LV_IMG_CF_INDEXED_2BIT:
-    case LV_IMG_CF_INDEXED_4BIT:
-    case LV_IMG_CF_INDEXED_8BIT:
+        case LV_IMG_CF_INDEXED_1BIT:
+        case LV_IMG_CF_INDEXED_2BIT:
+        case LV_IMG_CF_INDEXED_4BIT:
+        case LV_IMG_CF_INDEXED_8BIT:
 #endif
-        is_chroma_keyed = true; break;
+            is_chroma_keyed = true; break;
 
-    default: is_chroma_keyed = false; break;
+        default: is_chroma_keyed = false; break;
     }
 
     return is_chroma_keyed;
@@ -525,17 +426,17 @@ bool lv_img_color_format_has_alpha(lv_img_cf_t cf)
     bool has_alpha = false;
 
     switch(cf) {
-    case LV_IMG_CF_TRUE_COLOR_ALPHA:
-    case LV_IMG_CF_RAW_ALPHA:
-    case LV_IMG_CF_INDEXED_1BIT:
-    case LV_IMG_CF_INDEXED_2BIT:
-    case LV_IMG_CF_INDEXED_4BIT:
-    case LV_IMG_CF_INDEXED_8BIT:
-    case LV_IMG_CF_ALPHA_1BIT:
-    case LV_IMG_CF_ALPHA_2BIT:
-    case LV_IMG_CF_ALPHA_4BIT:
-    case LV_IMG_CF_ALPHA_8BIT: has_alpha = true; break;
-    default: has_alpha = false; break;
+        case LV_IMG_CF_TRUE_COLOR_ALPHA:
+        case LV_IMG_CF_RAW_ALPHA:
+        case LV_IMG_CF_INDEXED_1BIT:
+        case LV_IMG_CF_INDEXED_2BIT:
+        case LV_IMG_CF_INDEXED_4BIT:
+        case LV_IMG_CF_INDEXED_8BIT:
+        case LV_IMG_CF_ALPHA_1BIT:
+        case LV_IMG_CF_ALPHA_2BIT:
+        case LV_IMG_CF_ALPHA_4BIT:
+        case LV_IMG_CF_ALPHA_8BIT: has_alpha = true; break;
+        default: has_alpha = false; break;
     }
 
     return has_alpha;
@@ -578,16 +479,16 @@ lv_img_dsc_t *lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
     lv_img_dsc_t *dsc = lv_mem_alloc(sizeof(lv_img_dsc_t));
     if(dsc == NULL)
         return NULL;
-
+    
     memset(dsc, 0, sizeof(lv_img_dsc_t));
-
+    
     /* Get image data size */
     dsc->data_size = lv_img_buf_get_img_size(w, h, cf);
     if(dsc->data_size == 0) {
         lv_mem_free(dsc);
         return NULL;
     }
-
+    
     /* Allocate raw buffer */
     dsc->data = lv_mem_alloc(dsc->data_size);
     if(dsc->data == NULL) {
@@ -595,7 +496,7 @@ lv_img_dsc_t *lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
         return NULL;
     }
     memset((uint8_t *)dsc->data, 0, dsc->data_size);
-
+    
     /* Fill in header */
     dsc->header.always_zero = 0;
     dsc->header.w = w;
@@ -609,7 +510,7 @@ void lv_img_buf_free(lv_img_dsc_t *dsc)
     if(dsc != NULL) {
         if(dsc->data != NULL)
             lv_mem_free(dsc->data);
-
+        
         lv_mem_free(dsc);
     }
 }
@@ -617,18 +518,18 @@ void lv_img_buf_free(lv_img_dsc_t *dsc)
 uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
 {
     switch(cf) {
-    case LV_IMG_CF_TRUE_COLOR: return LV_IMG_BUF_SIZE_TRUE_COLOR(w, h);
-    case LV_IMG_CF_TRUE_COLOR_ALPHA: return LV_IMG_BUF_SIZE_TRUE_COLOR_ALPHA(w, h);
-    case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED: return LV_IMG_BUF_SIZE_TRUE_COLOR_CHROMA_KEYED(w, h);
-    case LV_IMG_CF_ALPHA_1BIT: return LV_IMG_BUF_SIZE_ALPHA_1BIT(w, h);
-    case LV_IMG_CF_ALPHA_2BIT: return LV_IMG_BUF_SIZE_ALPHA_2BIT(w, h);
-    case LV_IMG_CF_ALPHA_4BIT: return LV_IMG_BUF_SIZE_ALPHA_4BIT(w, h);
-    case LV_IMG_CF_ALPHA_8BIT: return LV_IMG_BUF_SIZE_ALPHA_8BIT(w, h);
-    case LV_IMG_CF_INDEXED_1BIT: return LV_IMG_BUF_SIZE_INDEXED_1BIT(w, h);
-    case LV_IMG_CF_INDEXED_2BIT: return LV_IMG_BUF_SIZE_INDEXED_2BIT(w, h);
-    case LV_IMG_CF_INDEXED_4BIT: return LV_IMG_BUF_SIZE_INDEXED_4BIT(w, h);
-    case LV_IMG_CF_INDEXED_8BIT: return LV_IMG_BUF_SIZE_INDEXED_8BIT(w, h);
-    default: return 0;
+        case LV_IMG_CF_TRUE_COLOR: return LV_IMG_BUF_SIZE_TRUE_COLOR(w, h);
+        case LV_IMG_CF_TRUE_COLOR_ALPHA: return LV_IMG_BUF_SIZE_TRUE_COLOR_ALPHA(w, h);
+        case LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED: return LV_IMG_BUF_SIZE_TRUE_COLOR_CHROMA_KEYED(w, h);
+        case LV_IMG_CF_ALPHA_1BIT: return LV_IMG_BUF_SIZE_ALPHA_1BIT(w, h);
+        case LV_IMG_CF_ALPHA_2BIT: return LV_IMG_BUF_SIZE_ALPHA_2BIT(w, h);
+        case LV_IMG_CF_ALPHA_4BIT: return LV_IMG_BUF_SIZE_ALPHA_4BIT(w, h);
+        case LV_IMG_CF_ALPHA_8BIT: return LV_IMG_BUF_SIZE_ALPHA_8BIT(w, h);
+        case LV_IMG_CF_INDEXED_1BIT: return LV_IMG_BUF_SIZE_INDEXED_1BIT(w, h);
+        case LV_IMG_CF_INDEXED_2BIT: return LV_IMG_BUF_SIZE_INDEXED_2BIT(w, h);
+        case LV_IMG_CF_INDEXED_4BIT: return LV_IMG_BUF_SIZE_INDEXED_4BIT(w, h);
+        case LV_IMG_CF_INDEXED_8BIT: return LV_IMG_BUF_SIZE_INDEXED_8BIT(w, h);
+        default: return 0;
     }
 }
 
@@ -637,7 +538,7 @@ uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf)
  **********************/
 
 static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src,
-        const lv_style_t * style, lv_opa_t opa_scale)
+                                 const lv_style_t * style, lv_opa_t opa_scale)
 {
 
     lv_area_t mask_com; /*Common area of mask and coords*/
@@ -649,7 +550,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
     }
 
     lv_opa_t opa =
-            opa_scale == LV_OPA_COVER ? style->image.opa : (uint16_t)((uint16_t)style->image.opa * opa_scale) >> 8;
+        opa_scale == LV_OPA_COVER ? style->image.opa : (uint16_t)((uint16_t)style->image.opa * opa_scale) >> 8;
 
     lv_img_cache_entry_t * cdsc = lv_img_cache_open(src, style);
 
@@ -666,13 +567,14 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
     /* The decoder open could open the image and gave the entire uncompressed image.
      * Just draw it!*/
     else if(cdsc->dec_dsc.img_data) {
-        lv_draw_map(coords, mask, cdsc->dec_dsc.img_data, opa, chroma_keyed, alpha_byte, style);
+        lv_draw_map(coords, mask, cdsc->dec_dsc.img_data, opa, chroma_keyed, alpha_byte, style->image.color,
+                    style->image.intense);
     }
     /* The whole uncompressed image is not available. Try to read it line-by-line*/
     else {
         lv_coord_t width = lv_area_get_width(&mask_com);
 
-        uint8_t  * buf = lv_draw_buf_get(lv_area_get_width(&mask_com) * LV_IMG_PX_SIZE_ALPHA_BYTE);  /*+1 because of the possible alpha byte*/
+        uint8_t  * buf = lv_draw_get_buf(lv_area_get_width(&mask_com) * LV_IMG_PX_SIZE_ALPHA_BYTE);  /*space for the possible alpha byte*/
 
         lv_area_t line;
         lv_area_copy(&line, &mask_com);
@@ -686,177 +588,14 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
             if(read_res != LV_RES_OK) {
                 lv_img_decoder_close(&cdsc->dec_dsc);
                 LV_LOG_WARN("Image draw can't read the line");
-                lv_draw_buf_release(buf);
                 return LV_RES_INV;
             }
-            lv_draw_map(&line, mask, buf, opa, chroma_keyed, alpha_byte, style);
+            lv_draw_map(&line, mask, buf, opa, chroma_keyed, alpha_byte, style->image.color, style->image.intense);
             line.y1++;
             line.y2++;
             y++;
         }
-        lv_draw_buf_release(buf);
     }
 
     return LV_RES_OK;
-}
-
-/**
- * Draw a color map to the display (image)
- * @param cords_p coordinates the color map
- * @param mask_p the map will drawn only on this area  (truncated to VDB area)
- * @param map_p pointer to a lv_color_t array
- * @param opa opacity of the map
- * @param chroma_keyed true: enable transparency of LV_IMG_LV_COLOR_TRANSP color pixels
- * @param alpha_byte true: extra alpha byte is inserted for every pixel
- * @param style style of the image
- */
-static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_opa_t opa,
-        bool chroma_key, bool alpha_byte, const lv_style_t * style)
-{
-    if(opa < LV_OPA_MIN) return;
-    if(opa > LV_OPA_MAX) opa = LV_OPA_COVER;
-
-    lv_area_t draw_area;
-    bool union_ok;
-
-    /* Get clipped map area which is the real draw area.
-     * It is always the same or inside `map_area` */
-    union_ok = lv_area_intersect(&draw_area, map_area, clip_area);
-
-    /*If there are common part of the three area then draw to the vdb*/
-    if(union_ok == false) return;
-
-    lv_disp_t * disp    = lv_refr_get_disp_refreshing();
-    lv_disp_buf_t * vdb = lv_disp_get_buf(disp);
-    const lv_area_t * disp_area = &vdb->area;
-
-    /* Now `draw_area` has absolute coordinates.
-     * Make it relative to `disp_area` to simplify draw to `disp_buf`*/
-    draw_area.x1 -= disp_area->x1;
-    draw_area.y1 -= disp_area->y1;
-    draw_area.x2 -= disp_area->x1;
-    draw_area.y2 -= disp_area->y1;
-
-    uint8_t other_mask_cnt = lv_draw_mask_get_cnt();
-
-    /*The simplest case just copy the pixels into the VDB*/
-    if(other_mask_cnt == 0 && chroma_key == false && alpha_byte == false && opa == LV_OPA_COVER && style->image.intense == LV_OPA_TRANSP) {
-        lv_blend_map(clip_area, map_area, (lv_color_t *)map_p, NULL, LV_DRAW_MASK_RES_FULL_COVER, LV_OPA_COVER, style->image.blend_mode);
-    }
-    /*In the other cases every pixel need to be checked one-by-one*/
-    else {
-        /*The pixel size in byte is different if an alpha byte is added too*/
-        uint8_t px_size_byte = alpha_byte ? LV_IMG_PX_SIZE_ALPHA_BYTE : sizeof(lv_color_t);
-
-
-
-        /*Build the image and a mask line-by-line*/
-        uint32_t mask_buf_size = lv_area_get_size(&draw_area) > LV_HOR_RES_MAX ? lv_area_get_size(&draw_area) : LV_HOR_RES_MAX;
-        lv_color_t * map2 = lv_draw_buf_get(mask_buf_size * sizeof(lv_color_t));
-        lv_opa_t * mask_buf = lv_draw_buf_get(mask_buf_size);
-
-        /*Go to the first displayed pixel of the map*/
-        lv_coord_t map_w = lv_area_get_width(map_area);
-        const uint8_t * map_buf_tmp = map_p;
-        map_buf_tmp += map_w * (draw_area.y1 - (map_area->y1 - disp_area->y1)) * px_size_byte;
-        map_buf_tmp += (draw_area.x1 - (map_area->x1 - disp_area->x1)) * px_size_byte;
-
-        lv_color_t c;
-        lv_color_t chroma_keyed_color = LV_COLOR_TRANSP;
-        uint32_t px_i = 0;
-        uint32_t px_i_start;
-
-        const uint8_t * map_px;
-
-        lv_area_t blend_area;
-        blend_area.x1 = draw_area.x1 + disp_area->x1;
-        blend_area.x2 = blend_area.x1 + lv_area_get_width(&draw_area) - 1;
-        blend_area.y1 = disp_area->y1 + draw_area.y1;
-        blend_area.y2 = blend_area.y1;
-
-        /*Prepare the `mask_buf`if there are other masks*/
-        if(other_mask_cnt) {
-            memset(mask_buf, 0xFF, mask_buf_size);
-        }
-
-        lv_draw_mask_res_t mask_res;
-        mask_res = (alpha_byte || chroma_key) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
-        lv_coord_t x;
-        lv_coord_t y;
-        for(y = 0; y < lv_area_get_height(&draw_area); y++) {
-            map_px = map_buf_tmp;
-            px_i_start = px_i;
-
-            for(x = 0; x < lv_area_get_width(&draw_area); x++, map_px += px_size_byte, px_i++) {
-                if(alpha_byte) {
-                    lv_opa_t px_opa = map_px[LV_IMG_PX_SIZE_ALPHA_BYTE - 1];
-                    mask_buf[px_i] = px_opa;
-                    if(px_opa < LV_OPA_MIN) continue;
-                } else {
-                    mask_buf[px_i] = LV_OPA_COVER;
-                }
-
-#if LV_COLOR_DEPTH == 8
-                c.full =  map_px[0];
-#elif LV_COLOR_DEPTH == 16
-                c.full =  map_px[0] + (map_px[1] << 8);
-#elif LV_COLOR_DEPTH == 32
-                c.full =  *((uint32_t*)map_px);
-#endif
-
-                if (chroma_key) {
-                    if(c.full == chroma_keyed_color.full) {
-                        mask_buf[px_i] = LV_OPA_TRANSP;
-                        continue;
-                    }
-                }
-
-                if(style->image.intense != 0) {
-                    c = lv_color_mix(style->image.color, c, style->image.intense);
-                }
-
-                map2[px_i].full = c.full;
-            }
-
-            /*Apply the masks if any*/
-            if(other_mask_cnt) {
-                lv_draw_mask_res_t mask_res_sub;
-                mask_res_sub = lv_draw_mask_apply(mask_buf + px_i_start, draw_area.x1 + vdb->area.x1, y + draw_area.y1 + vdb->area.y1, lv_area_get_width(&draw_area));
-                if(mask_res_sub == LV_DRAW_MASK_RES_FULL_TRANSP) {
-                    memset(mask_buf + px_i_start, 0x00, lv_area_get_width(&draw_area));
-                    mask_res = LV_DRAW_MASK_RES_CHANGED;
-                } else if(mask_res_sub == LV_DRAW_MASK_RES_CHANGED) {
-                    mask_res = LV_DRAW_MASK_RES_CHANGED;
-                }
-            }
-
-            map_buf_tmp += map_w * px_size_byte;
-            if(px_i + lv_area_get_width(&draw_area) < mask_buf_size) {
-                blend_area.y2 ++;
-            } else {
-                lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, opa, style->image.blend_mode);
-
-                blend_area.y1 = blend_area.y2 + 1;
-                blend_area.y2 = blend_area.y1;
-
-                px_i = 0;
-                mask_res = (alpha_byte || chroma_key) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
-
-                /*Prepare the `mask_buf`if there are other masks*/
-                if(other_mask_cnt) {
-                    memset(mask_buf, 0xFF, mask_buf_size);
-                }
-            }
-        }
-        /*Flush the last part*/
-        if(blend_area.y1 != blend_area.y2) {
-            blend_area.y2--;
-            lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, opa, style->image.blend_mode);
-        }
-
-        lv_draw_buf_release(mask_buf);
-        lv_draw_buf_release(map2);
-    }
-
-
 }
