@@ -43,27 +43,6 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-typedef struct {
-    lv_color_t res_color;
-    lv_opa_t res_opa;
-
-    const void * src;
-    lv_coord_t src_w;
-    lv_coord_t src_h;
-    lv_coord_t pivot_x;
-    lv_coord_t pivot_y;
-    lv_coord_t pivot_x_256;
-    lv_coord_t pivot_y_256;
-    int32_t sinma;
-    int32_t cosma;
-    int16_t angle;
-    lv_color_t color;
-    lv_img_cf_t cf;
-
-    uint8_t chroma_keyed :1;
-    uint8_t has_alpha :1;
-
-}lv_img_rotate_dsc_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -90,19 +69,17 @@ void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * 
  */
 lv_img_src_t lv_img_src_get_type(const void * src);
 
-
 /**
  * Get the color of an image's pixel
  * @param dsc an image descriptor
  * @param x x coordinate of the point to get
  * @param y x coordinate of the point to get
- * @param color the color of the image. In case of `LV_IMG_CF_ALPHA_1/2/4/8` this color is used.
- * Not used in other cases.
+ * @param style style of the image. In case of `LV_IMG_CF_ALPHA_1/2/4/8` `style->image.color` shows
+ * the color. Can be `NULL` but for `ALPHA` images black will be returned. In other cases it is not
+ * used.
  * @return color of the point
  */
-lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, lv_color_t color);
-
-
+lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y, const lv_style_t * style);
 /**
  * Get the alpha value of an image's pixel
  * @param dsc pointer to an image descriptor
@@ -111,12 +88,6 @@ lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
  * @return alpha value of the point
  */
 lv_opa_t lv_img_buf_get_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y);
-
-
-void lv_img_rotate_init(lv_img_rotate_dsc_t * dsc, int16_t angle, const void * src, lv_coord_t src_w, lv_coord_t src_h,
-                        lv_img_cf_t cf, lv_coord_t pivot_x, lv_coord_t pivot_y, lv_color_t color);
-
-bool lv_img_get_px_rotated(lv_img_rotate_dsc_t * dsc, lv_coord_t x, lv_coord_t y);
 
 /**
  * Set the color of a pixel of an image. The alpha channel won't be affected.
