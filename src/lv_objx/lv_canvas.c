@@ -321,7 +321,6 @@ void lv_canvas_rotate(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, lv_c
     int32_t x;
     int32_t y;
     lv_point_t point_p;
-
     bool ret;
 
     lv_img_rotate_dsc_t dsc;
@@ -331,6 +330,7 @@ void lv_canvas_rotate(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, lv_c
         for(y = -offset_y; y < dest_height - offset_y; y++) {
 
             ret = lv_img_buf_get_px_rotated(&dsc, x, y);
+
             if(ret == false) continue;
 
             if(x + offset_x >= 0 && x + offset_x < dest_width && y + offset_y >= 0 && y + offset_y < dest_height) {

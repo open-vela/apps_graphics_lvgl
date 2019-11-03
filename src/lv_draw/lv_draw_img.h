@@ -55,7 +55,6 @@ void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * 
  */
 lv_img_src_t lv_img_src_get_type(const void * src);
 
-
 /**
  * Get the pixel size of a color format in bits
  * @param cf a color format (`LV_IMG_CF_...`)
@@ -76,17 +75,6 @@ bool lv_img_cf_is_chroma_keyed(lv_img_cf_t cf);
  * @return true: has alpha channel; false: doesn't have alpha channel
  */
 bool lv_img_cf_has_alpha(lv_img_cf_t cf);
-
-/**
- * Allocate an image buffer in RAM
- * @param w width of image
- * @param h height of image
- * @param cf a color format (`LV_IMG_CF_...`)
- * @return an allocated image, or NULL on failure
- */
-lv_img_dsc_t *lv_img_buf_alloc(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
-
-
 
 
 #ifdef __cplusplus
