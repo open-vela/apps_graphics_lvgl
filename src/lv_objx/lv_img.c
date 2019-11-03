@@ -19,6 +19,7 @@
 #include "../lv_draw/lv_img_decoder.h"
 #include "../lv_misc/lv_fs.h"
 #include "../lv_misc/lv_txt.h"
+#include "../lv_misc/lv_math.h"
 #include "../lv_misc/lv_log.h"
 
 /*********************
@@ -33,7 +34,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode_t mode);
+static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param);
 
 /**********************
@@ -78,6 +79,7 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->cf        = LV_IMG_CF_UNKNOWN;
     ext->w         = lv_obj_get_width(new_img);
     ext->h         = lv_obj_get_height(new_img);
+    ext->angle = 0;
     ext->auto_size = 1;
     ext->offset.x  = 0;
     ext->offset.y  = 0;
@@ -199,6 +201,9 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
         lv_obj_set_size(img, ext->w, ext->h);
     }
 
+    /*Provide enough room for the rotated corners*/
+    if(ext->angle) lv_obj_refresh_ext_draw_pad(img);
+
     lv_obj_invalidate(img);
 }
 
@@ -251,6 +256,23 @@ void lv_img_set_offset_y(lv_obj_t * img, lv_coord_t y)
         ext->offset.y = y;
         lv_obj_invalidate(img);
     }
+}
+
+/**
+ * Set the rotation angle of the image.
+ * The image will be rotated around its middle point
+ * @param img pointer to an image object
+ * @param angle rotation angle in degree (> 0: clock wise)
+ */
+void lv_img_set_angle(lv_obj_t * img, int16_t angle)
+{
+    if(angle < 0 || angle >= 360) angle = angle % 360;
+
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+    ext->angle = angle;
+    lv_obj_refresh_ext_draw_pad(img);
+    lv_obj_invalidate(img);
+
 }
 
 /*=====================
@@ -330,6 +352,20 @@ lv_coord_t lv_img_get_offset_y(lv_obj_t * img)
     return ext->offset.y;
 }
 
+/**
+ * Get the rotation angle of the image.
+ * @param img pointer to an image object
+ * @return rotation angle in degree (0..359)
+ */
+uint16_t lv_img_get_angle(lv_obj_t * img)
+{
+    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
+
+    lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
+
+    return ext->angle;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -337,23 +373,25 @@ lv_coord_t lv_img_get_offset_y(lv_obj_t * img)
 /**
  * Handle the drawing related tasks of the images
  * @param img pointer to an object
- * @param mask the object will be drawn only in this area
+ * @param clip_area the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return true/false, depends on 'mode'
+ * @param return an element of `lv_design_res_t`
  */
-static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode_t mode)
+static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
     const lv_style_t * style = lv_obj_get_style(img);
     lv_img_ext_t * ext       = lv_obj_get_ext_attr(img);
 
     if(mode == LV_DESIGN_COVER_CHK) {
-        bool cover = false;
-        if(ext->src_type == LV_IMG_SRC_UNKNOWN || ext->src_type == LV_IMG_SRC_SYMBOL) return false;
+        lv_design_res_t cover = LV_DESIGN_RES_NOT_COVER;
+        if(ext->src_type == LV_IMG_SRC_UNKNOWN || ext->src_type == LV_IMG_SRC_SYMBOL || ext->angle != 0) return LV_DESIGN_RES_NOT_COVER;
 
-        if(ext->cf == LV_IMG_CF_TRUE_COLOR || ext->cf == LV_IMG_CF_RAW) cover = lv_area_is_in(mask, &img->coords);
+        if(ext->cf == LV_IMG_CF_TRUE_COLOR || ext->cf == LV_IMG_CF_RAW) {
+            cover = lv_area_is_in(clip_area, &img->coords) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
+        }
 
         return cover;
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -376,7 +414,7 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
                 cords_tmp.x1 = coords.x1;
                 cords_tmp.x2 = coords.x1 + ext->w - 1;
                 for(; cords_tmp.x1 < coords.x2; cords_tmp.x1 += ext->w, cords_tmp.x2 += ext->w) {
-                    lv_draw_img(&cords_tmp, mask, ext->src, style, opa_scale);
+                    lv_draw_img(&cords_tmp, clip_area, ext->src, style, ext->angle, opa_scale);
                 }
             }
         } else if(ext->src_type == LV_IMG_SRC_SYMBOL) {
@@ -384,11 +422,11 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
             lv_style_t style_mod;
             lv_style_copy(&style_mod, style);
             style_mod.text.color = style->image.color;
-            lv_draw_label(&coords, mask, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL, -1, -1, NULL, lv_obj_get_base_dir(img));
+            lv_draw_label(&coords, clip_area, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL, NULL, NULL);
         } else {
             /*Trigger the error handler of image drawer*/
             LV_LOG_WARN("lv_img_design: image source type is unknown");
-            lv_draw_img(&img->coords, mask, NULL, style, opa_scale);
+            lv_draw_img(&img->coords, clip_area, NULL, style, 0, opa_scale);
         }
     }
 
@@ -423,6 +461,15 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
         /*Refresh the file name to refresh the symbol text size*/
         if(ext->src_type == LV_IMG_SRC_SYMBOL) {
             lv_img_set_src(img, ext->src);
+        }
+    } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+        /*If the image has angle provide enough room for the rotated corners */
+        if(ext->angle) {
+            lv_sqrt_res_t ds;
+            lv_sqrt(ext->w * ext->w + ext->h * ext->h, &ds);
+
+            lv_coord_t d = (ds.i - LV_MATH_MIN(ext->w, ext->h)) / 2;
+            img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, d);
         }
     }
 

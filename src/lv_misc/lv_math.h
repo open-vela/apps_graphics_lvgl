@@ -32,6 +32,12 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
+typedef struct {
+     uint16_t i;
+     uint16_t f;
+ }lv_sqrt_res_t;
+
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -54,12 +60,16 @@ int16_t lv_trigo_sin(int16_t angle);
  */
 int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
 
+void lv_sqrt(uint32_t x, lv_sqrt_res_t * q);
+
 /**
- * Calculate the integer square root of a number.
- * @param num
- * @return square root of 'num'
+ * Calculate the atan2 of a vector.
+ * @param x
+ * @param y
+ * @return the angle in degree calculated from the given parameters in range of [0..360]
  */
-uint32_t lv_sqrt(uint32_t num);
+uint16_t lv_atan2(int x, int y);
+
 
 /**********************
  *      MACROS

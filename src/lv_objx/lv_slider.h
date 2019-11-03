@@ -42,8 +42,7 @@ typedef struct
     lv_bar_ext_t bar; /*Ext. of ancestor*/
     /*New data for this type */
     const lv_style_t * style_knob; /*Style of the knob*/
-    int16_t drag_value;            /*Store a temporal value during press until release (Handled by the library)*/
-    uint8_t knob_in : 1;           /*1: Draw the knob inside the bar*/
+    uint8_t dragging :1;        /*1: the slider is being dragged*/
 } lv_slider_ext_t;
 
 /** Built-in styles of slider*/
@@ -114,14 +113,6 @@ static inline void lv_slider_set_sym(lv_obj_t * slider, bool en)
 }
 
 /**
- * Set the 'knob in' attribute of a slider
- * @param slider pointer to slider object
- * @param in true: the knob is drawn always in the slider;
- *           false: the knob can be out on the edges
- */
-void lv_slider_set_knob_in(lv_obj_t * slider, bool in);
-
-/**
  * Set a style of a slider
  * @param slider pointer to a slider object
  * @param type which style should be set
@@ -186,14 +177,6 @@ static inline bool lv_slider_get_sym(lv_obj_t * slider)
 {
     return lv_bar_get_sym(slider);
 }
-
-/**
- * Get the 'knob in' attribute of a slider
- * @param slider pointer to slider object
- * @return true: the knob is drawn always in the slider;
- *         false: the knob can be out on the edges
- */
-bool lv_slider_get_knob_in(const lv_obj_t * slider);
 
 /**
  * Get a style of a slider
