@@ -42,7 +42,6 @@ typedef struct
     lv_point_t offset;
     lv_coord_t w;          /*Width of the image (Handled by the library)*/
     lv_coord_t h;          /*Height of the image (Handled by the library)*/
-    uint16_t angle;
     uint8_t src_type : 2;  /*See: lv_img_src_t*/
     uint8_t auto_size : 1; /*1: automatically set the object size to the image size*/
     uint8_t cf : 5;        /*Color format from `lv_img_color_format_t`*/
@@ -102,14 +101,6 @@ void lv_img_set_offset_x(lv_obj_t * img, lv_coord_t x);
 void lv_img_set_offset_y(lv_obj_t * img, lv_coord_t y);
 
 /**
- * Set the rotation angle of the image.
- * The image will be rotated around its middle point
- * @param img pointer to an image object
- * @param angle rotate angle in degree (> 0: clock wise)
- */
-void lv_img_set_angle(lv_obj_t * img, int16_t angle);
-
-/**
  * Set the style of an image
  * @param img pointer to an image object
  * @param type which style should be set (can be only `LV_IMG_STYLE_MAIN`)
@@ -159,13 +150,6 @@ lv_coord_t lv_img_get_offset_x(lv_obj_t * img);
  * @return offset.y value.
  */
 lv_coord_t lv_img_get_offset_y(lv_obj_t * img);
-
-/**
- * Get the rotation angle of the image.
- * @param img pointer to an image object
- * @return rotation angle in degree (0..359)
- */
-uint16_t lv_img_get_angle(lv_obj_t * img);
 
 /**
  * Get the style of an image object
