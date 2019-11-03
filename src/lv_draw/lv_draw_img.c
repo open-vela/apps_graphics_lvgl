@@ -72,7 +72,6 @@ void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * 
     }
 }
 
-
 /**
  * Get the pixel size of a color format in bits
  * @param cf a color format (`LV_IMG_CF_...`)
