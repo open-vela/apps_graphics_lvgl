@@ -65,21 +65,11 @@ enum {
 };
 typedef uint8_t lv_design_mode_t;
 
-
-/** Design results */
-enum {
-    LV_DESIGN_RES_OK,          /**< Draw ready */
-    LV_DESIGN_RES_COVER,       /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is fully covered*/
-    LV_DESIGN_RES_NOT_COVER,   /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is not covered*/
-    LV_DESIGN_RES_MASKED,      /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is masked out (children also not cover)*/
-};
-typedef uint8_t lv_design_res_t;
-
 /**
  * The design callback is used to draw the object on the screen.
  * It accepts the object, a mask area, and the mode in which to draw the object.
  */
-typedef lv_design_res_t (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
+typedef bool (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
 
 enum {
     LV_EVENT_PRESSED,             /**< The object has been pressed*/
@@ -135,8 +125,7 @@ enum {
     LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
     LV_SIGNAL_DRAG_BEGIN,	
-    LV_SIGNAL_DRAG_THROW_BEGIN,
-    LV_SIGNAL_DRAG_END,                                   
+    LV_SIGNAL_DRAG_END,
 
     /*Group related*/
     LV_SIGNAL_FOCUS,
@@ -187,6 +176,14 @@ typedef struct
 } lv_reailgn_t;
 #endif
 
+enum {
+    LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
+    LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
+    LV_DRAG_DIR_ALL = 0x3, /**< Object can be dragged in all directions. */
+};
+
+typedef uint8_t lv_drag_dir_t;
+
 typedef struct _lv_obj_t
 {
     struct _lv_obj_t * par; /**< Pointer to the parent object*/
@@ -223,7 +220,7 @@ typedef struct _lv_obj_t
     uint8_t top : 1;            /**< 1: If the object or its children is clicked it goes to the foreground*/
     uint8_t opa_scale_en : 1;   /**< 1: opa_scale is set*/
     uint8_t parent_event : 1;   /**< 1: Send the object's events to the parent too. */
-    lv_drag_dir_t drag_dir : 3; /**<  Which directions the object can be dragged in */
+    lv_drag_dir_t drag_dir : 2; /**<  Which directions the object can be dragged in */
     lv_bidi_dir_t base_dir : 2; /**< Base direction of texts related to this object */
     uint8_t reserved : 3;       /**<  Reserved for future use*/
     uint8_t protect;            /**< Automatically happening actions can be prevented. 'OR'ed values from
