@@ -438,9 +438,6 @@ typedef void * lv_obj_user_data_t;
 /*Container (dependencies: -*/
 #define LV_USE_CONT     1
 
-/*Color picker (dependencies: -*/
-#define LV_USE_CPICKER   1
-
 /*Drop down list (dependencies: lv_page, lv_label, lv_symbol_def.h)*/
 #define LV_USE_DDLIST    1
 #if LV_USE_DDLIST != 0
@@ -495,9 +492,6 @@ typedef void * lv_obj_user_data_t;
 
 /*Line meter (dependencies: *;)*/
 #define LV_USE_LMETER   1
-
-/*Mask (dependencies: -)*/
-#define LV_USE_OBJMASK  0
 
 /*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
 #define LV_USE_MBOX     1
