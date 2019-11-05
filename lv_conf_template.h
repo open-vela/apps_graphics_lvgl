@@ -236,7 +236,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
 #  define LV_LOG_LEVEL    LV_LOG_LEVEL_WARN
 
 /* 1: Print the log with 'printf';
- * 0: user need to register a callback with `lv_log_register_print_cb`*/
+ * 0: user need to register a callback with `lv_log_register_print`*/
 #  define LV_LOG_PRINTF   0
 #endif  /*LV_USE_LOG*/
 
@@ -344,27 +344,14 @@ typedef void * lv_font_user_data_t;
  /*Can break (wrap) texts on these chars*/
 #define LV_TXT_BREAK_CHARS                  " ,.;:-_"
 
- /* If a character is at least this long, will break wherever "prettiest" */
- #define LV_TXT_LINE_BREAK_LONG_LEN          12
+/* If a character is at least this long, will break wherever "prettiest" */
+#define LV_TXT_LINE_BREAK_LONG_LEN          12
 
- /* Minimum number of characters of a word to put on a line before a break */
- #define LV_TXT_LINE_BREAK_LONG_PRE_MIN_LEN  3
+/* Minimum number of characters of a word to put on a line before a break */
+#define LV_TXT_LINE_BREAK_LONG_PRE_MIN_LEN  3
 
- /* Minimum number of characters of a word to put on a line after a break */
- #define LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN 3
-
-/* Support bidirectional texts.
- * Allows mixing Left-to-Right and Right-to-Left texts.
- * The direction will be processed according to the Unicode Bidirectioanl Algorithm:
- * https://www.w3.org/International/articles/inline-bidi-markup/uba-basics*/
-#define LV_USE_BIDI     0
-#if LV_USE_BIDI
-/* Set the default direction. Supported values:
- * `LV_BIDI_DIR_LTR` Left-to-Right
- * `LV_BIDI_DIR_RTL` Right-to-Left
- * `LV_BIDI_DIR_AUTO` detect texts base direction */
-#define LV_BIDI_BASE_DIR_DEF  LV_BIDI_DIR_AUTO
-#endif
+/* Minimum number of characters of a word to put on a line after a break */
+#define LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN 3
 
 /*Change the built in (v)snprintf functions*/
 #define LV_SPRINTF_CUSTOM   0
@@ -437,6 +424,9 @@ typedef void * lv_obj_user_data_t;
 
 /*Container (dependencies: -*/
 #define LV_USE_CONT     1
+
+/*Color picker (dependencies: -*/
+#define LV_USE_CPICKER   1
 
 /*Drop down list (dependencies: lv_page, lv_label, lv_symbol_def.h)*/
 #define LV_USE_DDLIST    1
