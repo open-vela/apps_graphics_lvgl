@@ -1,7 +1,6 @@
 /**
  * @file lv_cpicker.c
  *
- * From @AloyseTech and @paulpv.
  */
 
 /*********************
