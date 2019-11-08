@@ -166,23 +166,6 @@ void lv_canvas_copy_buf(lv_obj_t * canvas, const void * to_copy, lv_coord_t x, l
 void lv_canvas_rotate(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, lv_coord_t offset_x, lv_coord_t offset_y,
                       int32_t pivot_x, int32_t pivot_y);
 
-
-
-/**
- * Apply horizontal blur on the canvas
- * @param canvas pointer to a canvas object
- * @param r radius of the blur
- */
-void lv_canvas_blur_hor(lv_obj_t * canvas, const lv_area_t * area, uint16_t r);
-
-/**
- * Apply vertical blur on the canvas
- * @param canvas pointer to a canvas object
- * @param area the area to blur. If `NULL` the whole canvas will be blurred.
- * @param r radius of the blur
- */
-void lv_canvas_blur_ver(lv_obj_t * canvas, const lv_area_t * area, uint16_t r);
-
 /**
  * Fill the canvas with color
  * @param canvas pointer to a canvas
