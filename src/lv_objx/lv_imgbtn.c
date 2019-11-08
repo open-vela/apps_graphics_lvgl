@@ -25,7 +25,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_design_mode_t mode);
+static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_imgbtn_signal(lv_obj_t * imgbtn, lv_signal_t sign, void * param);
 static void refr_img(lv_obj_t * imgbtn);
 
@@ -272,21 +272,21 @@ const lv_style_t * lv_imgbtn_get_style(const lv_obj_t * imgbtn, lv_imgbtn_style_
 /**
  * Handle the drawing related tasks of the image buttons
  * @param imgbtn pointer to an object
- * @param mask the object will be drawn only in this area
+ * @param clip_area the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return true/false, depends on 'mode'
+ * @param return an element of `lv_design_res_t`
  */
-static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_design_mode_t mode)
+static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
         lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
-        bool cover            = false;
+        lv_design_res_t cover = LV_DESIGN_RES_NOT_COVER;
         if(ext->act_cf == LV_IMG_CF_TRUE_COLOR || ext->act_cf == LV_IMG_CF_RAW) {
-            cover = lv_area_is_in(mask, &imgbtn->coords);
+            cover = lv_area_is_in(clip_area, &imgbtn->coords) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
         }
 
         return cover;
@@ -298,29 +298,25 @@ static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_desig
         lv_btn_state_t state     = lv_imgbtn_get_state(imgbtn);
         const lv_style_t * style = lv_imgbtn_get_style(imgbtn, state);
         lv_opa_t opa_scale       = lv_obj_get_opa_scale(imgbtn);
-
-
-
 #if LV_IMGBTN_TILED == 0
         const void * src = ext->img_src[state];
         if(lv_img_src_get_type(src) == LV_IMG_SRC_SYMBOL) {
-            lv_draw_label(&imgbtn->coords, mask, style, opa_scale, src, LV_TXT_FLAG_NONE, NULL, LV_LABEL_TEXT_SEL_OFF, LV_LABEL_TEXT_SEL_OFF, NULL, lv_obj_get_base_dir(imgbtn));
+            lv_draw_label(&imgbtn->coords, clip_area, style, opa_scale, src, LV_TXT_FLAG_NONE, NULL, NULL, NULL);
         } else {
-            lv_draw_img(&imgbtn->coords, mask, src, style, opa_scale);
+            lv_draw_img(&imgbtn->coords, clip_area, src, style, 0, LV_IMG_ZOOM_NONE, false, opa_scale);
         }
 #else
+        const void * src = ext->img_src_left[state];
         if(lv_img_src_get_type(src) == LV_IMG_SRC_SYMBOL) {
             LV_LOG_WARN("lv_imgbtn_design: SYMBOLS are not supported in tiled mode")
-            return;
+            return LV_DESIGN_RES_OK;
         }
 
-        const void * src;
         lv_img_header_t header;
         lv_area_t coords;
         lv_coord_t left_w = 0;
         lv_coord_t right_w = 0;
 
-        src = ext->img_src_left[state];
         if(src) {
             lv_img_decoder_get_info(src, &header);
             left_w = header.w;
@@ -328,7 +324,7 @@ static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_desig
             coords.y1 = imgbtn->coords.y1;
             coords.x2 = coords.x1 + header.w - 1;
             coords.y2 = coords.y1 + header.h - 1;
-            lv_draw_img(&coords, mask, src, style, opa_scale);
+            lv_draw_img(&coords, clip_area, src, style, 0, opa_scale);
         }
 
         src = ext->img_src_right[state];
@@ -339,25 +335,36 @@ static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_desig
             coords.y1 = imgbtn->coords.y1;
             coords.x2 = imgbtn->coords.x2;
             coords.y2 = imgbtn->coords.y1 + header.h - 1;
-            lv_draw_img(&coords, mask, src, style, opa_scale);
+            lv_draw_img(&coords, clip_area, src, style, 0, opa_scale);
         }
 
         src = ext->img_src_mid[state];
         if(src) {
-            lv_coord_t obj_w = lv_obj_get_width(imgbtn);
-            lv_coord_t i;
-            lv_img_decoder_get_info(src, &header);
+        	lv_area_t clip_center_area;
+        	clip_center_area.x1 = imgbtn->coords.x1 + left_w;
+        	clip_center_area.x2 = imgbtn->coords.x2 - right_w;
+        	clip_center_area.y1 = imgbtn->coords.y1;
+        	clip_center_area.y2 = imgbtn->coords.y2;
 
-            coords.x1 = imgbtn->coords.x1 + left_w;
-            coords.y1 = imgbtn->coords.y1;
-            coords.x2 = coords.x1 + header.w - 1;
-            coords.y2 = imgbtn->coords.y1 + header.h - 1;
+        	bool comm_res;
+        	comm_res = lv_area_intersect(&clip_center_area, &clip_center_area, clip_area);
+        	if(comm_res) {
 
-            for(i = 0; i < obj_w - right_w - left_w; i += header.w) {
-                lv_draw_img(&coords, mask, src, style, opa_scale);
-                coords.x1 = coords.x2 + 1;
-                coords.x2 += header.w;
-            }
+				lv_coord_t obj_w = lv_obj_get_width(imgbtn);
+				lv_coord_t i;
+				lv_img_decoder_get_info(src, &header);
+
+				coords.x1 = imgbtn->coords.x1 + left_w;
+				coords.y1 = imgbtn->coords.y1;
+				coords.x2 = coords.x1 + header.w - 1;
+				coords.y2 = imgbtn->coords.y1 + header.h - 1;
+
+				for(i = 0; i < obj_w - right_w - left_w; i += header.w) {
+					lv_draw_img(&coords, &clip_center_area, src, style, 0, opa_scale);
+					coords.x1 = coords.x2 + 1;
+					coords.x2 += header.w;
+				}
+        	}
         }
 
 #endif
@@ -367,7 +374,7 @@ static bool lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * mask, lv_desig
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return true;
+    return LV_DESIGN_RES_OK;
 }
 
 /**
