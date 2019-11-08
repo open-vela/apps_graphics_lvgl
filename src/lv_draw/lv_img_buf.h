@@ -205,7 +205,6 @@ lv_color_t lv_img_buf_get_px_color(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t 
  */
 lv_opa_t lv_img_buf_get_px_alpha(lv_img_dsc_t * dsc, lv_coord_t x, lv_coord_t y);
 
-
 /**
  * Set the color of a pixel of an image. The alpha channel won't be affected.
  * @param dsc pointer to an image descriptor
