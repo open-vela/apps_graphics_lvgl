@@ -7,7 +7,6 @@
  *      INCLUDES
  *********************/
 #include "lv_color.h"
-#include "lv_math.h"
 
 /*********************
  *      DEFINES
@@ -106,66 +105,39 @@ lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v)
 }
 
 /**
- * Convert a 32-bit RGB color to HSV
- * @param r8 8-bit red
- * @param g8 8-bit green
- * @param b8 8-bit blue
- * @return the given RGB color in HSV
+ * Convert an RGB color to HSV
+ * @param r red
+ * @param g green
+ * @param b blue
+ * @return the given RGB color n HSV
  */
-lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8)
+lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b)
 {
-    uint16_t r = ((uint32_t)r8 << 10) / 255;
-    uint16_t g = ((uint32_t)g8 << 10) / 255;
-    uint16_t b = ((uint32_t)b8 << 10) / 255;
-
-    uint16_t rgbMin = r < g ? (r < b ? r : b) : (g < b ? g : b);
-    uint16_t rgbMax = r > g ? (r > b ? r : b) : (g > b ? g : b);
-
     lv_color_hsv_t hsv;
+    uint8_t rgbMin, rgbMax;
 
-    // https://en.wikipedia.org/wiki/HSL_and_HSV#Lightness
-    hsv.v = (100 * rgbMax) >> 10;
+    rgbMin = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    rgbMax = r > g ? (r > b ? r : b) : (g > b ? g : b);
 
-    int32_t delta = rgbMax - rgbMin;
-    if (LV_MATH_ABS(delta) < 3) {
+    hsv.v = rgbMax;
+    if(hsv.v == 0) {
         hsv.h = 0;
         hsv.s = 0;
         return hsv;
     }
 
-    // https://en.wikipedia.org/wiki/HSL_and_HSV#Saturation
-    hsv.s = 100 * delta / rgbMax;
-    if(hsv.s < 3) {
+    hsv.s = 255 * (long)(rgbMax - rgbMin) / hsv.v;
+    if(hsv.s == 0) {
         hsv.h = 0;
         return hsv;
     }
 
-    // https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma
-    int32_t h;
     if(rgbMax == r)
-        h = (((g - b) << 10) / delta) + (g < b ? (6 << 10) : 0); // between yellow & magenta
+        hsv.h = 0 + 43 * (g - b) / (rgbMax - rgbMin);
     else if(rgbMax == g)
-        h = (((b - r) << 10) / delta) + (2 << 10); // between cyan & yellow
-    else if(rgbMax == b)
-        h = (((r - g) << 10) / delta) + (4 << 10); // between magenta & cyan
+        hsv.h = 85 + 43 * (b - r) / (rgbMax - rgbMin);
     else
-        h = 0;
-    h *= 60;
-    h >>= 10;
-    if (h < 0) h += 360;
+        hsv.h = 171 + 43 * (r - g) / (rgbMax - rgbMin);
 
-    hsv.h = h;
     return hsv;
-}
-
-/**
- * Convert a color to HSV
- * @param color color
- * @return the given color in HSV
- */
-lv_color_hsv_t lv_color_to_hsv(lv_color_t color)
-{
-    lv_color32_t color32;
-    color32.full = lv_color_to32(color);
-    return lv_color_rgb_to_hsv(color32.ch.red, color32.ch.green, color32.ch.blue);
 }
