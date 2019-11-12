@@ -30,7 +30,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * param);
 static lv_coord_t lv_lmeter_coord_round(int32_t x);
 
@@ -177,21 +177,6 @@ void lv_lmeter_set_scale(lv_obj_t * lmeter, uint16_t angle, uint8_t line_cnt)
     lv_obj_invalidate(lmeter);
 }
 
-/**
- * Set the angle settings of a line meter
- * @param lmeter pointer to a line meter object
- * @param angle angle where the meter will be facing (with its center)
- */
-void lv_lmeter_set_angle(lv_obj_t * lmeter, uint16_t angle)
-{
-    lv_lmeter_ext_t * ext = lv_obj_get_ext_attr(lmeter);
-    if(ext->angle == angle) return;
-
-    ext->angle = angle;
-
-    lv_obj_invalidate(lmeter);
-}
-
 /*=====================
  * Getter functions
  *====================*/
@@ -268,18 +253,18 @@ uint16_t lv_lmeter_get_scale_angle(const lv_obj_t * lmeter)
 /**
  * Handle the drawing related tasks of the line meters
  * @param lmeter pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -302,7 +287,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
 
         lv_coord_t x_ofs  = lv_obj_get_width(lmeter) / 2 + lmeter->coords.x1;
         lv_coord_t y_ofs  = lv_obj_get_height(lmeter) / 2 + lmeter->coords.y1;
-        int16_t angle_ofs = ext->angle + 90 + (360 - ext->scale_angle) / 2;
+        int16_t angle_ofs = 90 + (360 - ext->scale_angle) / 2;
         int16_t level =
             (int32_t)((int32_t)(ext->cur_value - ext->min_value) * ext->line_cnt) / (ext->max_value - ext->min_value);
         uint8_t i;
@@ -344,7 +329,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
                     lv_color_mix(style->body.grad_color, style->body.main_color, (255 * i) / ext->line_cnt);
             }
 
-            lv_draw_line(&p1, &p2, clip_area, &style_tmp, opa_scale);
+            lv_draw_line(&p1, &p2, mask, &style_tmp, opa_scale);
         }
 
     }
@@ -352,7 +337,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
