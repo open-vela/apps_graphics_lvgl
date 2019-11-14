@@ -35,7 +35,7 @@ typedef uint8_t day_draw_state_t;
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_calendar_design(lv_obj_t * calendar, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_calendar_design(lv_obj_t * calendar, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_calendar_signal(lv_obj_t * calendar, lv_signal_t sign, void * param);
 static bool calculate_touched_day(lv_obj_t * calendar, const lv_point_t * touched_point);
 static lv_coord_t get_header_height(lv_obj_t * calendar);
@@ -445,34 +445,34 @@ const lv_style_t * lv_calendar_get_style(const lv_obj_t * calendar, lv_calendar_
 /**
  * Handle the drawing related tasks of the calendars
  * @param calendar pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_calendar_design(lv_obj_t * calendar, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_calendar_design(lv_obj_t * calendar, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return ancestor_design(calendar, clip_area, mode);
+        return ancestor_design(calendar, mask, mode);
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
         lv_opa_t opa_scale = lv_obj_get_opa_scale(calendar);
-        lv_draw_rect(&calendar->coords, clip_area, lv_calendar_get_style(calendar, LV_CALENDAR_STYLE_BG), opa_scale);
+        lv_draw_rect(&calendar->coords, mask, lv_calendar_get_style(calendar, LV_CALENDAR_STYLE_BG), opa_scale);
 
-        draw_header(calendar, clip_area);
-        draw_day_names(calendar, clip_area);
-        draw_days(calendar, clip_area);
+        draw_header(calendar, mask);
+        draw_day_names(calendar, mask);
+        draw_days(calendar, mask);
 
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -670,6 +670,9 @@ static lv_coord_t get_day_names_height(lv_obj_t * calendar)
 static void draw_header(lv_obj_t * calendar, const lv_area_t * mask)
 {
     lv_calendar_ext_t * ext = lv_obj_get_ext_attr(calendar);
+
+    lv_bidi_dir_t bidi_dir = lv_obj_get_base_dir(calendar);
+
     lv_opa_t opa_scale      = lv_obj_get_opa_scale(calendar);
 
     lv_area_t header_area;
@@ -687,19 +690,19 @@ static void draw_header(lv_obj_t * calendar, const lv_area_t * mask)
     txt_buf[5] = '\0';
     strcpy(&txt_buf[5], get_month_name(calendar, ext->showed_date.month));
     header_area.y1 += ext->style_header->body.padding.top;
-    lv_draw_label(&header_area, mask, ext->style_header, opa_scale, txt_buf, LV_TXT_FLAG_CENTER, NULL, NULL, NULL);
+    lv_draw_label(&header_area, mask, ext->style_header, opa_scale, txt_buf, LV_TXT_FLAG_CENTER, NULL, NULL, NULL, bidi_dir);
 
     /*Add the left arrow*/
     const lv_style_t * arrow_style = ext->btn_pressing < 0 ? ext->style_header_pr : ext->style_header;
     header_area.x1 += ext->style_header->body.padding.left;
-    lv_draw_label(&header_area, mask, arrow_style, opa_scale, LV_SYMBOL_LEFT, LV_TXT_FLAG_NONE, NULL, NULL, NULL);
+    lv_draw_label(&header_area, mask, arrow_style, opa_scale, LV_SYMBOL_LEFT, LV_TXT_FLAG_NONE, NULL, NULL, NULL, bidi_dir);
 
     /*Add the right arrow*/
     arrow_style    = ext->btn_pressing > 0 ? ext->style_header_pr : ext->style_header;
     header_area.x1 = header_area.x2 - ext->style_header->body.padding.right -
                      lv_txt_get_width(LV_SYMBOL_RIGHT, strlen(LV_SYMBOL_RIGHT), arrow_style->text.font,
                                       arrow_style->text.line_space, LV_TXT_FLAG_NONE);
-    lv_draw_label(&header_area, mask, arrow_style, opa_scale, LV_SYMBOL_RIGHT, LV_TXT_FLAG_NONE, NULL, NULL, NULL);
+    lv_draw_label(&header_area, mask, arrow_style, opa_scale, LV_SYMBOL_RIGHT, LV_TXT_FLAG_NONE, NULL, NULL, NULL, bidi_dir);
 }
 
 /**
@@ -710,6 +713,7 @@ static void draw_header(lv_obj_t * calendar, const lv_area_t * mask)
 static void draw_day_names(lv_obj_t * calendar, const lv_area_t * mask)
 {
     lv_calendar_ext_t * ext = lv_obj_get_ext_attr(calendar);
+    lv_bidi_dir_t bidi_dir = lv_obj_get_base_dir(calendar);
     lv_opa_t opa_scale      = lv_obj_get_opa_scale(calendar);
 
     lv_coord_t l_pad = ext->style_day_names->body.padding.left;
@@ -724,7 +728,7 @@ static void draw_day_names(lv_obj_t * calendar, const lv_area_t * mask)
         label_area.x1 = calendar->coords.x1 + (w * i) / 7 + l_pad;
         label_area.x2 = label_area.x1 + box_w - 1;
         lv_draw_label(&label_area, mask, ext->style_day_names, opa_scale, get_day_name(calendar, i), LV_TXT_FLAG_CENTER,
-                      NULL, NULL, NULL);
+                      NULL, NULL, NULL, bidi_dir);
     }
 }
 
@@ -736,6 +740,7 @@ static void draw_day_names(lv_obj_t * calendar, const lv_area_t * mask)
 static void draw_days(lv_obj_t * calendar, const lv_area_t * mask)
 {
     lv_calendar_ext_t * ext     = lv_obj_get_ext_attr(calendar);
+    lv_bidi_dir_t bidi_dir = lv_obj_get_base_dir(calendar);
     const lv_style_t * style_bg = lv_calendar_get_style(calendar, LV_CALENDAR_STYLE_BG);
     lv_area_t label_area;
     lv_opa_t opa_scale = lv_obj_get_opa_scale(calendar);
@@ -853,7 +858,7 @@ static void draw_days(lv_obj_t * calendar, const lv_area_t * mask)
 
             /*Write the day's number*/
             lv_utils_num_to_str(day_cnt, buf);
-            lv_draw_label(&label_area, mask, final_style, opa_scale, buf, LV_TXT_FLAG_CENTER, NULL, NULL, NULL);
+            lv_draw_label(&label_area, mask, final_style, opa_scale, buf, LV_TXT_FLAG_CENTER, NULL, NULL, NULL, bidi_dir);
 
             /*Go to the next day*/
             day_cnt++;
