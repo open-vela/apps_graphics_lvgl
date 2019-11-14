@@ -37,7 +37,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_gauge_design(lv_obj_t * gauge, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_gauge_design(lv_obj_t * gauge, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_gauge_signal(lv_obj_t * gauge, lv_signal_t sign, void * param);
 static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask);
 static void lv_gauge_draw_needle(lv_obj_t * gauge, const lv_area_t * mask);
@@ -264,18 +264,18 @@ uint8_t lv_gauge_get_label_count(const lv_obj_t * gauge)
 /**
  * Handle the drawing related tasks of the gauges
  * @param gauge pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_gauge_design(lv_obj_t * gauge, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_gauge_design(lv_obj_t * gauge, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -287,11 +287,11 @@ static lv_design_res_t lv_gauge_design(lv_obj_t * gauge, const lv_area_t * clip_
         const lv_style_t * style       = lv_obj_get_style(gauge);
         lv_gauge_ext_t * ext           = lv_obj_get_ext_attr(gauge);
 
-        lv_gauge_draw_scale(gauge, clip_area);
+        lv_gauge_draw_scale(gauge, mask);
 
         /*Draw the ancestor line meter with max value to show the rainbow like line colors*/
         uint16_t line_cnt_tmp = ext->lmeter.line_cnt;
-        ancestor_design(gauge, clip_area, mode); /*To draw lines*/
+        ancestor_design(gauge, mask, mode); /*To draw lines*/
 
         /*Temporally modify the line meter to draw longer lines where labels are*/
         lv_style_t style_tmp;
@@ -301,20 +301,20 @@ static lv_design_res_t lv_gauge_design(lv_obj_t * gauge, const lv_area_t * clip_
         style_tmp.body.padding.right = style_tmp.body.padding.right * 2; /*Longer lines*/
         gauge->style_p               = &style_tmp;
 
-        ancestor_design(gauge, clip_area, mode); /*To draw lines*/
+        ancestor_design(gauge, mask, mode); /*To draw lines*/
 
         ext->lmeter.line_cnt = line_cnt_tmp; /*Restore the parameters*/
         gauge->style_p       = style_ori_p;  /*Restore the ORIGINAL style pointer*/
 
-        lv_gauge_draw_needle(gauge, clip_area);
+        lv_gauge_draw_needle(gauge, mask);
 
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
-        ancestor_design(gauge, clip_area, mode);
+        ancestor_design(gauge, mask, mode);
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -389,7 +389,7 @@ static void lv_gauge_draw_scale(lv_obj_t * gauge, const lv_area_t * mask)
         label_cord.x2 = label_cord.x1 + label_size.x;
         label_cord.y2 = label_cord.y1 + label_size.y;
 
-        lv_draw_label(&label_cord, mask, style, opa_scale, scale_txt, LV_TXT_FLAG_NONE, NULL, NULL, NULL);
+        lv_draw_label(&label_cord, mask, style, opa_scale, scale_txt, LV_TXT_FLAG_NONE, NULL, NULL, NULL, lv_obj_get_base_dir(gauge));
     }
 }
 /**
