@@ -75,8 +75,8 @@ enum {
     LV_OPA_COVER  = 255,
 };
 
-#define LV_OPA_MIN 16  /*Opacities below this will be transparent*/
-#define LV_OPA_MAX 251 /*Opacities above this will fully cover*/
+#define LV_OPA_MIN 5    /*Opacities below this will be transparent*/
+#define LV_OPA_MAX 250  /*Opacities above this will fully cover*/
 
 #if LV_COLOR_DEPTH == 1
 #define LV_COLOR_SIZE 8
@@ -88,110 +88,6 @@ enum {
 #define LV_COLOR_SIZE 32
 #else
 #error "Invalid LV_COLOR_DEPTH in lv_conf.h! Set it to 1, 8, 16 or 32!"
-#endif
-
-/*---------------------------------------
- * Macros for all existing  color depths
- * to set/get values of the color channels
- *------------------------------------------*/
-# define LV_COLOR_SET_R1(c, v) (c).ch.red = (v) & 0x1;
-# define LV_COLOR_SET_G1(c, v) (c).ch.green = (v) & 0x1;
-# define LV_COLOR_SET_B1(c, v) (c).ch.blue = (v) & 0x1;
-# define LV_COLOR_SET_A1(c, v)
-
-# define LV_COLOR_GET_R1(c) (c).ch.red
-# define LV_COLOR_GET_G1(c) (c).ch.green
-# define LV_COLOR_GET_B1(c) (c).ch.blue
-# define LV_COLOR_GET_A1(c) 1
-
-# define LV_COLOR_SET_R8(c, v) (c).ch.red = (v) & 0x7;
-# define LV_COLOR_SET_G8(c, v) (c).ch.green = (v) & 0x7;
-# define LV_COLOR_SET_B8(c, v) (c).ch.blue = (v) & 0x3;
-# define LV_COLOR_SET_A8(c, v)
-
-# define LV_COLOR_GET_R8(c) (c).ch.red
-# define LV_COLOR_GET_G8(c) (c).ch.green
-# define LV_COLOR_GET_B8(c) (c).ch.blue
-# define LV_COLOR_GET_A8(c) 0xFF
-
-# define LV_COLOR_SET_R16(c, v) (c).ch.red = (v) & 0x1F;
-# define LV_COLOR_SET_G16(c, v) (c).ch.green = (v) & 0x3F;
-# define LV_COLOR_SET_G16_SWAP(c, v) {(c).ch.green_h = ((v) >> 3) & 0x7; (c).ch.green_l = (v) & 0x7;}
-# define LV_COLOR_SET_B16(c, v) (c).ch.blue = (v) & 0x1F;
-# define LV_COLOR_SET_A16(c, v)
-
-# define LV_COLOR_GET_R16(c) (c).ch.red
-# define LV_COLOR_GET_G16(c) (c).ch.green
-# define LV_COLOR_GET_G16_SWAP(c) (((c).ch.green_h << 3) + (c).ch.green_l)
-# define LV_COLOR_GET_B16(c) (c).ch.blue
-# define LV_COLOR_GET_A16(c) 0xFF
-
-# define LV_COLOR_SET_R32(c, v) (c).ch.red = (v) & 0xFF;
-# define LV_COLOR_SET_G32(c, v) (c).ch.green = (v) & 0xFF;
-# define LV_COLOR_SET_B32(c, v) (c).ch.blue = (v) & 0xFF;
-# define LV_COLOR_SET_A32(c, v) (c).ch.alpha = (v) & 0xFF;
-
-# define LV_COLOR_GET_R32(c) (c).ch.red
-# define LV_COLOR_GET_G32(c) (c).ch.green
-# define LV_COLOR_GET_B32(c) (c).ch.blue
-# define LV_COLOR_GET_A32(c) (c).ch.alpha
-
-
-/*---------------------------------------
- * Macros for the current color depth
- * to set/get values of the color channels
- *------------------------------------------*/
-#if LV_COLOR_DEPTH == 1
-# define LV_COLOR_SET_R(c, v) LV_COLOR_SET_R1(c,v)
-# define LV_COLOR_SET_G(c, v) LV_COLOR_SET_G1(c,v)
-# define LV_COLOR_SET_B(c, v) LV_COLOR_SET_B1(c,v)
-# define LV_COLOR_SET_A(c, v) LV_COLOR_SET_A1(c,v)
-
-# define LV_COLOR_GET_R(c) LV_COLOR_GET_R1(c)
-# define LV_COLOR_GET_G(c) LV_COLOR_GET_G1(c)
-# define LV_COLOR_GET_B(c) LV_COLOR_GET_B1(c)
-# define LV_COLOR_GET_A(c) LV_COLOR_GET_A1(c)
-
-#elif LV_COLOR_DEPTH == 8
-# define LV_COLOR_SET_R(c, v) LV_COLOR_SET_R8(c,v)
-# define LV_COLOR_SET_G(c, v) LV_COLOR_SET_G8(c,v)
-# define LV_COLOR_SET_B(c, v) LV_COLOR_SET_B8(c,v)
-# define LV_COLOR_SET_A(c, v) LV_COLOR_SET_A8(c,v)
-
-# define LV_COLOR_GET_R(c) LV_COLOR_GET_R8(c)
-# define LV_COLOR_GET_G(c) LV_COLOR_GET_G8(c)
-# define LV_COLOR_GET_B(c) LV_COLOR_GET_B8(c)
-# define LV_COLOR_GET_A(c) LV_COLOR_GET_A8(c)
-
-#elif LV_COLOR_DEPTH == 16
-# define LV_COLOR_SET_R(c, v) LV_COLOR_SET_R16(c,v)
-# if LV_COLOR_16_SWAP == 0
-#   define LV_COLOR_SET_G(c, v) LV_COLOR_SET_G16(c,v)
-# else
-#   define LV_COLOR_SET_G(c, v) LV_COLOR_SET_G16_SWAP(c,v)
-# endif
-# define LV_COLOR_SET_B(c, v) LV_COLOR_SET_B16(c,v)
-# define LV_COLOR_SET_A(c, v) LV_COLOR_SET_A16(c,v)
-
-# define LV_COLOR_GET_R(c) LV_COLOR_GET_R16(c)
-# if LV_COLOR_16_SWAP == 0
-#   define LV_COLOR_GET_G(c) LV_COLOR_GET_G16(c)
-# else
-#   define LV_COLOR_GET_G(c) LV_COLOR_GET_G16_SWAP(c)
-# endif
-# define LV_COLOR_GET_B(c)   LV_COLOR_GET_B16(c)
-# define LV_COLOR_GET_A(c)   LV_COLOR_GET_A16(c)
-
-#elif LV_COLOR_DEPTH == 32
-# define LV_COLOR_SET_R(c, v) LV_COLOR_SET_R32(c,v)
-# define LV_COLOR_SET_G(c, v) LV_COLOR_SET_G32(c,v)
-# define LV_COLOR_SET_B(c, v) LV_COLOR_SET_B32(c,v)
-# define LV_COLOR_SET_A(c, v) LV_COLOR_SET_A32(c,v)
-
-# define LV_COLOR_GET_R(c) LV_COLOR_GET_R32(c)
-# define LV_COLOR_GET_G(c) LV_COLOR_GET_G32(c)
-# define LV_COLOR_GET_B(c) LV_COLOR_GET_B32(c)
-# define LV_COLOR_GET_A(c) LV_COLOR_GET_A32(c)
 #endif
 
 /**********************
@@ -298,19 +194,24 @@ static inline uint8_t lv_color_to1(lv_color_t color)
 #if LV_COLOR_DEPTH == 1
     return color.full;
 #elif LV_COLOR_DEPTH == 8
-    if((LV_COLOR_GET_R(color) & 0x4) || (LV_COLOR_GET_G(color) & 0x4) || (LV_COLOR_GET_B(color) & 0x2)) {
+    if((color.ch.red & 0x4) || (color.ch.green & 0x4) || (color.ch.blue & 0x2)) {
         return 1;
     } else {
         return 0;
     }
 #elif LV_COLOR_DEPTH == 16
-    if((LV_COLOR_GET_R(color) & 0x10) || (LV_COLOR_GET_G(color) & 0x20) || (LV_COLOR_GET_B(color) & 0x10)) {
+#if LV_COLOR_16_SWAP == 0
+    if((color.ch.red & 0x10) || (color.ch.green & 0x20) || (color.ch.blue & 0x10)) {
         return 1;
+#else
+    if((color.ch.red & 0x10) || (color.ch.green_h & 0x20) || (color.ch.blue & 0x10)) {
+        return 1;
+#endif
     } else {
         return 0;
     }
 #elif LV_COLOR_DEPTH == 32
-    if((LV_COLOR_GET_R(color) & 0x80) || (LV_COLOR_GET_G(color) & 0x80) || (LV_COLOR_GET_B(color) & 0x80)) {
+    if((color.ch.red & 0x80) || (color.ch.green & 0x80) || (color.ch.blue & 0x80)) {
         return 1;
     } else {
         return 0;
@@ -328,23 +229,31 @@ static inline uint8_t lv_color_to8(lv_color_t color)
 #elif LV_COLOR_DEPTH == 8
     return color.full;
 #elif LV_COLOR_DEPTH == 16
+
+#if LV_COLOR_16_SWAP == 0
     lv_color8_t ret;
-    LV_COLOR_SET_R8(ret, LV_COLOR_GET_R(color) >> 2);   /* 5 - 3  = 2*/
-    LV_COLOR_SET_G8(ret, LV_COLOR_GET_G(color) >> 3); /* 6 - 3  = 3*/
-    LV_COLOR_SET_B8(ret, LV_COLOR_GET_B(color) >> 3);  /* 5 - 2  = 3*/
+    ret.ch.red   = color.ch.red >> 2;   /* 5 - 3  = 2*/
+    ret.ch.green = color.ch.green >> 3; /* 6 - 3  = 3*/
+    ret.ch.blue  = color.ch.blue >> 3;  /* 5 - 2  = 3*/
     return ret.full;
+#else
+    lv_color8_t ret;
+    ret.ch.red   = color.ch.red >> 2;  /* 5 - 3  = 2*/
+    ret.ch.green = color.ch.green_h;   /* 6 - 3  = 3*/
+    ret.ch.blue  = color.ch.blue >> 3; /* 5 - 2  = 3*/
+    return ret.full;
+#endif
 #elif LV_COLOR_DEPTH == 32
     lv_color8_t ret;
-    LV_COLOR_SET_R8(ret, LV_COLOR_GET_R(color) >> 5);   /* 8 - 3  = 5*/
-    LV_COLOR_SET_G8(ret, LV_COLOR_GET_G(color) >> 5); /* 8 - 3  = 5*/
-    LV_COLOR_SET_B8(ret, LV_COLOR_GET_B(color) >> 6);  /* 8 - 2  = 6*/
+    ret.ch.red   = color.ch.red >> 5;   /* 8 - 3  = 5*/
+    ret.ch.green = color.ch.green >> 5; /* 8 - 3  = 5*/
+    ret.ch.blue  = color.ch.blue >> 6;  /* 8 - 2  = 6*/
     return ret.full;
 #endif
 }
 
 static inline uint16_t lv_color_to16(lv_color_t color)
 {
-
 #if LV_COLOR_DEPTH == 1
     if(color.full == 0)
         return 0;
@@ -352,30 +261,34 @@ static inline uint16_t lv_color_to16(lv_color_t color)
         return 0xFFFF;
 #elif LV_COLOR_DEPTH == 8
     lv_color16_t ret;
-    LV_COLOR_SET_R16(ret, LV_COLOR_GET_R(color) * 4);     /*(2^5 - 1)/(2^3 - 1) = 31/7 = 4*/
 #if LV_COLOR_16_SWAP == 0
-    LV_COLOR_SET_G16(ret,  LV_COLOR_GET_G(color) * 9); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
+    ret.ch.red = color.ch.red * 4;     /*(2^5 - 1)/(2^3 - 1) = 31/7 = 4*/
+    ret.ch.green = color.ch.green * 9; /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
+    ret.ch.blue = color.ch.blue * 10;  /*(2^5 - 1)/(2^2 - 1) = 31/3 = 10*/
 #else
-    LV_COLOR_SET_G16_SWAP(ret, (LV_COLOR_GET_G(color) * 9)); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
+    ret.red        = color.ch.red * 4;
+    uint8_t g_tmp  = color.ch.green * 9;
+    ret.ch.green_h = (g_tmp & 0x1F) >> 3;
+    ret.ch.green_l = g_tmp & 0x07;
+    ret.ch.blue    = color.ch.blue * 10;
 #endif
-    LV_COLOR_SET_B16(ret, LV_COLOR_GET_B(color) * 10);  /*(2^5 - 1)/(2^2 - 1) = 31/3 = 10*/
     return ret.full;
 #elif LV_COLOR_DEPTH == 16
     return color.full;
 #elif LV_COLOR_DEPTH == 32
     lv_color16_t ret;
-    LV_COLOR_SET_R16(ret, LV_COLOR_GET_R(color) >> 3);   /* 8 - 5  = 3*/
-
 #if LV_COLOR_16_SWAP == 0
-    LV_COLOR_SET_G16(ret, LV_COLOR_GET_G(color) >> 2); /* 8 - 6  = 2*/
+    ret.ch.red   = color.ch.red >> 3;   /* 8 - 5  = 3*/
+    ret.ch.green = color.ch.green >> 2; /* 8 - 6  = 2*/
+    ret.ch.blue  = color.ch.blue >> 3;  /* 8 - 5  = 3*/
 #else
-    LV_COLOR_SET_G16_SWAP(ret, ret.ch.green_h = (LV_COLOR_GET_G(color) >> 2); /*(2^6 - 1)/(2^3 - 1) = 63/7 = 9*/
+    ret.ch.red     = color.ch.red >> 3;
+    ret.ch.green_h = (color.ch.green & 0xE0) >> 5;
+    ret.ch.green_l = (color.ch.green & 0x1C) >> 2;
+    ret.ch.blue    = color.ch.blue >> 3;
 #endif
-    LV_COLOR_SET_B16(ret, LV_COLOR_GET_B(color) >> 3);  /* 8 - 5  = 3*/
     return ret.full;
 #endif
-
-    return 0;
 }
 
 static inline uint32_t lv_color_to32(lv_color_t color)
@@ -387,10 +300,10 @@ static inline uint32_t lv_color_to32(lv_color_t color)
         return 0xFFFFFFFF;
 #elif LV_COLOR_DEPTH == 8
     lv_color32_t ret;
-    LV_COLOR_SET_R32(ret, LV_COLOR_GET_R(color) * 36);     /*(2^8 - 1)/(2^3 - 1) = 255/7 = 36*/
-    LV_COLOR_SET_G32(ret, LV_COLOR_GET_G(color) * 36); /*(2^8 - 1)/(2^3 - 1) = 255/7 = 36*/
-    LV_COLOR_SET_B32(ret, LV_COLOR_GET_B(color) * 85);   /*(2^8 - 1)/(2^2 - 1) = 255/3 = 85*/
-    LV_COLOR_SET_A32(color, 0xFF);
+    ret.ch.red = color.ch.red * 36;     /*(2^8 - 1)/(2^3 - 1) = 255/7 = 36*/
+    ret.ch.green = color.ch.green * 36; /*(2^8 - 1)/(2^3 - 1) = 255/7 = 36*/
+    ret.ch.blue = color.ch.blue * 85;   /*(2^8 - 1)/(2^2 - 1) = 255/3 = 85*/
+    ret.ch.alpha = 0xFF;
     return ret.full;
 #elif LV_COLOR_DEPTH == 16
     /**
@@ -422,25 +335,48 @@ static inline uint32_t lv_color_to32(lv_color_t color)
      *       6         259      3        0       255
      */
     lv_color32_t ret;
-    LV_COLOR_SET_R32(ret, (LV_COLOR_GET_R(color) * 263 + 7 ) >> 5);
-    LV_COLOR_SET_G32(ret, (LV_COLOR_GET_G(color) * 259 + 3 ) >> 6);
-    LV_COLOR_SET_B32(ret, (LV_COLOR_GET_B(color) * 263 + 7 ) >> 5);
-    LV_COLOR_SET_A32(ret, 0xFF);
+    ret.ch.red   = ( color.ch.red * 263 + 7 ) >> 5;
+#if LV_COLOR_16_SWAP == 0
+    ret.ch.green = ( color.ch.green * 259 + 3 ) >> 6;
+#else
+    ret.ch.green = (((color.ch.green_h << 3) + color.ch.green_l) * 259 + 3 ) >> 6;
+#endif
+    ret.ch.blue  = ( color.ch.blue * 263 + 7 ) >> 5;
+    ret.ch.alpha = 0xFF;
     return ret.full;
 #elif LV_COLOR_DEPTH == 32
     return color.full;
 #endif
 }
 
+/**
+ * Mix two colors with a given ratio.
+ * @param c1
+ * @param c2
+ * @param mix The ratio of the colors. 0: full `c2`, 255: full `c1`, 127: half `c1` and half`c2`
+ * @return the mixed color
+ * @note 255 won't give clearly `c1`.
+ */
 static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 {
     lv_color_t ret;
 #if LV_COLOR_DEPTH != 1
     /*LV_COLOR_DEPTH == 8, 16 or 32*/
-    LV_COLOR_SET_R(ret, (uint16_t)((uint16_t) LV_COLOR_GET_R(c1) * mix + LV_COLOR_GET_R(c2) * (255 - mix)) >> 8);
-    LV_COLOR_SET_G(ret, (uint16_t)((uint16_t) LV_COLOR_GET_G(c1) * mix + LV_COLOR_GET_G(c2) * (255 - mix)) >> 8);
-    LV_COLOR_SET_B(ret, (uint16_t)((uint16_t) LV_COLOR_GET_B(c1) * mix + LV_COLOR_GET_B(c2) * (255 - mix)) >> 8);
-    LV_COLOR_SET_A(ret, 0xFF);
+    ret.ch.red = (uint16_t)((uint16_t)c1.ch.red * mix + (c2.ch.red * (256 - mix))) >> 8;
+#if LV_COLOR_DEPTH == 16 && LV_COLOR_16_SWAP
+    /*If swapped Green is in 2 parts*/
+    uint16_t g_1   = (c1.ch.green_h << 3) + c1.ch.green_l;
+    uint16_t g_2   = (c2.ch.green_h << 3) + c2.ch.green_l;
+    uint16_t g_out = (uint16_t)((uint16_t)g_1 * mix + (g_2 * (256 - mix))) >> 8;
+    ret.ch.green_h = g_out >> 3;
+    ret.ch.green_l = g_out & 0x7;
+#else
+    ret.ch.green = (uint16_t)((uint16_t)c1.ch.green * mix + (c2.ch.green * (256 - mix))) >> 8;
+#endif
+    ret.ch.blue = (uint16_t)((uint16_t)c1.ch.blue * mix + (c2.ch.blue * (256 - mix))) >> 8;
+#if LV_COLOR_DEPTH == 32
+    ret.ch.alpha = 0xFF;
+#endif
 #else
     /*LV_COLOR_DEPTH == 1*/
     ret.full = mix > LV_OPA_50 ? c1.full : c2.full;
@@ -448,6 +384,66 @@ static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 
     return ret;
 }
+
+/**
+ * Mix two colors. Both color can have alpha value. It requires ARGB888 colors.
+ * @param bg_color background color
+ * @param bg_opa alpha of the background color
+ * @param fg_color foreground color
+ * @param fg_opa alpha of the foreground color
+ * @param res_color the result color
+ * @param res_opa the result opacity
+ */
+static inline void lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa, lv_color_t fg_color, lv_opa_t fg_opa, lv_color_t * res_color, lv_opa_t * res_opa)
+{
+    /* Pick the foreground if it's fully opaque or the Background is fully transparent*/
+    if(fg_opa > LV_OPA_MAX || bg_opa <= LV_OPA_MIN) {
+        res_color->full = fg_color.full;
+        *res_opa = fg_opa;
+    }
+    /*Transparent foreground: use the Background*/
+    else if(fg_opa <= LV_OPA_MIN) {
+        res_color->full = bg_color.full;
+        *res_opa = bg_opa;
+    }
+    /*Opaque background: use simple mix*/
+    else if(bg_opa >= LV_OPA_MAX) {
+        *res_color = lv_color_mix(fg_color, bg_color, fg_opa);
+        *res_opa = LV_OPA_COVER;
+    }
+    /*Both colors have alpha. Expensive calculation need to be applied*/
+    else {
+        /*Save the parameters and the result. If they will be asked again don't compute again*/
+        static lv_opa_t fg_opa_save     = 0;
+        static lv_opa_t bg_opa_save     = 0;
+        static lv_color_t fg_color_save = {{0}};
+        static lv_color_t bg_color_save = {{0}};
+        static lv_color_t res_color_saved = {{0}};
+        static lv_opa_t res_opa_saved = 0;
+
+        if(fg_opa != fg_opa_save || bg_opa != bg_opa_save || fg_color.full != fg_color_save.full ||
+                bg_color.full != bg_color_save.full) {
+            fg_opa_save        = fg_opa;
+            bg_opa_save        = bg_opa;
+            fg_color_save.full = fg_color.full;
+            bg_color_save.full = bg_color.full;
+            /*Info:
+             * https://en.wikipedia.org/wiki/Alpha_compositing#Analytical_derivation_of_the_over_operator*/
+            res_opa_saved = 255 - ((uint16_t)((uint16_t)(255 - fg_opa) * (255 - bg_opa)) >> 8);
+            if(res_opa_saved == 0) {
+                while(1)
+                    ;
+            }
+            lv_opa_t ratio = (uint16_t)((uint16_t)fg_opa * 255) / res_opa_saved;
+            res_color_saved  = lv_color_mix(fg_color, bg_color, ratio);
+
+        }
+
+        res_color->full = res_color_saved.full;
+        *res_opa = res_opa_saved;
+    }
+}
+
 
 /**
  * Get the brightness of a color
@@ -458,16 +454,16 @@ static inline uint8_t lv_color_brightness(lv_color_t color)
 {
     lv_color32_t c32;
     c32.full        = lv_color_to32(color);
-    uint16_t bright = 3 * LV_COLOR_GET_R32(c32) + LV_COLOR_GET_B32(c32) + 4 * LV_COLOR_GET_G32(c32);
+    uint16_t bright = 3 * c32.ch.red + c32.ch.blue + 4 * c32.ch.green;
     return (uint16_t)bright >> 3;
 }
 
 /* The most simple macro to create a color from R,G and B values */
 #if LV_COLOR_DEPTH == 1
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){.full = (b8 >> 7 | g8 >> 7 | r8 >> 7)})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){(b8 >> 7 | g8 >> 7 | r8 >> 7)})
 static inline lv_color_t lv_color_make(int r8, int g8, int b8)
 {
-    lv_color_t color = { 0 };
+    lv_color_t color;
     color.full = (b8 >> 7 | g8 >> 7 | r8 >> 7);
     return color;
 }
@@ -476,36 +472,43 @@ static inline lv_color_t lv_color_make(int r8, int g8, int b8)
 static inline lv_color_t lv_color_make(uint8_t r8, int g8, int b8)
 {
     lv_color_t color;
-    LV_COLOR_SET_B(color, b8 >> 6);
-    LV_COLOR_SET_G(color, g8 >> 5);
-    LV_COLOR_SET_R(color, r8 >> 5);
-    LV_COLOR_SET_A(color, 0xFF);
+    color.ch.blue = b8 >> 6;
+    color.ch.green = g8 >> 5;
+    color.ch.red = r8 >> 5;
     return color;
 }
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8 >> 3, g8 >> 2, r8 >> 3}})
-#else
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{g8 >> 5, r8 >> 3, b8 >> 3, (g8 >> 2) & 0x7}})
-#endif
 static inline lv_color_t lv_color_make(uint8_t r8, uint8_t g8, uint8_t b8)
 {
     lv_color_t color;
-    LV_COLOR_SET_B(color, b8 >> 3);
-    LV_COLOR_SET_G(color, g8 >> 2);
-    LV_COLOR_SET_R(color, r8 >> 3);
-    LV_COLOR_SET_A(color, 0xFF);
+    color.ch.blue  = (uint16_t)(b8 >> 3);
+    color.ch.green = (uint16_t)(g8 >> 2);
+    color.ch.red   = (uint16_t)(r8 >> 3);
     return color;
 }
+#else
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{g8 >> 5, r8 >> 3, b8 >> 3, (g8 >> 2) & 0x7}})
+static inline lv_color_t lv_color_make(uint8_t r8, uint8_t g8, uint8_t b8)
+{
+    lv_color_t color;
+    color.ch.green_h = (uint16_t)(g8 >> 5);
+    color.ch.red = (uint16_t)(r8 >> 3);
+    color.ch.blue = (uint16_t)(b8 >> 3);
+    color.ch.green_l = (uint16_t)((g8 >> 2) & 0x7);
+    return color;
+}
+#endif
 #elif LV_COLOR_DEPTH == 32
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8, g8, r8, 0xff}}) /*Fix 0xff alpha*/
 static inline lv_color_t lv_color_make(uint8_t r8, uint8_t g8, uint8_t b8)
 {
     lv_color_t color;
-    LV_COLOR_SET_B(color, b8);
-    LV_COLOR_SET_G(color, g8);
-    LV_COLOR_SET_R(color, r8);
-    LV_COLOR_SET_A(color, 0xFF);
+    color.ch.blue  = b8;
+    color.ch.green = g8;
+    color.ch.red   = r8;
+    color.ch.alpha = 0xff;
     return color;
 }
 #endif
@@ -531,20 +534,13 @@ static inline lv_color_t lv_color_hex3(uint32_t c)
 lv_color_t lv_color_hsv_to_rgb(uint16_t h, uint8_t s, uint8_t v);
 
 /**
- * Convert a 32-bit RGB color to HSV
- * @param r8 8-bit red
- * @param g8 8-bit green
- * @param b8 8-bit blue
- * @return the given RGB color in HSV
+ * Convert an RGB color to HSV
+ * @param r red
+ * @param g green
+ * @param b blue
+ * @return the given RGB color n HSV
  */
-lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8);
-
-/**
- * Convert a color to HSV
- * @param color color
- * @return the given color in HSV
- */
-lv_color_hsv_t lv_color_to_hsv(lv_color_t color);
+lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b);
 
 /**********************
  *      MACROS
