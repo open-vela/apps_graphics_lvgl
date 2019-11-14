@@ -14,7 +14,6 @@
 #error "lv_img: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL  1) "
 #endif
 
-#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_draw/lv_img_decoder.h"
 #include "../lv_misc/lv_fs.h"
@@ -24,7 +23,6 @@
 /*********************
  *      DEFINES
  *********************/
-#define LV_OBJX_NAME "lv_img"
 
 /**********************
  *      TYPEDEFS
@@ -63,14 +61,14 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Create a basic object*/
     new_img = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_img);
+    lv_mem_assert(new_img);
     if(new_img == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_img);
 
     /*Extend the basic object to image object*/
     lv_img_ext_t * ext = lv_obj_allocate_ext_attr(new_img, sizeof(lv_img_ext_t));
-    LV_ASSERT_MEM(ext);
+    lv_mem_assert(ext);
     if(ext == NULL) return NULL;
 
     ext->src       = NULL;
@@ -123,8 +121,6 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
  */
 void lv_img_set_src(lv_obj_t * img, const void * src_img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_src_t src_type = lv_img_src_get_type(src_img);
     lv_img_ext_t * ext    = lv_obj_get_ext_attr(img);
 
@@ -171,7 +167,7 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
                 old_src = ext->src;
             }
             char * new_str = lv_mem_alloc(strlen(src_img) + 1);
-            LV_ASSERT_MEM(new_str);
+            lv_mem_assert(new_str);
             if(new_str == NULL) return;
             strcpy(new_str, src_img);
             ext->src = new_str;
@@ -210,8 +206,6 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
  */
 void lv_img_set_auto_size(lv_obj_t * img, bool en)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     ext->auto_size = (en == false ? 0 : 1);
@@ -225,8 +219,6 @@ void lv_img_set_auto_size(lv_obj_t * img, bool en)
  */
 void lv_img_set_offset_x(lv_obj_t * img, lv_coord_t x)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     if(x < ext->w - 1) {
@@ -243,8 +235,6 @@ void lv_img_set_offset_x(lv_obj_t * img, lv_coord_t x)
  */
 void lv_img_set_offset_y(lv_obj_t * img, lv_coord_t y)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     if(y < ext->h - 1) {
@@ -264,8 +254,6 @@ void lv_img_set_offset_y(lv_obj_t * img, lv_coord_t y)
  */
 const void * lv_img_get_src(lv_obj_t * img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     return ext->src;
@@ -278,8 +266,6 @@ const void * lv_img_get_src(lv_obj_t * img)
  */
 const char * lv_img_get_file_name(const lv_obj_t * img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     if(ext->src_type == LV_IMG_SRC_FILE)
@@ -295,8 +281,6 @@ const char * lv_img_get_file_name(const lv_obj_t * img)
  */
 bool lv_img_get_auto_size(const lv_obj_t * img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     return ext->auto_size == 0 ? false : true;
@@ -309,8 +293,6 @@ bool lv_img_get_auto_size(const lv_obj_t * img)
  */
 lv_coord_t lv_img_get_offset_x(lv_obj_t * img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     return ext->offset.x;
@@ -323,8 +305,6 @@ lv_coord_t lv_img_get_offset_x(lv_obj_t * img)
  */
 lv_coord_t lv_img_get_offset_y(lv_obj_t * img)
 {
-    LV_ASSERT_OBJ(img, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 
     return ext->offset.y;
@@ -372,10 +352,10 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
             cords_tmp.y1 = coords.y1;
             cords_tmp.y2 = coords.y1 + ext->h - 1;
 
-            for(; cords_tmp.y1 <= coords.y2; cords_tmp.y1 += ext->h, cords_tmp.y2 += ext->h) {
+            for(; cords_tmp.y1 < coords.y2; cords_tmp.y1 += ext->h, cords_tmp.y2 += ext->h) {
                 cords_tmp.x1 = coords.x1;
                 cords_tmp.x2 = coords.x1 + ext->w - 1;
-                for(; cords_tmp.x1 <= coords.x2; cords_tmp.x1 += ext->w, cords_tmp.x2 += ext->w) {
+                for(; cords_tmp.x1 < coords.x2; cords_tmp.x1 += ext->w, cords_tmp.x2 += ext->w) {
                     lv_draw_img(&cords_tmp, mask, ext->src, style, opa_scale);
                 }
             }
@@ -384,7 +364,7 @@ static bool lv_img_design(lv_obj_t * img, const lv_area_t * mask, lv_design_mode
             lv_style_t style_mod;
             lv_style_copy(&style_mod, style);
             style_mod.text.color = style->image.color;
-            lv_draw_label(&coords, mask, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL, NULL, NULL, lv_obj_get_base_dir(img));
+            lv_draw_label(&coords, mask, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL, -1, -1, NULL);
         } else {
             /*Trigger the error handler of image drawer*/
             LV_LOG_WARN("lv_img_design: image source type is unknown");
@@ -410,8 +390,6 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
     res = ancestor_signal(img, sign, param);
     if(res != LV_RES_OK) return res;
 
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
-
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
     if(sign == LV_SIGNAL_CLEANUP) {
         if(ext->src_type == LV_IMG_SRC_FILE || ext->src_type == LV_IMG_SRC_SYMBOL) {
@@ -424,6 +402,13 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
         if(ext->src_type == LV_IMG_SRC_SYMBOL) {
             lv_img_set_src(img, ext->src);
         }
+    } else if(sign == LV_SIGNAL_GET_TYPE) {
+        lv_obj_type_t * buf = param;
+        uint8_t i;
+        for(i = 0; i < LV_MAX_ANCESTOR_NUM - 1; i++) { /*Find the last set data*/
+            if(buf->type[i] == NULL) break;
+        }
+        buf->type[i] = "lv_img";
     }
 
     return res;
