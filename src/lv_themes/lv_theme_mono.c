@@ -61,7 +61,7 @@ static void basic_init(void)
     def.body.border.color   = LV_COLOR_BLACK;
     def.body.border.width   = 1;
     def.body.border.opa     = LV_OPA_COVER;
-    def.body.border.part    = LV_BORDER_PART_FULL;
+    def.body.border.part    = LV_BORDER_FULL;
 
     def.text.font         = _font;
     def.text.color        = LV_COLOR_BLACK;
@@ -76,13 +76,13 @@ static void basic_init(void)
     def.image.intense = LV_OPA_TRANSP;
     def.image.opa     = LV_OPA_COVER;
 
-    lv_style_copy(&light_plain, &def);
-
     lv_style_copy(&scr, &light_plain);
     scr.body.padding.bottom = 0;
     scr.body.padding.top    = 0;
     scr.body.padding.left   = 0;
     scr.body.padding.right  = 0;
+
+    lv_style_copy(&light_plain, &def);
 
     lv_style_copy(&light_frame, &light_plain);
     light_frame.body.radius = LV_DPI / 20;
@@ -157,6 +157,7 @@ static void led_init(void)
     led.body.radius       = LV_RADIUS_CIRCLE;
     led.body.shadow.width = LV_DPI / 8;
     led.body.shadow.color = LV_COLOR_BLACK;
+    led.body.shadow.type  = LV_SHADOW_FULL;
 
     theme.style.led = &led;
 #endif
