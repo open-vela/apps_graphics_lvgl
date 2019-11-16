@@ -43,6 +43,11 @@ extern "C" {
 /** log2(LV_BAR_ANIM_STATE_END) used to normalize data*/
 #define LV_BAR_ANIM_STATE_NORM 8
 
+LV_EXPORT_CONST_INT(LV_BAR_ANIM_STATE_START);
+LV_EXPORT_CONST_INT(LV_BAR_ANIM_STATE_END);
+LV_EXPORT_CONST_INT(LV_BAR_ANIM_STATE_INV);
+LV_EXPORT_CONST_INT(LV_BAR_ANIM_STATE_NORM);
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -56,6 +61,7 @@ typedef struct
     int16_t cur_value; /*Current value of the bar*/
     int16_t min_value; /*Minimum value of the bar*/
     int16_t max_value; /*Maximum value of the bar*/
+    lv_area_t indic_area;   /*Save the indicator area. MIght be used by derived types*/
 #if LV_USE_ANIMATION
     lv_anim_value_t anim_start;
     lv_anim_value_t anim_end;

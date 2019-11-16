@@ -9,6 +9,7 @@
  *********************/
 #include <stddef.h>
 #include "lv_task.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_hal/lv_hal_tick.h"
 #include "lv_gc.h"
 
@@ -67,16 +68,16 @@ LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
     LV_LOG_TRACE("lv_task_handler started");
 
     /*Avoid concurrent running of the task handler*/
-    static bool task_handler_mutex = false;
-    if(task_handler_mutex) return;
-    task_handler_mutex = true;
+    static bool already_running = false;
+    if(already_running) return;
+    already_running = true;
 
     static uint32_t idle_period_start = 0;
     static uint32_t handler_start     = 0;
     static uint32_t busy_time         = 0;
 
     if(lv_task_run == false) {
-        task_handler_mutex = false; /*Release mutex*/
+        already_running = false; /*Release mutex*/
         return;
     }
 
@@ -122,6 +123,7 @@ LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
                         task_interrupter =
                             LV_GC_ROOT(_lv_task_act); /*Check all tasks again from the highest priority */
                         end_flag = false;
+                        if(task_deleted) task_interrupter = NULL;
                         break;
                     }
                 }
@@ -132,6 +134,7 @@ LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
                 if(lv_task_exec(LV_GC_ROOT(_lv_task_act))) {
                     task_interrupter = LV_GC_ROOT(_lv_task_act); /*Check all tasks again from the highest priority */
                     end_flag         = false;
+                    if(task_deleted) task_interrupter = NULL;
                     break;
                 }
             }
@@ -153,7 +156,7 @@ LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
         idle_period_start = lv_tick_get();
     }
 
-    task_handler_mutex = false; /*Release the mutex*/
+    already_running = false; /*Release the mutex*/
 
     LV_LOG_TRACE("lv_task_handler ready");
 }
@@ -173,7 +176,7 @@ lv_task_t * lv_task_create_basic(void)
     /*It's the first task*/
     if(NULL == tmp) {
         new_task = lv_ll_ins_head(&LV_GC_ROOT(_lv_task_ll));
-        lv_mem_assert(new_task);
+        LV_ASSERT_MEM(new_task);
         if(new_task == NULL) return NULL;
     }
     /*Insert the new task to proper place according to its priority*/
@@ -181,7 +184,7 @@ lv_task_t * lv_task_create_basic(void)
         do {
             if(tmp->prio <= DEF_PRIO) {
                 new_task = lv_ll_ins_prev(&LV_GC_ROOT(_lv_task_ll), tmp);
-                lv_mem_assert(new_task);
+                LV_ASSERT_MEM(new_task);
                 if(new_task == NULL) return NULL;
                 break;
             }
@@ -191,7 +194,7 @@ lv_task_t * lv_task_create_basic(void)
         /*Only too high priority tasks were found. Add the task to the end*/
         if(tmp == NULL) {
             new_task = lv_ll_ins_tail(&LV_GC_ROOT(_lv_task_ll));
-            lv_mem_assert(new_task);
+            LV_ASSERT_MEM(new_task);
             if(new_task == NULL) return NULL;
         }
     }
@@ -223,7 +226,7 @@ lv_task_t * lv_task_create_basic(void)
 lv_task_t * lv_task_create(lv_task_cb_t task_cb, uint32_t period, lv_task_prio_t prio, void * user_data)
 {
     lv_task_t * new_task = lv_task_create_basic();
-    lv_mem_assert(new_task);
+    LV_ASSERT_MEM(new_task);
     if(new_task == NULL) return NULL;
 
     lv_task_set_cb(new_task, task_cb);
@@ -250,7 +253,7 @@ void lv_task_set_cb(lv_task_t * task, lv_task_cb_t task_cb)
  */
 void lv_task_del(lv_task_t * task)
 {
-    lv_ll_rem(&LV_GC_ROOT(_lv_task_ll), task);
+    lv_ll_remove(&LV_GC_ROOT(_lv_task_ll), task);
 
     lv_mem_free(task);
 
