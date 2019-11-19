@@ -12,7 +12,6 @@
 #if LV_LOG_PRINTF
 #include <stdio.h>
 #endif
-
 /*********************
  *      DEFINES
  *********************/
