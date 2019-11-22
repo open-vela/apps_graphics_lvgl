@@ -137,7 +137,7 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
  * @param btn_map button descriptor (button matrix map).
  *                E.g.  a const char *txt[] = {"ok", "close", ""} (Can not be local variable)
  */
-void lv_mbox_add_btns(lv_obj_t * mbox, const char ** btn_map)
+void lv_mbox_add_btns(lv_obj_t * mbox, const char * btn_map[])
 {
     lv_mbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
 
