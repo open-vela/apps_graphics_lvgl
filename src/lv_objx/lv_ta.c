@@ -1707,6 +1707,7 @@ static void get_cursor_style(lv_obj_t * ta, lv_style_t * style_res)
         style_res->body.padding.top    = 0;
         style_res->body.padding.bottom = 0;
         style_res->line.width          = 1;
+        style_res->body.opa            = LV_OPA_COVER;
     }
 }
 
