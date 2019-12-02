@@ -42,8 +42,8 @@ typedef struct
     lv_bar_ext_t bar; /*Ext. of ancestor*/
     /*New data for this type */
     const lv_style_t * style_knob; /*Style of the knob*/
-    const void * img_knob;
-    uint8_t dragging :1;        /*1: the slider is being dragged*/
+    int16_t drag_value;            /*Store a temporal value during press until release (Handled by the library)*/
+    uint8_t knob_in : 1;           /*1: Draw the knob inside the bar*/
 } lv_slider_ext_t;
 
 /** Built-in styles of slider*/
@@ -104,14 +104,6 @@ static inline void lv_slider_set_anim_time(lv_obj_t * slider, uint16_t anim_time
 }
 
 /**
- * Set an image to display on the knob of the slider
- * @param slider pointer to a slider object
- * @param img_src pointer to an `lv_img_dsc_t` variable or a path to an image
- *        (not an `lv_img` object)
- */
-void lv_slider_set_knob_img(lv_obj_t * slider, const void * img_src);
-
-/**
  * Set the animation time of the slider
  * @param slider pointer to a bar object
  * @param anim_time the animation time in milliseconds.
@@ -120,6 +112,14 @@ static inline void lv_slider_set_sym(lv_obj_t * slider, bool en)
 {
     lv_bar_set_sym(slider, en);
 }
+
+/**
+ * Set the 'knob in' attribute of a slider
+ * @param slider pointer to slider object
+ * @param in true: the knob is drawn always in the slider;
+ *           false: the knob can be out on the edges
+ */
+void lv_slider_set_knob_in(lv_obj_t * slider, bool in);
 
 /**
  * Set a style of a slider
@@ -168,13 +168,6 @@ static inline int16_t lv_slider_get_max_value(const lv_obj_t * slider)
 bool lv_slider_is_dragged(const lv_obj_t * slider);
 
 /**
- * Get an image to display on the knob of the slider
- * @param slider pointer to a slider object
- * @return the image source: pointer to an `lv_img_dsc_t` variable or a path to an image  (not an `lv_img` object)
- */
-const void * lv_slider_get_knob_img(lv_obj_t * slider, const void * img_src);
-
-/**
  * Get the animation time of the slider
  * @param slider pointer to a slider object
  * @return the animation time in milliseconds.
@@ -193,6 +186,14 @@ static inline bool lv_slider_get_sym(lv_obj_t * slider)
 {
     return lv_bar_get_sym(slider);
 }
+
+/**
+ * Get the 'knob in' attribute of a slider
+ * @param slider pointer to slider object
+ * @return true: the knob is drawn always in the slider;
+ *         false: the knob can be out on the edges
+ */
+bool lv_slider_get_knob_in(const lv_obj_t * slider);
 
 /**
  * Get a style of a slider

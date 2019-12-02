@@ -26,7 +26,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_arc_design(lv_obj_t * arc, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param);
 
 /**********************
@@ -114,39 +114,22 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
  *====================*/
 
 /**
- * Set the start angle of an arc. 0 deg: right, 90 bottom: right etc.
+ * Set the start and end angles of an arc. 0 deg: bottom, 90 deg: right etc.
  * @param arc pointer to an arc object
  * @param start the start angle [0..360]
+ * @param end the end angle [0..360]
  */
-void lv_arc_set_start_angle(lv_obj_t * arc, int16_t start)
+void lv_arc_set_angles(lv_obj_t * arc, uint16_t start, uint16_t end)
 {
     LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
 
     lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
 
-    if(start > 360) start -= 360;
-    if(start < 0) start += 360;
+    if(start > 360) start = 360;
+    if(end > 360) end = 360;
 
     ext->angle_start = start;
-
-    lv_obj_invalidate(arc);
-}
-
-/**
- * Set the start angle of an arc. 0 deg: right, 90 bottom: right etc.
- * @param arc pointer to an arc object
- * @param start the start angle [0..360]
- */
-void lv_arc_set_end_angle(lv_obj_t * arc, int16_t end)
-{
-    LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
-
-    lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
-
-    if(end > 360) end -= 360;
-    if(end < 0) end += 360;
-
-    ext->angle_end= end;
+    ext->angle_end   = end;
 
     lv_obj_invalidate(arc);
 }
@@ -233,18 +216,18 @@ const lv_style_t * lv_arc_get_style(const lv_obj_t * arc, lv_arc_style_t type)
 /**
  * Handle the drawing related tasks of the arcs
  * @param arc pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_arc_design(lv_obj_t * arc, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -255,13 +238,44 @@ static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area
         lv_coord_t x       = arc->coords.x1 + lv_obj_get_width(arc) / 2;
         lv_coord_t y       = arc->coords.y1 + lv_obj_get_height(arc) / 2;
         lv_opa_t opa_scale = lv_obj_get_opa_scale(arc);
-        lv_draw_arc(x, y, r, clip_area, ext->angle_start, ext->angle_end, style, opa_scale);
+        lv_draw_arc(x, y, r, mask, ext->angle_start, ext->angle_end, style, opa_scale);
+
+        /*Draw circle on the ends if enabled */
+        if(style->line.rounded) {
+            lv_coord_t thick_half = style->line.width / 2;
+            lv_coord_t cir_x      = ((r - thick_half) * lv_trigo_sin(ext->angle_start) >> LV_TRIGO_SHIFT);
+            lv_coord_t cir_y      = ((r - thick_half) * lv_trigo_sin(ext->angle_start + 90) >> LV_TRIGO_SHIFT);
+
+            lv_style_t cir_style;
+            lv_style_copy(&cir_style, &lv_style_plain);
+            cir_style.body.grad_color = style->line.color;
+            cir_style.body.main_color = cir_style.body.grad_color;
+            cir_style.body.radius     = LV_RADIUS_CIRCLE;
+            lv_area_t cir_area;
+            cir_area.x1 = cir_x + x - thick_half;
+            cir_area.y1 = cir_y + y - thick_half;
+            cir_area.x2 = cir_x + x + thick_half;
+            cir_area.y2 = cir_y + y + thick_half;
+
+            lv_draw_rect(&cir_area, mask, &cir_style, opa_scale);
+
+            cir_x = ((r - thick_half) * lv_trigo_sin(ext->angle_end) >> LV_TRIGO_SHIFT);
+            cir_y = ((r - thick_half) * lv_trigo_sin(ext->angle_end + 90) >> LV_TRIGO_SHIFT);
+
+            cir_area.x1 = cir_x + x - thick_half;
+            cir_area.y1 = cir_y + y - thick_half;
+            cir_area.x2 = cir_x + x + thick_half;
+            cir_area.y2 = cir_y + y + thick_half;
+
+            lv_draw_rect(&cir_area, mask, &cir_style, opa_scale);
+        }
+
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**

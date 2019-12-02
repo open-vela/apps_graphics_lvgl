@@ -124,7 +124,7 @@ lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, const
     dsc->user_data = NULL;
 
     if(dsc->src_type == LV_IMG_SRC_FILE) {
-        uint16_t fnlen = strlen(src);
+        size_t fnlen = strlen(src);
         dsc->src = lv_mem_alloc(fnlen + 1);
         strcpy((char *)dsc->src, src);
     } else {
@@ -214,7 +214,7 @@ lv_img_decoder_t * lv_img_decoder_create(void)
  */
 void lv_img_decoder_delete(lv_img_decoder_t * decoder)
 {
-    lv_ll_remove(&LV_GC_ROOT(_lv_img_defoder_ll), decoder);
+    lv_ll_rem(&LV_GC_ROOT(_lv_img_defoder_ll), decoder);
     lv_mem_free(decoder);
 }
 
@@ -353,11 +353,6 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
         LV_LOG_WARN("Image built-in decoder cannot read file because LV_USE_FILESYSTEM = 0");
         return LV_RES_INV;
 #endif
-    } else if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
-    	/*The variables should have valid data*/
-        if(((lv_img_dsc_t *)dsc->src)->data == NULL) {
-        	return LV_RES_INV;
-        }
     }
 
     lv_img_cf_t cf = dsc->header.cf;
@@ -379,7 +374,7 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
             cf == LV_IMG_CF_INDEXED_8BIT) {
 
 #if LV_IMG_CF_INDEXED
-        uint8_t px_size       = lv_img_cf_get_px_size(cf);
+        uint8_t px_size       = lv_img_color_format_get_px_size(cf);
         uint32_t palette_size = 1 << px_size;
 
         /*Allocate the palette*/
@@ -420,7 +415,6 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
         } else {
             /*The palette begins in the beginning of the image data. Just point to it.*/
             lv_color32_t * palette_p = (lv_color32_t *)((lv_img_dsc_t *)dsc->src)->data;
-
 
             uint32_t i;
             for(i = 0; i < palette_size; i++) {
@@ -515,7 +509,6 @@ void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_ds
         }
 #endif
         if(user_data->palette) lv_mem_free(user_data->palette);
-        if(user_data->opa) lv_mem_free(user_data->opa);
 
         lv_mem_free(user_data);
 
@@ -534,7 +527,7 @@ static lv_res_t lv_img_decoder_built_in_line_true_color(lv_img_decoder_dsc_t * d
 #if LV_USE_FILESYSTEM
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
     lv_fs_res_t res;
-    uint8_t px_size = lv_img_cf_get_px_size(dsc->header.cf);
+    uint8_t px_size = lv_img_color_format_get_px_size(dsc->header.cf);
 
     uint32_t pos = ((y * dsc->header.w + x) * px_size) >> 3;
     pos += 4; /*Skip the header*/
@@ -586,7 +579,7 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
     }
 
     const lv_opa_t * opa_table = NULL;
-    uint8_t px_size            = lv_img_cf_get_px_size(dsc->header.cf);
+    uint8_t px_size            = lv_img_color_format_get_px_size(dsc->header.cf);
     uint16_t mask              = (1 << px_size) - 1; /*E.g. px_size = 2; mask = 0x03*/
 
     lv_coord_t w = 0;
@@ -623,7 +616,7 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
 
 #if LV_USE_FILESYSTEM
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
-    uint8_t * fs_buf = lv_mem_buf_get(w);
+    uint8_t fs_buf[LV_HOR_RES_MAX];
 #endif
 
     const uint8_t * data_tmp = NULL;
@@ -657,9 +650,7 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
             data_tmp++;
         }
     }
-#if LV_USE_FILESYSTEM
-    lv_mem_buf_release(fs_buf);
-#endif
+
     return LV_RES_OK;
 
 #else
@@ -673,7 +664,7 @@ static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc,
 {
 
 #if LV_IMG_CF_INDEXED
-    uint8_t px_size = lv_img_cf_get_px_size(dsc->header.cf);
+    uint8_t px_size = lv_img_color_format_get_px_size(dsc->header.cf);
     uint16_t mask   = (1 << px_size) - 1; /*E.g. px_size = 2; mask = 0x03*/
 
     lv_coord_t w = 0;
@@ -712,7 +703,7 @@ static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc,
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
 
 #if LV_USE_FILESYSTEM
-    uint8_t * fs_buf = lv_mem_buf_get(w);
+    uint8_t fs_buf[LV_HOR_RES_MAX];
 #endif
     const uint8_t * data_tmp = NULL;
     if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
@@ -755,9 +746,7 @@ static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc,
             data_tmp++;
         }
     }
-#if LV_USE_FILESYSTEM
-    lv_mem_buf_release(fs_buf);
-#endif
+
     return LV_RES_OK;
 #else
     LV_LOG_WARN("Image built-in indexed line reader failed because LV_IMG_CF_INDEXED is 0 in lv_conf.h");

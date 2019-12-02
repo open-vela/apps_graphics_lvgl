@@ -61,7 +61,6 @@ typedef struct
     int16_t cur_value; /*Current value of the bar*/
     int16_t min_value; /*Minimum value of the bar*/
     int16_t max_value; /*Maximum value of the bar*/
-    lv_area_t indic_area;   /*Save the indicator area. MIght be used by derived types*/
 #if LV_USE_ANIMATION
     lv_anim_value_t anim_start;
     lv_anim_value_t anim_end;
@@ -171,7 +170,7 @@ bool lv_bar_get_sym(lv_obj_t * bar);
  * @param bar pointer to a bar object
  * @return the animation time in milliseconds.
  */
-uint16_t lv_bar_get_anim_time(const lv_obj_t * bar);
+uint16_t lv_bar_get_anim_time(lv_obj_t * bar);
 
 /**
  * Get a style of a bar
