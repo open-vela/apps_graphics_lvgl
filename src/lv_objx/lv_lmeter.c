@@ -20,6 +20,9 @@
  *********************/
 #define LV_OBJX_NAME "lv_lmeter"
 
+#define LV_LMETER_LINE_UPSCALE 5 /*2^x upscale of line to make rounding*/
+#define LV_LMETER_LINE_UPSCALE_MASK ((1 << LV_LMETER_LINE_UPSCALE) - 1)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -27,8 +30,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * param);
+static lv_coord_t lv_lmeter_coord_round(int32_t x);
 
 /**********************
  *  STATIC VARIABLES
@@ -161,7 +165,7 @@ void lv_lmeter_set_range(lv_obj_t * lmeter, int16_t min, int16_t max)
  * @param angle angle of the scale (0..360)
  * @param line_cnt number of lines
  */
-void lv_lmeter_set_scale(lv_obj_t * lmeter, uint16_t angle, uint8_t line_cnt)
+void lv_lmeter_set_scale(lv_obj_t * lmeter, uint16_t angle, uint16_t line_cnt)
 {
     LV_ASSERT_OBJ(lmeter, LV_OBJX_NAME);
 
@@ -269,7 +273,6 @@ uint16_t lv_lmeter_get_angle_offset(lv_obj_t * lmeter)
 
     return ext->angle_ofs;
 }
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -277,18 +280,18 @@ uint16_t lv_lmeter_get_angle_offset(lv_obj_t * lmeter)
 /**
  * Handle the drawing related tasks of the line meters
  * @param lmeter pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
@@ -318,27 +321,24 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
 
         style_tmp.line.color = style->body.main_color;
 
+        /*Calculate every coordinate in a bigger size to make rounding later*/
+        r_out = r_out << LV_LMETER_LINE_UPSCALE;
+        r_in  = r_in << LV_LMETER_LINE_UPSCALE;
+
         for(i = 0; i < ext->line_cnt; i++) {
             /*Calculate the position a scale label*/
             int16_t angle = (i * ext->scale_angle) / (ext->line_cnt - 1) + angle_ofs;
 
-            lv_coord_t y_out = (int32_t)((int32_t)lv_trigo_sin(angle) * r_out) >> (LV_TRIGO_SHIFT - 8);
-            lv_coord_t x_out = (int32_t)((int32_t)lv_trigo_sin(angle + 90) * r_out) >> (LV_TRIGO_SHIFT - 8);
-            lv_coord_t y_in  = (int32_t)((int32_t)lv_trigo_sin(angle) * r_in) >> (LV_TRIGO_SHIFT - 8);
-            lv_coord_t x_in  = (int32_t)((int32_t)lv_trigo_sin(angle + 90) * r_in) >> (LV_TRIGO_SHIFT - 8);
+            lv_coord_t y_out = (int32_t)((int32_t)lv_trigo_sin(angle) * r_out) >> LV_TRIGO_SHIFT;
+            lv_coord_t x_out = (int32_t)((int32_t)lv_trigo_sin(angle + 90) * r_out) >> LV_TRIGO_SHIFT;
+            lv_coord_t y_in  = (int32_t)((int32_t)lv_trigo_sin(angle) * r_in) >> LV_TRIGO_SHIFT;
+            lv_coord_t x_in  = (int32_t)((int32_t)lv_trigo_sin(angle + 90) * r_in) >> LV_TRIGO_SHIFT;
 
             /*Rounding*/
-            if(x_out <= 0) x_out = (x_out + 127) >> 8;
-            else x_out = (x_out - 127) >> 8;
-
-            if(x_in <= 0) x_in = (x_in + 127) >> 8;
-            else x_in = (x_in - 127) >> 8;
-
-            if(y_out <= 0) y_out = (y_out + 127) >> 8;
-            else y_out = (y_out - 127) >> 8;
-
-            if(y_in <= 0) y_in = (y_in + 127) >> 8;
-            else y_in = (y_in - 127) >> 8;
+            x_out = lv_lmeter_coord_round(x_out);
+            x_in  = lv_lmeter_coord_round(x_in);
+            y_out = lv_lmeter_coord_round(y_out);
+            y_in  = lv_lmeter_coord_round(y_in);
 
             lv_point_t p1;
             lv_point_t p2;
@@ -356,7 +356,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
                     lv_color_mix(style->body.grad_color, style->body.main_color, (255 * i) / ext->line_cnt);
             }
 
-            lv_draw_line(&p1, &p2, clip_area, &style_tmp, opa_scale);
+            lv_draw_line(&p1, &p2, mask, &style_tmp, opa_scale);
         }
 
     }
@@ -364,7 +364,7 @@ static lv_design_res_t lv_lmeter_design(lv_obj_t * lmeter, const lv_area_t * cli
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -394,4 +394,29 @@ static lv_res_t lv_lmeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * par
 
     return res;
 }
+
+/**
+ * Round a coordinate which is upscaled  (>=x.5 -> x + 1;   <x.5 -> x)
+ * @param x a coordinate which is greater then it should be
+ * @return the downscaled and rounded coordinate  (+-1)
+ */
+static lv_coord_t lv_lmeter_coord_round(int32_t x)
+{
+#if LV_LMETER_LINE_UPSCALE > 0
+    bool was_negative = false;
+    if(x < 0) {
+        was_negative = true;
+        x            = -x;
+    }
+
+    x = (x >> LV_LMETER_LINE_UPSCALE) + ((x & LV_LMETER_LINE_UPSCALE_MASK) >> (LV_LMETER_LINE_UPSCALE - 1));
+
+    if(was_negative) x = -x;
+
+    return x;
+#else
+    return x;
+#endif
+}
+
 #endif
