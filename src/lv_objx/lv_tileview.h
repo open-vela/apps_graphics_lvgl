@@ -46,6 +46,8 @@ typedef struct
     uint8_t drag_bottom_en : 1;
     uint8_t drag_left_en : 1;
     uint8_t drag_right_en : 1;
+    uint8_t drag_hor : 1;
+    uint8_t drag_ver : 1;
 } lv_tileview_ext_t;
 
 /*Styles*/
@@ -130,13 +132,7 @@ void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, const 
 /*=====================
  * Getter functions
  *====================*/
-/**
-* Get the tile to be shown
-* @param tileview pointer to a tileview object
-* @param x column id (0, 1, 2...)
-* @param y line id (0, 1, 2...)
-*/
-void lv_tileview_get_tile_act(lv_obj_t * tileview, lv_coord_t *x, lv_coord_t *y);
+
 /**
  * Get the scroll propagation property
  * @param tileview pointer to a Tileview
