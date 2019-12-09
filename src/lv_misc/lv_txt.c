@@ -103,7 +103,7 @@ void lv_txt_get_size(lv_point_t * size_res, const char * text, const lv_font_t *
     uint32_t line_start     = 0;
     uint32_t new_line_start = 0;
     lv_coord_t act_line_length;
-    uint8_t letter_height = lv_font_get_line_height(font);
+    uint16_t letter_height = lv_font_get_line_height(font);
 
     /*Calc. the height and longest line*/
     while(text[line_start] != '\0') {
@@ -303,9 +303,9 @@ uint16_t lv_txt_get_next_line(const char * txt, const lv_font_t * font,
 
         i += advance;
 
-        if(txt[0] == '\n' || txt[0] == '\r') break;
+        if(txt[0] == '\n') break;
 
-        if(txt[i] == '\n' || txt[i] == '\r'){
+        if(txt[i] == '\n'){
             i++;  /* Include the following newline in the current line */
             break;
         }
@@ -418,11 +418,11 @@ void lv_txt_ins(char * txt_buf, uint32_t pos, const char * ins_txt)
 {
     size_t old_len = strlen(txt_buf);
     size_t ins_len = strlen(ins_txt);
-    size_t new_len = ins_len + old_len;
+    uint32_t new_len = ins_len + old_len;
     pos              = lv_txt_encoded_get_byte_id(txt_buf, pos); /*Convert to byte index instead of letter index*/
 
     /*Copy the second part into the end to make place to text to insert*/
-    size_t i;
+    uint32_t i;
     for(i = new_len; i >= pos + ins_len; i--) {
         txt_buf[i] = txt_buf[i - ins_len];
     }
