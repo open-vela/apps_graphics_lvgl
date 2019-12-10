@@ -78,10 +78,7 @@ lv_obj_t * lv_mbox_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Allocate the message box type specific extended data*/
     lv_mbox_ext_t * ext = lv_obj_allocate_ext_attr(new_mbox, sizeof(lv_mbox_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(new_mbox);
-        return NULL;
-    }
+    if(ext == NULL) return NULL;
 
     ext->text = NULL;
     ext->btnm = NULL;
