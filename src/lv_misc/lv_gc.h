@@ -25,7 +25,6 @@ extern "C" {
 #include "lv_mem.h"
 #include "lv_ll.h"
 #include "../lv_draw/lv_img_cache.h"
-#include "../lv_draw/lv_draw.h"
 
 /*********************
  *      DEFINES
@@ -42,7 +41,7 @@ extern "C" {
     prefix lv_ll_t _lv_img_defoder_ll;                                                                                 \
     prefix lv_img_cache_entry_t * _lv_img_cache_array;                                                                 \
     prefix void * _lv_task_act;                                                                                        \
-    prefix lv_mem_buf_t _lv_mem_buf[LV_MEM_BUF_MAX_NUM];                                                            \
+    prefix void * _lv_draw_buf; 
 
 #define LV_NO_PREFIX
 #define LV_ROOTS LV_GC_ROOTS(LV_NO_PREFIX)
