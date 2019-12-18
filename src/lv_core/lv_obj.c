@@ -51,7 +51,6 @@ typedef struct _lv_event_temp_data
  *  STATIC PROTOTYPES
  **********************/
 static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coord_t y_diff);
-static inline lv_res_t get_style_prop_core(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop, void * out);
 static void report_style_mod_core(void * style_p, lv_obj_t * obj);
 static void refresh_children_style(lv_obj_t * obj);
 static void delete_children(lv_obj_t * obj);
@@ -106,7 +105,7 @@ void lv_init(void)
 #endif
 
     /*Init. the sstyles*/
-    lv_style_built_in_init();
+    lv_style_init();
 
     /*Initialize the screen refresh system*/
     lv_refr_init();
@@ -188,9 +187,9 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         /*Set the default styles*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-//            new_obj->style_p = th->style.scr;
+            new_obj->style_p = th->style.scr;
         } else {
-            lv_style_dsc_init(&new_obj->style_dsc);
+            new_obj->style_p = &lv_style_scr;
         }
 
         /*Init. user date*/
@@ -280,9 +279,9 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         /*Set appearance*/
         lv_theme_t * th = lv_theme_get_current();
         if(th) {
-//            new_obj->style_p = th->style.panel;
+            new_obj->style_p = th->style.panel;
         } else {
-            lv_style_dsc_init(&new_obj->style_dsc);
+            new_obj->style_p = &lv_style_plain_color;
         }
 
 #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
@@ -365,6 +364,8 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         new_obj->opa_scale_en = copy->opa_scale_en;
         new_obj->protect      = copy->protect;
         new_obj->opa_scale    = copy->opa_scale;
+
+        new_obj->style_p = copy->style_p;
 
 #if LV_USE_GROUP
         /*Add to the same group*/
@@ -1197,66 +1198,32 @@ void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right
  * @param obj pointer to an object
  * @param style_p pointer to the new style
  */
-//void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style)
-//{
-//    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-//    if(style) {
-//        LV_ASSERT_STYLE(style);
-//    }
-//
-//    obj->style_p = style;
-//
-//    /*Send a signal about style change to every children with NULL style*/
-//    refresh_children_style(obj);
-//
-//    /*Notify the object about the style change too*/
-//    lv_obj_refresh_style(obj);
-//}
-
-
-void lv_obj_set_style_color(lv_obj_t * obj, lv_style_property_t prop, lv_color_t color)
+void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style)
 {
-    lv_style_set_color(&obj->style_dsc.local, prop, color);
-}
-
-void lv_obj_set_style_value(lv_obj_t * obj, lv_style_property_t prop, lv_style_value_t value)
-{
-    lv_style_set_value(&obj->style_dsc.local, prop, value);
-}
-
-void lv_obj_set_style_opa(lv_obj_t * obj, lv_style_property_t prop, lv_opa_t opa)
-{
-    lv_style_set_opa(&obj->style_dsc.local, prop, opa);
-}
-
-void lv_obj_add_style_class(lv_obj_t * obj, uint8_t type, lv_style_t * style)
-{
-    lv_style_class_list_t * class = lv_mem_alloc(sizeof(lv_style_class_list_t));
-
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, type);
-    if(style_dsc == NULL) {
-        LV_LOG_WARN("lv_obj_add_style_class: can't find style with `type`");
-        return;
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+    if(style) {
+        LV_ASSERT_STYLE(style);
     }
 
-    class->style = style;
-    /* Insert the class to the first place.*/
-    class->next = style_dsc->classes;
-    style_dsc->classes = class;
+    obj->style_p = style;
 
-    lv_obj_refresh_style(obj, type);
+    /*Send a signal about style change to every children with NULL style*/
+    refresh_children_style(obj);
+
+    /*Notify the object about the style change too*/
+    lv_obj_refresh_style(obj);
 }
 
 /**
  * Notify an object about its style is modified
  * @param obj pointer to an object
  */
-void lv_obj_refresh_style(lv_obj_t * obj, uint8_t type)
+void lv_obj_refresh_style(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
     lv_obj_invalidate(obj);
-    obj->signal_cb(obj, LV_SIGNAL_STYLE_CHG, &type);
+    obj->signal_cb(obj, LV_SIGNAL_STYLE_CHG, NULL);
     lv_obj_invalidate(obj);
 }
 
@@ -1267,22 +1234,22 @@ void lv_obj_refresh_style(lv_obj_t * obj, uint8_t type)
  */
 void lv_obj_report_style_mod(lv_style_t * style)
 {
-//    LV_ASSERT_STYLE(style);
-//
-//    lv_disp_t * d = lv_disp_get_next(NULL);
-//
-//    while(d) {
-//        lv_obj_t * i;
-//        LV_LL_READ(d->scr_ll, i)
-//        {
-//            if(i->style_p == style || style == NULL) {
-//                lv_obj_refresh_style(i);
-//            }
-//
-//            report_style_mod_core(style, i);
-//        }
-//        d = lv_disp_get_next(d);
-//    }
+    LV_ASSERT_STYLE(style);
+
+    lv_disp_t * d = lv_disp_get_next(NULL);
+
+    while(d) {
+        lv_obj_t * i;
+        LV_LL_READ(d->scr_ll, i)
+        {
+            if(i->style_p == style || style == NULL) {
+                lv_obj_refresh_style(i);
+            }
+
+            report_style_mod_core(style, i);
+        }
+        d = lv_disp_get_next(d);
+    }
 }
 
 /*-----------------
@@ -1305,7 +1272,7 @@ void lv_obj_set_hidden(lv_obj_t * obj, bool en)
     if(!obj->hidden) lv_obj_invalidate(obj); /*Invalidate when not hidden (hidden objects are ignored) */
 
     lv_obj_t * par = lv_obj_get_parent(obj);
-    if(par) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 }
 
 /**
@@ -1583,16 +1550,12 @@ void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb)
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
- * @return LV_RES_OK or LV_RES_INV
  */
-lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param)
+void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_res_t res = LV_RES_OK;
-    if(obj->signal_cb) res = obj->signal_cb(obj, signal, param);
-
-    return res;
+    if(obj->signal_cb) obj->signal_cb(obj, signal, param);
 }
 
 /**
@@ -1819,16 +1782,14 @@ void lv_obj_get_inner_coords(const lv_obj_t * obj, lv_area_t * coords_p)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_border_part_t part = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BORDER_PART);
-    lv_coord_t w = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BORDER_WIDTH);
+    const lv_style_t * style = lv_obj_get_style(obj);
+    if(style->body.border.part & LV_BORDER_PART_LEFT) coords_p->x1 += style->body.border.width;
 
-    if(part & LV_BORDER_PART_LEFT) coords_p->x1 += w;
+    if(style->body.border.part & LV_BORDER_PART_RIGHT) coords_p->x2 -= style->body.border.width;
 
-    if(part & LV_BORDER_PART_RIGHT) coords_p->x2 -= w;
+    if(style->body.border.part & LV_BORDER_PART_TOP) coords_p->y1 += style->body.border.width;
 
-    if(part & LV_BORDER_PART_TOP) coords_p->y1 += w;
-
-    if(part & LV_BORDER_PART_BOTTOM) coords_p->y2 -= w;
+    if(style->body.border.part & LV_BORDER_PART_BOTTOM) coords_p->y2 -= style->body.border.width;
 }
 
 /**
@@ -1902,10 +1863,9 @@ lv_coord_t lv_obj_get_width_fit(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_style_value_t left = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_PAD_LEFT);
-    lv_style_value_t right = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_PAD_RIGHT);
+    const lv_style_t * style = lv_obj_get_style(obj);
 
-    return lv_obj_get_width(obj) - left - right;
+    return lv_obj_get_width(obj) - style->body.padding.left - style->body.padding.right;
 }
 
 /**
@@ -1917,10 +1877,9 @@ lv_coord_t lv_obj_get_height_fit(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_style_value_t top = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_PAD_TOP);
-    lv_style_value_t bottom =  lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_PAD_BOTTOM);
+    const lv_style_t * style = lv_obj_get_style(obj);
 
-    return lv_obj_get_height(obj) - top - bottom;
+    return lv_obj_get_height(obj) - style->body.padding.top - style->body.padding.bottom;
 }
 
 /**
@@ -2032,110 +1991,51 @@ lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj)
  * Appearance get
  *---------------*/
 
-lv_style_dsc_t * lv_obj_get_style(const lv_obj_t * obj, uint8_t type)
+/**
+ * Get the style pointer of an object (if NULL get style of the parent)
+ * @param obj pointer to an object
+ * @return pointer to a style
+ */
+const lv_style_t * lv_obj_get_style(const lv_obj_t * obj)
 {
-    void * p = &type;
-    lv_res_t res;
-    res = lv_signal_send((lv_obj_t*)obj, LV_SIGNAL_GET_STYLE, &p);
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    if(res != LV_RES_OK) return NULL;
+    const lv_style_t * style_act = obj->style_p;
+    if(style_act == NULL) {
+        lv_obj_t * par = obj->par;
 
-    return p;
-}
-
-
-lv_style_value_t lv_obj_get_style_value(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop)
-{
-    lv_style_value_t value;
-    lv_res_t found;
-    found = get_style_prop_core(obj, type, prop, &value);
-
-    if(found == LV_RES_OK) return value;
-    else {
-        /*Default value*/
-        switch(prop) {
-        case LV_STYLE_BORDER_PART:
-            return LV_BORDER_PART_FULL;
+        while(par) {
+            if(par->style_p) {
+                if(par->style_p->glass == 0) {
+#if LV_USE_GROUP == 0
+                    style_act = par->style_p;
+#else
+                    /*If a parent is focused then use then focused style*/
+                    lv_group_t * g = lv_obj_get_group(par);
+                    if(lv_group_get_focused(g) == par) {
+                        style_act = lv_group_mod_style(g, par->style_p);
+                    } else {
+                        style_act = par->style_p;
+                    }
+#endif
+                    break;
+                }
+            }
+            par = par->par;
         }
     }
-
-    return 0;
-}
-
-lv_color_t lv_obj_get_style_color(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop)
-{
-    lv_color_t color;
-    lv_res_t found;
-    found = get_style_prop_core(obj, type, prop, &color);
-
-    if(found == LV_RES_OK) return color;
-    else {
-       /*Default colors*/
+#if LV_USE_GROUP
+    if(obj->group_p) {
+        if(lv_group_get_focused(obj->group_p) == obj) {
+            style_act = lv_group_mod_style(obj->group_p, style_act);
+        }
     }
+#endif
 
-    return LV_COLOR_WHITE;
+    if(style_act == NULL) style_act = &lv_style_plain;
+
+    return style_act;
 }
-
-lv_opa_t lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop)
-{
-    lv_opa_t opa;
-    lv_res_t found;
-    found = get_style_prop_core(obj, type, prop, &opa);
-
-    if(found == LV_RES_OK) return opa;
-    else {
-        /*Default opa*/
-    }
-
-    return LV_OPA_COVER;
-}
-
-//
-///**
-// * Get the style pointer of an object (if NULL get style of the parent)
-// * @param obj pointer to an object
-// * @return pointer to a style
-// */
-//const lv_style_t * lv_obj_get_style(const lv_obj_t * obj)
-//{
-//    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-//
-//    const lv_style_t * style_act = obj->style_p;
-//    if(style_act == NULL) {
-//        lv_obj_t * par = obj->par;
-//
-//        while(par) {
-//            if(par->style_p) {
-//                if(par->style_p->glass == 0) {
-//#if LV_USE_GROUP == 0
-//                    style_act = par->style_p;
-//#else
-//                    /*If a parent is focused then use then focused style*/
-//                    lv_group_t * g = lv_obj_get_group(par);
-//                    if(lv_group_get_focused(g) == par) {
-//                        style_act = lv_group_mod_style(g, par->style_p);
-//                    } else {
-//                        style_act = par->style_p;
-//                    }
-//#endif
-//                    break;
-//                }
-//            }
-//            par = par->par;
-//        }
-//    }
-//#if LV_USE_GROUP
-//    if(obj->group_p) {
-//        if(lv_group_get_focused(obj->group_p) == obj) {
-//            style_act = lv_group_mod_style(obj->group_p, style_act);
-//        }
-//    }
-//#endif
-//
-//    if(style_act == NULL) style_act = &lv_style_plain;
-//
-//    return style_act;
-//}
 
 /*-----------------
  * Attribute get
@@ -2498,32 +2398,6 @@ static void lv_obj_del_async_cb(void * obj)
 }
 
 /**
- * Initialize a rectangle descriptor from an object's styles
- * @param obj pointer to an object
- * @param type type of style. E.g.  `LV_OBJ_STYLE_MAIN`, `LV_BTN_STYLE_REL` or `LV_PAGE_STYLE_SCRL`
- * @param draw_dsc the descriptor the initialize
- * @note Only the relevant fields will be set.
- * E.g. if `border width == 0` the other border properties won't be evaluated.
- */
-void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t type, lv_draw_rect_dsc_t * draw_dsc)
-{
-
-    lv_draw_rect_dsc_init(draw_dsc);
-    draw_dsc->radius = lv_obj_get_style_value(obj, type, LV_STYLE_RADIUS);
-
-    draw_dsc->bg_color = lv_obj_get_style_color(obj, type, LV_STYLE_BG_COLOR);
-
-    draw_dsc->border_width = lv_obj_get_style_value(obj, type, LV_STYLE_BORDER_WIDTH);
-    if(draw_dsc->border_width) {
-        draw_dsc->border_opa = lv_obj_get_style_opa(obj, type, LV_STYLE_BORDER_OPA);
-        if(draw_dsc->border_opa >= LV_OPA_MIN) {
-            draw_dsc->border_part = lv_obj_get_style_value(obj, type, LV_STYLE_BORDER_PART);
-            draw_dsc->border_color = lv_obj_get_style_color(obj, type, LV_STYLE_BORDER_COLOR);
-        }
-    }
-}
-
-/**
  * Handle the drawing related tasks of the base objects.
  * @param obj pointer to an object
  * @param clip_area the object will be drawn only in this area
@@ -2538,17 +2412,15 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
         /*Most trivial test. Is the mask fully IN the object? If no it surely doesn't cover it*/
         if(lv_area_is_in(clip_area, &obj->coords) == false) return LV_DESIGN_RES_NOT_COVER;
 
-        if(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BG_BLEND_MODE) != LV_BLEND_MODE_NORMAL) return LV_DESIGN_RES_NOT_COVER;
-        if(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BORDER_BLEND_MODE) != LV_BLEND_MODE_NORMAL) return LV_DESIGN_RES_NOT_COVER;
-
-        if(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BG_CLIP_CORNER)) return LV_DESIGN_RES_MASKED;
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) return LV_DESIGN_RES_MASKED;
 
         /*Can cover the area only if fully solid (no opacity)*/
-        if(lv_obj_get_style_opa(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BG_OPA) < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
+        if(style->body.opa < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
 
         /* Because of the radius it is not sure the area is covered
          * Check the areas where there is no radius*/
-        lv_coord_t r = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_RADIUS);
+        lv_coord_t r = style->body.radius;
 
         if(r == LV_RADIUS_CIRCLE) return LV_DESIGN_RES_NOT_COVER;
 
@@ -2570,23 +2442,20 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
 
     }
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        lv_draw_rect_dsc_t draw_dsc;
-        lv_obj_init_draw_rect_dsc(obj, LV_OBJ_STYLE_MAIN, &draw_dsc);
-        lv_draw_rect(&obj->coords, clip_area, &draw_dsc, lv_obj_get_opa_scale(obj));
+        const lv_style_t * style = lv_obj_get_style(obj);
+        lv_draw_rect(&obj->coords, clip_area, style, lv_obj_get_opa_scale(obj));
 
-        if(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BG_CLIP_CORNER)) {
+        if(style->body.corner_mask) {
             lv_draw_mask_radius_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_radius_param_t));
 
-            lv_coord_t r = lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_RADIUS);
-
-            lv_draw_mask_radius_init(mp, &obj->coords, r, false);
+            lv_draw_mask_radius_init(mp, &obj->coords, style->body.radius, false);
             /*Add the mask and use `obj+8` as custom id. Don't use `obj` directly because it might be used by the user*/
             lv_draw_mask_add(mp, obj + 8);
         }
     }
     else if(mode == LV_DESIGN_DRAW_POST) {
-//        const lv_style_t * style_dsc = lv_obj_get_style(obj);
-        if(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_BG_CLIP_CORNER)) {
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) {
             lv_draw_mask_radius_param_t * param = lv_draw_mask_remove_custom(obj + 8);
             lv_mem_buf_release(param);
         }
@@ -2604,12 +2473,7 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
  */
 static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
 {
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_style_dsc_t ** style_dsc_p = param;
-        *style_dsc_p = &obj->style_dsc;
-        return LV_RES_OK;
-    }
-    else if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_res_t res = LV_RES_OK;
 
@@ -2617,10 +2481,10 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         /*Return 'invalid' if the child change signal is not enabled*/
         if(lv_obj_is_protected(obj, LV_PROTECT_CHILD_CHG) != false) res = LV_RES_INV;
     } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
-        lv_coord_t shadow = (lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_SHADOW_WIDTH) >> 1) + 1;
-        shadow += lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_SHADOW_SPREAD);
-        shadow += LV_MATH_MAX(LV_MATH_ABS(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_SHADOW_OFFSET_X)),
-                              LV_MATH_ABS(lv_obj_get_style_value(obj, LV_OBJ_STYLE_MAIN, LV_STYLE_SHADOW_OFFSET_Y)));
+        const lv_style_t * style = lv_obj_get_style(obj);
+        lv_coord_t shadow = (style->body.shadow.width >> 1) + 1;
+        shadow += style->body.shadow.spread;
+        shadow += LV_MATH_MAX(LV_MATH_ABS(style->body.shadow.offset.x), LV_MATH_ABS(style->body.shadow.offset.y));
 
         if(shadow > obj->ext_draw_pad) obj->ext_draw_pad = shadow;
     } else if(sign == LV_SIGNAL_STYLE_CHG) {
@@ -2649,54 +2513,23 @@ static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coor
     }
 }
 
-static inline lv_res_t get_style_prop_core(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop, void * out)
-{
-    lv_style_dsc_t * dsc = lv_obj_get_style(obj, type);
-
-    if(dsc == NULL) return LV_RES_INV;
-
-    lv_res_t found = LV_RES_INV;
-
-    lv_style_attr_t attr;
-    attr.full= prop >> 8;
-
-    const lv_obj_t * parent = obj;
-    while(parent) {
-        found = lv_style_get_color(&dsc->local, prop, out);
-        if(found == LV_RES_OK) return LV_RES_OK;
-
-         const lv_style_class_list_t * classes = obj->style_dsc.classes;
-         while(classes) {
-             found = lv_style_get_color(classes->style, prop, out);
-             if(found == LV_RES_OK) return LV_RES_OK;
-
-             classes = classes->next;
-         }
-
-        if(attr.bits.inherit == 0) break;
-        parent = lv_obj_get_parent(parent);
-    }
-
-    return LV_RES_INV;
-}
-
 /**
  * Refresh the style of all children of an object. (Called recursively)
- * @param style_p refresh objects only with this style_dsc.
+ * @param style_p refresh objects only with this style.
  * @param obj pointer to an object
  */
 static void report_style_mod_core(void * style_p, lv_obj_t * obj)
 {
-//    lv_obj_t * i;
-//    LV_LL_READ(obj->child_ll, i)
-//    {
-//        if(i->style.local == style_p || style_p == NULL) {
-//            refresh_children_style(i);
-//            lv_obj_refresh_style(i);
-//        }
-//
-//        report_style_mod_core(style_p, i);
-//    }
+    lv_obj_t * i;
+    LV_LL_READ(obj->child_ll, i)
+    {
+        if(i->style_p == style_p || style_p == NULL) {
+            refresh_children_style(i);
+            lv_obj_refresh_style(i);
+        }
+
+        report_style_mod_core(style_p, i);
+    }
 }
 
 /**
@@ -2706,17 +2539,17 @@ static void report_style_mod_core(void * style_p, lv_obj_t * obj)
  */
 static void refresh_children_style(lv_obj_t * obj)
 {
-//    lv_obj_t * child = lv_obj_get_child(obj, NULL);
-//    while(child != NULL) {
-//        if(child->style_p == NULL) {
-//            refresh_children_style(child); /*Check children too*/
-//            lv_obj_refresh_style(child);   /*Notify the child about the style change*/
-//        } else if(child->style_p->glass) {
-//            /*Children with 'glass' parent might be effected if their class == NULL*/
-//            refresh_children_style(child);
-//        }
-//        child = lv_obj_get_child(obj, child);
-//    }
+    lv_obj_t * child = lv_obj_get_child(obj, NULL);
+    while(child != NULL) {
+        if(child->style_p == NULL) {
+            refresh_children_style(child); /*Check children too*/
+            lv_obj_refresh_style(child);   /*Notify the child about the style change*/
+        } else if(child->style_p->glass) {
+            /*Children with 'glass' parent might be effected if their style == NULL*/
+            refresh_children_style(child);
+        }
+        child = lv_obj_get_child(obj, child);
+    }
 }
 
 /**
