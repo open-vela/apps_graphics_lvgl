@@ -139,17 +139,15 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
     disp->act_scr   = lv_obj_create(NULL, NULL); /*Create a default screen on the display*/
     disp->top_layer = lv_obj_create(NULL, NULL); /*Create top layer on the display*/
     disp->sys_layer = lv_obj_create(NULL, NULL); /*Create sys layer on the display*/
-//    lv_obj_set_style(disp->top_layer, &lv_style_transp);
-//    lv_obj_set_style(disp->sys_layer, &lv_style_transp);
-    lv_obj_set_hidden(disp->top_layer, true);
-    lv_obj_set_hidden(disp->sys_layer, true);
+    lv_obj_set_style(disp->top_layer, &lv_style_transp);
+    lv_obj_set_style(disp->sys_layer, &lv_style_transp);
 
     lv_obj_invalidate(disp->act_scr);
 
     disp_def = disp_def_tmp; /*Revert the default display*/
 
     /*Create a refresh task*/
-    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, disp);
+    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_REFR_TASK_PRIO, disp);
     LV_ASSERT_MEM(disp->refr_task);
     if(disp->refr_task == NULL) return NULL;
 

@@ -30,7 +30,6 @@ extern "C" {
 #include "../lv_misc/lv_log.h"
 #include "../lv_misc/lv_bidi.h"
 #include "../lv_hal/lv_hal.h"
-#include "../lv_draw/lv_draw_rect.h"
 
 /*********************
  *      DEFINES
@@ -47,9 +46,9 @@ extern "C" {
 
 #define LV_MAX_ANCESTOR_NUM 8
 
-#define LV_EXT_CLICK_AREA_OFF   0
-#define LV_EXT_CLICK_AREA_TINY  1
-#define LV_EXT_CLICK_AREA_FULL  2
+#define LV_EXT_CLICK_AREA_OFF 0
+#define LV_EXT_CLICK_AREA_TINY 1
+#define LV_EXT_CLICK_AREA_FULL 2
 
 /**********************
  *      TYPEDEFS
@@ -127,7 +126,6 @@ enum {
     LV_SIGNAL_BASE_DIR_CHG, /**<The base dir has changed*/
     LV_SIGNAL_REFR_EXT_DRAW_PAD, /**< Object's extra padding has changed */
     LV_SIGNAL_GET_TYPE, /**< LittlevGL needs to retrieve the object's type */
-    LV_SIGNAL_GET_STYLE, /**<Get the style of an object*/
 
     /*Input device related*/
     LV_SIGNAL_PRESSED,           /**< The object has been pressed*/
@@ -201,7 +199,7 @@ typedef struct _lv_obj_t
     lv_design_cb_t design_cb; /**< Object type specific design function*/
 
     void * ext_attr;            /**< Object type specific extended data*/
-    lv_style_dsc_t  style_dsc;
+    const lv_style_t * style_p; /**< Pointer to the object's style*/
 
 #if LV_USE_GROUP != 0
     void * group_p; /**< Pointer to the group of the object*/
@@ -243,12 +241,6 @@ typedef struct _lv_obj_t
 #endif
 
 } lv_obj_t;
-
-enum {
-    LV_OBJ_STYLE_MAIN
-};
-
-typedef uint8_t lv_obj_style_t;
 
 /*Protect some attributes (max. 8 bit)*/
 enum {
@@ -450,18 +442,11 @@ void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right
  */
 void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style);
 
-void lv_obj_set_style_color(lv_obj_t * obj, lv_style_property_t prop, lv_color_t color);
-
-void lv_obj_set_style_value(lv_obj_t * obj, lv_style_property_t prop, lv_style_value_t value);
-
-void lv_obj_set_style_opa(lv_obj_t * obj, lv_style_property_t prop, lv_opa_t opa);
-
-void lv_obj_add_style_class(lv_obj_t * obj, uint8_t type, lv_style_t * style);
 /**
  * Notify an object about its style is modified
  * @param obj pointer to an object
  */
-void lv_obj_refresh_style(lv_obj_t * obj, uint8_t type);
+void lv_obj_refresh_style(lv_obj_t * obj);
 
 /**
  * Notify all object if a style is modified
@@ -607,14 +592,12 @@ const void * lv_event_get_data(void);
  */
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
 
-
 /**
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
- * @return LV_RES_OK or LV_RES_INV
  */
-lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
 
 /**
  * Set a new design function for an object
@@ -807,20 +790,12 @@ lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj);
  * Appearance get
  *---------------*/
 
-lv_style_dsc_t * lv_obj_get_style(const lv_obj_t * obj, uint8_t type);
-
-lv_style_value_t lv_obj_get_style_value(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-lv_color_t lv_obj_get_style_color(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-lv_opa_t lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-///**
-// * Get the style pointer of an object (if NULL get style of the parent)
-// * @param obj pointer to an object
-// * @return pointer to a style
-// */
-//const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
+/**
+ * Get the style pointer of an object (if NULL get style of the parent)
+ * @param obj pointer to an object
+ * @return pointer to a style
+ */
+const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
 
 /*-----------------
  * Attribute get
@@ -1007,18 +982,6 @@ bool lv_obj_is_focused(const lv_obj_t * obj);
  * @return LV_RES_OK
  */
 lv_res_t lv_obj_handle_get_type_signal(lv_obj_type_t * buf, const char * name);
-
-
-
-/**
- * Initialize a rectangle descriptor from an object's styles
- * @param obj pointer to an object
- * @param type type of style. E.g.  `LV_OBJ_STYLE_MAIN`, `LV_BTN_STYLE_REL` or `LV_PAGE_STYLE_SCRL`
- * @param draw_dsc the descriptor the initialize
- * @note Only the relevant fields will be set.
- * E.g. if `border width == 0` the other border properties won't be evaluated.
- */
-void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t type, lv_draw_rect_dsc_t * draw_dsc);
 
 /**********************
  *      MACROS
