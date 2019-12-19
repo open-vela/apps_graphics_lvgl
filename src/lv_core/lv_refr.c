@@ -73,8 +73,6 @@ void lv_refr_init(void)
  */
 void lv_refr_now(lv_disp_t * disp)
 {
-	lv_anim_refr_now();
-
     if(disp) {
         lv_disp_refr_task(disp->refr_task);
     } else {
