@@ -31,7 +31,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_design_mode_t mode);
+static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_roller_scrl_signal(lv_obj_t * roller_scrl, lv_signal_t sign, void * param);
 static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * param);
 static void refr_position(lv_obj_t * roller, lv_anim_enable_t animen);
@@ -77,8 +77,11 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Allocate the roller type specific extended data*/
     lv_roller_ext_t * ext = lv_obj_allocate_ext_attr(new_roller, sizeof(lv_roller_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) return NULL;
-    ext->ddlist.draw_arrow = 0; /*Do not draw arrow by default*/
+    if(ext == NULL) {
+        lv_obj_del(new_roller);
+        return NULL;
+    }
+
     ext->mode = LV_ROLLER_MODE_NORMAL;
 
     /*The signal and design functions are not copied so set them here*/
@@ -93,6 +96,7 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_ddlist_open(new_roller, false);
         lv_ddlist_set_anim_time(new_roller, LV_ROLLER_DEF_ANIM_TIME);
         lv_ddlist_set_stay_open(new_roller, true);
+        lv_ddlist_set_symbol(new_roller, NULL);
         lv_roller_set_visible_row_count(new_roller, 3);
         lv_label_set_align(ext->ddlist.label, LV_LABEL_ALIGN_CENTER);
 
@@ -273,6 +277,24 @@ uint16_t lv_roller_get_selected(const lv_obj_t * roller)
 }
 
 /**
+ * Get the total number of options
+ * @param roller pointer to a roller object
+ * @return the total number of options
+ */
+uint16_t lv_roller_get_option_cnt(const lv_obj_t * roller)
+{
+    LV_ASSERT_OBJ(roller, LV_OBJX_NAME);
+
+    lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
+    if(ext->mode == LV_ROLLER_MODE_INIFINITE) {
+        uint16_t real_id_cnt = ext->ddlist.option_cnt / LV_ROLLER_INF_PAGES;
+        return real_id_cnt;
+    } else {
+        return ext->ddlist.option_cnt;
+    }
+}
+
+/**
  * Get the align attribute. Default alignment after _create is LV_LABEL_ALIGN_CENTER
  * @param roller pointer to a roller object
  * @return LV_LABEL_ALIGN_LEFT, LV_LABEL_ALIGN_RIGHT or LV_LABEL_ALIGN_CENTER
@@ -309,14 +331,19 @@ const lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_
 {
     LV_ASSERT_OBJ(roller, LV_OBJX_NAME);
 
+    const lv_style_t * style;
     switch(type) {
-        case LV_ROLLER_STYLE_BG: return lv_obj_get_style(roller);
-        case LV_ROLLER_STYLE_SEL: return lv_ddlist_get_style(roller, LV_DDLIST_STYLE_SEL);
-        default: return NULL;
+        case LV_ROLLER_STYLE_BG:
+            style = lv_obj_get_style(roller);
+            break;
+        case LV_ROLLER_STYLE_SEL:
+            style = lv_ddlist_get_style(roller, LV_DDLIST_STYLE_SEL);
+            break;
+        default:
+            style = NULL;
     }
 
-    /*To avoid warning*/
-    return NULL;
+    return style;
 }
 
 /**********************
@@ -326,22 +353,22 @@ const lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_
 /**
  * Handle the drawing related tasks of the rollers
  * @param roller pointer to an object
- * @param mask the object will be drawn only in this area
+ * @param clip_area the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return true/false, depends on 'mode'
+ * @param return an element of `lv_design_res_t`
  */
-static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_design_mode_t mode)
+static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return false;
+        return LV_DESIGN_RES_NOT_COVER;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        draw_bg(roller, mask);
+        draw_bg(roller, clip_area);
 
         const lv_style_t * style = lv_roller_get_style(roller, LV_ROLLER_STYLE_BG);
         lv_opa_t opa_scale       = lv_obj_get_opa_scale(roller);
@@ -359,7 +386,7 @@ static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_desig
         rect_area.x1 = roller_coords.x1;
         rect_area.x2 = roller_coords.x2;
 
-        lv_draw_rect(&rect_area, mask, ext->ddlist.sel_style, opa_scale);
+        lv_draw_rect(&rect_area, clip_area, ext->ddlist.sel_style, opa_scale);
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
@@ -378,7 +405,7 @@ static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_desig
         rect_area.x2 = roller->coords.x2;
         lv_area_t mask_sel;
         bool area_ok;
-        area_ok = lv_area_intersect(&mask_sel, mask, &rect_area);
+        area_ok = lv_area_intersect(&mask_sel, clip_area, &rect_area);
         if(area_ok) {
             const lv_style_t * sel_style = lv_roller_get_style(roller, LV_ROLLER_STYLE_SEL);
             lv_style_t new_style;
@@ -402,7 +429,7 @@ static bool lv_roller_design(lv_obj_t * roller, const lv_area_t * mask, lv_desig
         }
     }
 
-    return true;
+    return LV_DESIGN_RES_OK;
 }
 
 /**
