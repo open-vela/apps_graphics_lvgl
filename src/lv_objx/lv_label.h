@@ -77,22 +77,19 @@ typedef struct
                            by the library)*/
         char tmp[LV_LABEL_DOT_NUM + 1]; /* Directly store the characters if <=4 characters */
     } dot;
-
     uint16_t dot_end;  /*The text end position in dot mode (Handled by the library)*/
+    lv_point_t offset; /*Text draw position offset*/
+#if LV_LABEL_LONG_TXT_HINT
+    lv_draw_label_hint_t hint; /*Used to buffer info about large text*/
+#endif
 
 #if LV_USE_ANIMATION
     uint16_t anim_speed; /*Speed of scroll and roll animation in px/sec unit*/
 #endif
 
-    lv_point_t offset; /*Text draw position offset*/
-
-#if LV_LABEL_LONG_TXT_HINT
-    lv_draw_label_hint_t hint; /*Used to buffer info about large text*/
-#endif
-
 #if LV_LABEL_TEXT_SEL
-    uint16_t sel_start;
-    uint16_t sel_end;
+    uint16_t txt_sel_start; /*Left-most selection character*/
+    uint16_t txt_sel_end;   /*Right-most selection character*/
 #endif
 
     lv_label_long_mode_t long_mode : 3; /*Determinate what to do with the long texts*/
@@ -109,7 +106,6 @@ typedef struct
 enum {
     LV_LABEL_STYLE_MAIN,
 };
-
 typedef uint8_t lv_label_style_t;
 
 /**********************
@@ -195,6 +191,18 @@ void lv_label_set_body_draw(lv_obj_t * label, bool en);
  * @param anim_speed speed of animation in px/sec unit
  */
 void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed);
+
+/**
+ * Set the style of an label
+ * @param label pointer to an label object
+ * @param type which style should be get (can be only `LV_LABEL_STYLE_MAIN`)
+ * @param style pointer to a style
+ */
+static inline void lv_label_set_style(lv_obj_t * label, lv_label_style_t type, const lv_style_t * style)
+{
+    (void)type; /*Unused*/
+    lv_obj_set_style(label, style);
+}
 
 /**
  * @brief Set the selection start index.
@@ -283,6 +291,18 @@ uint16_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos);
 bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos);
 
 /**
+ * Get the style of an label object
+ * @param label pointer to an label object
+ * @param type which style should be get (can be only `LV_LABEL_STYLE_MAIN`)
+ * @return pointer to the label's style
+ */
+static inline const lv_style_t * lv_label_get_style(const lv_obj_t * label, lv_label_style_t type)
+{
+    (void)type; /*Unused*/
+    return lv_obj_get_style(label);
+}
+
+/**
  * @brief Get the selection start index.
  * @param label pointer to a label object.
  * @return selection start index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
@@ -295,9 +315,6 @@ uint16_t lv_label_get_text_sel_start(const lv_obj_t * label);
  * @return selection end index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
  */
 uint16_t lv_label_get_text_sel_end(const lv_obj_t * label);
-
-
-lv_style_dsc_t * lv_label_get_style(lv_obj_t * label, uint8_t type);
 
 /*=====================
  * Other functions

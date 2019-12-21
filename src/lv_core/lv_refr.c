@@ -217,7 +217,7 @@ void lv_disp_refr_task(lv_task_t * task)
         }
     }
 
-    lv_mem_buf_free_all();
+    lv_draw_free_buf();
 
     LV_LOG_TRACE("lv_refr_task: ready");
 }
@@ -419,9 +419,6 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
     /*If this object is fully cover the draw area check the children too */
     if(lv_area_is_in(area_p, &obj->coords) && obj->hidden == 0) {
-        lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
-        if(design_res == LV_DESIGN_RES_MASKED) return NULL;
-
         lv_obj_t * i;
         LV_LL_READ(obj->child_ll, i)
         {
@@ -435,7 +432,8 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
         /*If no better children check this object*/
         if(found_p == NULL) {
-            if(design_res == LV_DESIGN_RES_COVER &&
+            const lv_style_t * style = lv_obj_get_style(obj);
+            if(style->body.opa == LV_OPA_COVER && obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK) != false &&
                lv_obj_get_opa_scale(obj) == LV_OPA_COVER) {
                 found_p = obj;
             }
@@ -520,12 +518,7 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
 
 #if MASK_AREA_DEBUG
         static lv_color_t debug_color = LV_COLOR_RED;
-        LV_STYLE_CREATE(style_debug, &lv_style_plain);
-        style_debug.body.main_color = debug_color;
-        style_debug.body.grad_color = debug_color;
-        style_debug.body.border.width = 2;
-        style_debug.body.border.color.full = (debug_color.full + 0x13) * 9;
-        lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &style_debug, LV_OPA_50);
+        lv_draw_fill(&obj_ext_mask, &obj_ext_mask, debug_color, LV_OPA_50);
         debug_color.full *= 17;
         debug_color.full += 0xA1;
 #endif
