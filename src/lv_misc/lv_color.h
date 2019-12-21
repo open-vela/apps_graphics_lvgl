@@ -75,8 +75,8 @@ enum {
     LV_OPA_COVER  = 255,
 };
 
-#define LV_OPA_MIN 16  /*Opacities below this will be transparent*/
-#define LV_OPA_MAX 251 /*Opacities above this will fully cover*/
+#define LV_OPA_MIN 5    /*Opacities below this will be transparent*/
+#define LV_OPA_MAX 250  /*Opacities above this will fully cover*/
 
 #if LV_COLOR_DEPTH == 1
 #define LV_COLOR_SIZE 8
@@ -104,9 +104,9 @@ enum {
 # define LV_COLOR_GET_B1(c) (c).ch.blue
 # define LV_COLOR_GET_A1(c) 1
 
-# define LV_COLOR_SET_R8(c, v) (c).ch.red = (uint8_t)((v) & 0x7);
-# define LV_COLOR_SET_G8(c, v) (c).ch.green = (uint8_t)((v) & 0x7);
-# define LV_COLOR_SET_B8(c, v) (c).ch.blue = (uint8_t)((v) & 0x3);
+# define LV_COLOR_SET_R8(c, v) (c).ch.red = (uint8_t)(v) & 0x7U;
+# define LV_COLOR_SET_G8(c, v) (c).ch.green = (uint8_t)(v) & 0x7U;
+# define LV_COLOR_SET_B8(c, v) (c).ch.blue = (uint8_t)(v) & 0x3U;
 # define LV_COLOR_SET_A8(c, v) do {} while(0)
 
 # define LV_COLOR_GET_R8(c) (c).ch.red
@@ -114,10 +114,10 @@ enum {
 # define LV_COLOR_GET_B8(c) (c).ch.blue
 # define LV_COLOR_GET_A8(c) 0xFF
 
-# define LV_COLOR_SET_R16(c, v) (c).ch.red = (uint8_t)(((uint8_t)(v)) & 0x1F);
-# define LV_COLOR_SET_G16(c, v) (c).ch.green = (uint8_t)((v) & 0x3F);
+# define LV_COLOR_SET_R16(c, v) (c).ch.red = (uint8_t)(v) & 0x1FU;
+# define LV_COLOR_SET_G16(c, v) (c).ch.green = (uint8_t)(v) & 0x3FU;
 # define LV_COLOR_SET_G16_SWAP(c, v) {(c).ch.green_h = (uint8_t)(((v) >> 3) & 0x7); (c).ch.green_l = (uint8_t)((v) & 0x7);}
-# define LV_COLOR_SET_B16(c, v) (c).ch.blue = (uint8_t)((v) & 0x1F);
+# define LV_COLOR_SET_B16(c, v) (c).ch.blue = (uint8_t)(v) & 0x1FU;
 # define LV_COLOR_SET_A16(c, v) do {} while(0)
 
 # define LV_COLOR_GET_R16(c) (c).ch.red
@@ -432,6 +432,14 @@ static inline uint32_t lv_color_to32(lv_color_t color)
 #endif
 }
 
+/**
+ * Mix two colors with a given ratio.
+ * @param c1
+ * @param c2
+ * @param mix The ratio of the colors. 0: full `c2`, 255: full `c1`, 127: half `c1` and half`c2`
+ * @return the mixed color
+ * @note 255 won't give clearly `c1`.
+ */
 static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 {
     lv_color_t ret;
@@ -450,6 +458,66 @@ static inline lv_color_t lv_color_mix(lv_color_t c1, lv_color_t c2, uint8_t mix)
 }
 
 /**
+ * Mix two colors. Both color can have alpha value. It requires ARGB888 colors.
+ * @param bg_color background color
+ * @param bg_opa alpha of the background color
+ * @param fg_color foreground color
+ * @param fg_opa alpha of the foreground color
+ * @param res_color the result color
+ * @param res_opa the result opacity
+ */
+static inline void lv_color_mix_with_alpha(lv_color_t bg_color, lv_opa_t bg_opa, lv_color_t fg_color, lv_opa_t fg_opa, lv_color_t * res_color, lv_opa_t * res_opa)
+{
+    /* Pick the foreground if it's fully opaque or the Background is fully transparent*/
+    if(fg_opa > LV_OPA_MAX || bg_opa <= LV_OPA_MIN) {
+        res_color->full = fg_color.full;
+        *res_opa = fg_opa;
+    }
+    /*Transparent foreground: use the Background*/
+    else if(fg_opa <= LV_OPA_MIN) {
+        res_color->full = bg_color.full;
+        *res_opa = bg_opa;
+    }
+    /*Opaque background: use simple mix*/
+    else if(bg_opa >= LV_OPA_MAX) {
+        *res_color = lv_color_mix(fg_color, bg_color, fg_opa);
+        *res_opa = LV_OPA_COVER;
+    }
+    /*Both colors have alpha. Expensive calculation need to be applied*/
+    else {
+        /*Save the parameters and the result. If they will be asked again don't compute again*/
+        static lv_opa_t fg_opa_save     = 0;
+        static lv_opa_t bg_opa_save     = 0;
+        static lv_color_t fg_color_save = {{0}};
+        static lv_color_t bg_color_save = {{0}};
+        static lv_color_t res_color_saved = {{0}};
+        static lv_opa_t res_opa_saved = 0;
+
+        if(fg_opa != fg_opa_save || bg_opa != bg_opa_save || fg_color.full != fg_color_save.full ||
+                bg_color.full != bg_color_save.full) {
+            fg_opa_save        = fg_opa;
+            bg_opa_save        = bg_opa;
+            fg_color_save.full = fg_color.full;
+            bg_color_save.full = bg_color.full;
+            /*Info:
+             * https://en.wikipedia.org/wiki/Alpha_compositing#Analytical_derivation_of_the_over_operator*/
+            res_opa_saved = 255 - ((uint16_t)((uint16_t)(255 - fg_opa) * (255 - bg_opa)) >> 8);
+            if(res_opa_saved == 0) {
+                while(1)
+                    ;
+            }
+            lv_opa_t ratio = (uint16_t)((uint16_t)fg_opa * 255) / res_opa_saved;
+            res_color_saved  = lv_color_mix(fg_color, bg_color, ratio);
+
+        }
+
+        res_color->full = res_color_saved.full;
+        *res_opa = res_opa_saved;
+    }
+}
+
+
+/**
  * Get the brightness of a color
  * @param color a color
  * @return the brightness [0..255]
@@ -464,14 +532,14 @@ static inline uint8_t lv_color_brightness(lv_color_t color)
 
 /* The most simple macro to create a color from R,G and B values */
 #if LV_COLOR_DEPTH == 1
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){.full = (b8 >> 7 | g8 >> 7 | r8 >> 7)})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){.full = ((b8 >> 7) | (g8 >> 7) | (r8 >> 7))})
 #elif LV_COLOR_DEPTH == 8
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8 >> 6, g8 >> 5, r8 >> 5}})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(b8 >> 6) & 0x3U, (g8 >> 5) & 0x7U, (r8 >> 5) & 0x7U}})
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8 >> 3, g8 >> 2, r8 >> 3}})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(b8 >> 3) & 0x1FU, (g8 >> 2) & 0x3FU, (r8 >> 3) & 0x1FU}})
 #else
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{g8 >> 5, r8 >> 3, b8 >> 3, (g8 >> 2) & 0x7}})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(g8 >> 5) & 0x7U, (r8 >> 3) & 0x1FU, (b8 >> 3) & 0x1FU, (g8 >> 2) & 0x7U}})
 #endif
 #elif LV_COLOR_DEPTH == 32
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8, g8, r8, 0xff}}) /*Fix 0xff alpha*/

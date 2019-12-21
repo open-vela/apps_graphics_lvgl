@@ -61,7 +61,11 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Allocate the spinbox type specific extended data*/
     lv_spinbox_ext_t * ext = lv_obj_allocate_ext_attr(new_spinbox, sizeof(lv_spinbox_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) return NULL;
+    if(ext == NULL) {
+        lv_obj_del(new_spinbox);
+        return NULL;
+    }
+
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_spinbox);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_spinbox);
 
@@ -405,11 +409,15 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
     char buf[LV_SPINBOX_MAX_DIGIT_COUNT + 8];
     memset(buf, 0, sizeof(buf));
     char * buf_p = buf;
+    uint8_t cur_shift_left = 0;
 
     if (ext->range_min < 0) { // hide sign if there are only positive values
         /*Add the sign*/
         (*buf_p) = ext->value >= 0 ? '+' : '-';
         buf_p++;
+    } else {
+    	/*Cursor need shift to left*/
+    	cur_shift_left++;
     }
 
     int32_t i;
@@ -467,7 +475,7 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
 
     if(cur_pos > intDigits) cur_pos++; /*Skip teh decimal point*/
 
-    cur_pos += ext->digit_padding_left;
+    cur_pos += (ext->digit_padding_left - cur_shift_left);
 
     lv_ta_set_cursor_pos(spinbox, cur_pos);
 }
