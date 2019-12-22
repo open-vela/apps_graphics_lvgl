@@ -17,19 +17,17 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-/* Check windows*/
-#ifdef __WIN64
+// Check windows
+#ifdef _WIN64
 #define LV_ARCH_64
 #endif
 
-/* Check GCC */
+// Check GCC
 #ifdef __GNUC__
 #if defined(__x86_64__) || defined(__ppc64__)
 #define LV_ARCH_64
 #endif
 #endif
-
-#define LV_UNUNSED(x) (void)x;
 
 /**********************
  *      TYPEDEFS
