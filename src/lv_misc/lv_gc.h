@@ -25,12 +25,10 @@ extern "C" {
 #include "lv_mem.h"
 #include "lv_ll.h"
 #include "../lv_draw/lv_img_cache.h"
-#include "../lv_draw/lv_draw.h"
 
 /*********************
  *      DEFINES
  *********************/
-
 
 #define LV_ITERATE_ROOTS(f) \
     f(lv_ll_t, _lv_task_ll)  /*Linked list to store the lv_tasks*/ \
@@ -43,7 +41,7 @@ extern "C" {
     f(lv_ll_t, _lv_img_defoder_ll)                                 \
     f(lv_img_cache_entry_t*, _lv_img_cache_array)                  \
     f(void*, _lv_task_act)                                         \
-    f(lv_mem_buf_t, _lv_mem_buf[LV_MEM_BUF_MAX_NUM])               \
+    f(void*, _lv_draw_buf)
 
 #define LV_DEFINE_ROOT(root_type, root_name) root_type root_name;
 #define LV_ROOTS LV_ITERATE_ROOTS(LV_DEFINE_ROOT)
