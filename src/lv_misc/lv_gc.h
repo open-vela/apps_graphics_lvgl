@@ -25,26 +25,27 @@ extern "C" {
 #include "lv_mem.h"
 #include "lv_ll.h"
 #include "../lv_draw/lv_img_cache.h"
+#include "../lv_draw/lv_draw.h"
 
 /*********************
  *      DEFINES
  *********************/
 
-#define LV_ITERATE_ROOTS(f) \
-    f(lv_ll_t, _lv_task_ll)  /*Linked list to store the lv_tasks*/ \
-    f(lv_ll_t, _lv_disp_ll)  /*Linked list of screens*/            \
-    f(lv_ll_t, _lv_indev_ll) /*Linked list of screens*/            \
-    f(lv_ll_t, _lv_drv_ll)                                         \
-    f(lv_ll_t, _lv_file_ll)                                        \
-    f(lv_ll_t, _lv_anim_ll)                                        \
-    f(lv_ll_t, _lv_group_ll)                                       \
-    f(lv_ll_t, _lv_img_defoder_ll)                                 \
-    f(lv_img_cache_entry_t*, _lv_img_cache_array)                  \
-    f(void*, _lv_task_act)                                         \
-    f(void*, _lv_draw_buf)
+#define LV_GC_ROOTS(prefix)                                                                                            \
+    prefix lv_ll_t _lv_task_ll;  /*Linked list to store the lv_tasks*/                                                 \
+    prefix lv_ll_t _lv_disp_ll;  /*Linked list of screens*/                                                            \
+    prefix lv_ll_t _lv_indev_ll; /*Linked list of screens*/                                                            \
+    prefix lv_ll_t _lv_drv_ll;                                                                                         \
+    prefix lv_ll_t _lv_file_ll;                                                                                        \
+    prefix lv_ll_t _lv_anim_ll;                                                                                        \
+    prefix lv_ll_t _lv_group_ll;                                                                                       \
+    prefix lv_ll_t _lv_img_defoder_ll;                                                                                 \
+    prefix lv_img_cache_entry_t * _lv_img_cache_array;                                                                 \
+    prefix void * _lv_task_act;                                                                                        \
+    prefix lv_mem_buf_t _lv_mem_buf[LV_MEM_BUF_MAX_NUM];                                                            \
 
-#define LV_DEFINE_ROOT(root_type, root_name) root_type root_name;
-#define LV_ROOTS LV_ITERATE_ROOTS(LV_DEFINE_ROOT)
+#define LV_NO_PREFIX
+#define LV_ROOTS LV_GC_ROOTS(LV_NO_PREFIX)
 
 #if LV_ENABLE_GC == 1
 #if LV_MEM_CUSTOM != 1
@@ -52,8 +53,7 @@ extern "C" {
 #endif /* LV_MEM_CUSTOM */
 #else  /* LV_ENABLE_GC */
 #define LV_GC_ROOT(x) x
-#define LV_EXTERN_ROOT(root_type, root_name) extern root_type root_name;
-LV_ITERATE_ROOTS(LV_EXTERN_ROOT)
+LV_GC_ROOTS(extern)
 #endif /* LV_ENABLE_GC */
 
 /**********************
@@ -63,8 +63,6 @@ LV_ITERATE_ROOTS(LV_EXTERN_ROOT)
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-
-void lv_gc_clear_roots(void);
 
 /**********************
  *      MACROS
