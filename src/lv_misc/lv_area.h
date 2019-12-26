@@ -13,10 +13,14 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 /*********************
  *      DEFINES
@@ -144,10 +148,9 @@ void lv_area_join(lv_area_t * a_res_p, const lv_area_t * a1_p, const lv_area_t *
  * Check if a point is on an area
  * @param a_p pointer to an area
  * @param p_p pointer to a point
- * @param radius radius of area (e.g. for rounded rectangle)
  * @return false:the point is out of the area
  */
-bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coord_t radius);
+bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p);
 
 /**
  * Check if two area has common parts
