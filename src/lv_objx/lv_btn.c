@@ -33,7 +33,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_btn_design(lv_obj_t * btn, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param);
 
 #if LV_USE_ANIMATION && LV_BTN_INK_EFFECT
@@ -87,10 +87,7 @@ lv_obj_t * lv_btn_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Allocate the extended data*/
     lv_btn_ext_t * ext = lv_obj_allocate_ext_attr(new_btn, sizeof(lv_btn_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(new_btn);
-        return NULL;
-    }
+    if(ext == NULL) return NULL;
 
     ext->state = LV_BTN_STATE_REL;
 
@@ -423,17 +420,17 @@ const lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type)
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_btn_design(lv_obj_t * btn, const lv_area_t * mask, lv_design_mode_t mode)
 {
     if(mode == LV_DESIGN_COVER_CHK) {
-        return ancestor_design(btn, clip_area, mode);
+        return false;
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
 
 #if LV_USE_ANIMATION && LV_BTN_INK_EFFECT
         if(btn != ink_obj) {
-            ancestor_design(btn, clip_area, mode);
+            ancestor_design(btn, mask, mode);
         } else {
             lv_opa_t opa_scale = lv_obj_get_opa_scale(btn);
             lv_btn_ext_t * ext = lv_obj_get_ext_attr(btn);
@@ -443,7 +440,7 @@ static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area
                 lv_style_t style_tmp;
                 lv_style_copy(&style_tmp, ext->styles[ink_bg_state]);
                 style_tmp.body.shadow.width = ext->styles[ink_top_state]->body.shadow.width;
-                lv_draw_rect(&btn->coords, clip_area, &style_tmp, opa_scale);
+                lv_draw_rect(&btn->coords, mask, &style_tmp, opa_scale);
 
                 lv_coord_t w     = lv_obj_get_width(btn);
                 lv_coord_t h     = lv_obj_get_height(btn);
@@ -482,22 +479,22 @@ static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area
                 style_tmp.body.border.width = 0;
 
                 /*Draw the circle*/
-                lv_draw_rect(&cir_area, clip_area, &style_tmp, opa_scale);
+                lv_draw_rect(&cir_area, mask, &style_tmp, opa_scale);
             } else {
                 lv_style_t res;
                 lv_style_copy(&res, ext->styles[ink_bg_state]);
                 lv_style_mix(ext->styles[ink_bg_state], ext->styles[ink_top_state], &res, ink_act_value);
-                lv_draw_rect(&btn->coords, clip_area, &res, opa_scale);
+                lv_draw_rect(&btn->coords, mask, &res, opa_scale);
             }
         }
 #else
-        ancestor_design(btn, clip_area, mode);
+        ancestor_design(btn, mask, mode);
 #endif
     } else if(mode == LV_DESIGN_DRAW_POST) {
-        ancestor_design(btn, clip_area, mode);
+        ancestor_design(btn, mask, mode);
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
