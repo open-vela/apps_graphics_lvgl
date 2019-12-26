@@ -1,150 +1,251 @@
-///**
-// * @file lv_draw_arc.c
-// *
-// */
-//
-///*********************
-// *      INCLUDES
-// *********************/
-//#include "lv_draw_arc.h"
-//#include "lv_draw_mask.h"
-//#include "../lv_misc/lv_math.h"
-//
-///*********************
-// *      DEFINES
-// *********************/
-//
-///**********************
-// *      TYPEDEFS
-// **********************/
-//
-///**********************
-// *  STATIC PROTOTYPES
-// **********************/
-//static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness, lv_area_t * res_area);
-//
-///**********************
-// *  STATIC VARIABLES
-// **********************/
-//
-///**********************
-// *      MACROS
-// **********************/
-//
-///**********************
-// *   GLOBAL FUNCTIONS
-// **********************/
-//
-///**
-// * Draw an arc. (Can draw pie too with great thickness.)
-// * @param center_x the x coordinate of the center of the arc
-// * @param center_y the y coordinate of the center of the arc
-// * @param radius the radius of the arc
-// * @param mask the arc will be drawn only in this mask
-// * @param start_angle the start angle of the arc (0 deg on the bottom, 90 deg on the right)
-// * @param end_angle the end angle of the arc
-// * @param style style of the arc (`body.thickness`, `body.main_color`, `body.opa` is used)
-// * @param opa_scale scale down all opacities by the factor
-// */
-//void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius, const lv_area_t * clip_area,
-//        uint16_t start_angle, uint16_t end_angle, const lv_style_t * style, lv_opa_t opa_scale)
-//{
-//    lv_style_t circle_style;
-//    lv_style_copy(&circle_style, style);
-//    circle_style.body.radius = LV_RADIUS_CIRCLE;
-//    circle_style.body.opa = LV_OPA_TRANSP;
-//    circle_style.body.border.width = style->line.width;
-//    circle_style.body.border.color = style->line.color;
-//    circle_style.body.border.opa = style->line.opa;
-//
-//    lv_draw_mask_angle_param_t mask_angle_param;
-//    lv_draw_mask_angle_init(&mask_angle_param, center_x, center_y, start_angle, end_angle);
-//
-//    int16_t mask_angle_id = lv_draw_mask_add(&mask_angle_param, NULL);
-//
-//    lv_area_t area;
-//    area.x1 = center_x - radius;
-//    area.y1 = center_y - radius;
-//    area.x2 = center_x + radius - 1;  /*-1 because the center already belongs to the left/bottom part*/
-//    area.y2 = center_y + radius - 1;
-//
-//    lv_draw_rect(&area, clip_area, &circle_style, LV_OPA_COVER);
-//
-//    lv_draw_mask_remove_id(mask_angle_id);
-//
-//    if(style->line.rounded) {
-//        circle_style.body.main_color = style->line.color;
-//        circle_style.body.grad_color = style->line.color;
-//        circle_style.body.opa        = LV_OPA_COVER;
-//        circle_style.body.border.width = 0;
-//
-//        lv_area_t round_area;
-//        get_rounded_area(start_angle, radius, style->line.width, &round_area);
-//        round_area.x1 += center_x;
-//        round_area.x2 += center_x;
-//        round_area.y1 += center_y;
-//        round_area.y2 += center_y;
-//
-//        lv_draw_rect(&round_area, clip_area, &circle_style, opa_scale);
-//
-//        get_rounded_area(end_angle, radius, style->line.width, &round_area);
-//        round_area.x1 += center_x;
-//        round_area.x2 += center_x;
-//        round_area.y1 += center_y;
-//        round_area.y2 += center_y;
-//
-//        lv_draw_rect(&round_area, clip_area, &circle_style, opa_scale);
-//    }
-//}
-//
-//
-///**********************
-// *   STATIC FUNCTIONS
-// **********************/
-//
-//static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness, lv_area_t * res_area)
-//{
-//    const uint8_t ps = 8;
-//    const uint8_t pa = 127;
-//
-//    lv_coord_t thick_half = tickness / 2;
-//    lv_coord_t thick_corr = tickness & 0x01 ? 0 : 1;
-//
-//    lv_coord_t rx_corr;
-//    lv_coord_t ry_corr;
-//
-//    if(angle > 90 && angle < 270) rx_corr = 0;
-//    else  rx_corr = 0;
-//
-//    if(angle > 0 && angle < 180) ry_corr = 0;
-//    else  ry_corr = 0;
-//
-//    lv_coord_t cir_x;
-//    lv_coord_t cir_y;
-//
-//    cir_x = ((radius - rx_corr - thick_half) * lv_trigo_sin(90 - angle)) >> (LV_TRIGO_SHIFT - ps);
-//    cir_y = ((radius - ry_corr - thick_half) * lv_trigo_sin(angle)) >> (LV_TRIGO_SHIFT - ps);
-//
-//    /* Actually the center of the pixel need to be calculated so apply 1/2 px offset*/
-//    if(cir_x > 0) {
-//        cir_x = (cir_x - pa) >> ps;
-//        res_area->x1 = cir_x - thick_half + thick_corr;
-//        res_area->x2 = cir_x + thick_half;
-//    }
-//    else {
-//        cir_x = (cir_x + pa) >> ps;
-//        res_area->x1 = cir_x - thick_half;
-//        res_area->x2 = cir_x + thick_half - thick_corr;
-//    }
-//
-//    if(cir_y > 0) {
-//        cir_y = (cir_y - pa) >> ps;
-//        res_area->y1 = cir_y - thick_half + thick_corr;
-//        res_area->y2 = cir_y + thick_half;
-//    }
-//    else {
-//        cir_y = (cir_y + pa) >> ps;
-//        res_area->y1 = cir_y - thick_half;
-//        res_area->y2 = cir_y + thick_half - thick_corr;
-//    }
-//}
+/**
+ * @file lv_draw_arc.c
+ *
+ */
+
+/*********************
+ *      INCLUDES
+ *********************/
+#include "lv_draw_arc.h"
+#include "../lv_misc/lv_math.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+static void ver_line(lv_coord_t x, lv_coord_t y, const lv_area_t * mask, lv_coord_t len, lv_color_t color,
+                     lv_opa_t opa);
+static void hor_line(lv_coord_t x, lv_coord_t y, const lv_area_t * mask, lv_coord_t len, lv_color_t color,
+                     lv_opa_t opa);
+static bool deg_test_norm(uint16_t deg, uint16_t start, uint16_t end);
+static bool deg_test_inv(uint16_t deg, uint16_t start, uint16_t end);
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+/**
+ * Draw an arc. (Can draw pie too with great thickness.)
+ * @param center_x the x coordinate of the center of the arc
+ * @param center_y the y coordinate of the center of the arc
+ * @param radius the radius of the arc
+ * @param mask the arc will be drawn only in this mask
+ * @param start_angle the start angle of the arc (0 deg on the bottom, 90 deg on the right)
+ * @param end_angle the end angle of the arc
+ * @param style style of the arc (`body.thickness`, `body.main_color`, `body.opa` is used)
+ * @param opa_scale scale down all opacities by the factor
+ */
+void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius, const lv_area_t * mask,
+                 uint16_t start_angle, uint16_t end_angle, const lv_style_t * style, lv_opa_t opa_scale)
+{
+    lv_coord_t thickness = style->line.width;
+    if(thickness > radius) thickness = radius;
+
+#if LV_ANTIALIAS
+    thickness--;
+    radius--;
+#endif
+
+    lv_coord_t r_out = radius;
+    lv_coord_t r_in  = r_out - thickness;
+    int16_t deg_base;
+    int16_t deg;
+    lv_coord_t x_start[4];
+    lv_coord_t x_end[4];
+
+    lv_color_t color = style->line.color;
+    lv_opa_t opa = opa_scale == LV_OPA_COVER ? style->body.opa : (uint16_t)((uint16_t)style->body.opa * opa_scale) >> 8;
+
+    bool (*deg_test)(uint16_t, uint16_t, uint16_t);
+    if(start_angle <= end_angle)
+        deg_test = deg_test_norm;
+    else
+        deg_test = deg_test_inv;
+
+    int middle_r_out = r_out;
+#if !LV_ANTIALIAS
+    thickness--;
+    middle_r_out = r_out - 1;
+#endif
+    if(deg_test(270, start_angle, end_angle))
+        hor_line(center_x - middle_r_out, center_y, mask, thickness, color, opa); /*Left Middle*/
+    if(deg_test(90, start_angle, end_angle))
+        hor_line(center_x + r_in, center_y, mask, thickness, color, opa); /*Right Middle*/
+    if(deg_test(180, start_angle, end_angle))
+        ver_line(center_x, center_y - middle_r_out, mask, thickness, color, opa); /*Top Middle*/
+    if(deg_test(0, start_angle, end_angle))
+        ver_line(center_x, center_y + r_in, mask, thickness, color, opa); /*Bottom middle*/
+
+    uint32_t r_out_sqr = r_out * r_out;
+    uint32_t r_in_sqr  = r_in * r_in;
+#if LV_ANTIALIAS
+    uint32_t r_out_aa_sqr = (r_out + 1) * (r_out + 1);
+    uint32_t r_in_aa_sqr  = (r_in - 1) * (r_in - 1);
+#endif
+    int16_t xi;
+    int16_t yi;
+    for(yi = -r_out; yi < 0; yi++) {
+        x_start[0] = LV_COORD_MIN;
+        x_start[1] = LV_COORD_MIN;
+        x_start[2] = LV_COORD_MIN;
+        x_start[3] = LV_COORD_MIN;
+        x_end[0]   = LV_COORD_MIN;
+        x_end[1]   = LV_COORD_MIN;
+        x_end[2]   = LV_COORD_MIN;
+        x_end[3]   = LV_COORD_MIN;
+        int xe     = 0;
+        for(xi = -r_out; xi < 0; xi++) {
+
+            uint32_t r_act_sqr = xi * xi + yi * yi;
+#if LV_ANTIALIAS
+            if(r_act_sqr > r_out_aa_sqr) {
+                continue;
+            }
+#else
+            if(r_act_sqr > r_out_sqr) continue;
+#endif
+
+            deg_base = lv_atan2(xi, yi) - 180;
+
+#if LV_ANTIALIAS
+            int opa2 = -1;
+            if(r_act_sqr > r_out_sqr) {
+                opa2 = LV_OPA_100 * (r_out + 1) - lv_sqrt(LV_OPA_100 * LV_OPA_100 * r_act_sqr);
+                if(opa2 < LV_OPA_0)
+                    opa2 = LV_OPA_0;
+                else if(opa2 > LV_OPA_100)
+                    opa2 = LV_OPA_100;
+            } else if(r_act_sqr < r_in_sqr) {
+                if(xe == 0) xe = xi;
+                opa2 = lv_sqrt(LV_OPA_100 * LV_OPA_100 * r_act_sqr) - LV_OPA_100 * (r_in - 1);
+                if(opa2 < LV_OPA_0)
+                    opa2 = LV_OPA_0;
+                else if(opa2 > LV_OPA_100)
+                    opa2 = LV_OPA_100;
+                if(r_act_sqr < r_in_aa_sqr)
+                    break; /*No need to continue the iteration in x once we found the inner edge of the
+                              arc*/
+            }
+            if(opa2 != -1) {
+                if(deg_test(180 + deg_base, start_angle, end_angle)) {
+                    lv_draw_px(center_x + xi, center_y + yi, mask, color, opa2);
+                }
+                if(deg_test(360 - deg_base, start_angle, end_angle)) {
+                    lv_draw_px(center_x + xi, center_y - yi, mask, color, opa2);
+                }
+                if(deg_test(180 - deg_base, start_angle, end_angle)) {
+                    lv_draw_px(center_x - xi, center_y + yi, mask, color, opa2);
+                }
+                if(deg_test(deg_base, start_angle, end_angle)) {
+                    lv_draw_px(center_x - xi, center_y - yi, mask, color, opa2);
+                }
+                continue;
+            }
+#endif
+
+            deg = 180 + deg_base;
+            if(deg_test(deg, start_angle, end_angle)) {
+                if(x_start[0] == LV_COORD_MIN) x_start[0] = xi;
+            } else if(x_start[0] != LV_COORD_MIN && x_end[0] == LV_COORD_MIN) {
+                x_end[0] = xi - 1;
+            }
+
+            deg = 360 - deg_base;
+            if(deg_test(deg, start_angle, end_angle)) {
+                if(x_start[1] == LV_COORD_MIN) x_start[1] = xi;
+            } else if(x_start[1] != LV_COORD_MIN && x_end[1] == LV_COORD_MIN) {
+                x_end[1] = xi - 1;
+            }
+
+            deg = 180 - deg_base;
+            if(deg_test(deg, start_angle, end_angle)) {
+                if(x_start[2] == LV_COORD_MIN) x_start[2] = xi;
+            } else if(x_start[2] != LV_COORD_MIN && x_end[2] == LV_COORD_MIN) {
+                x_end[2] = xi - 1;
+            }
+
+            deg = deg_base;
+            if(deg_test(deg, start_angle, end_angle)) {
+                if(x_start[3] == LV_COORD_MIN) x_start[3] = xi;
+            } else if(x_start[3] != LV_COORD_MIN && x_end[3] == LV_COORD_MIN) {
+                x_end[3] = xi - 1;
+            }
+
+            if(r_act_sqr < r_in_sqr) {
+                xe = xi;
+                break; /*No need to continue the iteration in x once we found the inner edge of the
+                          arc*/
+            }
+        }
+
+        if(x_start[0] != LV_COORD_MIN) {
+            if(x_end[0] == LV_COORD_MIN) x_end[0] = xe - 1;
+            hor_line(center_x + x_start[0], center_y + yi, mask, x_end[0] - x_start[0], color, opa);
+        }
+
+        if(x_start[1] != LV_COORD_MIN) {
+            if(x_end[1] == LV_COORD_MIN) x_end[1] = xe - 1;
+            hor_line(center_x + x_start[1], center_y - yi, mask, x_end[1] - x_start[1], color, opa);
+        }
+
+        if(x_start[2] != LV_COORD_MIN) {
+            if(x_end[2] == LV_COORD_MIN) x_end[2] = xe - 1;
+            hor_line(center_x - x_end[2], center_y + yi, mask, LV_MATH_ABS(x_end[2] - x_start[2]), color, opa);
+        }
+
+        if(x_start[3] != LV_COORD_MIN) {
+            if(x_end[3] == LV_COORD_MIN) x_end[3] = xe - 1;
+            hor_line(center_x - x_end[3], center_y - yi, mask, LV_MATH_ABS(x_end[3] - x_start[3]), color, opa);
+        }
+    }
+}
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+static void ver_line(lv_coord_t x, lv_coord_t y, const lv_area_t * mask, lv_coord_t len, lv_color_t color, lv_opa_t opa)
+{
+    lv_area_t area;
+    lv_area_set(&area, x, y, x, y + len);
+
+    lv_draw_fill(&area, mask, color, opa);
+}
+
+static void hor_line(lv_coord_t x, lv_coord_t y, const lv_area_t * mask, lv_coord_t len, lv_color_t color, lv_opa_t opa)
+{
+    lv_area_t area;
+    lv_area_set(&area, x, y, x + len, y);
+
+    lv_draw_fill(&area, mask, color, opa);
+}
+
+static bool deg_test_norm(uint16_t deg, uint16_t start, uint16_t end)
+{
+    if(deg >= start && deg <= end)
+        return true;
+    else
+        return false;
+}
+
+static bool deg_test_inv(uint16_t deg, uint16_t start, uint16_t end)
+{
+    if(deg >= start || deg <= end) {
+        return true;
+    } else
+        return false;
+}
