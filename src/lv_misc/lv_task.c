@@ -65,6 +65,8 @@ void lv_task_core_init(void)
  */
 LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
 {
+
+
     LV_LOG_TRACE("lv_task_handler started");
 
     /*Avoid concurrent running of the task handler*/
@@ -258,7 +260,7 @@ void lv_task_set_cb(lv_task_t * task, lv_task_cb_t task_cb)
  */
 void lv_task_del(lv_task_t * task)
 {
-    lv_ll_rem(&LV_GC_ROOT(_lv_task_ll), task);
+    lv_ll_remove(&LV_GC_ROOT(_lv_task_ll), task);
 
     lv_mem_free(task);
 
