@@ -439,12 +439,7 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
         /*If no better children check this object*/
         if(found_p == NULL) {
-            const lv_style_t * style = lv_obj_get_style(obj);
-            if(style->body.opa == LV_OPA_COVER && design_res == LV_DESIGN_RES_COVER &&
-               lv_obj_get_opa_scale(obj) == LV_OPA_COVER &&
-               style->body.blend_mode == LV_BLEND_MODE_NORMAL &&
-               style->body.border.blend_mode == LV_BLEND_MODE_NORMAL &&
-               style->image.blend_mode == LV_BLEND_MODE_NORMAL) {
+            if(design_res == LV_DESIGN_RES_COVER) {
                 found_p = obj;
             }
         }
@@ -528,12 +523,14 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
 
 #if MASK_AREA_DEBUG
         static lv_color_t debug_color = LV_COLOR_RED;
-        LV_STYLE_CREATE(style_debug, &lv_style_plain);
-        style_debug.body.main_color = debug_color;
-        style_debug.body.grad_color = debug_color;
-        style_debug.body.border.width = 2;
-        style_debug.body.border.color.full = (debug_color.full + 0x13) * 9;
-        lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &style_debug, LV_OPA_50);
+        lv_draw_rect_dsc_t draw_dsc;
+        lv_draw_rect_dsc_init(&draw_dsc);
+        draw_dsc.bg_color.full = debug_color.full;
+        draw_dsc.bg_opa = LV_OPA_50;
+        draw_dsc.border_width = 2;
+        draw_dsc.border_color.full = (debug_color.full + 0x13) * 9;
+
+        lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &draw_dsc);
         debug_color.full *= 17;
         debug_color.full += 0xA1;
 #endif
