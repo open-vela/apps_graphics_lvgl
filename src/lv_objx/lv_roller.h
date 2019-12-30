@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_ROLLER != 0
 
@@ -141,13 +145,6 @@ void lv_roller_set_style(lv_obj_t * roller, lv_roller_style_t type, const lv_sty
  * @return id of the selected option (0 ... number of option - 1);
  */
 uint16_t lv_roller_get_selected(const lv_obj_t * roller);
-
-/**
- * Get the total number of options
- * @param roller pointer to a roller object
- * @return the total number of options in the list
- */
-uint16_t lv_roller_get_option_cnt(const lv_obj_t * roller);
 
 /**
  * Get the current selected option as a string
