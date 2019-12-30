@@ -13,11 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #if LV_USE_CHART != 0
 
@@ -49,6 +45,7 @@ enum {
     LV_CHART_TYPE_POINT         = 0x04, /**< Draw circles on the points*/
     LV_CHART_TYPE_VERTICAL_LINE = 0x08, /**< Draw vertical lines on points (useful when chart width == point count)*/
     LV_CHART_TYPE_AREA          = 0x10, /**< Draw area chart*/
+    LV_CHART_TYPE_AREA_FADED    = 0x20, /**< Draw area chart by fading out the bottom of the area*/
 };
 typedef uint8_t lv_chart_type_t;
 
@@ -330,7 +327,7 @@ lv_chart_type_t lv_chart_get_type(const lv_obj_t * chart);
  * @param chart pointer to chart object
  * @return point number on each data line
  */
-uint16_t lv_chart_get_point_cnt(const lv_obj_t * chart);
+uint16_t lv_chart_get_point_count(const lv_obj_t * chart);
 
 /**
  * Get the opacity of the data series
