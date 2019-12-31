@@ -23,11 +23,12 @@ extern "C" {
 #endif
 
 #include "../lv_core/lv_obj.h"
-#include "lv_slider.h"
+#include "lv_bar.h"
 
 /*********************
  *      DEFINES
  *********************/
+#define LV_SW_MAX_VALUE 100
 
 /**********************
  *      TYPEDEFS
@@ -35,23 +36,28 @@ extern "C" {
 /*Data of switch*/
 typedef struct
 {
-    lv_slider_ext_t slider; /*Ext. of ancestor*/
+    lv_bar_ext_t bar; /*Ext. of ancestor*/
     /*New data for this type */
+    const lv_style_t * style_knob_off; /**< Style of the knob when the switch is OFF*/
+    const lv_style_t * style_knob_on;  /**< Style of the knob when the switch is ON (NULL to use the same as OFF)*/
+    const void * img_knob_off;   /**< Image to display when the switch is OFF*/
+    const void * img_knob_on;    /**< Image to display when the switch is ON*/
     lv_coord_t start_x;
     uint8_t changed :1; /*Indicates the switch state explicitly changed by drag*/
+    uint8_t slided  :1;
     uint8_t state   :1; /*The current state*/
 } lv_sw_ext_t;
 
 /**
- * Switch parts.
+ * Switch styles.
  */
 enum {
-    LV_SW_PART_BG, /**< Switch background. */
-    LV_SW_PART_INDIC, /**< Switch fill area. */
-    LV_SW_PART_KNOB, /**< Switch knob (when off). */
+    LV_SW_STYLE_BG, /**< Switch background. */
+    LV_SW_STYLE_INDIC, /**< Switch fill area. */
+    LV_SW_STYLE_KNOB_OFF, /**< Switch knob (when off). */
+    LV_SW_STYLE_KNOB_ON, /**< Switch knob (when on). */
 };
-
-typedef uint8_t lv_sw_part_t;
+typedef uint8_t lv_sw_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -92,12 +98,12 @@ void lv_sw_off(lv_obj_t * sw, lv_anim_enable_t anim);
 bool lv_sw_toggle(lv_obj_t * sw, lv_anim_enable_t anim);
 
 /**
- * Set an image to display on the knob of the switch.
+ * Set an image to display on the knob of the switch when it's in OFF state
  * @param sw pointer to a switch object
  * @param img_src pointer to an `lv_img_dsc_t` variable or a path to an image
  *        (not an `lv_img` object)
  */
-void lv_sw_set_knob_img(lv_obj_t * sw, const void * img_src);
+void lv_sw_set_knob_off_img(lv_obj_t * sw, const void * img_src);
 
 /**
  * Set an image to display on the knob of the switch when it's in ON state
@@ -117,6 +123,14 @@ static inline void lv_sw_set_anim_time(lv_obj_t * sw, uint16_t anim_time)
 {
     lv_bar_set_anim_time(sw, anim_time);
 }
+/**
+ * Set a style of a switch
+ * @param sw pointer to a switch object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_sw_set_style(lv_obj_t * sw, lv_sw_style_t type, const lv_style_t * style);
+
 
 /*=====================
  * Getter functions
@@ -156,6 +170,16 @@ static inline uint16_t lv_sw_get_anim_time(const lv_obj_t * sw)
 {
     return lv_bar_get_anim_time(sw);
 }
+
+/**
+ * Get a style of a switch
+ * @param sw pointer to a  switch object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_sw_get_style(const lv_obj_t * sw, lv_sw_style_t type);
+
+
 
 /**********************
  *      MACROS
