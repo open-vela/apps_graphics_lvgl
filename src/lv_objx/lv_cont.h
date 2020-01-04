@@ -13,11 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #if LV_USE_CONT != 0
 
@@ -64,18 +60,18 @@ typedef struct
 {
     /*Inherited from 'base_obj' so no inherited ext. */ /*Ext. of ancestor*/
     /*New data for this type */
-    uint8_t layout : 4;     /*A layout from 'lv_layout_t' enum*/
-    uint8_t fit_left : 2;   /*A fit type from `lv_fit_t` enum */
-    uint8_t fit_right : 2;  /*A fit type from `lv_fit_t` enum */
-    uint8_t fit_top : 2;    /*A fit type from `lv_fit_t` enum */
-    uint8_t fit_bottom : 2; /*A fit type from `lv_fit_t` enum */
+    lv_layout_t layout : 4;     /*A layout from 'lv_layout_t' enum*/
+    lv_fit_t fit_left : 2;   /*A fit type from `lv_fit_t` enum */
+    lv_fit_t fit_right : 2;  /*A fit type from `lv_fit_t` enum */
+    lv_fit_t fit_top : 2;    /*A fit type from `lv_fit_t` enum */
+    lv_fit_t fit_bottom : 2; /*A fit type from `lv_fit_t` enum */
 } lv_cont_ext_t;
 
 /*Styles*/
 enum {
-    LV_CONT_STYLE_MAIN,
+    LV_CONT_PART_MAIN,
 };
-typedef uint8_t lv_cont_style_t;
+typedef uint8_t lv_cont_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -134,18 +130,6 @@ static inline void lv_cont_set_fit(lv_obj_t * cont, lv_fit_t fit)
     lv_cont_set_fit4(cont, fit, fit, fit, fit);
 }
 
-/**
- * Set the style of a container
- * @param cont pointer to a container object
- * @param type which style should be set (can be only `LV_CONT_STYLE_MAIN`)
- * @param style pointer to the new style
- */
-static inline void lv_cont_set_style(lv_obj_t * cont, lv_cont_style_t type, const lv_style_t * style)
-{
-    (void)type; /*Unused*/
-    lv_obj_set_style(cont, style);
-}
-
 /*=====================
  * Getter functions
  *====================*/
@@ -184,18 +168,6 @@ lv_fit_t lv_cont_get_fit_top(const lv_obj_t * cont);
  * @return an element of `lv_fit_t`
  */
 lv_fit_t lv_cont_get_fit_bottom(const lv_obj_t * cont);
-
-/**
- * Get the style of a container
- * @param cont pointer to a container object
- * @param type which style should be get (can be only `LV_CONT_STYLE_MAIN`)
- * @return pointer to the container's style
- */
-static inline const lv_style_t * lv_cont_get_style(const lv_obj_t * cont, lv_cont_style_t type)
-{
-    (void)type; /*Unused*/
-    return lv_obj_get_style(cont);
-}
 
 /**********************
  *      MACROS
