@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -23,6 +27,7 @@ extern "C" {
 #include "../lv_misc/lv_mem.h"
 #include "../lv_misc/lv_ll.h"
 #include "../lv_misc/lv_color.h"
+#include "../lv_misc/lv_log.h"
 #include "../lv_misc/lv_bidi.h"
 #include "../lv_hal/lv_hal.h"
 
@@ -60,21 +65,11 @@ enum {
 };
 typedef uint8_t lv_design_mode_t;
 
-
-/** Design results */
-enum {
-    LV_DESIGN_RES_OK,          /**< Draw ready */
-    LV_DESIGN_RES_COVER,       /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is fully covered*/
-    LV_DESIGN_RES_NOT_COVER,   /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is not covered*/
-    LV_DESIGN_RES_MASKED,      /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is masked out (children also not cover)*/
-};
-typedef uint8_t lv_design_res_t;
-
 /**
  * The design callback is used to draw the object on the screen.
  * It accepts the object, a mask area, and the mode in which to draw the object.
  */
-typedef lv_design_res_t (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
+typedef bool (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
 
 enum {
     LV_EVENT_PRESSED,             /**< The object has been pressed*/
@@ -123,7 +118,6 @@ enum {
     LV_SIGNAL_GET_TYPE, /**< LittlevGL needs to retrieve the object's type */
 
     /*Input device related*/
-    LV_SIGNAL_HIT_TEST,          /**< Advanced hit-testing */
     LV_SIGNAL_PRESSED,           /**< The object has been pressed*/
     LV_SIGNAL_PRESSING,          /**< The object is being pressed (called continuously while pressing)*/
     LV_SIGNAL_PRESS_LOST,        /**< User is still pressing but slid cursor/finger off of the object */
@@ -131,8 +125,7 @@ enum {
     LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
     LV_SIGNAL_DRAG_BEGIN,	
-    LV_SIGNAL_DRAG_THROW_BEGIN,
-    LV_SIGNAL_DRAG_END,                                   
+    LV_SIGNAL_DRAG_END,
 
     /*Group related*/
     LV_SIGNAL_FOCUS,
@@ -183,6 +176,14 @@ typedef struct
 } lv_reailgn_t;
 #endif
 
+enum {
+    LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
+    LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
+    LV_DRAG_DIR_ALL = 0x3, /**< Object can be dragged in all directions. */
+};
+
+typedef uint8_t lv_drag_dir_t;
+
 typedef struct _lv_obj_t
 {
     struct _lv_obj_t * par; /**< Pointer to the parent object*/
@@ -219,10 +220,9 @@ typedef struct _lv_obj_t
     uint8_t top : 1;            /**< 1: If the object or its children is clicked it goes to the foreground*/
     uint8_t opa_scale_en : 1;   /**< 1: opa_scale is set*/
     uint8_t parent_event : 1;   /**< 1: Send the object's events to the parent too. */
-    lv_drag_dir_t drag_dir : 3; /**<  Which directions the object can be dragged in */
+    lv_drag_dir_t drag_dir : 2; /**<  Which directions the object can be dragged in */
     lv_bidi_dir_t base_dir : 2; /**< Base direction of texts related to this object */
-    uint8_t adv_hittest : 1;    /**< 1: Use advanced hit-testing (slower) */
-    uint8_t reserved : 2;       /**<  Reserved for future use*/
+    uint8_t reserved : 3;       /**<  Reserved for future use*/
     uint8_t protect;            /**< Automatically happening actions can be prevented. 'OR'ed values from
                                    `lv_protect_t`*/
     lv_opa_t opa_scale;         /**< Scale down the opacity by this factor. Effects all children as well*/
@@ -259,12 +259,6 @@ typedef struct
     const char * type[LV_MAX_ANCESTOR_NUM]; /**< [0]: the actual type, [1]: ancestor, [2] #1's ancestor
                                                ... [x]: "lv_obj" */
 } lv_obj_type_t;
-
-typedef struct _lv_hit_test_info_t
-{
-    lv_point_t *point;
-    bool result;
-} lv_hit_test_info_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -477,13 +471,6 @@ void lv_obj_report_style_mod(lv_style_t * style);
  * @param en true: hide the object
  */
 void lv_obj_set_hidden(lv_obj_t * obj, bool en);
-
-/**
- * Set whether advanced hit-testing is enabled on an object
- * @param obj pointer to an object
- * @param en true: advanced hit-testing is enabled
- */
-void lv_obj_set_adv_hittest(lv_obj_t * obj, bool en);
 
 /**
  * Enable or disable the clicking of an object
@@ -828,13 +815,6 @@ const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
 bool lv_obj_get_hidden(const lv_obj_t * obj);
 
 /**
- * Get whether advanced hit-testing is enabled on an object
- * @param obj pointer to an object
- * @return true: advanced hit-testing is enabled
- */
-bool lv_obj_get_adv_hittest(const lv_obj_t * obj);
-
-/**
  * Get the click enable attribute of an object
  * @param obj pointer to an object
  * @return true: the object is clickable
@@ -939,24 +919,6 @@ lv_event_cb_t lv_obj_get_event_cb(const lv_obj_t * obj);
 /*------------------
  * Other get
  *-----------------*/
-
-/**
- * Check if a given screen-space point is on an object's coordinates.
- * 
- * This method is intended to be used mainly by advanced hit testing algorithms to check
- * whether the point is even within the object (as an optimization).
- * @param obj object to check
- * @param point screen-space point
- */
-bool lv_obj_is_point_on_coords(lv_obj_t * obj, const lv_point_t * point);
-
-/**
- * Hit-test an object given a particular point in screen space.
- * @param obj object to hit-test
- * @param point screen-space point
- * @return true if the object is considered under the point
- */
-bool lv_obj_hittest(lv_obj_t * obj, lv_point_t * point);
 
 /**
  * Get the ext pointer
