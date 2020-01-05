@@ -76,8 +76,6 @@ static rle_state_t rle_state;
  */
 const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unicode_letter)
 {
-	if(unicode_letter == '\t') unicode_letter = ' ';
-
     lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return NULL;
@@ -127,11 +125,6 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
  */
 bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t * dsc_out, uint32_t unicode_letter, uint32_t unicode_letter_next)
 {
-	bool is_tab = false;
-	if(unicode_letter == '\t') {
-		unicode_letter = ' ';
-		is_tab = true;
-	}
     lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return false;
@@ -149,10 +142,7 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
 
     int32_t kv = ((int32_t)((int32_t)kvalue * fdsc->kern_scale) >> 4);
 
-    uint32_t adv_w = gdsc->adv_w;
-    if(is_tab) adv_w *= 2;
-
-    adv_w += kv;
+    uint32_t adv_w = gdsc->adv_w + kv;
     adv_w  = (adv_w + (1 << 3)) >> 4;
 
     dsc_out->adv_w = adv_w;
@@ -161,8 +151,6 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
     dsc_out->ofs_x = gdsc->ofs_x;
     dsc_out->ofs_y = gdsc->ofs_y;
     dsc_out->bpp   = (uint8_t)fdsc->bpp;
-
-    if(is_tab) dsc_out->box_w = dsc_out->box_w * 2;
 
     return true;
 }
@@ -317,8 +305,9 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
 
     rle_init(in, bpp);
 
-    uint8_t * line_buf1 = lv_mem_buf_get(w);
-    uint8_t * line_buf2 = lv_mem_buf_get(w);
+    uint8_t * line_buf = lv_draw_get_buf(w * 2);
+    uint8_t * line_buf1 = line_buf;
+    uint8_t * line_buf2 = line_buf + w;
 
     decompress_line(line_buf1, w);
 
@@ -338,9 +327,6 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
             wrp += wr_size;
         }
     }
-
-    lv_mem_buf_release(line_buf1);
-    lv_mem_buf_release(line_buf2);
 }
 
 /**

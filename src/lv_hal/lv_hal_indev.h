@@ -15,7 +15,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -50,17 +54,6 @@ typedef uint8_t lv_indev_type_t;
 enum { LV_INDEV_STATE_REL = 0, LV_INDEV_STATE_PR };
 typedef uint8_t lv_indev_state_t;
 
-
-enum {
-    LV_DRAG_DIR_HOR = 0x0, /**< Object can be dragged horizontally. */
-    LV_DRAG_DIR_VER = 0x1, /**< Object can be dragged vertically. */
-    LV_DRAG_DIR_BOTH = 0x2, /**< Object can be dragged in all directions. */
-    LV_DRAG_DIR_ONE = 0x3, /**< Object can be dragged only one direction (the first move). */
-};
-
-typedef uint8_t lv_drag_dir_t;
-
-
 /** Data structure passed to an input driver to fill */
 typedef struct
 {
@@ -71,7 +64,6 @@ typedef struct
 
     lv_indev_state_t state; /**< LV_INDEV_STATE_REL or LV_INDEV_STATE_PR*/
 } lv_indev_data_t;
-
 
 /** Initialized by the user and registered by 'lv_indev_add()'*/
 typedef struct _lv_indev_drv_t
@@ -135,7 +127,6 @@ typedef struct _lv_indev_proc_t
             /*Flags*/
             uint8_t drag_limit_out : 1;
             uint8_t drag_in_prog : 1;
-            lv_drag_dir_t drag_dir  : 3;
         } pointer;
         struct
         { /*Keypad data*/
