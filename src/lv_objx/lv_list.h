@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_LIST != 0
 
@@ -48,6 +52,8 @@ typedef struct
 {
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
+    const lv_style_t * styles_btn[_LV_BTN_STATE_NUM]; /*Styles of the list element buttons*/
+    const lv_style_t * style_img;                     /*Style of the list element images on buttons*/
     uint16_t size;                                    /*the number of items(buttons) in the list*/
 
     uint8_t single_mode : 1; /* whether single selected mode is enabled */
@@ -63,11 +69,15 @@ typedef struct
 
 /** List styles. */
 enum {
-    LV_LIST_PART_BG = _LV_OBJ_PART_MAIN_VALUE, /**< List background style */
-    LV_LIST_PART_SCRLBAR = _LV_OBJ_PART_VIRTUAL_START, /**< List scrollbar style. */
-    LV_LIST_PART_EDGE_FLASH, /**< List edge flash style. */
-
-    LV_LIST_PART_SCRL = _LV_OBJ_PART_REAL_START, /**< List scrollable area style. */
+    LV_LIST_STYLE_BG, /**< List background style */
+    LV_LIST_STYLE_SCRL, /**< List scrollable area style. */
+    LV_LIST_STYLE_SB, /**< List scrollbar style. */
+    LV_LIST_STYLE_EDGE_FLASH, /**< List edge flash style. */
+    LV_LIST_STYLE_BTN_REL, /**< Same meaning as the ordinary button styles. */
+    LV_LIST_STYLE_BTN_PR,
+    LV_LIST_STYLE_BTN_TGL_REL,
+    LV_LIST_STYLE_BTN_TGL_PR,
+    LV_LIST_STYLE_BTN_INA,
 };
 typedef uint8_t lv_list_style_t;
 
@@ -173,6 +183,14 @@ static inline void lv_list_set_anim_time(lv_obj_t * list, uint16_t anim_time)
 {
     lv_page_set_anim_time(list, anim_time);
 }
+
+/**
+ * Set a style of a list
+ * @param list pointer to a list object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, const lv_style_t * style);
 
 /**
  * Set layout of a list
@@ -297,6 +315,14 @@ static inline uint16_t lv_list_get_anim_time(const lv_obj_t * list)
 {
     return lv_page_get_anim_time(list);
 }
+
+/**
+ * Get a style of a list
+ * @param list pointer to a list object
+ * @param type which style should be get
+ * @return style pointer to a style
+ *  */
+const lv_style_t * lv_list_get_style(const lv_obj_t * list, lv_list_style_t type);
 
 /*=====================
  * Other functions

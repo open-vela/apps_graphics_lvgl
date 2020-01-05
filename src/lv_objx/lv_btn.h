@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_BTN != 0
 
@@ -62,16 +66,46 @@ typedef struct
     /** Ext. of ancestor*/
     lv_cont_ext_t cont;
 
+    /*New data for this type */
+
+    /**Styles in each state*/
+    const lv_style_t * styles[_LV_BTN_STATE_NUM];
+#if LV_BTN_INK_EFFECT
+    /** [ms] Time of ink fill effect (0: disable ink effect)*/
+    uint16_t ink_in_time;
+
+    /** [ms] Wait before the ink disappears */
+    uint16_t ink_wait_time;
+
+    /** [ms] Time of ink disappearing*/
+    uint16_t ink_out_time;
+#endif
+
+    /** Current state of the button from 'lv_btn_state_t' enum*/
+    lv_btn_state_t state : 3;
+
     /** 1: Toggle enabled*/
     uint8_t toggle : 1;
 } lv_btn_ext_t;
 
 /**Styles*/
 enum {
-    LV_BTN_PART_MAIN,
+    /** Release style */
+    LV_BTN_STYLE_REL,
 
+    /**Pressed style*/
+    LV_BTN_STYLE_PR,
+
+    /** Toggle released style*/
+    LV_BTN_STYLE_TGL_REL,
+
+    /** Toggle pressed style */
+    LV_BTN_STYLE_TGL_PR,
+
+    /** Inactive style*/
+    LV_BTN_STYLE_INA,
 };
-typedef uint8_t lv_btn_part_t;
+typedef uint8_t lv_btn_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -183,7 +217,7 @@ void lv_btn_set_ink_out_time(lv_obj_t * btn, uint16_t time);
  * @param type which style should be set
  * @param style pointer to a style
  *  */
-void lv_btn_set_style(lv_obj_t * btn, lv_btn_part_t type, const lv_style_t * style);
+void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -274,7 +308,13 @@ uint16_t lv_btn_get_ink_wait_time(const lv_obj_t * btn);
  */
 uint16_t lv_btn_get_ink_out_time(const lv_obj_t * btn);
 
-lv_style_dsc_t * lv_btn_get_style(lv_obj_t * cont, uint8_t type);
+/**
+ * Get style of a button.
+ * @param btn pointer to button object
+ * @param type which style should be get
+ * @return style pointer to the style
+ *  */
+const lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type);
 
 /**********************
  *      MACROS

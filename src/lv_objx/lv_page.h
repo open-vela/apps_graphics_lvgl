@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_PAGE != 0
 
@@ -57,7 +61,7 @@ typedef struct
     lv_obj_t * scrl; /*The scrollable object on the background*/
     struct
     {
-        lv_style_dsc_t style; /*Style of scrollbars*/
+        const lv_style_t * style; /*Style of scrollbars*/
         lv_area_t hor_area;       /*Horizontal scrollbar area relative to the page. (Handled by the library) */
         lv_area_t ver_area;       /*Vertical scrollbar area relative to the page (Handled by the library)*/
         uint8_t hor_draw : 1;     /*1: horizontal scrollbar is visible now (Handled by the library)*/
@@ -68,7 +72,7 @@ typedef struct
     struct
     {
         lv_anim_value_t state;    /*Store the current size of the edge flash effect*/
-        lv_style_dsc_t style; /*Style of edge flash effect (usually homogeneous circle)*/
+        const lv_style_t * style; /*Style of edge flash effect (usually homogeneous circle)*/
         uint8_t enabled : 1;      /*1: Show a flash animation on the edge*/
         uint8_t top_ip : 1;       /*Used internally to show that top most position is reached (flash is In
                                      Progress)*/
@@ -82,18 +86,18 @@ typedef struct
 
     uint16_t anim_time; /*Scroll animation time*/
 #endif
-    lv_obj_t * scroll_prop_obj;          /*Pointer to child page from where the scroll is being propagated */
-    uint8_t scroll_prop :1;    /*The direction of the scroll propagation*/
+
+    uint8_t scroll_prop : 1;    /*1: Propagate the scrolling the the parent if the edge is reached*/
+    uint8_t scroll_prop_ip : 1; /*1: Scroll propagation is in progress (used by the library)*/
 } lv_page_ext_t;
 
 enum {
-    LV_PAGE_PART_BG = _LV_OBJ_PART_MAIN_VALUE,
-    LV_PAGE_PART_SCRLBAR = _LV_OBJ_PART_VIRTUAL_START,
-    LV_PAGE_PART_EDGE_FLASH,
-
-    LV_PAGE_PART_SCRL = _LV_OBJ_PART_REAL_START,
+    LV_PAGE_STYLE_BG,
+    LV_PAGE_STYLE_SCRL,
+    LV_PAGE_STYLE_SB,
+    LV_PAGE_STYLE_EDGE_FLASH,
 };
-typedef uint8_t lv_part_style_t;
+typedef uint8_t lv_page_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -148,8 +152,6 @@ void lv_page_set_anim_time(lv_obj_t * page, uint16_t anim_time);
 /**
  * Enable the scroll propagation feature. If enabled then the page will move its parent if there is
  * no more space to scroll.
- * The page needs to have a page-like parent (e.g. `lv_page`, `lv_tabview` tab, `lv_win` content area etc)
- * If enabled drag direction will be changed `LV_DRAG_DIR_ONE` automatically to allow scrolling only in one direction at one time.
  * @param page pointer to a Page
  * @param en true or false to enable/disable scroll propagation
  */
@@ -228,6 +230,14 @@ static inline void lv_page_set_scrl_layout(lv_obj_t * page, lv_layout_t layout)
 {
     lv_cont_set_layout(lv_page_get_scrl(page), layout);
 }
+
+/**
+ * Set a style of a page
+ * @param page pointer to a page object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_page_set_style(lv_obj_t * page, lv_page_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -338,6 +348,14 @@ static inline lv_fit_t lv_page_get_scrl_fit_bottom(const lv_obj_t * page)
     return lv_cont_get_fit_bottom(lv_page_get_scrl(page));
 }
 
+/**
+ * Get a style of a page
+ * @param page pointer to page object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_page_get_style(const lv_obj_t * page, lv_page_style_t type);
+
 /*=====================
  * Other functions
  *====================*/
@@ -381,12 +399,10 @@ void lv_page_scroll_ver(lv_obj_t * page, lv_coord_t dist);
 
 /**
  * Not intended to use directly by the user but by other object types internally.
- * Start an edge flash animation.
+ * Start an edge flash animation. Exactly one `ext->edge_flash.xxx_ip` should be set
  * @param page
- * @param edge the edge to flash. Can be `LV_PAGE_EDGE_LEFT/RIGHT/TOP/BOTTOM`
  */
-void lv_page_start_edge_flash(lv_obj_t * page, lv_page_edge_t edge);
-
+void lv_page_start_edge_flash(lv_obj_t * page);
 /**********************
  *      MACROS
  **********************/
