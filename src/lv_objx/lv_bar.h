@@ -27,6 +27,18 @@ extern "C" {
  *      DEFINES
  *********************/
 
+/** Bar animation start value. (Not the real value of the Bar just indicates process animation)*/
+#define LV_BAR_ANIM_STATE_START 0
+
+/** Bar animation end value.  (Not the real value of the Bar just indicates process animation)*/
+#define LV_BAR_ANIM_STATE_END 256
+
+/** Mark no animation is in progress */
+#define LV_BAR_ANIM_STATE_INV -1
+
+/** log2(LV_BAR_ANIM_STATE_END) used to normalize data*/
+#define LV_BAR_ANIM_STATE_NORM 8
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -43,8 +55,7 @@ typedef struct {
     lv_obj_t * bar;
 	lv_anim_value_t anim_start;
     lv_anim_value_t anim_end;
-    lv_anim_value_t anim_val;
-	uint8_t is_animating : 1;
+	lv_anim_value_t anim_state;
 } lv_bar_anim_t;
 #endif
 
@@ -65,15 +76,15 @@ typedef struct
 	lv_bar_anim_t start_value_anim;
 #endif
 	uint8_t type : 2;			/*Type of bar*/
-    lv_style_dsc_t style_indic; /*Style of the indicator*/
+    const lv_style_t * style_indic; /*Style of the indicator*/
 } lv_bar_ext_t;
 
-/** Bar parts */
+/** Bar styles. */
 enum {
-    LV_BAR_PART_BG, /** Bar background style. */
-    LV_BAR_PART_INDIC, /** Bar fill area style. */
+    LV_BAR_STYLE_BG, /** Bar background style. */
+    LV_BAR_STYLE_INDIC, /** Bar fill area style. */
 };
-typedef uint8_t lv_bar_part_t;
+typedef uint8_t lv_bar_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -129,6 +140,14 @@ void lv_bar_set_type(lv_obj_t * bar, lv_bar_type_t type);
  */
 void lv_bar_set_anim_time(lv_obj_t * bar, uint16_t anim_time);
 
+/**
+ * Set a style of a bar
+ * @param bar pointer to a bar object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_bar_set_style(lv_obj_t * bar, lv_bar_style_t type, const lv_style_t * style);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -174,6 +193,14 @@ lv_bar_type_t lv_bar_get_type(lv_obj_t * bar);
  * @return the animation time in milliseconds.
  */
 uint16_t lv_bar_get_anim_time(const lv_obj_t * bar);
+
+/**
+ * Get a style of a bar
+ * @param bar pointer to a bar object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_bar_get_style(const lv_obj_t * bar, lv_bar_style_t type);
 
 /**********************
  *      MACROS

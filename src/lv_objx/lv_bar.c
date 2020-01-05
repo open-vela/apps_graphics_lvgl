@@ -25,6 +25,12 @@
 
 #define LV_BAR_SIZE_MIN  4   /*hor. pad and ver. pad cannot make the indicator smaller then this [px]*/
 
+#if LV_USE_ANIMATION
+#define LV_BAR_IS_ANIMATING(anim_struct) (((anim_struct).anim_state) != LV_BAR_ANIM_STATE_INV)
+#define LV_BAR_GET_ANIM_VALUE(orig_value, anim_struct) (LV_BAR_IS_ANIMATING(anim_struct) ? ((anim_struct).anim_end) : (orig_value))
+#else
+#define LV_BAR_GET_ANIM_VALUE(orig_value, anim_struct) (orig_value)
+#endif
 /**********************
  *      TYPEDEFS
  **********************/
@@ -34,10 +40,11 @@
  **********************/
 static lv_design_res_t lv_bar_design(lv_obj_t * bar, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_bar_signal(lv_obj_t * bar, lv_signal_t sign, void * param);
-static lv_style_dsc_t * lv_bar_get_style(lv_obj_t * bar, uint8_t part);
 
-static void draw_bg(lv_obj_t * bar, const lv_area_t * clip_area);
-static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area);
+
+static void draw_bg(lv_obj_t * bar, const lv_area_t * clip_area, lv_design_mode_t mode, lv_opa_t opa);
+static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area, lv_design_mode_t mode, lv_opa_t opa);
+
 
 #if LV_USE_ANIMATION
 static void lv_bar_set_value_with_anim(lv_obj_t * bar, int16_t new_value, int16_t *value_ptr, lv_bar_anim_t *anim_info, lv_anim_enable_t en);
@@ -96,11 +103,10 @@ lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy)
 	lv_bar_init_anim(new_bar, &ext->start_value_anim);
 #endif
     ext->type         = LV_BAR_TYPE_NORMAL;
-    lv_style_dsc_init(&ext->style_indic);
+    ext->style_indic = &lv_style_pretty_color;
 
     lv_obj_set_signal_cb(new_bar, lv_bar_signal);
     lv_obj_set_design_cb(new_bar, lv_bar_design);
-
 
     /*Init the new  bar object*/
     if(copy == NULL) {
@@ -108,9 +114,13 @@ lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_obj_set_size(new_bar, LV_DPI * 2, LV_DPI / 4);
         lv_bar_set_value(new_bar, ext->cur_value, false);
 
-        _ot(new_bar, LV_BAR_PART_BG, BAR);
-        _ot(new_bar, LV_BAR_PART_INDIC, BAR_INDIC);
-
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_bar_set_style(new_bar, LV_BAR_STYLE_BG, th->style.bar.bg);
+            lv_bar_set_style(new_bar, LV_BAR_STYLE_INDIC, th->style.bar.indic);
+        } else {
+            lv_obj_set_style(new_bar, &lv_style_pretty);
+        }
     } else {
         lv_bar_ext_t * ext_copy = lv_obj_get_ext_attr(copy);
         ext->min_value          = ext_copy->min_value;
@@ -120,7 +130,7 @@ lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->style_indic        = ext_copy->style_indic;
         ext->type                = ext_copy->type;
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(new_bar, LV_OBJ_PART_ALL);
+        lv_obj_refresh_style(new_bar);
 
         lv_bar_set_value(new_bar, ext->cur_value, false);
     }
@@ -250,6 +260,27 @@ void lv_bar_set_anim_time(lv_obj_t * bar, uint16_t anim_time)
 #endif
 }
 
+/**
+ * Set a style of a bar
+ * @param bar pointer to a bar object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_bar_set_style(lv_obj_t * bar, lv_bar_style_t type, const lv_style_t * style)
+{
+    LV_ASSERT_OBJ(bar, LV_OBJX_NAME);
+
+    lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
+
+    switch(type) {
+        case LV_BAR_STYLE_BG: lv_obj_set_style(bar, style); break;
+        case LV_BAR_STYLE_INDIC:
+            ext->style_indic = style;
+            lv_obj_refresh_ext_draw_pad(bar);
+            break;
+    }
+}
+
 /*=====================
  * Getter functions
  *====================*/
@@ -264,12 +295,8 @@ int16_t lv_bar_get_value(const lv_obj_t * bar)
     LV_ASSERT_OBJ(bar, LV_OBJX_NAME);
 
     lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
-    /*If animated tell that it's already at the end value*/
-#if LV_USE_ANIMATION
-    if(ext->cur_value_anim.is_animating) return ext->cur_value_anim.anim_end;
-#endif
-    /*No animation, simple return the current value*/
-    return ext->cur_value;
+
+    return LV_BAR_GET_ANIM_VALUE(ext->cur_value, ext->cur_value_anim);
 }
 
 /**
@@ -285,12 +312,7 @@ int16_t lv_bar_get_start_value(const lv_obj_t * bar)
 
 	if(ext->type != LV_BAR_TYPE_CUSTOM) return ext->min_value;
 
-    /*If animated tell that it's already at the end value*/
-#if LV_USE_ANIMATION
-    if(ext->start_value_anim.is_animating) return ext->start_value_anim.anim_end;
-#endif
-    /*No animation, simple return the current value*/
-    return ext->start_value;
+    return LV_BAR_GET_ANIM_VALUE(ext->start_value, ext->start_value_anim);
 }
 
 /**
@@ -349,6 +371,27 @@ uint16_t lv_bar_get_anim_time(const lv_obj_t * bar)
 #endif
 }
 
+/**
+ * Get a style of a bar
+ * @param bar pointer to a bar object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_bar_get_style(const lv_obj_t * bar, lv_bar_style_t type)
+{
+    LV_ASSERT_OBJ(bar, LV_OBJX_NAME);
+
+    const lv_style_t * style = NULL;
+    lv_bar_ext_t * ext       = lv_obj_get_ext_attr(bar);
+
+    switch(type) {
+        case LV_BAR_STYLE_BG: style = lv_obj_get_style(bar); break;
+        case LV_BAR_STYLE_INDIC: style = ext->style_indic; break;
+        default: style = NULL; break;
+    }
+
+    return style;
+}
 
 /**********************
  *   STATIC FUNCTIONS
@@ -370,8 +413,22 @@ static lv_design_res_t lv_bar_design(lv_obj_t * bar, const lv_area_t * clip_area
         /*Return false if the object is not covers the mask area*/
         return ancestor_design_f(bar, clip_area, mode);
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
-        draw_bg(bar, clip_area);
-        draw_indic(bar, clip_area);
+        lv_opa_t opa_scale = lv_obj_get_opa_scale(bar);
+
+        draw_bg(bar, clip_area, mode, opa_scale);
+        draw_indic(bar, clip_area, mode, opa_scale);
+
+#if LV_USE_GROUP
+        /*Draw the border*/
+        if(lv_obj_is_focused(bar)) {
+            const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
+            lv_style_t style_tmp;
+            lv_style_copy(&style_tmp, style_bg);
+            style_tmp.body.opa          = LV_OPA_TRANSP;
+            style_tmp.body.shadow.width = 0;
+            lv_draw_rect(&bar->coords, clip_area, &style_tmp, opa_scale);
+        }
+#endif
 
     } else if(mode == LV_DESIGN_DRAW_POST) {
 
@@ -379,18 +436,32 @@ static lv_design_res_t lv_bar_design(lv_obj_t * bar, const lv_area_t * clip_area
     return LV_DESIGN_RES_OK;
 }
 
-static void draw_bg(lv_obj_t * bar, const lv_area_t * clip_area)
+static void draw_bg(lv_obj_t * bar, const lv_area_t * clip_area, lv_design_mode_t mode, lv_opa_t opa)
 {
-    /*Simply draw the background*/
-    lv_draw_rect_dsc_t draw_dsc;
-    lv_draw_rect_dsc_init(&draw_dsc);
-    lv_obj_init_draw_rect_dsc(bar, LV_BAR_PART_BG, &draw_dsc);
-    lv_draw_rect(&bar->coords, clip_area, &draw_dsc);
 
+        const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
+#if LV_USE_GROUP == 0
+        /*Simply draw the background*/
+        lv_draw_rect(&bar->coords, clip_area, style_bg, opa);
+#else
+        /* Draw the borders later if the bar is focused.
+         * At value = 100% the indicator can cover to whole background and the focused style won't
+         * be visible*/
+        if(lv_obj_is_focused(bar)) {
+            lv_style_t style_tmp;
+            lv_style_copy(&style_tmp, style_bg);
+            style_tmp.body.border.width = 0;
+            lv_draw_rect(&bar->coords, clip_area, &style_tmp, opa);
+        } else {
+            lv_draw_rect(&bar->coords, clip_area, style_bg, opa);
+        }
+#endif
 }
 
-static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area)
+static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area, lv_design_mode_t mode, lv_opa_t opa)
 {
+    (void) mode; /*Unused*/
+
     lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
 
     lv_coord_t objw = lv_obj_get_width(bar);
@@ -398,29 +469,18 @@ static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area)
     int32_t range = ext->max_value - ext->min_value;
     bool hor = objw >= objh ? true : false;
     bool sym = false;
-    if(ext->type == LV_BAR_TYPE_SYM && ext->min_value < 0 && ext->max_value > 0) sym = true;
-
-    bool cur_value_anim = false;
-#if LV_USE_ANIMATION
-    if(ext->cur_value_anim.is_animating) cur_value_anim = true;
-#endif
-    bool start_value_anim = false;
-#if LV_USE_ANIMATION
-    if(ext->start_value_anim.is_animating) start_value_anim = true;
-#endif
+    if(ext->type == LV_BAR_TYPE_SYM && ext->min_value < 0 && ext->max_value > 0 && ext->start_value == ext->min_value) sym = true;
 
     /*Calculate the indicator area*/
-    lv_style_value_t bg_left = lv_obj_get_style_value(bar,   LV_BAR_PART_BG, LV_STYLE_PAD_LEFT);
-    lv_style_value_t bg_right = lv_obj_get_style_value(bar,  LV_BAR_PART_BG, LV_STYLE_PAD_RIGHT);
-    lv_style_value_t bg_top = lv_obj_get_style_value(bar,    LV_BAR_PART_BG, LV_STYLE_PAD_TOP);
-    lv_style_value_t bg_bottom = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_PAD_BOTTOM);
+    lv_area_copy(&ext->indic_area, &bar->coords);
+    const lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
+    const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
 
     /*Respect padding and minimum width/height too*/
-    lv_area_copy(&ext->indic_area, &bar->coords);
-    ext->indic_area.x1 += bg_left;
-    ext->indic_area.x2 -= bg_right;
-    ext->indic_area.y1 += bg_top;
-    ext->indic_area.y2 -= bg_bottom;
+    ext->indic_area.x1 += style_indic->body.padding.left;
+    ext->indic_area.x2 -= style_indic->body.padding.right;
+    ext->indic_area.y1 += style_indic->body.padding.top;
+    ext->indic_area.y2 -= style_indic->body.padding.bottom;
 
     if(hor && lv_area_get_height(&ext->indic_area) < LV_BAR_SIZE_MIN) {
         ext->indic_area.y1 = bar->coords.y1 + (objh / 2) - (LV_BAR_SIZE_MIN / 2);
@@ -434,123 +494,110 @@ static void draw_indic(lv_obj_t * bar, const lv_area_t * clip_area)
     lv_coord_t indich = lv_area_get_height(&ext->indic_area);
 
     /*Calculate the indicator length*/
-    lv_coord_t indic_length;
+    lv_coord_t anim_length = hor ? indicw : indich;
 
-	lv_coord_t anim_cur_value, anim_start_value;
-	if(cur_value_anim) {
-#if LV_USE_ANIMATION
-		anim_cur_value = ext->cur_value_anim.anim_val;
-#endif
-	} else {
-		anim_cur_value = ext->cur_value;
-	}
+    lv_coord_t anim_cur_value_x, anim_start_value_x;
 
-	if(start_value_anim) {
-#if LV_USE_ANIMATION
-		anim_start_value = ext->start_value_anim.anim_val;
-#endif
-	} else {
-		anim_start_value = ext->start_value;
-	}
+    lv_coord_t * axis1, * axis2;
+    lv_coord_t (*indic_length_calc)(const lv_area_t *area);
 
-    indic_length = (int32_t)((int32_t)(hor ? indicw : indich) * ((anim_cur_value - ext->min_value) - (anim_start_value - ext->min_value))) /
-                (ext->max_value - ext->min_value);
-
-    /*Horizontal bar*/
     if(hor) {
-        ext->indic_area.x2 = ext->indic_area.x1 + indic_length - 1;
-        if(sym) {
-            lv_coord_t zero;
-            zero = ext->indic_area.x1 + (-ext->min_value * indicw) / range;
-            if(ext->indic_area.x2 > zero)
-                ext->indic_area.x1 = zero;
-            else {
-                ext->indic_area.x1 = ext->indic_area.x2;
-                ext->indic_area.x2 = zero;
-            }
-        } else {
-			lv_coord_t increment = ((anim_start_value-ext->min_value) * indicw) / range;
-			ext->indic_area.x1 += increment;
-			ext->indic_area.x2 += increment;
-		}
+        axis1 = &ext->indic_area.x1;
+        axis2 = &ext->indic_area.x2;
+        indic_length_calc = lv_area_get_width;
+    } else {
+        axis1 = &ext->indic_area.y1;
+        axis2 = &ext->indic_area.y2;
+        indic_length_calc = lv_area_get_height;
     }
-    /*Vertical bar*/
-    else {
-        ext->indic_area.y1 = ext->indic_area.y2 - indic_length + 1;
-        if(sym) {
-            lv_coord_t zero;
-            zero = ext->indic_area.y2 - (-ext->min_value * objh) / range;
-            if(ext->indic_area.y1 < zero)
-                ext->indic_area.y2 = zero;
-            else {
-                ext->indic_area.y2 = ext->indic_area.y1;
-                ext->indic_area.y1 = zero;
-            }
-        } else {
-			lv_coord_t increment = ((anim_start_value-ext->min_value) * objh) / range;
-			ext->indic_area.y1 += increment;
-			ext->indic_area.y2 += increment;
-		}
+
+#if LV_USE_ANIMATION
+    if(LV_BAR_IS_ANIMATING(ext->start_value_anim)) {
+        lv_coord_t anim_start_value_start_x =
+            (int32_t)((int32_t)anim_length * (ext->start_value_anim.anim_start - ext->min_value)) / range;
+        lv_coord_t anim_start_value_end_x =
+            (int32_t)((int32_t)anim_length * (ext->start_value_anim.anim_end - ext->min_value)) / range;
+        
+        anim_start_value_x = (((anim_start_value_end_x - anim_start_value_start_x) * ext->start_value_anim.anim_state) >> LV_BAR_ANIM_STATE_NORM);
+    } else
+#endif
+    {
+        anim_start_value_x = (int32_t)((int32_t)anim_length * (ext->start_value - ext->min_value)) / range;
+    }
+
+#if LV_USE_ANIMATION
+    if(LV_BAR_IS_ANIMATING(ext->cur_value_anim)) {
+        lv_coord_t anim_cur_value_start_x =
+            (int32_t)((int32_t)anim_length * (ext->cur_value_anim.anim_start - ext->min_value)) / range;
+        lv_coord_t anim_cur_value_end_x =
+            (int32_t)((int32_t)anim_length * (ext->cur_value_anim.anim_end - ext->min_value)) / range;
+        
+        anim_cur_value_x = (((anim_cur_value_end_x - anim_cur_value_start_x) * ext->cur_value_anim.anim_state) >> LV_BAR_ANIM_STATE_NORM);
+    } else
+#endif
+    {
+        anim_cur_value_x = (int32_t)((int32_t)anim_length * (ext->cur_value - ext->min_value)) / range;
+    }
+
+    /* Set the indicator length */
+    *axis2 = *axis1 + anim_cur_value_x;
+    *axis1 += anim_start_value_x;
+
+    if(sym) {
+        lv_coord_t zero;
+        zero = *axis1 + (-ext->min_value * anim_length) / range;
+        if(*axis2 > zero)
+            *axis1 = zero;
+        else {
+            *axis1 = *axis2;
+            *axis2 = zero;
+        }
     }
 
     /*Draw the indicator*/
 
     /*Do not draw a zero length indicator*/
-    if(!sym && indic_length == 0) return;
+    if(!sym && indic_length_calc(&ext->indic_area) == 0) return;
 
-    uint16_t bg_radius = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_RADIUS);
+    lv_style_t style_indic_tmp;
+    lv_style_copy(&style_indic_tmp, style_indic);
+    uint16_t bg_radius = style_bg->body.radius;
     lv_coord_t short_side = LV_MATH_MIN(objw, objh);
     if(bg_radius > short_side >> 1) bg_radius = short_side >> 1;
-
-    lv_draw_rect_dsc_t draw_indic_dsc;
-    lv_draw_rect_dsc_init(&draw_indic_dsc);
-    lv_obj_init_draw_rect_dsc(bar, LV_BAR_PART_INDIC, &draw_indic_dsc);
-
-    /* Draw only the shadow if the indicator is long enough.
-     * The radius of the bg and the indicator can make a strange shape where
-     * it'd be very difficult to draw shadow. */
-    if((hor && lv_area_get_width(&ext->indic_area) > bg_radius * 2) ||
-      (!hor && lv_area_get_height(&ext->indic_area) > bg_radius * 2)) {
-        lv_opa_t bg_opa = draw_indic_dsc.bg_opa;
-        lv_opa_t border_opa = draw_indic_dsc.border_opa;
-        draw_indic_dsc.bg_opa = LV_OPA_TRANSP;
-        draw_indic_dsc.border_opa = LV_OPA_TRANSP;
-        lv_draw_rect(&ext->indic_area, clip_area, &draw_indic_dsc);
-        draw_indic_dsc.bg_opa = bg_opa;
-        draw_indic_dsc.border_opa = border_opa;
+    /*Draw only the shadow*/
+    if(indic_length_calc(&ext->indic_area) > (bg_radius * 2)) {
+        style_indic_tmp.body.opa = LV_OPA_TRANSP;
+        style_indic_tmp.body.border.width = 0;
+        lv_draw_rect(&ext->indic_area, clip_area, &style_indic_tmp, opa);
     }
 
+
     lv_draw_mask_radius_param_t mask_bg_param;
-    lv_draw_mask_radius_init(&mask_bg_param, &bar->coords, bg_radius, false);
+    lv_draw_mask_radius_init(&mask_bg_param, &bar->coords, style_bg->body.radius, false);
     int16_t mask_bg_id = lv_draw_mask_add(&mask_bg_param, NULL);
 
     /*Draw_only the background*/
-    lv_opa_t shadow_opa = draw_indic_dsc.shadow_opa;
-    lv_opa_t border_opa = draw_indic_dsc.border_opa;
-    draw_indic_dsc.border_opa = LV_OPA_TRANSP;
-    draw_indic_dsc.shadow_opa = LV_OPA_TRANSP;
+    style_indic_tmp.body.shadow.width = 0;
+    style_indic_tmp.body.opa = style_indic->body.opa;
 
     /*Get the max possible indicator area. The gradient should be applied on this*/
     lv_area_t mask_indic_max_area;
     lv_area_copy(&mask_indic_max_area, &bar->coords);
-    mask_indic_max_area.x1 += bg_left;
-    mask_indic_max_area.y1 += bg_top;
-    mask_indic_max_area.x2 -= bg_right;
-    mask_indic_max_area.y2 -= bg_bottom;
+    mask_indic_max_area.x1 += style_indic->body.padding.left;
+    mask_indic_max_area.y1 += style_indic->body.padding.top;
+    mask_indic_max_area.x2 -= style_indic->body.padding.right;
+    mask_indic_max_area.y2 -= style_indic->body.padding.bottom;
 
     /*Create a mask to the current indicator area to see only this part from the whole gradient.*/
     lv_draw_mask_radius_param_t mask_indic_param;
-    lv_draw_mask_radius_init(&mask_indic_param, &ext->indic_area, draw_indic_dsc.radius, false);
+    lv_draw_mask_radius_init(&mask_indic_param, &ext->indic_area, style_indic->body.radius, false);
     int16_t mask_indic_id = lv_draw_mask_add(&mask_indic_param, NULL);
-
-    lv_draw_rect(&mask_indic_max_area, clip_area, &draw_indic_dsc);
-    draw_indic_dsc.border_opa = border_opa;
-    draw_indic_dsc.shadow_opa = shadow_opa;
+    lv_draw_rect(&mask_indic_max_area, clip_area, &style_indic_tmp, opa);
 
     /*Draw the border*/
-    draw_indic_dsc.bg_opa = LV_OPA_TRANSP;
-    draw_indic_dsc.shadow_opa = LV_OPA_TRANSP;
-    lv_draw_rect(&ext->indic_area, clip_area, &draw_indic_dsc);
+    style_indic_tmp.body.border.width = style_indic->body.border.width;
+    style_indic_tmp.body.opa = LV_OPA_TRANSP;
+    lv_draw_rect(&ext->indic_area, clip_area, &style_indic_tmp, opa);
 
     lv_draw_mask_remove_id(mask_indic_id);
     lv_draw_mask_remove_id(mask_bg_id);
@@ -568,40 +615,25 @@ static lv_res_t lv_bar_signal(lv_obj_t * bar, lv_signal_t sign, void * param)
 {
     lv_res_t res;
 
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        uint8_t ** type_p = param;
-        lv_style_dsc_t ** style_dsc_p = param;
-        *style_dsc_p = lv_bar_get_style(bar, **type_p);
-        return LV_RES_OK;
-    }
-
     /* Include the ancient signal function */
     res = ancestor_signal(bar, sign, param);
     if(res != LV_RES_OK) return res;
     if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
-        lv_style_value_t bg_sh_width = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_SHADOW_WIDTH);
-        lv_style_value_t bg_sh_spread = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_SHADOW_SPREAD);
-        lv_style_value_t bg_sh_ofs_x = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_SHADOW_OFFSET_X);
-        lv_style_value_t bg_sh_ofs_y = lv_obj_get_style_value(bar, LV_BAR_PART_BG, LV_STYLE_SHADOW_OFFSET_Y);
+        const lv_style_t * style_indic = lv_bar_get_style(bar, LV_BAR_STYLE_INDIC);
+        const lv_style_t * style_bg = lv_bar_get_style(bar, LV_BAR_STYLE_BG);
 
-        lv_coord_t bg_size = bg_sh_width + bg_sh_spread;
-        bg_size += LV_MATH_MAX(LV_MATH_ABS(bg_sh_ofs_x), LV_MATH_ABS(bg_sh_ofs_y));
+        lv_coord_t bg_size = style_bg->body.shadow.width + style_bg->body.shadow.spread;
+        bg_size += LV_MATH_MAX(LV_MATH_ABS(style_bg->body.shadow.offset.x), LV_MATH_ABS(style_bg->body.shadow.offset.y));
 
-
-        lv_style_value_t indic_sh_width = lv_obj_get_style_value(bar,  LV_BAR_PART_INDIC, LV_STYLE_SHADOW_WIDTH);
-        lv_style_value_t indic_sh_spread = lv_obj_get_style_value(bar, LV_BAR_PART_INDIC, LV_STYLE_SHADOW_SPREAD);
-        lv_style_value_t indic_sh_ofs_x = lv_obj_get_style_value(bar,  LV_BAR_PART_INDIC, LV_STYLE_SHADOW_OFFSET_X);
-        lv_style_value_t indic_sh_ofs_y = lv_obj_get_style_value(bar,  LV_BAR_PART_INDIC, LV_STYLE_SHADOW_OFFSET_Y);
-
-
-        lv_coord_t indic_size = indic_sh_width + indic_sh_spread;
-        indic_size += LV_MATH_MAX(LV_MATH_ABS(indic_sh_ofs_x), LV_MATH_ABS(indic_sh_ofs_y));
+        lv_coord_t indic_size = style_indic->body.shadow.width + style_indic->body.shadow.spread;
+        indic_size += LV_MATH_MAX(LV_MATH_ABS(style_indic->body.shadow.offset.x), LV_MATH_ABS(style_indic->body.shadow.offset.y));
 
         bar->ext_draw_pad = LV_MATH_MAX(bar->ext_draw_pad, bg_size);
         bar->ext_draw_pad = LV_MATH_MAX(bar->ext_draw_pad, indic_size);
 
+        if(style_indic->body.shadow.width > bar->ext_draw_pad) bar->ext_draw_pad = style_indic->body.shadow.width;
     }
 
 	if(sign == LV_SIGNAL_CLEANUP) {
@@ -615,31 +647,10 @@ static lv_res_t lv_bar_signal(lv_obj_t * bar, lv_signal_t sign, void * param)
     return res;
 }
 
-static lv_style_dsc_t * lv_bar_get_style(lv_obj_t * bar, uint8_t part)
-{
-    LV_ASSERT_OBJ(bar, LV_OBJX_NAME);
-
-    lv_bar_ext_t * ext = lv_obj_get_ext_attr(bar);
-    lv_style_dsc_t * style_dsc_p;
-
-    switch(part) {
-    case LV_BAR_PART_BG:
-        style_dsc_p = &bar->style_dsc;
-        break;
-    case LV_BAR_PART_INDIC:
-        style_dsc_p = &ext->style_indic;
-        break;
-    default:
-        style_dsc_p = NULL;
-    }
-
-    return style_dsc_p;
-}
-
 #if LV_USE_ANIMATION
 static void lv_bar_anim(lv_bar_anim_t * var, lv_anim_value_t value)
 {
-    var->anim_val    = value;
+    var->anim_state    = value;
     lv_obj_invalidate(var->bar);
 }
 
@@ -647,7 +658,7 @@ static void lv_bar_anim_ready(lv_anim_t * a)
 {
 	lv_bar_anim_t * var = a->var;
 	lv_bar_ext_t * ext = lv_obj_get_ext_attr(var->bar);
-    var->is_animating = false;
+    var->anim_state = LV_BAR_ANIM_STATE_INV;
 	if(var == &ext->cur_value_anim)
 		ext->cur_value = var->anim_end;
 	else if(var == &ext->start_value_anim)
@@ -662,7 +673,7 @@ static void lv_bar_set_value_with_anim(lv_obj_t * bar, int16_t new_value, int16_
     } else {
         lv_bar_ext_t *ext = lv_obj_get_ext_attr(bar);
         /*No animation in progress -> simply set the values*/
-        if(!anim_info->is_animating) {
+        if(anim_info->anim_state == LV_BAR_ANIM_STATE_INV) {
             anim_info->anim_start = *value_ptr;
             anim_info->anim_end   = new_value;
         }
@@ -676,8 +687,8 @@ static void lv_bar_set_value_with_anim(lv_obj_t * bar, int16_t new_value, int16_
 
         lv_anim_t a;
         a.var            = anim_info;
-        a.start          = anim_info->anim_start;
-        a.end            = anim_info->anim_end;
+        a.start          = LV_BAR_ANIM_STATE_START;
+        a.end            = LV_BAR_ANIM_STATE_END;
         a.exec_cb        = (lv_anim_exec_xcb_t)lv_bar_anim;
         a.path_cb        = lv_anim_path_linear;
         a.ready_cb       = lv_bar_anim_ready;
@@ -689,7 +700,6 @@ static void lv_bar_set_value_with_anim(lv_obj_t * bar, int16_t new_value, int16_
         a.repeat_pause   = 0;
 
         lv_anim_create(&a);
-		anim_info->is_animating = true;
     }
 }
 
@@ -698,7 +708,7 @@ static void lv_bar_init_anim(lv_obj_t * bar, lv_bar_anim_t * bar_anim)
 	bar_anim->bar = bar;
 	bar_anim->anim_start = 0;
 	bar_anim->anim_end = 0;
-	bar_anim->is_animating = false;
+	bar_anim->anim_state = LV_BAR_ANIM_STATE_INV;
 }
 #endif
 
