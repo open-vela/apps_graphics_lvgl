@@ -32,7 +32,6 @@
  *  STATIC PROTOTYPES
  **********************/
 static bool lv_task_exec(lv_task_t * task);
-static uint32_t lv_task_time_remaining(lv_task_t * task);
 
 /**********************
  *  STATIC VARIABLES
@@ -40,7 +39,6 @@ static uint32_t lv_task_time_remaining(lv_task_t * task);
 static bool lv_task_run  = false;
 static uint8_t idle_last = 0;
 static bool task_deleted;
-static bool task_list_changed;
 static bool task_created;
 
 /**********************
@@ -58,16 +56,14 @@ void lv_task_core_init(void)
 {
     lv_ll_init(&LV_GC_ROOT(_lv_task_ll), sizeof(lv_task_t));
 
-    task_list_changed = false;
     /*Initially enable the lv_task handling*/
     lv_task_enable(true);
 }
 
 /**
  * Call it  periodically to handle lv_tasks.
- * @return the time after which it must be called again
  */
-LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void)
+LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void)
 {
 
 
@@ -75,17 +71,16 @@ LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void)
 
     /*Avoid concurrent running of the task handler*/
     static bool already_running = false;
-    if(already_running) return 1;
+    if(already_running) return;
     already_running = true;
 
     static uint32_t idle_period_start = 0;
     static uint32_t handler_start     = 0;
     static uint32_t busy_time         = 0;
-	static uint32_t time_till_next;
 
     if(lv_task_run == false) {
         already_running = false; /*Release mutex*/
-        return 1;
+        return;
     }
 
     handler_start = lv_tick_get();
@@ -154,13 +149,6 @@ LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void)
                 break;
             }
 
-            if(task_list_changed) {
-                task_interrupter = NULL;
-                end_flag = false;
-                task_list_changed = false;
-                break;
-            }
-
             LV_GC_ROOT(_lv_task_act) = next; /*Load the next task*/
         }
     } while(!end_flag);
@@ -174,23 +162,10 @@ LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void)
         busy_time         = 0;
         idle_period_start = lv_tick_get();
     }
-	
-    time_till_next = LV_NO_TASK_READY;
-    next = lv_ll_get_head(&LV_GC_ROOT(_lv_task_ll));
-    while(next) {
-        if(next->prio != LV_TASK_PRIO_OFF) {
-            uint32_t delay = lv_task_time_remaining(next);
-            if(delay < time_till_next)
-                time_till_next = delay;
-        }
-        
-        next = lv_ll_get_next(&LV_GC_ROOT(_lv_task_ll), next); /*Find the next task*/
-    }
-	
+
     already_running = false; /*Release the mutex*/
 
     LV_LOG_TRACE("lv_task_handler ready");
-	return time_till_next;
 }
 /**
  * Create an "empty" task. It needs to initialzed with at least
@@ -230,7 +205,6 @@ lv_task_t * lv_task_create_basic(void)
             if(new_task == NULL) return NULL;
         }
     }
-    task_list_changed = true;
 
     new_task->period  = DEF_PERIOD;
     new_task->task_cb = NULL;
@@ -287,7 +261,6 @@ void lv_task_set_cb(lv_task_t * task, lv_task_cb_t task_cb)
 void lv_task_del(lv_task_t * task)
 {
     lv_ll_remove(&LV_GC_ROOT(_lv_task_ll), task);
-    task_list_changed = true;
 
     lv_mem_free(task);
 
@@ -317,7 +290,6 @@ void lv_task_set_prio(lv_task_t * task, lv_task_prio_t prio)
     if(i == NULL) {
         lv_ll_move_before(&LV_GC_ROOT(_lv_task_ll), task, NULL);
     }
-    task_list_changed = true;
 
     task->prio = prio;
 }
@@ -391,7 +363,9 @@ static bool lv_task_exec(lv_task_t * task)
 {
     bool exec = false;
 
-    if(lv_task_time_remaining(task) == 0) {
+    /*Execute if at least 'period' time elapsed*/
+    uint32_t elp = lv_tick_elaps(task->last_run);
+    if(elp >= task->period) {
         task->last_run = lv_tick_get();
         task_deleted   = false;
         task_created   = false;
@@ -407,18 +381,4 @@ static bool lv_task_exec(lv_task_t * task)
     }
 
     return exec;
-}
-
-/**
- * Find out how much time remains before a task must be run.
- * @param task pointer to lv_task
- * @return the time remaining, or 0 if it needs to be run again
- */
-static uint32_t lv_task_time_remaining(lv_task_t * task)
-{
-	/*Check if at least 'period' time elapsed*/
-    uint32_t elp = lv_tick_elaps(task->last_run);
-	if(elp >= task->period)
-		return 0;
-	return task->period - elp;
 }
