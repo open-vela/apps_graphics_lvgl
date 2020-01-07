@@ -53,8 +53,7 @@ typedef struct _lv_event_temp_data
  **********************/
 static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coord_t y_diff);
 static void report_style_mod_core(void * style_p, lv_obj_t * obj);
-static void refresh_children_style(lv_obj_t * obj, uint8_t part);
-static lv_res_t style_cache_update_core(lv_obj_t * obj, uint8_t part);
+static void refresh_children_style(lv_obj_t * obj);
 static void delete_children(lv_obj_t * obj);
 static void base_dir_refr_children(lv_obj_t * obj);
 static void lv_event_mark_deleted(lv_obj_t * obj);
@@ -93,7 +92,6 @@ void lv_init(void)
     /*Initialize the lv_misc modules*/
     lv_mem_init();
     lv_task_core_init();
-    lv_style_built_in_init();
 
 #if LV_USE_FILESYSTEM
     lv_fs_init();
@@ -108,10 +106,7 @@ void lv_init(void)
 #endif
 
     /*Init. the sstyles*/
-//    lv_style_built_in_init();
-
-    lv_theme_t * th = lv_theme_alien_init(0, NULL);
-    lv_theme_set_act(th);
+    lv_style_init();
 
     /*Initialize the screen refresh system*/
     lv_refr_init();
@@ -130,11 +125,6 @@ void lv_init(void)
 }
 
 #if LV_ENABLE_GC || !LV_MEM_CUSTOM
-
-/**
- * Deinit the 'lv' library
- * Currently only implemented when not using custom allocators, or GC is enabled.
- */
 void lv_deinit(void)
 {
     lv_gc_clear_roots();
@@ -163,8 +153,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
 {
 
     lv_obj_t * new_obj = NULL;
-
-    /*Create a screen*/
+    /*Create a screen if the parent is NULL*/
     if(parent == NULL) {
         LV_LOG_TRACE("Screen create started");
         lv_disp_t * disp = lv_disp_get_default();
@@ -177,14 +166,81 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         LV_ASSERT_MEM(new_obj);
         if(new_obj == NULL) return NULL;
 
+        new_obj->par = NULL; /*Screens has no a parent*/
+        lv_ll_init(&(new_obj->child_ll), sizeof(lv_obj_t));
+
+        /*Set the callbacks*/
+        new_obj->signal_cb = lv_obj_signal;
+        new_obj->design_cb = lv_obj_design;
+        new_obj->event_cb = NULL;
+
         /*Set coordinates to full screen size*/
         new_obj->coords.x1    = 0;
         new_obj->coords.y1    = 0;
         new_obj->coords.x2    = lv_disp_get_hor_res(NULL) - 1;
         new_obj->coords.y2    = lv_disp_get_ver_res(NULL) - 1;
+        new_obj->ext_draw_pad = 0;
 
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+        memset(&new_obj->ext_click_pad, 0, sizeof(new_obj->ext_click_pad));
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+        new_obj->ext_click_pad_hor = 0;
+        new_obj->ext_click_pad_ver = 0;
+#endif
+
+        /*Init realign*/
+#if LV_USE_OBJ_REALIGN
+        new_obj->realign.align        = LV_ALIGN_CENTER;
+        new_obj->realign.xofs         = 0;
+        new_obj->realign.yofs         = 0;
+        new_obj->realign.base         = NULL;
+        new_obj->realign.auto_realign = 0;
+#endif
+
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            new_obj->style_p = th->style.scr;
+        } else {
+            new_obj->style_p = &lv_style_scr;
+        }
+
+        /*Init. user date*/
+#if LV_USE_USER_DATA
+        memset(&new_obj->user_data, 0, sizeof(lv_obj_user_data_t));
+#endif
+
+#if LV_USE_GROUP
+        new_obj->group_p = NULL;
+#endif
+        /*Set attributes*/
+        new_obj->adv_hittest  = 0;
+        new_obj->click        = 0;
+        new_obj->drag         = 0;
+        new_obj->drag_throw   = 0;
+        new_obj->drag_parent  = 0;
+        new_obj->drag_dir     = 0;
+        new_obj->hidden       = 0;
+        new_obj->top          = 0;
+        new_obj->protect      = LV_PROTECT_NONE;
+        new_obj->opa_scale_en = 0;
+        new_obj->opa_scale    = LV_OPA_COVER;
+        new_obj->parent_event = 0;
+#if LV_USE_BIDI
+        new_obj->base_dir     = LV_BIDI_BASE_DIR_DEF;
+#else
+        new_obj->base_dir     = LV_BIDI_DIR_LTR;
+#endif
+
+        new_obj->reserved     = 0;
+
+        new_obj->ext_attr = NULL;
+
+        LV_LOG_INFO("Screen create ready");
     }
-    /*Create a normal object*/
+    /*parent != NULL create normal obj. on a parent*/
     else {
         LV_LOG_TRACE("Object create started");
         LV_ASSERT_OBJ(parent, LV_OBJX_NAME);
@@ -193,6 +249,21 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         LV_ASSERT_MEM(new_obj);
         if(new_obj == NULL) return NULL;
 
+        new_obj->par = parent; /*Set the parent*/
+        lv_ll_init(&(new_obj->child_ll), sizeof(lv_obj_t));
+
+        /*Set the callbacks*/
+        new_obj->signal_cb = lv_obj_signal;
+        new_obj->design_cb = lv_obj_design;
+        new_obj->event_cb = NULL;
+
+#if LV_USE_BIDI
+        new_obj->base_dir     = LV_BIDI_DIR_INHERIT;
+#else
+        new_obj->base_dir     = LV_BIDI_DIR_LTR;
+#endif
+
+        /*Set coordinates left top corner of parent*/
         new_obj->coords.y1    = parent->coords.y1;
         new_obj->coords.y2    = parent->coords.y1 + LV_OBJ_DEF_HEIGHT;
         if(lv_obj_get_base_dir(new_obj) == LV_BIDI_DIR_RTL) {
@@ -202,78 +273,71 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
             new_obj->coords.x1    = parent->coords.x1;
             new_obj->coords.x2    = parent->coords.x1 + LV_OBJ_DEF_WIDTH;
         }
-    }
-
-    new_obj->par = parent;
-
-    lv_ll_init(&(new_obj->child_ll), sizeof(lv_obj_t));
-
-    /*Set the callbacks*/
-    new_obj->signal_cb = lv_obj_signal;
-    new_obj->design_cb = lv_obj_design;
-    new_obj->event_cb = NULL;
-
-    new_obj->ext_draw_pad = 0;
+        new_obj->ext_draw_pad = 0;
 
 #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
-    memset(&new_obj->ext_click_pad, 0, sizeof(new_obj->ext_click_pad));
+        memset(&new_obj->ext_click_pad, 0, sizeof(new_obj->ext_click_pad));
 #endif
 
 #if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
-    new_obj->ext_click_pad_hor = 0;
-    new_obj->ext_click_pad_ver = 0;
+        new_obj->ext_click_pad_hor = 0;
+        new_obj->ext_click_pad_ver = 0;
 #endif
 
-    /*Init realign*/
+        /*Init realign*/
 #if LV_USE_OBJ_REALIGN
-    new_obj->realign.align        = LV_ALIGN_CENTER;
-    new_obj->realign.xofs         = 0;
-    new_obj->realign.yofs         = 0;
-    new_obj->realign.base         = NULL;
-    new_obj->realign.auto_realign = 0;
+        new_obj->realign.align        = LV_ALIGN_CENTER;
+        new_obj->realign.xofs         = 0;
+        new_obj->realign.yofs         = 0;
+        new_obj->realign.base         = NULL;
+        new_obj->realign.auto_realign = 0;
+#endif
+        /*Set appearance*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            new_obj->style_p = th->style.panel;
+        } else {
+            new_obj->style_p = &lv_style_plain_color;
+        }
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+        memset(&new_obj->ext_click_pad, 0, sizeof(new_obj->ext_click_pad));
 #endif
 
-    /*Init. user date*/
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+        new_obj->ext_click_pad_hor = 0;
+        new_obj->ext_click_pad_ver = 0;
+#endif
+
+        /*Init. user date*/
 #if LV_USE_USER_DATA
-    memset(&new_obj->user_data, 0, sizeof(lv_obj_user_data_t));
+        memset(&new_obj->user_data, 0, sizeof(lv_obj_user_data_t));
 #endif
-
 
 #if LV_USE_GROUP
-    new_obj->group_p = NULL;
+        new_obj->group_p = NULL;
 #endif
 
-    /*Set attributes*/
-    new_obj->adv_hittest  = 0;
-    new_obj->click        = parent ? 1 : 0;
-    new_obj->drag         = 0;
-    new_obj->drag_throw   = 0;
-    new_obj->drag_parent  = 0;
-    new_obj->drag_dir     = LV_DRAG_DIR_BOTH;
-    new_obj->hidden       = 0;
-    new_obj->top          = 0;
-    new_obj->protect      = LV_PROTECT_NONE;
-    new_obj->parent_event = 0;
+        /*Set attributes*/
+        new_obj->click        = 1;
+        new_obj->drag         = 0;
+        new_obj->drag_dir     = LV_DRAG_DIR_BOTH;
+        new_obj->drag_throw   = 0;
+        new_obj->drag_parent  = 0;
+        new_obj->hidden       = 0;
+        new_obj->top          = 0;
+        new_obj->protect      = LV_PROTECT_NONE;
+        new_obj->opa_scale    = LV_OPA_COVER;
+        new_obj->opa_scale_en = 0;
+        new_obj->parent_event = 0;
+        new_obj->reserved     = 0;
 
-#if LV_USE_BIDI
-    if(parent == NULL) new_obj->base_dir     = LV_BIDI_BASE_DIR_DEF;
-    else new_obj->base_dir     = LV_BIDI_DIR_INHERIT;
-#else
-    new_obj->base_dir     = LV_BIDI_DIR_LTR;
-#endif
-
-    new_obj->ext_attr = NULL;
-
-    lv_style_dsc_init(&new_obj->style_dsc);
-
-    if(parent != NULL) {
-        lv_obj_add_style_class(new_obj, LV_OBJ_PART_MAIN, _t(PANEL));
-    } else {
-        lv_obj_add_style_class(new_obj, LV_OBJ_PART_MAIN, _t(SCR));
+        new_obj->ext_attr = NULL;
     }
 
     /*Copy the attributes if required*/
     if(copy != NULL) {
+        LV_ASSERT_OBJ(copy, LV_OBJX_NAME);
         lv_area_copy(&new_obj->coords, &copy->coords);
         new_obj->ext_draw_pad = copy->ext_draw_pad;
 
@@ -313,7 +377,11 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         new_obj->top          = copy->top;
         new_obj->parent_event = copy->parent_event;
 
+        new_obj->opa_scale_en = copy->opa_scale_en;
         new_obj->protect      = copy->protect;
+        new_obj->opa_scale    = copy->opa_scale;
+
+        new_obj->style_p = copy->style_p;
 
 #if LV_USE_GROUP
         /*Add to the same group*/
@@ -329,6 +397,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
             lv_obj_set_pos(new_obj, 0, 0);
         }
 
+        LV_LOG_INFO("Object create ready");
     }
 
     /*Send a signal to the parent to notify it about the new child*/
@@ -338,8 +407,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         /*Invalidate the area if not screen created*/
         lv_obj_invalidate(new_obj);
     }
-
-    LV_LOG_INFO("Object create ready");
 
     return new_obj;
 }
@@ -652,7 +719,7 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     refresh_children_position(obj, diff.x, diff.y);
 
     /*Inform the object about its new coordinates*/
-    obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
+    obj->signal_cb(obj, LV_SIGNAL_CORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
     par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
@@ -719,7 +786,7 @@ void lv_obj_set_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
     }
 
     /*Send a signal to the object with its new coordinates*/
-    obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
+    obj->signal_cb(obj, LV_SIGNAL_CORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
     lv_obj_t * par = lv_obj_get_parent(obj);
@@ -1147,95 +1214,33 @@ void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right
  * @param obj pointer to an object
  * @param style_p pointer to the new style
  */
-//void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style)
-//{
-//    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-//    if(style) {
-//        LV_ASSERT_STYLE(style);
-//    }
-//
-//    obj->style_p = style;
-//
-//    /*Send a signal about style change to every children with NULL style*/
-//    refresh_children_style(obj);
-//
-//    /*Notify the object about the style change too*/
-//    lv_obj_refresh_style(obj);
-//}
-
-
-void lv_obj_set_style_color(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, lv_color_t color)
+void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style)
 {
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    lv_style_set_color(&style_dsc->local, prop, color);
-    lv_obj_refresh_style(obj, part);
-}
-
-void lv_obj_set_style_value(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, lv_style_int_t value)
-{
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    lv_style_set_int(&style_dsc->local, prop, value);
-    lv_obj_refresh_style(obj, part);
-}
-
-void lv_obj_set_style_opa(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, lv_opa_t opa)
-{
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    lv_style_set_opa(&style_dsc->local, prop, opa);
-    lv_obj_refresh_style(obj, part);
-}
-
-void lv_obj_set_style_ptr(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, void * p)
-{
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    lv_style_set_ptr(&style_dsc->local, prop, p);
-    lv_obj_refresh_style(obj, part);
-}
-
-void lv_obj_add_style_class(lv_obj_t * obj, uint8_t part, lv_style_t * style)
-{
-    if(style == NULL) return;
-
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    if(style_dsc == NULL) {
-        LV_LOG_WARN("lv_obj_add_style_class: can't find style with `type`");
-        return;
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+    if(style) {
+        LV_ASSERT_STYLE(style);
     }
 
-    lv_style_dsc_add_class(style_dsc, style);
+    obj->style_p = style;
 
-    lv_obj_refresh_style(obj, part);
+    /*Send a signal about style change to every children with NULL style*/
+    refresh_children_style(obj);
+
+    /*Notify the object about the style change too*/
+    lv_obj_refresh_style(obj);
 }
-
-void lv_obj_reset_style(lv_obj_t * obj, uint8_t part)
-{
-    lv_style_dsc_t * style_dsc = lv_obj_get_style(obj, part);
-    if(style_dsc == NULL) {
-        LV_LOG_WARN("lv_obj_clean_styles: can't find style with `part`");
-        return;
-    }
-
-    lv_style_dsc_reset(style_dsc);
-
-    lv_obj_refresh_style(obj, part);
-}
-
 
 /**
- * Notify an object (and its children) about its style is modified
+ * Notify an object about its style is modified
  * @param obj pointer to an object
  */
-void lv_obj_refresh_style(lv_obj_t * obj, uint8_t part)
+void lv_obj_refresh_style(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_obj_update_style_cache(obj, part);
-
     lv_obj_invalidate(obj);
-    obj->signal_cb(obj, LV_SIGNAL_STYLE_CHG, &part);
+    obj->signal_cb(obj, LV_SIGNAL_STYLE_CHG, NULL);
     lv_obj_invalidate(obj);
-
-    refresh_children_style(obj, part);
 }
 
 /**
@@ -1245,12 +1250,18 @@ void lv_obj_refresh_style(lv_obj_t * obj, uint8_t part)
  */
 void lv_obj_report_style_mod(lv_style_t * style)
 {
+    LV_ASSERT_STYLE(style);
+
     lv_disp_t * d = lv_disp_get_next(NULL);
 
     while(d) {
         lv_obj_t * i;
         LV_LL_READ(d->scr_ll, i)
         {
+            if(i->style_p == style || style == NULL) {
+                lv_obj_refresh_style(i);
+            }
+
             report_style_mod_core(style, i);
         }
         d = lv_disp_get_next(d);
@@ -1277,7 +1288,7 @@ void lv_obj_set_hidden(lv_obj_t * obj, bool en)
     if(!obj->hidden) lv_obj_invalidate(obj); /*Invalidate when not hidden (hidden objects are ignored) */
 
     lv_obj_t * par = lv_obj_get_parent(obj);
-    if(par) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 }
 
 /**
@@ -1398,6 +1409,34 @@ void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir)
 }
 
 /**
+ * Set the opa scale enable parameter (required to set opa_scale with `lv_obj_set_opa_scale()`)
+ * @param obj pointer to an object
+ * @param en true: opa scaling is enabled for this object and all children; false: no opa scaling
+ */
+void lv_obj_set_opa_scale_enable(lv_obj_t * obj, bool en)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    obj->opa_scale_en = en ? 1 : 0;
+}
+
+/**
+ * Set the opa scale of an object.
+ * The opacity of this object and all it's children will be scaled down with this factor.
+ * `lv_obj_set_opa_scale_enable(obj, true)` needs to be called to enable it.
+ * (not for all children just for the parent where to start the opa scaling)
+ * @param obj pointer to an object
+ * @param opa_scale a factor to scale down opacity [0..255]
+ */
+void lv_obj_set_opa_scale(lv_obj_t * obj, lv_opa_t opa_scale)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    obj->opa_scale = opa_scale;
+    lv_obj_invalidate(obj);
+}
+
+/**
  * Set a bit or bits in the protect filed
  * @param obj pointer to an object
  * @param prot 'OR'-ed values from `lv_protect_t`
@@ -1420,29 +1459,6 @@ void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot)
 
     prot = (~prot) & 0xFF;
     obj->protect &= prot;
-}
-
-void lv_obj_set_state(lv_obj_t * obj, lv_obj_state_t state)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    lv_obj_state_t new_state = obj->state | state;
-    if(obj->state != new_state) {
-        obj->state = new_state;
-        lv_obj_refresh_style(obj, LV_OBJ_PART_ALL);
-    }
-}
-
-void lv_obj_clear_state(lv_obj_t * obj, lv_obj_state_t state)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    state = (~state) & 0xFF;
-    lv_obj_state_t new_state = obj->state & state;
-    if(obj->state != new_state) {
-        obj->state = new_state;
-        lv_obj_refresh_style(obj, LV_OBJ_PART_ALL);
-    }
 }
 
 /**
@@ -1565,16 +1581,12 @@ void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb)
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
- * @return LV_RES_OK or LV_RES_INV
  */
-lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param)
+void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_res_t res = LV_RES_OK;
-    if(obj->signal_cb) res = obj->signal_cb(obj, signal, param);
-
-    return res;
+    if(obj->signal_cb) obj->signal_cb(obj, signal, param);
 }
 
 /**
@@ -1801,16 +1813,14 @@ void lv_obj_get_inner_coords(const lv_obj_t * obj, lv_area_t * coords_p)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_border_side_t part = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_BORDER_PART);
-    lv_coord_t w = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_BORDER_WIDTH);
+    const lv_style_t * style = lv_obj_get_style(obj);
+    if(style->body.border.part & LV_BORDER_PART_LEFT) coords_p->x1 += style->body.border.width;
 
-    if(part & LV_BORDER_SIDE_LEFT) coords_p->x1 += w;
+    if(style->body.border.part & LV_BORDER_PART_RIGHT) coords_p->x2 -= style->body.border.width;
 
-    if(part & LV_BORDER_SIDE_RIGHT) coords_p->x2 -= w;
+    if(style->body.border.part & LV_BORDER_PART_TOP) coords_p->y1 += style->body.border.width;
 
-    if(part & LV_BORDER_SIDE_TOP) coords_p->y1 += w;
-
-    if(part & LV_BORDER_SIDE_BOTTOM) coords_p->y2 -= w;
+    if(style->body.border.part & LV_BORDER_PART_BOTTOM) coords_p->y2 -= style->body.border.width;
 }
 
 /**
@@ -1884,10 +1894,9 @@ lv_coord_t lv_obj_get_width_fit(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_style_int_t left = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_PAD_LEFT);
-    lv_style_int_t right = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_PAD_RIGHT);
+    const lv_style_t * style = lv_obj_get_style(obj);
 
-    return lv_obj_get_width(obj) - left - right;
+    return lv_obj_get_width(obj) - style->body.padding.left - style->body.padding.right;
 }
 
 /**
@@ -1899,10 +1908,9 @@ lv_coord_t lv_obj_get_height_fit(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_style_int_t top = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_PAD_TOP);
-    lv_style_int_t bottom =  lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_PAD_BOTTOM);
+    const lv_style_t * style = lv_obj_get_style(obj);
 
-    return lv_obj_get_height(obj) - top - bottom;
+    return lv_obj_get_height(obj) - style->body.padding.top - style->body.padding.bottom;
 }
 
 /**
@@ -2014,484 +2022,50 @@ lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj)
  * Appearance get
  *---------------*/
 
-lv_style_dsc_t * lv_obj_get_style(const lv_obj_t * obj, uint8_t part)
+/**
+ * Get the style pointer of an object (if NULL get style of the parent)
+ * @param obj pointer to an object
+ * @return pointer to a style
+ */
+const lv_style_t * lv_obj_get_style(const lv_obj_t * obj)
 {
-	if(part == LV_OBJ_PART_MAIN) return &obj->style_dsc;
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    void * p = &part;
+    const lv_style_t * style_act = obj->style_p;
+    if(style_act == NULL) {
+        lv_obj_t * par = obj->par;
 
-    lv_res_t res;
-    res = lv_signal_send((lv_obj_t*)obj, LV_SIGNAL_GET_STYLE, &p);
-
-    if(res != LV_RES_OK) return NULL;
-
-    return p;
-}
-
-
-lv_style_int_t lv_obj_get_style_int(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
-{
-
-    lv_style_dsc_t * dsc = lv_obj_get_style(obj, part);
-    if(dsc->cache.enabled) {
-        switch(prop & (~LV_STYLE_STATE_MASK)) {
-        case LV_STYLE_PAD_LEFT:
-            if(dsc->cache.pad_left != LV_STYLE_CACHE_PAD_SKIPPED) {
-                return dsc->cache.pad_left;
+        while(par) {
+            if(par->style_p) {
+                if(par->style_p->glass == 0) {
+#if LV_USE_GROUP == 0
+                    style_act = par->style_p;
+#else
+                    /*If a parent is focused then use then focused style*/
+                    lv_group_t * g = lv_obj_get_group(par);
+                    if(lv_group_get_focused(g) == par) {
+                        style_act = lv_group_mod_style(g, par->style_p);
+                    } else {
+                        style_act = par->style_p;
+                    }
+#endif
+                    break;
+                }
             }
-            break;
-        case LV_STYLE_PAD_RIGHT:
-            if(dsc->cache.pad_right != LV_STYLE_CACHE_PAD_SKIPPED) {
-                return dsc->cache.pad_right;
-            }
-            break;
-        case LV_STYLE_PAD_TOP:
-            if(dsc->cache.pad_top != LV_STYLE_CACHE_PAD_SKIPPED) {
-                return dsc->cache.pad_top;
-            }
-            break;
-        case LV_STYLE_PAD_BOTTOM:
-            if(dsc->cache.pad_bottom != LV_STYLE_CACHE_PAD_SKIPPED) {
-                return dsc->cache.pad_bottom;
-            }
-            break;
-        case LV_STYLE_PAD_INNER:
-            if(dsc->cache.pad_inner!= LV_STYLE_CACHE_PAD_SKIPPED) {
-                return dsc->cache.pad_inner;
-            }
-            break;
-        case LV_STYLE_BG_GRAD_DIR:
-            return dsc->cache.bg_grad_dir;
-            break;
-        case LV_STYLE_BORDER_WIDTH:
-            if(dsc->cache.border_width != LV_STYLE_CACHE_WIDTH_SKIPPED) {
-                return dsc->cache.border_width;
-            }
-            break;
-        case LV_STYLE_LINE_WIDTH:
-            if(dsc->cache.line_width != LV_STYLE_CACHE_WIDTH_SKIPPED) {
-                return dsc->cache.line_width;
-            }
-            break;
-        case LV_STYLE_LETTER_SPACE:
-            if(dsc->cache.letter_space != LV_STYLE_CACHE_WIDTH_SKIPPED) {
-                return dsc->cache.letter_space;
-            }
-            break;
-        case LV_STYLE_LINE_SPACE:
-            if(dsc->cache.line_space != LV_STYLE_CACHE_WIDTH_SKIPPED) {
-                return dsc->cache.line_space;
-            }
-            break;
-        case LV_STYLE_SHADOW_WIDTH:
-            if(dsc->cache.shadow_width == 0) {
-                return 0;
-            }
-            break;
-        case LV_STYLE_BG_BLEND_MODE:
-            if(dsc->cache.bg_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_BORDER_BLEND_MODE:
-            if(dsc->cache.border_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_TEXT_BLEND_MODE:
-            if(dsc->cache.text_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_LINE_BLEND_MODE:
-            if(dsc->cache.line_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_IMAGE_BLEND_MODE:
-            if(dsc->cache.image_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_SHADOW_BLEND_MODE:
-            if(dsc->cache.shadow_blend_mode == LV_STYLE_CACHE_BLEND_MODE_NORMAL) {
-                return LV_BLEND_MODE_NORMAL;
-            }
-            break;
-        case LV_STYLE_RADIUS:
-            if(dsc->cache.radius != LV_STYLE_CACHE_RADIUS_SKIPPED) {
-                return dsc->cache.radius == LV_STYLE_CACHE_RADIUS_CIRCLE ? LV_RADIUS_CIRCLE : dsc->cache.radius;
-            }
-            break;
-        case LV_STYLE_CLIP_CORNER:
-        	return dsc->cache.clip_corner;
-            break;
-        case LV_STYLE_BORDER_PART:
-        	if(dsc->cache.border_part == LV_STYLE_CACHE_BORDER_PART_FULL) return LV_BORDER_SIDE_FULL;
-            break;
+            par = par->par;
         }
     }
-
-    uint8_t state;
-    lv_style_property_t prop_ori = prop;
-
-    lv_style_attr_t attr;
-    attr.full = prop >> 8;
-
-    int16_t weight = -1;
-    lv_style_int_t value;
-
-    const lv_obj_t * parent = obj;
-    while(parent) {
-        lv_style_dsc_t * dsc = lv_obj_get_style(parent, part);
-        if(dsc == NULL) continue;
-
-        uint8_t state = lv_obj_get_state(parent, part);
-        prop = (uint16_t)prop_ori + ((uint16_t)state << LV_STYLE_STATE_POS);
-        int16_t weight_goal = state;
-
-        int16_t weight_act;
-        lv_style_int_t value_act;
-        weight_act = lv_style_get_int(&dsc->local, prop, &value_act);
-
-        /*On perfect match return the value immediately*/
-        if(weight_act == weight_goal) {
-            return value_act;
-        }
-        /*If the found ID is better the current candidate then use it*/
-        else if(weight_act > weight) {
-            weight =  weight_act;
-            value = value_act;
-        }
-
-        int16_t ci;
-        for(ci = dsc->class_cnt - 1; ci >= 0; ci--) {
-            lv_style_t * class = lv_style_dsc_get_class(dsc, ci);
-            weight_act = lv_style_get_int(class, prop, &value_act);
-            /*On perfect match return the value immediately*/
-            if(weight_act == weight_goal) {
-                return value_act;
-            }
-            /*If the found ID is better the current candidate then use it*/
-            else if(weight_act > weight) {
-                weight =  weight_act;
-                value = value_act;
-            }
-        }
-
-        if(attr.bits.inherit == 0) break;
-
-        /*If not found, check the `MAIN` style first*/
-        if(part != LV_OBJ_PART_MAIN) {
-            part = LV_OBJ_PART_MAIN;
-            continue;
-        }
-
-        /*Check the parent too.*/
-        parent = lv_obj_get_parent(parent);
-    }
-
-    if(weight >= 0) return value;
-
-
-    prop = prop & (~LV_STYLE_STATE_MASK);
-    switch(prop) {
-    case LV_STYLE_BORDER_PART:
-        return LV_BORDER_SIDE_FULL;
-    case LV_STYLE_SIZE:
-        return LV_DPI / 10;
-    case LV_STYLE_SCALE_WIDTH:
-        return LV_DPI / 8;
-    }
-
-    return 0;
-}
-
-lv_color_t lv_obj_get_style_color(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
-{
-    uint8_t state;
-    lv_style_property_t prop_ori = prop;
-
-    lv_style_attr_t attr;
-    attr.full = prop >> 8;
-
-    int16_t weight = -1;
-    lv_color_t value;
-
-    const lv_obj_t * parent = obj;
-    while(parent) {
-        lv_style_dsc_t * dsc = lv_obj_get_style(parent, part);
-        if(dsc == NULL) continue;
-
-        uint8_t state = lv_obj_get_state(parent, part);
-        prop = (uint16_t)prop_ori + ((uint16_t)state << LV_STYLE_STATE_POS);
-        int16_t weight_goal = state;
-
-        int16_t weight_act;
-        lv_color_t value_act;
-        weight_act = lv_style_get_color(&dsc->local, prop, &value_act);
-
-        /*On perfect match return the value immediately*/
-        if(weight_act == weight_goal) {
-            return value_act;
-        }
-        /*If the found ID is better the current candidate then use it*/
-        else if(weight_act > weight) {
-            weight =  weight_act;
-            value = value_act;
-        }
-
-        int16_t ci;
-        for(ci = dsc->class_cnt - 1; ci >= 0; ci--) {
-            lv_style_t * class = lv_style_dsc_get_class(dsc, ci);
-            weight_act = lv_style_get_color(class, prop, &value_act);
-            /*On perfect match return the value immediately*/
-            if(weight_act == weight_goal) {
-                return value_act;
-            }
-            /*If the found ID is better the current candidate then use it*/
-            else if(weight_act > weight) {
-                weight =  weight_act;
-                value = value_act;
-            }
-        }
-
-        if(attr.bits.inherit == 0) break;
-
-        /*If not found, check the `MAIN` style first*/
-        if(part != LV_OBJ_PART_MAIN) {
-            part = LV_OBJ_PART_MAIN;
-            continue;
-        }
-
-        /*Check the parent too.*/
-        parent = lv_obj_get_parent(parent);
-    }
-
-    if(weight >= 0) return value;
-
-    /*Handle unset values*/
-    prop = prop & (~LV_STYLE_STATE_MASK);
-    switch(prop) {
-    case LV_STYLE_TEXT_COLOR:
-        return LV_COLOR_BLACK;
-    case LV_STYLE_BORDER_COLOR:
-        return LV_COLOR_BLACK;
-    case LV_STYLE_SHADOW_COLOR:
-		return LV_COLOR_GRAY;
-	}
-
-    return LV_COLOR_WHITE;
-}
-
-lv_opa_t lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
-{
-
-    lv_style_dsc_t * dsc = lv_obj_get_style(obj, part);
-    if(dsc->cache.enabled) {
-        switch(prop & (~LV_STYLE_STATE_MASK)) {
-        case LV_STYLE_BG_OPA:
-            if(dsc->cache.bg_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.bg_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_BORDER_OPA:
-            if(dsc->cache.border_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.border_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_TEXT_OPA:
-            if(dsc->cache.text_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.text_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_SHADOW_OPA:
-            if(dsc->cache.shadow_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.shadow_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_LINE_OPA:
-            if(dsc->cache.line_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.line_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_IMAGE_OPA:
-            if(dsc->cache.image_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.image_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_OVERLAY_OPA:
-            if(dsc->cache.overlay_opa == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.overlay_opa == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
-        case LV_STYLE_OPA_SCALE:
-            if(dsc->cache.opa_scale == LV_STYLE_CACHE_OPA_COVER) return LV_OPA_COVER;
-            if(dsc->cache.opa_scale == LV_STYLE_CACHE_OPA_TRANSP) return LV_OPA_TRANSP;
-            break;
+#if LV_USE_GROUP
+    if(obj->group_p) {
+        if(lv_group_get_focused(obj->group_p) == obj) {
+            style_act = lv_group_mod_style(obj->group_p, style_act);
         }
     }
+#endif
 
+    if(style_act == NULL) style_act = &lv_style_plain;
 
-    lv_style_property_t prop_ori = prop;
-
-    lv_style_attr_t attr;
-    attr.full = prop >> 8;
-
-    int16_t weight = -1;
-    lv_opa_t value;
-
-    const lv_obj_t * parent = obj;
-    while(parent) {
-        lv_style_dsc_t * dsc = lv_obj_get_style(parent, part);
-        if(dsc == NULL) continue;
-
-        uint8_t state = lv_obj_get_state(parent, part);
-        prop = (uint16_t)prop_ori + ((uint16_t)state << LV_STYLE_STATE_POS);
-        int16_t weight_goal = state;
-
-        int16_t weight_act;
-        lv_opa_t value_act;
-        weight_act = lv_style_get_opa(&dsc->local, prop, &value_act);
-
-        /*On perfect match return the value immediately*/
-        if(weight_act == weight_goal) {
-            return value_act;
-        }
-        /*If the found ID is better the current candidate then use it*/
-        else if(weight_act > weight) {
-            weight =  weight_act;
-            value = value_act;
-        }
-
-        int16_t ci;
-        for(ci = dsc->class_cnt - 1; ci >= 0; ci--) {
-            lv_style_t * class = lv_style_dsc_get_class(dsc, ci);
-            weight_act = lv_style_get_opa(class, prop, &value_act);
-            /*On perfect match return the value immediately*/
-            if(weight_act == weight_goal) {
-                return value_act;
-            }
-            /*If the found ID is better the current candidate then use it*/
-            else if(weight_act > weight) {
-                weight =  weight_act;
-                value = value_act;
-            }
-        }
-
-        if(attr.bits.inherit == 0) break;
-
-        /*If not found, check the `MAIN` style first*/
-        if(part != LV_OBJ_PART_MAIN) {
-            part = LV_OBJ_PART_MAIN;
-            continue;
-        }
-
-        /*Check the parent too.*/
-        parent = lv_obj_get_parent(parent);
-    }
-
-    if(weight >= 0) return value;
-
-
-    prop = prop & (~LV_STYLE_STATE_MASK);
-    switch(prop) {
-    case LV_STYLE_OVERLAY_OPA:
-    case LV_STYLE_PATTERN_RECOLOR_OPA:
-    case LV_STYLE_IMAGE_RECOLOR_OPA:
-        return LV_OPA_TRANSP;
-    }
-
-    return LV_OPA_COVER;
-}
-
-
-void * lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
-{
-    lv_style_dsc_t * dsc = lv_obj_get_style(obj, part);
-    if(dsc->cache.enabled) {
-        switch(prop & (~LV_STYLE_STATE_MASK)) {
-        case LV_STYLE_FONT:
-            if(dsc->cache.font == LV_STYLE_CACHE_FONT_DEFAULT) return LV_FONT_DEFAULT;
-            break;
-        }
-    }
-    uint8_t state;
-    lv_style_property_t prop_ori = prop;
-
-    lv_style_attr_t attr;
-    attr.full = prop >> 8;
-
-    int16_t weight = -1;
-    void * value;
-
-    const lv_obj_t * parent = obj;
-    while(parent) {
-        lv_style_dsc_t * dsc = lv_obj_get_style(parent, part);
-        if(dsc == NULL) continue;
-
-        uint8_t state = lv_obj_get_state(parent, part);
-        prop = (uint16_t)prop_ori + ((uint16_t)state << LV_STYLE_STATE_POS);
-        int16_t weight_goal = state;
-
-        int16_t weight_act;
-        void * value_act;
-        weight_act = lv_style_get_ptr(&dsc->local, prop, &value_act);
-
-        /*On perfect match return the value immediately*/
-        if(weight_act == weight_goal) {
-            return value_act;
-        }
-        /*If the found ID is better the current candidate then use it*/
-        else if(weight_act > weight) {
-            weight =  weight_act;
-            value = value_act;
-        }
-
-        int16_t ci;
-        for(ci = dsc->class_cnt - 1; ci >= 0; ci--) {
-            lv_style_t * class = lv_style_dsc_get_class(dsc, ci);
-            weight_act = lv_style_get_ptr(class, prop, &value_act);
-            /*On perfect match return the value immediately*/
-            if(weight_act == weight_goal) {
-                return value_act;
-            }
-            /*If the found ID is better the current candidate then use it*/
-            else if(weight_act > weight) {
-                weight =  weight_act;
-                value = value_act;
-            }
-        }
-
-        if(attr.bits.inherit == 0) break;
-
-        /*If not found, check the `MAIN` style first*/
-        if(part != LV_OBJ_PART_MAIN) {
-            part = LV_OBJ_PART_MAIN;
-            continue;
-        }
-
-        /*Check the parent too.*/
-        parent = lv_obj_get_parent(parent);
-    }
-
-    if(weight >= 0) return value;
-
-    prop = prop & (~LV_STYLE_STATE_MASK);
-    switch(prop) {
-    case LV_STYLE_FONT:
-        return LV_FONT_DEFAULT;
-    }
-
-    return NULL;
-}
-
-
-void lv_obj_update_style_cache(lv_obj_t * obj, uint8_t part)
-{
-    if(part != LV_OBJ_PART_ALL) {
-        style_cache_update_core(obj, part);
-    } else {
-        uint8_t part_sub;
-        for(part_sub = 0; part_sub != LV_OBJ_PART_ALL; part_sub++) {
-            lv_res_t res;
-            res = style_cache_update_core(obj, part_sub);
-            if(res == LV_RES_INV) break;
-        }
-    }
+    return style_act;
 }
 
 /*-----------------
@@ -2623,6 +2197,38 @@ lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj)
 #endif
 }
 
+
+/**
+ * Get the opa scale enable parameter
+ * @param obj pointer to an object
+ * @return true: opa scaling is enabled for this object and all children; false: no opa scaling
+ */
+lv_opa_t lv_obj_get_opa_scale_enable(const lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    return obj->opa_scale_en == 0 ? false : true;
+}
+
+/**
+ * Get the opa scale parameter of an object
+ * @param obj pointer to an object
+ * @return opa scale [0..255]
+ */
+lv_opa_t lv_obj_get_opa_scale(const lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    const lv_obj_t * parent = obj;
+
+    while(parent) {
+        if(parent->opa_scale_en) return parent->opa_scale;
+        parent = lv_obj_get_parent(parent);
+    }
+
+    return LV_OPA_COVER;
+}
+
 /**
  * Get the protect field of an object
  * @param obj pointer to an object
@@ -2646,27 +2252,6 @@ bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot)
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
     return (obj->protect & prot) == 0 ? false : true;
-}
-
-lv_obj_state_t lv_obj_get_state(const lv_obj_t * obj, uint8_t part)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    if(part < _LV_OBJ_PART_REAL_START) return obj->state;
-
-    /*If a real part is asked, then use the object's signal to get its state.
-     * A real object can be in different state then the main part
-     * and only the object itseld knows who to get it's state. */
-    lv_get_state_info_t info;
-    info.part = part;
-    info.result = 0;
-    lv_res_t res;
-    res = lv_signal_send((lv_obj_t*)obj, LV_SIGNAL_GET_STATE, &info);
-
-    if(res != LV_RES_OK) return 0;
-
-    return info.result;
-
 }
 
 /**
@@ -2906,136 +2491,6 @@ static void lv_obj_del_async_cb(void * obj)
 }
 
 /**
- * Initialize a rectangle descriptor from an object's styles
- * @param obj pointer to an object
- * @param type type of style. E.g.  `LV_OBJ_STYLE_MAIN`, `LV_BTN_STYLE_REL` or `LV_PAGE_STYLE_SCRL`
- * @param draw_dsc the descriptor the initialize
- * @note Only the relevant fields will be set.
- * E.g. if `border width == 0` the other border properties won't be evaluated.
- */
-void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t * draw_dsc)
-{
-    draw_dsc->radius = lv_obj_get_style_int(obj, part, LV_STYLE_RADIUS);
-
-    lv_opa_t opa_scale = lv_obj_get_style_opa(obj, part, LV_STYLE_OPA_SCALE);
-    if(opa_scale <= LV_OPA_MIN) {
-        draw_dsc->bg_opa = LV_OPA_TRANSP;
-        draw_dsc->border_opa = LV_OPA_TRANSP;
-        draw_dsc->shadow_opa = LV_OPA_TRANSP;
-        return;
-    }
-
-    draw_dsc->bg_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_BG_OPA);
-    if(draw_dsc->bg_opa > LV_OPA_MIN) {
-        draw_dsc->bg_color = lv_obj_get_style_color(obj, part, LV_STYLE_BG_COLOR);
-        draw_dsc->bg_grad_dir =  lv_obj_get_style_int(obj, part, LV_STYLE_BG_GRAD_DIR);
-        if(draw_dsc->bg_grad_dir != LV_GRAD_DIR_NONE) {
-            draw_dsc->bg_grad_color = lv_obj_get_style_color(obj, part, LV_STYLE_BG_GRAD_COLOR);
-        }
-    }
-
-    draw_dsc->border_width = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_WIDTH);
-    if(draw_dsc->border_width) {
-        draw_dsc->border_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_BORDER_OPA);
-        if(draw_dsc->border_opa > LV_OPA_MIN) {
-            draw_dsc->border_part = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_PART);
-            draw_dsc->border_color = lv_obj_get_style_color(obj, part, LV_STYLE_BORDER_COLOR);
-        }
-    }
-
-    draw_dsc->pattern_src = lv_obj_get_style_ptr(obj, part, LV_STYLE_PATTERN_IMAGE);
-    if(draw_dsc->pattern_src) {
-        draw_dsc->pattern_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_PATTERN_OPA);
-        if(draw_dsc->pattern_opa > LV_OPA_MIN) {
-            draw_dsc->pattern_repeate = lv_obj_get_style_int(obj, part, LV_STYLE_PATTERN_REPEATE) & 0x1U;
-            draw_dsc->pattern_recolor = lv_obj_get_style_color(obj, part, LV_STYLE_PATTERN_RECOLOR);
-            draw_dsc->pattern_recolor_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_PATTERN_RECOLOR_OPA);
-            if(lv_img_src_get_type(draw_dsc->pattern_src) == LV_IMG_SRC_SYMBOL) {
-                draw_dsc->pattern_font = lv_obj_get_style_ptr(obj, part, LV_STYLE_FONT);
-            }
-        }
-    }
-
-    draw_dsc->overlay_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_OVERLAY_OPA);
-    draw_dsc->overlay_color = lv_obj_get_style_color(obj, part, LV_STYLE_OVERLAY_COLOR);
-
-    draw_dsc->shadow_width = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_WIDTH);
-    if(draw_dsc->shadow_width) {
-        draw_dsc->shadow_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_SHADOW_OPA);
-        if(draw_dsc->shadow_opa > LV_OPA_MIN) {
-            draw_dsc->shadow_ofs_x = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_OFFSET_X);
-            draw_dsc->shadow_ofs_y = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_OFFSET_Y);
-            draw_dsc->shadow_spread = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_SPREAD);
-            draw_dsc->shadow_color = lv_obj_get_style_color(obj, part, LV_STYLE_SHADOW_COLOR);
-        }
-    }
-
-    if(opa_scale < LV_OPA_MAX) {
-        draw_dsc->bg_opa = (uint16_t)((uint16_t)draw_dsc->bg_opa * opa_scale) >> 8;
-        draw_dsc->border_opa = (uint16_t)((uint16_t)draw_dsc->border_opa * opa_scale) >> 8;
-        draw_dsc->shadow_opa = (uint16_t)((uint16_t)draw_dsc->shadow_opa * opa_scale) >> 8;
-        draw_dsc->pattern_opa = (uint16_t)((uint16_t)draw_dsc->pattern_opa * opa_scale) >> 8;
-    }
-}
-
-void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_t * draw_dsc)
-{
-    draw_dsc->color = lv_obj_get_style_color(obj, part, LV_STYLE_TEXT_COLOR);
-    draw_dsc->letter_space = lv_obj_get_style_int(obj, part, LV_STYLE_LETTER_SPACE);
-    draw_dsc->line_space = lv_obj_get_style_int(obj, part, LV_STYLE_LETTER_SPACE);
-    draw_dsc->opa = lv_obj_get_style_opa(obj, part, LV_STYLE_TEXT_OPA);
-
-    draw_dsc->font = lv_obj_get_style_ptr(obj, part, LV_STYLE_FONT);
-
-    lv_opa_t opa_scale = lv_obj_get_style_opa(obj, part, LV_STYLE_OPA_SCALE);
-
-    if(opa_scale < LV_OPA_MAX) {
-        draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
-    }
-}
-
-void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * draw_dsc)
-{
-    draw_dsc->opa = lv_obj_get_style_opa(obj, part, LV_STYLE_IMAGE_OPA);
-    if(draw_dsc->opa <= LV_OPA_MIN)  return;
-    lv_opa_t opa_scale = lv_obj_get_style_opa(obj, part, LV_STYLE_OPA_SCALE);
-    if(opa_scale < LV_OPA_MAX) {
-        draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
-    }
-    if(draw_dsc->opa <= LV_OPA_MIN)  return;
-
-    draw_dsc->angle = 0;
-    draw_dsc->zoom = LV_IMG_ZOOM_NONE;
-    draw_dsc->pivot.x = lv_area_get_width(&obj->coords) / 2;
-    draw_dsc->pivot.y = lv_area_get_height(&obj->coords) / 2;
-
-    draw_dsc->recolor_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_IMAGE_RECOLOR_OPA);
-    draw_dsc->recolor = lv_obj_get_style_color(obj, part, LV_STYLE_IMAGE_RECOLOR);
-
-    draw_dsc->overlay_opa = lv_obj_get_style_opa(obj, part, LV_STYLE_OVERLAY_OPA);
-    draw_dsc->overlay_color = lv_obj_get_style_color(obj, part, LV_STYLE_OVERLAY_COLOR);
-
-    draw_dsc->blend_mode = lv_obj_get_style_int(obj, part, LV_STYLE_IMAGE_BLEND_MODE);
-}
-
-void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t * draw_dsc)
-{
-    draw_dsc->opa = lv_obj_get_style_opa(obj, part, LV_STYLE_IMAGE_OPA);
-    if(draw_dsc->opa <= LV_OPA_MIN)  return;
-    lv_opa_t opa_scale = lv_obj_get_style_opa(obj, part, LV_STYLE_OPA_SCALE);
-    if(opa_scale < LV_OPA_MAX) {
-        draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
-    }
-    if(draw_dsc->opa <= LV_OPA_MIN)  return;
-
-    draw_dsc->width = lv_obj_get_style_int(obj, part, LV_STYLE_LINE_WIDTH);
-    if(draw_dsc->width == 0) return;
-
-    draw_dsc->color = lv_obj_get_style_color(obj, part, LV_STYLE_LINE_COLOR);
-    draw_dsc->blend_mode = lv_obj_get_style_int(obj, part, LV_STYLE_LINE_BLEND_MODE);
-}
-
-/**
  * Handle the drawing related tasks of the base objects.
  * @param obj pointer to an object
  * @param clip_area the object will be drawn only in this area
@@ -3048,39 +2503,52 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
 {
     if(mode == LV_DESIGN_COVER_CHK) {
         /*Most trivial test. Is the mask fully IN the object? If no it surely doesn't cover it*/
-        lv_coord_t r = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_RADIUS);
-        if(lv_area_is_in(clip_area, &obj->coords, r) == false) return LV_DESIGN_RES_NOT_COVER;
+        if(lv_area_is_in(clip_area, &obj->coords) == false) return LV_DESIGN_RES_NOT_COVER;
 
-        if(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_CLIP_CORNER)) return LV_DESIGN_RES_MASKED;
-
-        if(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_BG_BLEND_MODE) != LV_BLEND_MODE_NORMAL) return LV_DESIGN_RES_NOT_COVER;
-        if(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_BORDER_BLEND_MODE) != LV_BLEND_MODE_NORMAL) return LV_DESIGN_RES_NOT_COVER;
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) return LV_DESIGN_RES_MASKED;
 
         /*Can cover the area only if fully solid (no opacity)*/
-        if(lv_obj_get_style_opa(obj, LV_OBJ_PART_MAIN, LV_STYLE_BG_OPA) < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
-        if(lv_obj_get_style_opa(obj, LV_OBJ_PART_MAIN, LV_STYLE_OPA_SCALE) < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
+        if(style->body.opa < LV_OPA_MAX) return LV_DESIGN_RES_NOT_COVER;
+
+        /* Because of the radius it is not sure the area is covered
+         * Check the areas where there is no radius*/
+        lv_coord_t r = style->body.radius;
+
+        if(r == LV_RADIUS_CIRCLE) return LV_DESIGN_RES_NOT_COVER;
+
+        lv_area_t area_tmp;
+
+        /*Check horizontally without radius*/
+        lv_obj_get_coords(obj, &area_tmp);
+        area_tmp.x1 += r;
+        area_tmp.x2 -= r;
+        if(lv_area_is_in(clip_area, &area_tmp) == false) return LV_DESIGN_RES_NOT_COVER;
+
+        /*Check vertically without radius*/
+        lv_obj_get_coords(obj, &area_tmp);
+        area_tmp.y1 += r;
+        area_tmp.y2 -= r;
+        if(lv_area_is_in(clip_area, &area_tmp) == false) return LV_DESIGN_RES_NOT_COVER;
 
         return  LV_DESIGN_RES_COVER;
 
     }
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        lv_draw_rect_dsc_t draw_dsc;
-        lv_draw_rect_dsc_init(&draw_dsc);
-        lv_obj_init_draw_rect_dsc(obj, LV_OBJ_PART_MAIN, &draw_dsc);
-        lv_draw_rect(&obj->coords, clip_area, &draw_dsc);
+        const lv_style_t * style = lv_obj_get_style(obj);
+        lv_draw_rect(&obj->coords, clip_area, style, lv_obj_get_opa_scale(obj));
 
-        if(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_CLIP_CORNER)) {
+        if(style->body.corner_mask) {
             lv_draw_mask_radius_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_radius_param_t));
 
-            lv_coord_t r = lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_RADIUS);
-
-            lv_draw_mask_radius_init(mp, &obj->coords, r, false);
+            lv_draw_mask_radius_init(mp, &obj->coords, style->body.radius, false);
             /*Add the mask and use `obj+8` as custom id. Don't use `obj` directly because it might be used by the user*/
             lv_draw_mask_add(mp, obj + 8);
         }
     }
     else if(mode == LV_DESIGN_DRAW_POST) {
-        if(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_CLIP_CORNER)) {
+        const lv_style_t * style = lv_obj_get_style(obj);
+        if(style->body.corner_mask) {
             lv_draw_mask_radius_param_t * param = lv_draw_mask_remove_custom(obj + 8);
             lv_mem_buf_release(param);
         }
@@ -3098,44 +2566,31 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
  */
 static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
 {
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        uint8_t ** type_p = param;
-        lv_style_dsc_t ** style_dsc_p = param;
-        if((**type_p) == LV_OBJ_PART_MAIN)  *style_dsc_p = &obj->style_dsc;
-        else *style_dsc_p = NULL;
-        return LV_RES_OK;
-    }
-    else if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_res_t res = LV_RES_OK;
 
     if(sign == LV_SIGNAL_CHILD_CHG) {
         /*Return 'invalid' if the child change signal is not enabled*/
         if(lv_obj_is_protected(obj, LV_PROTECT_CHILD_CHG) != false) res = LV_RES_INV;
-    } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
-        lv_coord_t shadow = (lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_SHADOW_WIDTH) >> 1) + 1;
-        shadow += lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_SHADOW_SPREAD);
-        shadow += LV_MATH_MAX(LV_MATH_ABS(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_SHADOW_OFFSET_X)),
-                              LV_MATH_ABS(lv_obj_get_style_int(obj, LV_OBJ_PART_MAIN, LV_STYLE_SHADOW_OFFSET_Y)));
+    }
+#if LV_USE_OBJ_REALIGN
+    else if(sign == LV_SIGNAL_PARENT_SIZE_CHG) {
+        if(obj->realign.auto_realign) {
+            lv_obj_realign(obj);
+        }
+    }
+#endif
+    else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
+        const lv_style_t * style = lv_obj_get_style(obj);
+        lv_coord_t shadow = (style->body.shadow.width >> 1) + 1;
+        shadow += style->body.shadow.spread;
+        shadow += LV_MATH_MAX(LV_MATH_ABS(style->body.shadow.offset.x), LV_MATH_ABS(style->body.shadow.offset.y));
 
         if(shadow > obj->ext_draw_pad) obj->ext_draw_pad = shadow;
     } else if(sign == LV_SIGNAL_STYLE_CHG) {
         lv_obj_refresh_ext_draw_pad(obj);
     }
-#if LV_USE_GROUP
-    else if(sign == LV_SIGNAL_FOCUS) {
-        if(lv_group_get_editing(lv_obj_get_group(obj))) {
-            uint8_t state = LV_OBJ_STATE_FOCUS;
-            state |= LV_OBJ_STATE_EDIT;
-        } else {
-            lv_obj_set_state(obj, LV_OBJ_STATE_FOCUS);
-            lv_obj_clear_state(obj, LV_OBJ_STATE_EDIT);
-        }
-    } else if(sign == LV_SIGNAL_DEFOCUS) {
-        lv_obj_clear_state(obj, LV_OBJ_STATE_FOCUS | LV_OBJ_STATE_EDIT);
-    }
-#endif
-
     return res;
 }
 
@@ -3161,40 +2616,21 @@ static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coor
 
 /**
  * Refresh the style of all children of an object. (Called recursively)
- * @param style refresh objects only with this style_dsc.
+ * @param style_p refresh objects only with this style.
  * @param obj pointer to an object
  */
-static void report_style_mod_core(void * style, lv_obj_t * obj)
+static void report_style_mod_core(void * style_p, lv_obj_t * obj)
 {
-    uint8_t part_sub;
-    for(part_sub = 0; part_sub != LV_OBJ_PART_ALL; part_sub++) {
-        lv_style_dsc_t * dsc = lv_obj_get_style(obj, part_sub);
-        if(dsc == NULL) break;
-
-        if(&dsc->local == style) {
-            lv_obj_refresh_style(obj, part_sub);
-            /* Two local style can't have the same pointer
-             * so there won't be an other match*/
-            return;
+    lv_obj_t * i;
+    LV_LL_READ(obj->child_ll, i)
+    {
+        if(i->style_p == style_p || style_p == NULL) {
+            refresh_children_style(i);
+            lv_obj_refresh_style(i);
         }
 
-        uint8_t ci;
-        for(ci = 0; ci < dsc->class_cnt; ci++) {
-            lv_style_t * class = lv_style_dsc_get_class(dsc, ci);
-            if(class == style) {
-                lv_obj_refresh_style(obj, part_sub);
-                /*It's enough to handle once (if duplicated)*/
-                break;
-            }
-        }
+        report_style_mod_core(style_p, i);
     }
-
-    lv_obj_t * child = lv_obj_get_child(obj, NULL);
-    while(child) {
-        report_style_mod_core(style, child);
-        child = lv_obj_get_child(obj, child);
-    }
-
 }
 
 /**
@@ -3202,170 +2638,19 @@ static void report_style_mod_core(void * style, lv_obj_t * obj)
  * because the NULL styles are inherited from the parent
  * @param obj pointer to an object
  */
-static void refresh_children_style(lv_obj_t * obj, uint8_t part)
+static void refresh_children_style(lv_obj_t * obj)
 {
     lv_obj_t * child = lv_obj_get_child(obj, NULL);
     while(child != NULL) {
-        refresh_children_style(child, part); /*Check children too*/
-
-        lv_obj_update_style_cache(child, part);
-        lv_obj_invalidate(child);
-        child->signal_cb(child, LV_SIGNAL_STYLE_CHG, &part);
-        lv_obj_invalidate(child);
+        if(child->style_p == NULL) {
+            refresh_children_style(child); /*Check children too*/
+            lv_obj_refresh_style(child);   /*Notify the child about the style change*/
+        } else if(child->style_p->glass) {
+            /*Children with 'glass' parent might be effected if their style == NULL*/
+            refresh_children_style(child);
+        }
         child = lv_obj_get_child(obj, child);
     }
-}
-
-
-static lv_res_t style_cache_update_core(lv_obj_t * obj, uint8_t part)
-{
-    lv_style_dsc_t * dsc = lv_obj_get_style(obj, part);
-    if(dsc == NULL) return LV_RES_INV;
-
-    if(!dsc->cache.enabled) return LV_RES_OK;
-    dsc->cache.enabled = 0;
-
-
-    lv_style_int_t value;
-    lv_opa_t opa;
-    const void * ptr;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_LETTER_SPACE);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.letter_space = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_PAD_LEFT);
-    if(value >= LV_STYLE_CACHE_PAD_SKIPPED || value < 0) value = LV_STYLE_CACHE_PAD_SKIPPED;
-    dsc->cache.pad_left = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_PAD_RIGHT);
-    if(value >= LV_STYLE_CACHE_PAD_SKIPPED || value < 0) value = LV_STYLE_CACHE_PAD_SKIPPED;
-    dsc->cache.pad_right= value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_PAD_TOP);
-    if(value >= LV_STYLE_CACHE_PAD_SKIPPED || value < 0) value = LV_STYLE_CACHE_PAD_SKIPPED;
-    dsc->cache.pad_top= value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_PAD_BOTTOM);
-    if(value >= LV_STYLE_CACHE_PAD_SKIPPED || value < 0) value = LV_STYLE_CACHE_PAD_SKIPPED;
-    dsc->cache.pad_bottom = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_PAD_INNER);
-    if(value >= LV_STYLE_CACHE_PAD_SKIPPED || value < 0) value = LV_STYLE_CACHE_PAD_SKIPPED;
-    dsc->cache.pad_inner = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BG_GRAD_DIR);
-    dsc->cache.bg_grad_dir = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_WIDTH);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.border_width = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_LINE_WIDTH);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.line_width = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_LETTER_SPACE);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.letter_space = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_LINE_SPACE);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.line_space = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_WIDTH);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.shadow_width = value;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_WIDTH);
-    if(value >= LV_STYLE_CACHE_WIDTH_SKIPPED || value < 0) value = LV_STYLE_CACHE_WIDTH_SKIPPED;
-    dsc->cache.border_width = value;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_BG_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.bg_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.bg_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.bg_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_BORDER_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.border_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.border_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.border_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_TEXT_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.text_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.text_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.text_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_IMAGE_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.image_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.image_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.image_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_LINE_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.line_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.line_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.line_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_SHADOW_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.shadow_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.shadow_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.shadow_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_OVERLAY_OPA);
-    if(opa >= LV_OPA_MAX) dsc->cache.overlay_opa = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.overlay_opa = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.overlay_opa = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    opa = lv_obj_get_style_opa(obj, part, LV_STYLE_OPA_SCALE);
-    if(opa >= LV_OPA_MAX) dsc->cache.opa_scale = LV_STYLE_CACHE_OPA_COVER;
-    else if(opa <= LV_OPA_MIN) dsc->cache.opa_scale = LV_STYLE_CACHE_OPA_TRANSP;
-    else dsc->cache.opa_scale = LV_STYLE_CACHE_OPA_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BG_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.bg_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.bg_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.border_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.border_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_TEXT_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.text_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.text_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_LINE_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.line_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.line_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_IMAGE_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.image_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.image_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_SHADOW_BLEND_MODE);
-    if(value == LV_BLEND_MODE_NORMAL) dsc->cache.shadow_blend_mode = LV_STYLE_CACHE_BLEND_MODE_NORMAL;
-    else dsc->cache.shadow_blend_mode = LV_STYLE_CACHE_BLEND_MODE_SKIPPED;
-
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_RADIUS);
-    if(value == LV_RADIUS_CIRCLE) dsc->cache.radius = LV_STYLE_CACHE_RADIUS_CIRCLE;
-    else if(value < LV_STYLE_CACHE_RADIUS_SKIPPED) dsc->cache.radius = value;
-    else dsc->cache.radius = LV_STYLE_CACHE_RADIUS_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_BORDER_PART);
-    if(value == LV_BORDER_SIDE_FULL) dsc->cache.border_part = LV_STYLE_CACHE_BORDER_PART_FULL;
-    else dsc->cache.border_part = LV_STYLE_CACHE_BORDER_PART_SKIPPED;
-
-    ptr = lv_obj_get_style_ptr(obj, part, LV_STYLE_FONT);
-    if(ptr == LV_FONT_DEFAULT) dsc->cache.font = LV_STYLE_CACHE_FONT_DEFAULT;
-    else dsc->cache.font = LV_STYLE_CACHE_FONT_SKIPPED;
-
-    value = lv_obj_get_style_int(obj, part, LV_STYLE_CLIP_CORNER);
-    dsc->cache.clip_corner = value;
-
-
-    dsc->cache.enabled = 1;
-
-    return LV_RES_OK;
 }
 
 /**
