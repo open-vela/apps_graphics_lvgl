@@ -59,46 +59,39 @@ static const uint8_t bpp4_opa_table[16] = {0,  17, 34,  51,  /*Opacity mapping w
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc)
-{
-    memset(dsc, 0x00, sizeof(lv_draw_label_dsc_t));
-    dsc->opa = LV_OPA_COVER;
-    dsc->color = LV_COLOR_BLACK;
-    dsc->font = LV_FONT_DEFAULT;
-    dsc->sel_start = LV_DRAW_LABEL_NO_TXT_SEL;
-    dsc->sel_end = LV_DRAW_LABEL_NO_TXT_SEL;
-    dsc->sel_color = LV_COLOR_BLUE;
-    dsc->bidi_dir = LV_BIDI_DIR_LTR;
-}
-
 /**
  * Write a text
  * @param coords coordinates of the label
  * @param mask the label will be drawn only in this area
- * @param dsc pointer to draw descriptor
- * @param txt `\0` terminated text to write
+ * @param style pointer to a style
+ * @param opa_scale scale down all opacities by the factor
+ * @param txt 0 terminated text to write
+ * @param flag settings for the text from 'txt_flag_t' enum
+ * @param offset text offset in x and y direction (NULL if unused)
+ * @param sel make the text selected in the range by drawing a background there
  */
-void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_label_dsc_t * dsc,
-                   const char * txt, lv_draw_label_hint_t * hint)
+void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, const lv_style_t * style, lv_opa_t opa_scale,
+                   const char * txt, lv_txt_flag_t flag, lv_point_t * offset, lv_draw_label_txt_sel_t * sel,
+                   lv_draw_label_hint_t * hint, lv_bidi_dir_t bidi_dir)
 {
-    const lv_font_t * font = dsc->font;
+    const lv_font_t * font = style->text.font;
     lv_coord_t w;
 
     /*No need to waste processor time if string is empty*/
     if (txt[0] == '\0')  return;
 
-    if((dsc->flag & LV_TXT_FLAG_EXPAND) == 0) {
+    if((flag & LV_TXT_FLAG_EXPAND) == 0) {
         /*Normally use the label's width as width*/
         w = lv_area_get_width(coords);
     } else {
         /*If EXAPND is enabled then not limit the text's width to the object's width*/
         lv_point_t p;
-        lv_txt_get_size(&p, txt, dsc->font, dsc->letter_space, dsc->line_space, LV_COORD_MAX,
-                dsc->flag);
+        lv_txt_get_size(&p, txt, style->text.font, style->text.letter_space, style->text.line_space, LV_COORD_MAX,
+                flag);
         w = p.x;
     }
 
-    lv_coord_t line_height = lv_font_get_line_height(font) + dsc->line_space;
+    lv_coord_t line_height = lv_font_get_line_height(font) + style->text.line_space;
 
     /*Init variables for the first line*/
     lv_coord_t line_width = 0;
@@ -108,9 +101,11 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 
     lv_coord_t x_ofs = 0;
     lv_coord_t y_ofs = 0;
-    x_ofs = dsc->ofs_x;
-    y_ofs = dsc->ofs_y;
-    pos.y += y_ofs;
+    if(offset != NULL) {
+        x_ofs = offset->x;
+        y_ofs = offset->y;
+        pos.y += y_ofs;
+    }
 
     uint32_t line_start     = 0;
     int32_t last_line_start = -1;
@@ -131,13 +126,13 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
     }
 
 
-    uint32_t line_end = line_start + lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+    uint32_t line_end = line_start + lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
 
     /*Go the first visible line*/
     while(pos.y + line_height < mask->y1) {
         /*Go to next line*/
         line_start = line_end;
-        line_end += lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+        line_end += lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
         pos.y += line_height;
 
         /*Save at the threshold coordinate*/
@@ -151,52 +146,53 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
     }
 
     /*Align to middle*/
-    if(dsc->flag & LV_TXT_FLAG_CENTER) {
-        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+    if(flag & LV_TXT_FLAG_CENTER) {
+        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
 
         pos.x += (lv_area_get_width(coords) - line_width) / 2;
 
     }
     /*Align to the right*/
-    else if(dsc->flag & LV_TXT_FLAG_RIGHT) {
-        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+    else if(flag & LV_TXT_FLAG_RIGHT) {
+        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
         pos.x += lv_area_get_width(coords) - line_width;
     }
 
-    lv_opa_t opa = dsc->opa;
+    lv_opa_t opa = opa_scale == LV_OPA_COVER ? style->text.opa : (uint16_t)((uint16_t)style->text.opa * opa_scale) >> 8;
 
-    uint16_t sel_start = dsc->sel_start;
-    uint16_t sel_end = dsc->sel_end;
-    if(sel_start > sel_end) {
-        uint16_t tmp = sel_start;
-        sel_start = sel_end;
-        sel_end = tmp;
+    uint16_t sel_start = 0xFFFF;
+    uint16_t sel_end = 0xFFFF;
+    if(sel) {
+        sel_start = sel->start;
+        sel_end = sel->end;
+        if(sel_start > sel_end) {
+            uint16_t tmp = sel_start;
+            sel_start = sel_end;
+            sel_end = tmp;
+        }
     }
 
-//    lv_style_t line_style;
-//    if(dsc->underline || dsc->strikethrough) {
-//        lv_style_copy(&line_style, style);
-//        line_style.line.color = dsc->color;
-//        line_style.line.width = (dsc->font->line_height + 5) / 10;    /*+5 for rounding*/
-//        line_style.line.opa = dsc->opa;
-//        line_style.line.blend_mode = dsc->blend_mode;
-//    }
+    lv_style_t line_style;
+    if(style->text.underline || style->text.strikethrough) {
+        lv_style_copy(&line_style, style);
+        line_style.line.color = style->text.color;
+        line_style.line.width = (style->text.font->line_height + 5) / 10;    /*+5 for rounding*/
+        line_style.line.opa = style->text.opa;
+        line_style.line.blend_mode = style->text.blend_mode;
+    }
 
     cmd_state_t cmd_state = CMD_STATE_WAIT;
     uint32_t i;
     uint16_t par_start = 0;
     lv_color_t recolor;
     lv_coord_t letter_w;
-
-
-    lv_draw_rect_dsc_t draw_dsc_sel;
-    lv_draw_rect_dsc_init(&draw_dsc_sel);
-    draw_dsc_sel.bg_color = dsc->sel_color;
-
+    lv_style_t sel_style;
+    lv_style_copy(&sel_style, &lv_style_plain_color);
+    sel_style.body.main_color = sel_style.body.grad_color = style->text.sel_color;
     lv_coord_t pos_x_start = pos.x;
     /*Write out all lines*/
     while(txt[line_start] != '\0') {
-        pos.x += x_ofs;
+        if(offset != NULL) pos.x += x_ofs;
 
         /*Write all letter of a line*/
         cmd_state = CMD_STATE_WAIT;
@@ -205,7 +201,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
         uint32_t letter_next;
 #if LV_USE_BIDI
         char *bidi_txt = lv_mem_buf_get(line_end - line_start + 1);
-        lv_bidi_process_paragraph(txt + line_start, bidi_txt, line_end - line_start, dsc->bidi_dir, NULL, 0);
+        lv_bidi_process_paragraph(txt + line_start, bidi_txt, line_end - line_start, bidi_dir, NULL, 0);
 #else
         (void)bidi_dir;
         const char *bidi_txt = txt + line_start;
@@ -217,7 +213,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 #if LV_USE_BIDI
                 logical_char_pos = lv_txt_encoded_get_char_id(txt, line_start);
                 uint16_t t = lv_txt_encoded_get_char_id(bidi_txt, i);
-                logical_char_pos += lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, dsc->bidi_dir, t, NULL);
+                logical_char_pos += lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, bidi_dir, t, NULL);
 #else
                 logical_char_pos = lv_txt_encoded_get_char_id(txt, line_start + i);
 #endif
@@ -228,7 +224,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 
 
             /*Handle the re-color command*/
-            if((dsc->flag & LV_TXT_FLAG_RECOLOR) != 0) {
+            if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
                 if(letter == (uint32_t)LV_TXT_COLOR_CMD[0]) {
                     if(cmd_state == CMD_STATE_WAIT) { /*Start char*/
                         par_start = i;
@@ -256,7 +252,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                             b       = (hex_char_to_num(buf[4]) << 4) + hex_char_to_num(buf[5]);
                             recolor = lv_color_make(r, g, b);
                         } else {
-                            recolor.full = dsc->color.full;
+                            recolor.full = style->text.color.full;
                         }
                         cmd_state = CMD_STATE_IN; /*After the parameter the text is in the command*/
                     }
@@ -264,7 +260,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                 }
             }
 
-            lv_color_t color = dsc->color;
+            lv_color_t color = style->text.color;
 
             if(cmd_state == CMD_STATE_IN) color = recolor;
 
@@ -275,38 +271,38 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                     lv_area_t sel_coords;
                     sel_coords.x1 = pos.x;
                     sel_coords.y1 = pos.y;
-                    sel_coords.x2 = pos.x + letter_w + dsc->letter_space - 1;
+                    sel_coords.x2 = pos.x + letter_w + style->text.letter_space - 1;
                     sel_coords.y2 = pos.y + line_height - 1;
-                    lv_draw_rect(&sel_coords, mask, &draw_dsc_sel);
+                    lv_draw_rect(&sel_coords, mask, &sel_style, opa);
                 }
             }
 
             lv_draw_letter(&pos, mask, font, letter, color, opa);
 
             if(letter_w > 0) {
-                pos.x += letter_w + dsc->letter_space;
+                pos.x += letter_w + style->text.letter_space;
             }
         }
 
-//        if(dsc->strikethrough) {
-//            lv_point_t p1;
-//            lv_point_t p2;
-//            p1.x = pos_x_start;
-//            p1.y = pos.y + (dsc->font->line_height / 2)  + style->line.width / 2;
-//            p2.x = pos.x;
-//            p2.y = p1.y;
-//            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
-//        }
-//
-//        if(dsc->underline) {
-//            lv_point_t p1;
-//            lv_point_t p2;
-//            p1.x = pos_x_start;
-//            p1.y = pos.y + dsc->font->line_height - dsc->font->base_line + style->line.width / 2 + 1;
-//            p2.x = pos.x;
-//            p2.y = p1.y;
-//            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
-//        }
+        if(style->text.strikethrough) {
+            lv_point_t p1;
+            lv_point_t p2;
+            p1.x = pos_x_start;
+            p1.y = pos.y + (style->text.font->line_height / 2)  + style->line.width / 2;
+            p2.x = pos.x;
+            p2.y = p1.y;
+            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
+        }
+
+        if(style->text.underline) {
+            lv_point_t p1;
+            lv_point_t p2;
+            p1.x = pos_x_start;
+            p1.y = pos.y + style->text.font->line_height - style->text.font->base_line + style->line.width / 2 + 1;
+            p2.x = pos.x;
+            p2.y = p1.y;
+            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
+        }
 
 #if LV_USE_BIDI
         lv_mem_buf_release(bidi_txt);
@@ -314,21 +310,21 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 #endif
         /*Go to next line*/
         line_start = line_end;
-        line_end += lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+        line_end += lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
 
         pos.x = coords->x1;
         /*Align to middle*/
-        if(dsc->flag & LV_TXT_FLAG_CENTER) {
+        if(flag & LV_TXT_FLAG_CENTER) {
             line_width =
-                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
 
             pos.x += (lv_area_get_width(coords) - line_width) / 2;
 
         }
         /*Align to the right*/
-        else if(dsc->flag & LV_TXT_FLAG_RIGHT) {
+        else if(flag & LV_TXT_FLAG_RIGHT) {
             line_width =
-                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
             pos.x += lv_area_get_width(coords) - line_width;
         }
 
