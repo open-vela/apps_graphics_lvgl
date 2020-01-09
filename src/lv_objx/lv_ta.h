@@ -65,7 +65,7 @@ typedef struct
     uint16_t pwd_show_time;      /*Time to show characters in password mode before change them to '*' */
     struct
     {
-        const lv_style_t * style;  /* Style of the cursor (NULL to use label's style)*/
+        lv_style_dsc_t style;  /* Style of the cursor (NULL to use label's style)*/
         lv_coord_t valid_x;        /* Used when stepping up/down to a shorter line.
                                     * (Used by the library)*/
         uint16_t pos;              /* The current cursor position
@@ -78,7 +78,8 @@ typedef struct
         uint8_t click_pos : 1;     /*1: Enable positioning the cursor by clicking the text area*/
     } cursor;
 #if LV_LABEL_TEXT_SEL
-    lv_draw_label_txt_sel_t sel;  /*Temporary values for text selection*/
+    uint16_t sel_start;  /*Temporary values for text selection*/
+    uint16_t sel_end;
     uint8_t text_sel_in_prog : 1; /*User is in process of selecting */
     uint8_t text_sel_en : 1;      /*Text can be selected on this text area*/
 #endif
@@ -88,11 +89,14 @@ typedef struct
 
 /** Possible text areas tyles. */
 enum {
-    LV_TA_STYLE_BG, /**< Text area background style */
-    LV_TA_STYLE_SB, /**< Scrollbar style */
-    LV_TA_STYLE_CURSOR, /**< Cursor style */
-    LV_TA_STYLE_EDGE_FLASH, /**< Edge flash style */
-    LV_TA_STYLE_PLACEHOLDER, /**< Placeholder style */
+    LV_TA_PART_BG = LV_PAGE_PART_BG, /**< Text area background style */
+    LV_TA_PART_SCRLBAR = LV_PAGE_PART_SCRLBAR, /**< Scrollbar style */
+    LV_TA_PART_EDGE_FLASH = LV_PAGE_PART_EDGE_FLASH, /**< Edge flash style */
+    LV_TA_PART_CURSOR = _LV_PAGE_PART_VIRTUAL_LAST, /**< Cursor style */
+    _LV_TA_PART_VIRTUAL_LAST,
+
+    LV_TA_PART_PLACEHOLDER = _LV_PAGE_PART_REAL_LAST, /**< Placeholder style */
+    _LV_TA_PART_REAL_LAST,
 };
 typedef uint8_t lv_ta_style_t;
 
@@ -259,14 +263,6 @@ static inline void lv_ta_set_edge_flash(lv_obj_t * ta, bool en)
 }
 
 /**
- * Set a style of a text area
- * @param ta pointer to a text area object
- * @param type which style should be set
- * @param style pointer to a style
- */
-void lv_ta_set_style(lv_obj_t * ta, lv_ta_style_t type, const lv_style_t * style);
-
-/**
  * Enable/disable selection mode.
  * @param ta pointer to a text area object
  * @param en true or false to enable/disable selection mode
@@ -390,14 +386,6 @@ static inline bool lv_ta_get_edge_flash(lv_obj_t * ta)
 {
     return lv_page_get_edge_flash(ta);
 }
-
-/**
- * Get a style of a text area
- * @param ta pointer to a text area object
- * @param type which style should be get
- * @return style pointer to a style
- */
-const lv_style_t * lv_ta_get_style(const lv_obj_t * ta, lv_ta_style_t type);
 
 /**
  * Find whether text is selected or not.
