@@ -144,7 +144,6 @@ void lv_area_join(lv_area_t * a_res_p, const lv_area_t * a1_p, const lv_area_t *
  * Check if a point is on an area
  * @param a_p pointer to an area
  * @param p_p pointer to a point
- * @param radius radius of area (e.g. for rounded rectangle)
  * @return false:the point is out of the area
  */
 bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coord_t radius)
@@ -202,7 +201,7 @@ bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coord
         return lv_point_within_circle(&corner_area, p_p);
     }
     /*Not within corners*/
-    return true;
+    return false;
 }
 
 /**
@@ -223,11 +222,10 @@ bool lv_area_is_on(const lv_area_t * a1_p, const lv_area_t * a2_p)
 /**
  * Check if an area is fully on an other
  * @param ain_p pointer to an area which could be in 'aholder_p'
- * @param aholder_p pointer to an area which could involve 'ain_p'
- * @param radius radius of `aholder_p` (e.g. for rounded rectangle)
- * @return true: `ain_p` is fully inside `aholder_p`
+ * @param aholder pointer to an area which could involve 'ain_p'
+ * @return
  */
-bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, lv_coord_t radius)
+bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p)
 {
     bool is_in = false;
 
@@ -236,28 +234,7 @@ bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, lv_coor
         is_in = true;
     }
 
-    if(radius == 0) return is_in;
-
-    /*Check if the corner points are inside the radius or not*/
-    lv_point_t p;
-
-    p.x = ain_p->x1;
-    p.y = ain_p->y1;
-    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
-
-    p.x = ain_p->x2;
-    p.y = ain_p->y1;
-    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
-
-    p.x = ain_p->x1;
-    p.y = ain_p->y2;
-    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
-
-    p.x = ain_p->x2;
-    p.y = ain_p->y2;
-    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
-
-    return true;
+    return is_in;
 }
 
 /**
