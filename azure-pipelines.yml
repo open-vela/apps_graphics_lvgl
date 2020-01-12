@@ -10,7 +10,11 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+  - script: echo Hello, world!
+    displayName: 'Run a one-line script'
+
   - script: |
       cd tests
+      echo tests content:
       python build.py
     displayName: 'Build'

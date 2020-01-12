@@ -2,8 +2,7 @@
 # Makefile
 #
 CC ?= gcc
-LVGL_DIR ?= ${shell pwd}/../..
-LVGL_DIR_NAME ?= lvgl
+LVGL_DIR ?= ${shell pwd}/..
 
 WARNINGS ?= -Wall -Wextra
 OPTIMIZATION ?= -O3 -g0
@@ -18,7 +17,7 @@ BIN ?= demo
 #Collect the files to compile
 MAINSRC = ./test_main.c
 
-include ../lvgl.mk
+include $(LVGL_DIR)/lvgl.mk
 
 OBJEXT ?= .o
 
