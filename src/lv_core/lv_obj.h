@@ -25,6 +25,7 @@ extern "C" {
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_bidi.h"
 #include "../lv_hal/lv_hal.h"
+#include "../lv_draw/lv_draw_rect.h"
 
 /*********************
  *      DEFINES
@@ -41,9 +42,9 @@ extern "C" {
 
 #define LV_MAX_ANCESTOR_NUM 8
 
-#define LV_EXT_CLICK_AREA_OFF 0
-#define LV_EXT_CLICK_AREA_TINY 1
-#define LV_EXT_CLICK_AREA_FULL 2
+#define LV_EXT_CLICK_AREA_OFF   0
+#define LV_EXT_CLICK_AREA_TINY  1
+#define LV_EXT_CLICK_AREA_FULL  2
 
 /**********************
  *      TYPEDEFS
@@ -115,12 +116,14 @@ enum {
     /*General signals*/
     LV_SIGNAL_CLEANUP, /**< Object is being deleted */
     LV_SIGNAL_CHILD_CHG, /**< Child was removed/added */
-    LV_SIGNAL_CORD_CHG, /**< Object coordinates/size have changed */
+    LV_SIGNAL_COORD_CHG, /**< Object coordinates/size have changed */
     LV_SIGNAL_PARENT_SIZE_CHG, /**< Parent's size has changed */
     LV_SIGNAL_STYLE_CHG,    /**< Object's style has changed */
     LV_SIGNAL_BASE_DIR_CHG, /**<The base dir has changed*/
     LV_SIGNAL_REFR_EXT_DRAW_PAD, /**< Object's extra padding has changed */
     LV_SIGNAL_GET_TYPE, /**< LittlevGL needs to retrieve the object's type */
+    LV_SIGNAL_GET_STYLE, /**<Get the style of an object*/
+    LV_SIGNAL_GET_STATE, /**<Get the state of the object*/
 
     /*Input device related*/
     LV_SIGNAL_HIT_TEST,          /**< Advanced hit-testing */
@@ -180,64 +183,8 @@ typedef struct
     uint8_t auto_realign : 1;
     uint8_t origo_align : 1; /**< 1: the origo (center of the object) was aligned with
                                 `lv_obj_align_origo`*/
-} lv_reailgn_t;
+} lv_realign_t;
 #endif
-
-typedef struct _lv_obj_t
-{
-    struct _lv_obj_t * par; /**< Pointer to the parent object*/
-    lv_ll_t child_ll;       /**< Linked list to store the children objects*/
-
-    lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
-
-    lv_event_cb_t event_cb; /**< Event callback function */
-    lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
-    lv_design_cb_t design_cb; /**< Object type specific design function*/
-
-    void * ext_attr;            /**< Object type specific extended data*/
-    const lv_style_t * style_p; /**< Pointer to the object's style*/
-
-#if LV_USE_GROUP != 0
-    void * group_p; /**< Pointer to the group of the object*/
-#endif
-
-#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
-    uint8_t ext_click_pad_hor; /**< Extra click padding in horizontal direction */
-    uint8_t ext_click_pad_ver; /**< Extra click padding in vertical direction */
-#endif
-
-#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
-    lv_area_t ext_click_pad;   /**< Extra click padding area. */
-#endif
-
-    /*Attributes and states*/
-    uint8_t click : 1;          /**< 1: Can be pressed by an input device*/
-    uint8_t drag : 1;           /**< 1: Enable the dragging*/
-    uint8_t drag_throw : 1;     /**< 1: Enable throwing with drag*/
-    uint8_t drag_parent : 1;    /**< 1: Parent will be dragged instead*/
-    uint8_t hidden : 1;         /**< 1: Object is hidden*/
-    uint8_t top : 1;            /**< 1: If the object or its children is clicked it goes to the foreground*/
-    uint8_t opa_scale_en : 1;   /**< 1: opa_scale is set*/
-    uint8_t parent_event : 1;   /**< 1: Send the object's events to the parent too. */
-    lv_drag_dir_t drag_dir : 3; /**<  Which directions the object can be dragged in */
-    lv_bidi_dir_t base_dir : 2; /**< Base direction of texts related to this object */
-    uint8_t adv_hittest : 1;    /**< 1: Use advanced hit-testing (slower) */
-    uint8_t reserved : 2;       /**<  Reserved for future use*/
-    uint8_t protect;            /**< Automatically happening actions can be prevented. 'OR'ed values from
-                                   `lv_protect_t`*/
-    lv_opa_t opa_scale;         /**< Scale down the opacity by this factor. Effects all children as well*/
-
-    lv_coord_t ext_draw_pad; /**< EXTtend the size in every direction for drawing. */
-
-#if LV_USE_OBJ_REALIGN
-    lv_reailgn_t realign;       /**< Information about the last call to ::lv_obj_align. */
-#endif
-
-#if LV_USE_USER_DATA
-    lv_obj_user_data_t user_data; /**< Custom user data for object. */
-#endif
-
-} lv_obj_t;
 
 /*Protect some attributes (max. 8 bit)*/
 enum {
@@ -253,6 +200,83 @@ enum {
 };
 typedef uint8_t lv_protect_t;
 
+enum {
+    LV_OBJ_STATE_CHECKED  =  (LV_STYLE_STATE_CHECKED >> LV_STYLE_STATE_POS),
+    LV_OBJ_STATE_FOCUS  =    (LV_STYLE_STATE_FOCUS >> LV_STYLE_STATE_POS),
+    LV_OBJ_STATE_EDIT  =     (LV_STYLE_STATE_EDIT >> LV_STYLE_STATE_POS),
+    LV_OBJ_STATE_HOVER  =    (LV_STYLE_STATE_HOVER >> LV_STYLE_STATE_POS),
+    LV_OBJ_STATE_PRESSED  =  (LV_STYLE_STATE_PRESSED >> LV_STYLE_STATE_POS),
+    LV_OBJ_STATE_DISABLED =  (LV_STYLE_STATE_DISABLED >> LV_STYLE_STATE_POS),
+};
+
+typedef uint8_t lv_obj_state_t;
+
+typedef struct _lv_obj_t
+{
+    struct _lv_obj_t * parent; /**< Pointer to the parent object*/
+    lv_ll_t child_ll;       /**< Linked list to store the children objects*/
+
+    lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
+
+    lv_event_cb_t event_cb; /**< Event callback function */
+    lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
+    lv_design_cb_t design_cb; /**< Object type specific design function*/
+
+    void * ext_attr;            /**< Object type specific extended data*/
+    lv_style_dsc_t  style_dsc;
+
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+    uint8_t ext_click_pad_hor; /**< Extra click padding in horizontal direction */
+    uint8_t ext_click_pad_ver; /**< Extra click padding in vertical direction */
+#elif LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+    lv_area_t ext_click_pad;   /**< Extra click padding area. */
+#endif
+
+    lv_coord_t ext_draw_pad; /**< EXTtend the size in every direction for drawing. */
+
+    /*Attributes and states*/
+    uint8_t click           :1;  /**< 1: Can be pressed by an input device*/
+    uint8_t drag            :1;  /**< 1: Enable the dragging*/
+    uint8_t drag_throw      :1;  /**< 1: Enable throwing with drag*/
+    uint8_t drag_parent     :1;  /**< 1: Parent will be dragged instead*/
+    uint8_t hidden          :1;  /**< 1: Object is hidden*/
+    uint8_t top             :1;  /**< 1: If the object or its children is clicked it goes to the foreground*/
+    uint8_t parent_event    :1;  /**< 1: Send the object's events to the parent too. */
+    uint8_t adv_hittest     :1;  /**< 1: Use advanced hit-testing (slower) */
+
+    lv_drag_dir_t drag_dir  :2;  /**<  Which directions the object can be dragged in */
+    lv_bidi_dir_t base_dir  :2;  /**< Base direction of texts related to this object */
+
+#if LV_USE_GROUP != 0
+    uint8_t group_id        :LV_GROUP_ID_MAX;
+#endif
+
+    uint8_t protect;            /**< Automatically happening actions can be prevented.
+                                     'OR'ed values from `lv_protect_t`*/
+    uint8_t state;
+    uint8_t prev_state;
+    uint8_t state_anim;
+
+#if LV_USE_OBJ_REALIGN
+    lv_realign_t realign;       /**< Information about the last call to ::lv_obj_align. */
+#endif
+
+#if LV_USE_USER_DATA
+    lv_obj_user_data_t user_data; /**< Custom user data for object. */
+#endif
+
+} lv_obj_t;
+
+enum {
+    LV_OBJ_PART_MAIN,
+    _LV_OBJ_PART_VIRTUAL_LAST = 0x01,
+    _LV_OBJ_PART_REAL_LAST =    0x40,
+    _LV_OBJ_PART_ALL = 0xFF,
+};
+
+typedef uint8_t lv_obj_part_t;
+
 /** Used by `lv_obj_get_type()`. The object's and its ancestor types are stored here*/
 typedef struct
 {
@@ -260,11 +284,24 @@ typedef struct
                                                ... [x]: "lv_obj" */
 } lv_obj_type_t;
 
-typedef struct _lv_hit_test_info_t
+typedef struct
 {
     lv_point_t *point;
     bool result;
 } lv_hit_test_info_t;
+
+
+typedef struct
+{
+    uint8_t part;
+    lv_style_dsc_t * result;
+} lv_get_style_info_t;
+
+typedef struct
+{
+    uint8_t part;
+    lv_obj_state_t result;
+} lv_get_state_info_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -278,7 +315,7 @@ void lv_init(void);
 
 /**
  * Deinit the 'lv' library
- * Currently only implemented when not using custorm allocators, or GC is enabled.
+ * Currently only implemented when not using custom allocators, or GC is enabled.
  */
 #if LV_ENABLE_GC || !LV_MEM_CUSTOM
 void lv_deinit(void);
@@ -454,6 +491,19 @@ void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right
  */
 void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style);
 
+void lv_obj_set_style_color(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_color_t color);
+
+void lv_obj_set_style_value(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_style_int_t value);
+
+void lv_obj_set_style_opa(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_opa_t opa);
+
+void lv_obj_set_style_ptr(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, void * p);
+
+void lv_obj_add_style_class(lv_obj_t * obj, uint8_t type, lv_style_t * style);
+
+
+void lv_obj_reset_style(lv_obj_t * obj, uint8_t type);
+
 /**
  * Notify an object about its style is modified
  * @param obj pointer to an object
@@ -568,6 +618,10 @@ void lv_obj_set_protect(lv_obj_t * obj, uint8_t prot);
  */
 void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot);
 
+void lv_obj_set_state(lv_obj_t * obj, lv_obj_state_t state);
+
+void lv_obj_clear_state(lv_obj_t * obj, lv_obj_state_t state);
+
 /**
  * Set a an event handler function for an object.
  * Used by the user to react on event which happens with the object.
@@ -611,12 +665,14 @@ const void * lv_event_get_data(void);
  */
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
 
+
 /**
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
+ * @return LV_RES_OK or LV_RES_INV
  */
-void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
 
 /**
  * Set a new design function for an object
@@ -809,12 +865,24 @@ lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj);
  * Appearance get
  *---------------*/
 
-/**
- * Get the style pointer of an object (if NULL get style of the parent)
- * @param obj pointer to an object
- * @return pointer to a style
- */
-const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
+lv_style_dsc_t * lv_obj_get_style(const lv_obj_t * obj, uint8_t type);
+
+lv_style_int_t lv_obj_get_style_int(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
+
+lv_color_t lv_obj_get_style_color(lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
+
+lv_opa_t lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
+
+void * lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
+///**
+// * Get the style pointer of an object (if NULL get style of the parent)
+// * @param obj pointer to an object
+// * @return pointer to a style
+// */
+//const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
+
+
+void lv_obj_update_style_cache(lv_obj_t * obj);
 
 /*-----------------
  * Attribute get
@@ -914,6 +982,8 @@ uint8_t lv_obj_get_protect(const lv_obj_t * obj);
  * @return false: none of the given bits are set, true: at least one bit is set
  */
 bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
+
+lv_obj_state_t lv_obj_get_state(const lv_obj_t * obj, uint8_t part);
 
 /**
  * Get the signal function of an object
@@ -1026,6 +1096,24 @@ bool lv_obj_is_focused(const lv_obj_t * obj);
  * @return LV_RES_OK
  */
 lv_res_t lv_obj_handle_get_type_signal(lv_obj_type_t * buf, const char * name);
+
+
+
+/**
+ * Initialize a rectangle descriptor from an object's styles
+ * @param obj pointer to an object
+ * @param type type of style. E.g.  `LV_OBJ_STYLE_MAIN`, `LV_BTN_STYLE_REL` or `LV_PAGE_STYLE_SCRL`
+ * @param draw_dsc the descriptor the initialize
+ * @note Only the relevant fields will be set.
+ * E.g. if `border width == 0` the other border properties won't be evaluated.
+ */
+void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t type, lv_draw_rect_dsc_t * draw_dsc);
+
+void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t type, lv_draw_label_dsc_t * draw_dsc);
+
+void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * draw_dsc);
+
+void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t * draw_dsc);
 
 /**********************
  *      MACROS
