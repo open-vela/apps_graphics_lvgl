@@ -25,7 +25,7 @@
  *********************/
 /*Add memory junk on alloc (0xaa) and free(0xbb) (just for testing purposes)*/
 #ifndef LV_MEM_ADD_JUNK
-#define LV_MEM_ADD_JUNK 1
+#define LV_MEM_ADD_JUNK 0
 #endif
 
 #ifdef LV_ARCH_64
@@ -334,20 +334,6 @@ void lv_mem_defrag(void)
         e_free = e_next;
     }
 #endif
-}
-
-void lv_mem_test(void)
-{
-    lv_mem_ent_t * e;
-    e = ent_get_next(NULL);
-    while(e) {
-        if(e->header.s.d_size > 200000) {
-            printf("mem err\n");
-            while(1);
-        }
-        e = ent_get_next(e);
-    }
-
 }
 
 /**
