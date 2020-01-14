@@ -62,7 +62,7 @@ static uint16_t entry_cnt;
  * @param style style of the image
  * @return pointer to the cache entry or NULL if can open the image
  */
-lv_img_cache_entry_t * lv_img_cache_open(const void * src, const lv_style_t * style)
+lv_img_cache_entry_t * lv_img_cache_open(const void * src, lv_color_t color)
 {
     if(entry_cnt == 0) {
         LV_LOG_WARN("lv_img_cache_open: the cache size is 0");
@@ -85,7 +85,7 @@ lv_img_cache_entry_t * lv_img_cache_open(const void * src, const lv_style_t * st
         bool match = false;
         lv_img_src_t src_type = lv_img_src_get_type(cache[i].dec_dsc.src);
         if(src_type == LV_IMG_SRC_VARIABLE) {
-            if(cache[i].dec_dsc.src == src && cache[i].dec_dsc.style == style) match = true;
+            if(cache[i].dec_dsc.src == src && cache[i].dec_dsc.color.full == color.full) match = true;
         } else if(src_type == LV_IMG_SRC_FILE) {
             if(strcmp(cache[i].dec_dsc.src, src) == 0) match = true;
         }
@@ -124,7 +124,7 @@ lv_img_cache_entry_t * lv_img_cache_open(const void * src, const lv_style_t * st
         uint32_t t_start;
         t_start                          = lv_tick_get();
         cached_src->dec_dsc.time_to_open = 0;
-        lv_res_t open_res                = lv_img_decoder_open(&cached_src->dec_dsc, src, style);
+        lv_res_t open_res                = lv_img_decoder_open(&cached_src->dec_dsc, src, color);
         if(open_res == LV_RES_INV) {
             LV_LOG_WARN("Image draw cannot open the image resource");
             lv_img_decoder_close(&cached_src->dec_dsc);
