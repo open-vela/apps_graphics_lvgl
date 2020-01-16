@@ -52,14 +52,22 @@ typedef uint8_t lv_indev_state_t;
 
 
 enum {
-    LV_DRAG_DIR_HOR = 0x0, /**< Object can be dragged horizontally. */
-    LV_DRAG_DIR_VER = 0x1, /**< Object can be dragged vertically. */
-    LV_DRAG_DIR_BOTH = 0x2, /**< Object can be dragged in all directions. */
-    LV_DRAG_DIR_ONE = 0x3, /**< Object can be dragged only one direction (the first move). */
+    LV_DRAG_DIR_NONE = 0x0, /**< Both directions are disabled */
+    LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
+    LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
+    LV_DRAG_DIR_BOTH = 0x3, /**< Object can be dragged in all directions. */
+    LV_DRAG_DIR_ONE = 0x4, /**< Object can be dragged only one direction (the first move). */
 };
 
 typedef uint8_t lv_drag_dir_t;
 
+enum {
+	LV_GESTURE_DIR_TOP,		/**< Gesture dir up. */
+	LV_GESTURE_DIR_BOTTOM,	/**< Gesture dir down. */
+	LV_GESTURE_DIR_LEFT,	/**< Gesture dir left. */
+	LV_GESTURE_DIR_RIGHT,	/**< Gesture dir right. */
+};
+typedef uint8_t lv_gesture_dir_t;
 
 /** Data structure passed to an input driver to fill */
 typedef struct
@@ -105,6 +113,12 @@ typedef struct _lv_indev_drv_t
     /**< Drag throw slow-down in [%]. Greater value means faster slow-down */
     uint8_t drag_throw;
 
+    /**< At least this difference should between two points to evaluate as gesture */
+    uint8_t gesture_min_velocity;
+
+    /**< At least this difference should be to send a gesture */
+    uint8_t gesture_limit;
+
     /**< Long press time in milliseconds*/
     uint16_t long_press_time;
 
@@ -132,10 +146,13 @@ typedef struct _lv_indev_proc_t
                                                 other post-release event)*/
             struct _lv_obj_t * last_pressed; /*The lastly pressed object*/
 
+	    lv_gesture_dir_t gesture_dir;
+	    lv_point_t gesture_sum; /*Count the gesture pixels to check LV_INDEV_DEF_GESTURE_LIMIT*/
             /*Flags*/
             uint8_t drag_limit_out : 1;
             uint8_t drag_in_prog : 1;
             lv_drag_dir_t drag_dir  : 3;
+	    uint8_t gesture_sent : 1;
         } pointer;
         struct
         { /*Keypad data*/
