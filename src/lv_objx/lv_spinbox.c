@@ -27,7 +27,6 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * param);
-static lv_style_list_t * lv_spinbox_get_style(lv_obj_t * ta, uint8_t part);
 static void lv_spinbox_updatevalue(lv_obj_t * spinbox);
 
 /**********************
@@ -62,11 +61,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Allocate the spinbox type specific extended data*/
     lv_spinbox_ext_t * ext = lv_obj_allocate_ext_attr(new_spinbox, sizeof(lv_spinbox_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(new_spinbox);
-        return NULL;
-    }
-
+    if(ext == NULL) return NULL;
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_spinbox);
     if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_spinbox);
 
@@ -79,8 +74,9 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->range_max          = 99999;
     ext->range_min          = -99999;
 
+    lv_ta_set_cursor_type(new_spinbox, LV_CURSOR_BLOCK);
     lv_ta_set_one_line(new_spinbox, true);
-    lv_ta_set_cursor_click_pos(new_spinbox, true);
+    lv_ta_set_cursor_click_pos(new_spinbox, false);
 
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(new_spinbox, lv_spinbox_signal);
@@ -88,7 +84,13 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Init the new spinbox spinbox*/
     if(copy == NULL) {
-
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_BG, th->style.spinbox.bg);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_CURSOR, th->style.spinbox.cursor);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_SB, th->style.spinbox.sb);
+        }
     }
     /*Copy an existing spinbox*/
     else {
@@ -100,7 +102,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_spinbox_set_step(new_spinbox, copy_ext->step);
 
         /*Refresh the style with new signal function*/
-//        lv_obj_refresh_style(new_spinbox);
+        lv_obj_refresh_style(new_spinbox);
     }
 
     lv_spinbox_updatevalue(new_spinbox);
@@ -329,12 +331,6 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
 {
 
     lv_res_t res = LV_RES_OK;
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_get_style_info_t * info = param;
-        info->result = lv_spinbox_get_style(spinbox, info->part);
-        if(info->result != NULL) return LV_RES_OK;
-        else return ancestor_signal(spinbox, sign, param);
-    }
 
     /* Include the ancient signal function */
     if(sign != LV_SIGNAL_CONTROL) {
@@ -344,6 +340,7 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
     if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
 
+    lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(spinbox);
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     } else if(sign == LV_SIGNAL_GET_TYPE) {
@@ -356,7 +353,6 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
     } else if(sign == LV_SIGNAL_RELEASED) {
         /*If released with an ENCODER then move to the next digit*/
 #if LV_USE_GROUP
-        lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(spinbox);
         lv_indev_t * indev = lv_indev_get_act();
         if(lv_indev_get_type(indev) == LV_INDEV_TYPE_ENCODER) {
             if(lv_group_get_editing(lv_obj_get_group(spinbox))) {
@@ -402,35 +398,6 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
     return res;
 }
 
-/**
- * Get the style descriptor of a part of the object
- * @param page pointer the object
- * @param part the part from `lv_spinbox_part_t`. (LV_SPINBOX_PART_...)
- * @return pointer to the style descriptor of the specified part
- */
-static lv_style_list_t * lv_spinbox_get_style(lv_obj_t * ta, uint8_t part)
-{
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
-    lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(ta);
-    lv_style_list_t * style_dsc_p;
-
-    switch(part) {
-    case LV_SPINBOX_PART_BG:
-        style_dsc_p = &ta->style_list;
-        break;
-    case LV_SPINBOX_PART_SCRLBAR:
-        style_dsc_p = &ext->ta.page.sb.style;
-        break;
-    case LV_SPINBOX_PART_CURSOR:
-        style_dsc_p = &ext->ta.cursor.style;
-        break;
-    default:
-        style_dsc_p = NULL;
-    }
-
-    return style_dsc_p;
-}
 static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
 {
     lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(spinbox);
