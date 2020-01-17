@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_IMG != 0
 
@@ -38,20 +42,16 @@ typedef struct
     lv_point_t offset;
     lv_coord_t w;          /*Width of the image (Handled by the library)*/
     lv_coord_t h;          /*Height of the image (Handled by the library)*/
-    uint16_t angle;	   /*rotation angle of the image*/
-    lv_point_t pivot;     /*rotation center of the image*/
-    uint16_t zoom;         /*256 means no zoom, 512 double size, 128 hasl size*/
     uint8_t src_type : 2;  /*See: lv_img_src_t*/
     uint8_t auto_size : 1; /*1: automatically set the object size to the image size*/
     uint8_t cf : 5;        /*Color format from `lv_img_color_format_t`*/
-    uint8_t antialias :1;  /*Apply anti-aliasing in transformations (rotate, zoom)*/
 } lv_img_ext_t;
 
-/*Image parts*/
+/*Styles*/
 enum {
-    LV_IMG_PART_MAIN,
+    LV_IMG_STYLE_MAIN,
 };
-typedef uint8_t lv_img_part_t;
+typedef uint8_t lv_img_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -101,40 +101,16 @@ void lv_img_set_offset_x(lv_obj_t * img, lv_coord_t x);
 void lv_img_set_offset_y(lv_obj_t * img, lv_coord_t y);
 
 /**
- * Set the rotation center of the image.
- * The image will be rotated around this point
+ * Set the style of an image
  * @param img pointer to an image object
- * @param pivot_x rotation center x of the image
- * @param pivot_y rotation center y of the image
+ * @param type which style should be set (can be only `LV_IMG_STYLE_MAIN`)
+ * @param style pointer to a style
  */
-void lv_img_set_pivot(lv_obj_t * img, lv_coord_t pivot_x, lv_coord_t pivot_y);
-
-/**
- * Set the rotation angle of the image.
- * The image will be rotated around its middle point
- * @param img pointer to an image object
- * @param angle rotate angle in degree (> 0: clock wise)
- */
-void lv_img_set_angle(lv_obj_t * img, int16_t angle);
-
-/**
- * Set the zoom factor of the image.
- * @param img pointer to an image object
- * @param zoom the zoom factor.
- * - 256 or LV_ZOOM_IMG_NONE for no zoom
- * - <256: scale down
- * - >256 scale up
- * - 128 half size
- * - 512 double size
- */
-void lv_img_set_zoom(lv_obj_t * img, uint16_t zoom);
-
-/**
- * Enable/disable anti-aliasing for the transformations (rotate, zoom) or not
- * @param img pointer to an image object
- * @param antialias true: anti-aliased; false: not anti-aliased
- */
-void lv_img_set_antialias(lv_obj_t * img, bool antialias);
+static inline void lv_img_set_style(lv_obj_t * img, lv_img_style_t type, const lv_style_t * style)
+{
+    (void)type; /*Unused*/
+    lv_obj_set_style(img, style);
+}
 
 /*=====================
  * Getter functions
@@ -176,32 +152,16 @@ lv_coord_t lv_img_get_offset_x(lv_obj_t * img);
 lv_coord_t lv_img_get_offset_y(lv_obj_t * img);
 
 /**
- * Get the rotation angle of the image.
+ * Get the style of an image object
  * @param img pointer to an image object
- * @return rotation angle in degree (0..359)
+ * @param type which style should be get (can be only `LV_IMG_STYLE_MAIN`)
+ * @return pointer to the image's style
  */
-uint16_t lv_img_get_angle(lv_obj_t * img);
-
-/**
- * Get the rotation center of the image.
- * @param img pointer to an image object
- * @param center rotation center of the image
- */
-void lv_img_get_pivot(lv_obj_t * img, lv_point_t *center);
-
-/**
- * Get the zoom factor of the image.
- * @param img pointer to an image object
- * @return zoom factor (256: no zoom)
- */
-uint16_t lv_img_get_zoom(lv_obj_t * img);
-
-/**
- * Get whether the transformations (rotate, zoom) are anti-aliased or not
- * @param img pointer to an image object
- * @return true: anti-aliased; false: not anti-aliased
- */
-bool lv_img_get_antialias(lv_obj_t * img);
+static inline const lv_style_t * lv_img_get_style(const lv_obj_t * img, lv_img_style_t type)
+{
+    (void)type; /*Unused*/
+    return lv_obj_get_style(img);
+}
 
 /**********************
  *      MACROS
