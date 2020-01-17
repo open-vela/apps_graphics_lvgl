@@ -784,7 +784,7 @@ static void indev_proc_press(lv_indev_proc_t * proc)
             proc->types.pointer.drag_in_prog   = 0;
             proc->types.pointer.drag_sum.x     = 0;
             proc->types.pointer.drag_sum.y     = 0;
-            proc->types.pointer.drag_dir = LV_DRAG_DIR_NONE;
+            proc->types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
             proc->types.pointer.gesture_sent   = 0;
             proc->types.pointer.gesture_sum.x  = 0;
             proc->types.pointer.gesture_sum.y  = 0;
@@ -1031,7 +1031,7 @@ static void indev_proc_reset_query_handler(lv_indev_t * indev)
         indev->proc.longpr_rep_timestamp            = 0;
         indev->proc.types.pointer.drag_sum.x        = 0;
         indev->proc.types.pointer.drag_sum.y        = 0;
-        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_NONE;
+        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
         indev->proc.types.pointer.drag_throw_vect.x = 0;
         indev->proc.types.pointer.drag_throw_vect.y = 0;
         indev->proc.types.pointer.gesture_sum.x     = 0;
