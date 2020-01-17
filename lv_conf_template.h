@@ -122,13 +122,6 @@ typedef int16_t lv_coord_t;
  * Time between `LV_EVENT_LONG_PRESSED_REPEAT */
 #define LV_INDEV_DEF_LONG_PRESS_REP_TIME  100
 
-
-/* Gesture threshold in pixels */
-#define LV_INDEV_DEF_GESTURE_LIMIT        50
-
-/* Gesture min velocity at release before swipe (pixels)*/
-#define LV_INDEV_DEF_GESTURE_MIN_VELOCITY 3
-
 /*==================
  * Feature usage
  *==================*/
@@ -286,8 +279,6 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
 /*================
  *  THEME USAGE
  *================*/
-#define LV_THEME_LIVE_UPDATE    0   /*1: Allow theme switching at run time. Uses 8..10 kB of RAM*/
-
 #define LV_USE_THEME_TEMPL      0   /*Just for test*/
 #define LV_USE_THEME_DEFAULT    0   /*Built mainly from the built-in styles. Consumes very few RAM*/
 #define LV_USE_THEME_ALIEN      0   /*Dark futuristic theme*/
