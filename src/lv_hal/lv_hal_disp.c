@@ -133,7 +133,11 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
     lv_disp_t * disp_def_tmp = disp_def;
     disp_def                 = disp; /*Temporarily change the default screen to create the default screens on the
                                         new display*/
-
+    /*Create a refresh task*/
+    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_REFR_TASK_PRIO, disp);
+    LV_ASSERT_MEM(disp->refr_task);
+    if(disp->refr_task == NULL) return NULL;
+    
     disp->inv_p = 0;
 
     disp->act_scr   = lv_obj_create(NULL, NULL); /*Create a default screen on the display*/
@@ -145,11 +149,6 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
     lv_obj_invalidate(disp->act_scr);
 
     disp_def = disp_def_tmp; /*Revert the default display*/
-
-    /*Create a refresh task*/
-    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, disp);
-    LV_ASSERT_MEM(disp->refr_task);
-    if(disp->refr_task == NULL) return NULL;
 
     lv_task_ready(disp->refr_task); /*Be sure the screen will be refreshed immediately on start up*/
 
@@ -191,7 +190,7 @@ void lv_disp_remove(lv_disp_t * disp)
         indev = lv_indev_get_next(indev);
     }
 
-    lv_ll_rem(&LV_GC_ROOT(_lv_disp_ll), disp);
+    lv_ll_remove(&LV_GC_ROOT(_lv_disp_ll), disp);
     lv_mem_free(disp);
 
     if(was_default) lv_disp_set_default(lv_ll_get_head(&LV_GC_ROOT(_lv_disp_ll)));
