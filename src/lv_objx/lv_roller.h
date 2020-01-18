@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_ROLLER != 0
 
@@ -53,11 +57,10 @@ typedef struct
 } lv_roller_ext_t;
 
 enum {
-    LV_ROLLER_PART_BG,
-    LV_ROLLER_PART_SCRL,
-    LV_ROLLER_PART_SEL,
+    LV_ROLLER_STYLE_BG,
+    LV_ROLLER_STYLE_SEL,
 };
-typedef uint8_t lv_roller_part_t;
+typedef uint8_t lv_roller_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -125,6 +128,14 @@ static inline void lv_roller_set_anim_time(lv_obj_t * roller, uint16_t anim_time
     lv_ddlist_set_anim_time(roller, anim_time);
 }
 
+/**
+ * Set a style of a roller
+ * @param roller pointer to a roller object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_roller_set_style(lv_obj_t * roller, lv_roller_style_t type, const lv_style_t * style);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -134,13 +145,6 @@ static inline void lv_roller_set_anim_time(lv_obj_t * roller, uint16_t anim_time
  * @return id of the selected option (0 ... number of option - 1);
  */
 uint16_t lv_roller_get_selected(const lv_obj_t * roller);
-
-/**
- * Get the total number of options
- * @param roller pointer to a roller object
- * @return the total number of options in the list
- */
-uint16_t lv_roller_get_option_cnt(const lv_obj_t * roller);
 
 /**
  * Get the current selected option as a string
@@ -186,6 +190,14 @@ static inline uint16_t lv_roller_get_anim_time(const lv_obj_t * roller)
  * @return true: auto size enabled; false: manual width settings enabled
  */
 bool lv_roller_get_hor_fit(const lv_obj_t * roller);
+
+/**
+ * Get a style of a roller
+ * @param roller pointer to a roller object
+ * @param type which style should be get
+ * @return style pointer to a style
+ *  */
+const lv_style_t * lv_roller_get_style(const lv_obj_t * roller, lv_roller_style_t type);
 
 /**********************
  *      MACROS
