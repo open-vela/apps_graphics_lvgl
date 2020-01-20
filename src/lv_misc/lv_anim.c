@@ -26,6 +26,7 @@
  *********************/
 #define LV_ANIM_RESOLUTION 1024
 #define LV_ANIM_RES_SHIFT 10
+#define LV_ANIM_TASK_PRIO LV_TASK_PRIO_MID
 
 /**********************
  *      TYPEDEFS
@@ -35,6 +36,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static void anim_task(lv_task_t * param);
+static void anim_mark_list_change(void);
 static bool anim_ready_handler(lv_anim_t * a);
 
 /**********************
@@ -42,6 +44,7 @@ static bool anim_ready_handler(lv_anim_t * a);
  **********************/
 static uint32_t last_task_run;
 static bool anim_list_changed;
+static lv_task_t * _lv_anim_task;
 
 /**********************
  *      MACROS
@@ -58,7 +61,9 @@ void lv_anim_core_init(void)
 {
     lv_ll_init(&LV_GC_ROOT(_lv_anim_ll), sizeof(lv_anim_t));
     last_task_run = lv_tick_get();
-    lv_task_create(anim_task, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, NULL);
+    _lv_anim_task = lv_task_create(anim_task, LV_DISP_DEF_REFR_PERIOD, LV_ANIM_TASK_PRIO, NULL);
+	anim_mark_list_change(); /*Turn off the animation task*/
+	anim_list_changed = false; /*The list has not actaully changed*/
 }
 
 /**
@@ -88,6 +93,11 @@ void lv_anim_create(lv_anim_t * a)
     /* Do not let two animations for the  same 'var' with the same 'fp'*/
     if(a->exec_cb != NULL) lv_anim_del(a->var, a->exec_cb); /*fp == NULL would delete all animations of var*/
 
+    /*If the list is empty the anim task was suspended and it's last run measure is invalid*/
+    if(lv_ll_is_empty(&LV_GC_ROOT(_lv_anim_ll))) {
+        last_task_run = lv_tick_get();
+    }
+
     /*Add the new animation to the animation linked list*/
     lv_anim_t * new_anim = lv_ll_ins_head(&LV_GC_ROOT(_lv_anim_ll));
     LV_ASSERT_MEM(new_anim);
@@ -102,7 +112,7 @@ void lv_anim_create(lv_anim_t * a)
 
     /* Creating an animation changed the linked list.
      * It's important if it happens in a ready callback. (see `anim_task`)*/
-    anim_list_changed = true;
+	anim_mark_list_change();
 
     LV_LOG_TRACE("animation created")
 }
@@ -125,9 +135,9 @@ bool lv_anim_del(void * var, lv_anim_exec_xcb_t exec_cb)
         a_next = lv_ll_get_next(&LV_GC_ROOT(_lv_anim_ll), a);
 
         if(a->var == var && (a->exec_cb == exec_cb || exec_cb == NULL)) {
-            lv_ll_rem(&LV_GC_ROOT(_lv_anim_ll), a);
+            lv_ll_remove(&LV_GC_ROOT(_lv_anim_ll), a);
             lv_mem_free(a);
-            anim_list_changed = true; /*Read by `anim_task`. It need to know if a delete occurred in
+            anim_mark_list_change(); /*Read by `anim_task`. It need to know if a delete occurred in
                                          the linked list*/
             del = true;
         }
@@ -170,6 +180,17 @@ uint16_t lv_anim_speed_to_time(uint16_t speed, lv_anim_value_t start, lv_anim_va
     }
 
     return time;
+}
+
+/**
+ * Manually refresh the state of the animations.
+ * Useful to make the animations running in a blocking process where
+ * `lv_task_handler` can't run for a while.
+ * Shouldn't be used directly because it is called in `lv_refr_now()`.
+ */
+void lv_anim_refr_now(void)
+{
+	anim_task(NULL);
 }
 
 /**
@@ -444,9 +465,10 @@ static bool anim_ready_handler(lv_anim_t * a)
          * This way the `ready_cb` will see the animations like it's animation is ready deleted*/
         lv_anim_t a_tmp;
         memcpy(&a_tmp, a, sizeof(lv_anim_t));
-        lv_ll_rem(&LV_GC_ROOT(_lv_anim_ll), a);
+        lv_ll_remove(&LV_GC_ROOT(_lv_anim_ll), a);
         lv_mem_free(a);
-        anim_list_changed = true;
+		/*Flag that the list has changed */
+		anim_mark_list_change();
 
         /* Call the callback function at the end*/
         if(a_tmp.ready_cb != NULL) a_tmp.ready_cb(&a_tmp);
@@ -470,5 +492,13 @@ static bool anim_ready_handler(lv_anim_t * a)
     }
 
     return anim_list_changed;
+}
+static void anim_mark_list_change(void)
+{
+	anim_list_changed = true;
+	if(lv_ll_get_head(&LV_GC_ROOT(_lv_anim_ll)) == NULL)
+		lv_task_set_prio(_lv_anim_task, LV_TASK_PRIO_OFF);
+	else
+		lv_task_set_prio(_lv_anim_task, LV_ANIM_TASK_PRIO);
 }
 #endif
