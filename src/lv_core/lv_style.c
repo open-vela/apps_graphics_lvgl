@@ -25,6 +25,9 @@
         res->attr = start->attr;                                                                                       \
     }
 
+#define LV_STYLE_PROP_TO_ID(prop) (prop & 0xFF);
+#define LV_STYLE_PROP_GET_TYPE(prop) ((prop >> 8) & 0xFF);
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -32,27 +35,21 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static inline int32_t get_property_index(const lv_style_t * style, lv_style_property_t prop);
+static lv_style_t * get_local_style(lv_style_list_t * list);
 #if LV_USE_ANIMATION
 static void style_animator(lv_style_anim_dsc_t * dsc, lv_anim_value_t val);
 static void style_animation_common_end_cb(lv_anim_t * a);
 #endif
 
 /**********************
+ *  GLOABAL VARIABLES
+ **********************/
+//lv_style_t lv_style_transp_tight;
+
+/**********************
  *  STATIC VARIABLES
  **********************/
-lv_style_t lv_style_scr;
-lv_style_t lv_style_transp;
-lv_style_t lv_style_transp_fit;
-lv_style_t lv_style_transp_tight;
-lv_style_t lv_style_plain;
-lv_style_t lv_style_plain_color;
-lv_style_t lv_style_pretty;
-lv_style_t lv_style_pretty_color;
-lv_style_t lv_style_btn_rel;
-lv_style_t lv_style_btn_pr;
-lv_style_t lv_style_btn_tgl_rel;
-lv_style_t lv_style_btn_tgl_pr;
-lv_style_t lv_style_btn_ina;
 
 /**********************
  *      MACROS
@@ -62,223 +59,507 @@ lv_style_t lv_style_btn_ina;
  *   GLOBAL FUNCTIONS
  **********************/
 
-/**
- *  Init the basic styles
- */
-void lv_style_init(void)
+void lv_style_built_in_init(void)
 {
-    /* Not White/Black/Gray colors are created by HSV model with
-     * HUE = 210*/
 
-    /*Screen style*/
-    lv_style_scr.glass               = 0;
-    lv_style_scr.body.opa            = LV_OPA_COVER;
-    lv_style_scr.body.main_color     = LV_COLOR_WHITE;
-    lv_style_scr.body.grad_color     = LV_COLOR_WHITE;
-    lv_style_scr.body.radius         = 0;
-    lv_style_scr.body.padding.left   = 0;
-    lv_style_scr.body.padding.right  = 0;
-    lv_style_scr.body.padding.top    = 0;
-    lv_style_scr.body.padding.bottom = 0;
-    lv_style_scr.body.padding.inner  = LV_DPI / 20;
-
-    lv_style_scr.body.border.color = LV_COLOR_BLACK;
-    lv_style_scr.body.border.opa   = LV_OPA_COVER;
-    lv_style_scr.body.border.width = 0;
-    lv_style_scr.body.border.part  = LV_BORDER_FULL;
-
-    lv_style_scr.body.shadow.color = LV_COLOR_GRAY;
-    lv_style_scr.body.shadow.type  = LV_SHADOW_FULL;
-    lv_style_scr.body.shadow.width = 0;
-
-    lv_style_scr.text.opa          = LV_OPA_COVER;
-    lv_style_scr.text.color        = lv_color_make(0x30, 0x30, 0x30);
-    lv_style_scr.text.sel_color    = lv_color_make(0x55, 0x96, 0xd8);
-    lv_style_scr.text.font         = LV_FONT_DEFAULT;
-    lv_style_scr.text.letter_space = 0;
-    lv_style_scr.text.line_space   = 2;
-
-    lv_style_scr.image.opa     = LV_OPA_COVER;
-    lv_style_scr.image.color   = lv_color_make(0x20, 0x20, 0x20);
-    lv_style_scr.image.intense = LV_OPA_TRANSP;
-
-    lv_style_scr.line.opa     = LV_OPA_COVER;
-    lv_style_scr.line.color   = lv_color_make(0x20, 0x20, 0x20);
-    lv_style_scr.line.width   = 2;
-    lv_style_scr.line.rounded = 0;
-
-#if LV_USE_DEBUG
-#if LV_USE_ASSERT_STYLE
-    lv_style_scr.debug_sentinel = LV_STYLE_DEGUG_SENTINEL_VALUE;
-#endif
-#endif
-
-    /*Plain style (by default near the same as the screen style)*/
-    lv_style_copy(&lv_style_plain, &lv_style_scr);
-    lv_style_plain.body.padding.left   = LV_DPI / 20;
-    lv_style_plain.body.padding.right  = LV_DPI / 20;
-    lv_style_plain.body.padding.top    = LV_DPI / 20;
-    lv_style_plain.body.padding.bottom = LV_DPI / 20;
-
-    /*Plain color style*/
-    lv_style_copy(&lv_style_plain_color, &lv_style_plain);
-    lv_style_plain_color.text.color      = lv_color_make(0xf0, 0xf0, 0xf0);
-    lv_style_plain_color.image.color     = lv_color_make(0xf0, 0xf0, 0xf0);
-    lv_style_plain_color.line.color      = lv_color_make(0xf0, 0xf0, 0xf0);
-    lv_style_plain_color.body.main_color = lv_color_make(0x55, 0x96, 0xd8);
-    lv_style_plain_color.body.grad_color = lv_style_plain_color.body.main_color;
-
-    /*Pretty style */
-    lv_style_copy(&lv_style_pretty, &lv_style_plain);
-    lv_style_pretty.text.color        = lv_color_make(0x20, 0x20, 0x20);
-    lv_style_pretty.image.color       = lv_color_make(0x20, 0x20, 0x20);
-    lv_style_pretty.line.color        = lv_color_make(0x20, 0x20, 0x20);
-    lv_style_pretty.body.main_color   = LV_COLOR_WHITE;
-    lv_style_pretty.body.grad_color   = LV_COLOR_SILVER;
-    lv_style_pretty.body.radius       = LV_DPI / 15;
-    lv_style_pretty.body.border.color = lv_color_make(0x40, 0x40, 0x40);
-    lv_style_pretty.body.border.width = LV_DPI / 50 >= 1 ? LV_DPI / 50 : 1;
-    lv_style_pretty.body.border.opa   = LV_OPA_30;
-
-    /*Pretty color style*/
-    lv_style_copy(&lv_style_pretty_color, &lv_style_pretty);
-    lv_style_pretty_color.text.color        = lv_color_make(0xe0, 0xe0, 0xe0);
-    lv_style_pretty_color.image.color       = lv_color_make(0xe0, 0xe0, 0xe0);
-    lv_style_pretty_color.line.color        = lv_color_make(0xc0, 0xc0, 0xc0);
-    lv_style_pretty_color.body.main_color   = lv_color_make(0x6b, 0x9a, 0xc7);
-    lv_style_pretty_color.body.grad_color   = lv_color_make(0x2b, 0x59, 0x8b);
-    lv_style_pretty_color.body.border.color = lv_color_make(0x15, 0x2c, 0x42);
-
-    /*Transparent style*/
-    lv_style_copy(&lv_style_transp, &lv_style_plain);
-    lv_style_transp.glass             = 1;
-    lv_style_transp.body.border.width = 0;
-    lv_style_transp.body.opa          = LV_OPA_TRANSP;
-
-    /*Transparent fitting size*/
-    lv_style_copy(&lv_style_transp_fit, &lv_style_transp);
-    lv_style_transp_fit.body.padding.left   = 0;
-    lv_style_transp_fit.body.padding.right  = 0;
-    lv_style_transp_fit.body.padding.top    = 0;
-    lv_style_transp_fit.body.padding.bottom = 0;
-
-    /*Transparent tight style*/
-    lv_style_copy(&lv_style_transp_tight, &lv_style_transp_fit);
-    lv_style_transp_tight.body.padding.inner = 0;
-
-    /*Button released style*/
-    lv_style_copy(&lv_style_btn_rel, &lv_style_plain);
-    lv_style_btn_rel.body.main_color     = lv_color_make(0x76, 0xa2, 0xd0);
-    lv_style_btn_rel.body.grad_color     = lv_color_make(0x19, 0x3a, 0x5d);
-    lv_style_btn_rel.body.radius         = LV_DPI / 15;
-    lv_style_btn_rel.body.padding.left   = LV_DPI / 4;
-    lv_style_btn_rel.body.padding.right  = LV_DPI / 4;
-    lv_style_btn_rel.body.padding.top    = LV_DPI / 6;
-    lv_style_btn_rel.body.padding.bottom = LV_DPI / 6;
-    lv_style_btn_rel.body.padding.inner  = LV_DPI / 10;
-    lv_style_btn_rel.body.border.color   = lv_color_make(0x0b, 0x19, 0x28);
-    lv_style_btn_rel.body.border.width   = LV_DPI / 50 >= 1 ? LV_DPI / 50 : 1;
-    lv_style_btn_rel.body.border.opa     = LV_OPA_70;
-    lv_style_btn_rel.body.shadow.color   = LV_COLOR_GRAY;
-    lv_style_btn_rel.body.shadow.width   = 0;
-    lv_style_btn_rel.text.color          = lv_color_make(0xff, 0xff, 0xff);
-    lv_style_btn_rel.image.color         = lv_color_make(0xff, 0xff, 0xff);
-
-    /*Button pressed style*/
-    lv_style_copy(&lv_style_btn_pr, &lv_style_btn_rel);
-    lv_style_btn_pr.body.main_color = lv_color_make(0x33, 0x62, 0x94);
-    lv_style_btn_pr.body.grad_color = lv_color_make(0x10, 0x26, 0x3c);
-    lv_style_btn_pr.text.color      = lv_color_make(0xa4, 0xb5, 0xc6);
-    lv_style_btn_pr.image.color     = lv_color_make(0xa4, 0xb5, 0xc6);
-    lv_style_btn_pr.line.color      = lv_color_make(0xa4, 0xb5, 0xc6);
-
-    /*Button toggle released style*/
-    lv_style_copy(&lv_style_btn_tgl_rel, &lv_style_btn_rel);
-    lv_style_btn_tgl_rel.body.main_color   = lv_color_make(0x0a, 0x11, 0x22);
-    lv_style_btn_tgl_rel.body.grad_color   = lv_color_make(0x37, 0x62, 0x90);
-    lv_style_btn_tgl_rel.body.border.color = lv_color_make(0x01, 0x07, 0x0d);
-    lv_style_btn_tgl_rel.text.color        = lv_color_make(0xc8, 0xdd, 0xf4);
-    lv_style_btn_tgl_rel.image.color       = lv_color_make(0xc8, 0xdd, 0xf4);
-    lv_style_btn_tgl_rel.line.color        = lv_color_make(0xc8, 0xdd, 0xf4);
-
-    /*Button toggle pressed style*/
-    lv_style_copy(&lv_style_btn_tgl_pr, &lv_style_btn_tgl_rel);
-    lv_style_btn_tgl_pr.body.main_color = lv_color_make(0x02, 0x14, 0x27);
-    lv_style_btn_tgl_pr.body.grad_color = lv_color_make(0x2b, 0x4c, 0x70);
-    lv_style_btn_tgl_pr.text.color      = lv_color_make(0xa4, 0xb5, 0xc6);
-    lv_style_btn_tgl_pr.image.color     = lv_color_make(0xa4, 0xb5, 0xc6);
-    lv_style_btn_tgl_pr.line.color      = lv_color_make(0xa4, 0xb5, 0xc6);
-
-    /*Button inactive style*/
-    lv_style_copy(&lv_style_btn_ina, &lv_style_btn_rel);
-    lv_style_btn_ina.body.main_color   = lv_color_make(0xd8, 0xd8, 0xd8);
-    lv_style_btn_ina.body.grad_color   = lv_color_make(0xd8, 0xd8, 0xd8);
-    lv_style_btn_ina.body.border.color = lv_color_make(0x90, 0x90, 0x90);
-    lv_style_btn_ina.text.color        = lv_color_make(0x70, 0x70, 0x70);
-    lv_style_btn_ina.image.color       = lv_color_make(0x70, 0x70, 0x70);
-    lv_style_btn_ina.line.color        = lv_color_make(0x70, 0x70, 0x70);
 }
 
-/**
- * Copy a style to an other
- * @param dest pointer to the destination style
- * @param src pointer to the source style
- */
-void lv_style_copy(lv_style_t * dest, const lv_style_t * src)
+void lv_style_init(lv_style_t * style)
 {
-    memcpy(dest, src, sizeof(lv_style_t));
+    style->map = NULL;
+    style->size = 0;
 }
 
-/**
- * Mix two styles according to a given ratio
- * @param start start style
- * @param end end style
- * @param res store the result style here
- * @param ratio the ratio of mix [0..256]; 0: `start` style; 256: `end` style
- */
-void lv_style_mix(const lv_style_t * start, const lv_style_t * end, lv_style_t * res, uint16_t ratio)
+void lv_style_copy(lv_style_t * style_dest, const lv_style_t * style_src)
 {
-    STYLE_ATTR_MIX(body.opa, ratio);
-    STYLE_ATTR_MIX(body.radius, ratio);
-    STYLE_ATTR_MIX(body.border.width, ratio);
-    STYLE_ATTR_MIX(body.border.opa, ratio);
-    STYLE_ATTR_MIX(body.shadow.width, ratio);
-    STYLE_ATTR_MIX(body.padding.left, ratio);
-    STYLE_ATTR_MIX(body.padding.right, ratio);
-    STYLE_ATTR_MIX(body.padding.top, ratio);
-    STYLE_ATTR_MIX(body.padding.bottom, ratio);
-    STYLE_ATTR_MIX(body.padding.inner, ratio);
-    STYLE_ATTR_MIX(text.line_space, ratio);
-    STYLE_ATTR_MIX(text.letter_space, ratio);
-    STYLE_ATTR_MIX(text.opa, ratio);
-    STYLE_ATTR_MIX(line.width, ratio);
-    STYLE_ATTR_MIX(line.opa, ratio);
-    STYLE_ATTR_MIX(image.intense, ratio);
-    STYLE_ATTR_MIX(image.opa, ratio);
+    lv_style_init(style_dest);
 
-    lv_opa_t opa = ratio == STYLE_MIX_MAX ? LV_OPA_COVER : ratio;
+    if(style_src->map == NULL) return;
 
-    res->body.main_color   = lv_color_mix(end->body.main_color, start->body.main_color, opa);
-    res->body.grad_color   = lv_color_mix(end->body.grad_color, start->body.grad_color, opa);
-    res->body.border.color = lv_color_mix(end->body.border.color, start->body.border.color, opa);
-    res->body.shadow.color = lv_color_mix(end->body.shadow.color, start->body.shadow.color, opa);
-    res->text.color        = lv_color_mix(end->text.color, start->text.color, opa);
-    res->image.color       = lv_color_mix(end->image.color, start->image.color, opa);
-    res->line.color        = lv_color_mix(end->line.color, start->line.color, opa);
+    style_dest->map = lv_mem_alloc(style_src->size);
+    memcpy(style_dest->map, style_src->map, style_src->size);
+    style_dest->size = style_src->size;
+}
 
-    if(ratio < (STYLE_MIX_MAX >> 1)) {
-        res->body.border.part = start->body.border.part;
-        res->glass            = start->glass;
-        res->text.font        = start->text.font;
-        res->body.shadow.type = start->body.shadow.type;
-        res->line.rounded     = start->line.rounded;
+void lv_style_list_init(lv_style_list_t * list)
+{
+    list->style_list = NULL;
+    list->style_cnt = 0;
+    list->has_local = 0;
+}
+
+void lv_style_list_copy(lv_style_list_t * list_dest, const lv_style_list_t * list_src)
+{
+    lv_style_list_reset(list_dest);
+
+    if(list_src->style_list == NULL) return;
+
+    if(list_src->has_local == 0) {
+        list_dest->style_list = lv_mem_alloc(list_src->style_cnt * sizeof(lv_style_t *));
+        memcpy(list_dest->style_list, list_src->style_list, list_src->style_cnt * sizeof(lv_style_t *));
+
+        list_dest->style_cnt = list_src->style_cnt;
     } else {
-        res->body.border.part = end->body.border.part;
-        res->glass            = end->glass;
-        res->text.font        = end->text.font;
-        res->body.shadow.type = end->body.shadow.type;
-        res->line.rounded     = end->line.rounded;
+        list_dest->style_list = lv_mem_alloc((list_src->style_cnt - 1) * sizeof(lv_style_t *));
+        memcpy(list_dest->style_list, list_src->style_list + 1, (list_src->style_cnt - 1) * sizeof(lv_style_t *));
+        list_dest->style_cnt = list_src->style_cnt - 1;
+
+        lv_style_t * local_style = get_local_style(list_dest);
+        lv_style_copy(local_style, get_local_style(list_src));
     }
+}
+
+
+void lv_style_list_add_style(lv_style_list_t * list, lv_style_t * style)
+{
+    /*Remove the style first if already exists*/
+    lv_style_list_remove_style(list, style);
+
+    lv_style_t ** new_classes;
+    if(list->style_cnt == 0) new_classes = lv_mem_alloc(sizeof(lv_style_t *));
+    else new_classes = lv_mem_realloc(list->style_list, sizeof(lv_style_t *) * (list->style_cnt + 1));
+    LV_ASSERT_MEM(new_classes);
+    if(new_classes == NULL) {
+        LV_LOG_WARN("lv_style_list_add_style: couldn't add the class");
+        return;
+    }
+
+    /*Make space for the new style at the beginning. Leave local style if exists*/
+    uint8_t i;
+    uint8_t first_style = list->has_local ? 1 : 0;
+    for(i = list->style_cnt; i > first_style; i--) {
+        new_classes[i] = new_classes[i - 1];
+    }
+
+    new_classes[first_style] = style;
+    list->style_cnt++;
+    list->style_list = new_classes;
+}
+
+void lv_style_list_remove_style(lv_style_list_t * list, lv_style_t * style)
+{
+    if(list->style_cnt == 0) return;
+
+    /*Check if the style really exists here*/
+    uint8_t i;
+    bool found = false;
+    for(i = 0; i < list->style_cnt; i++) {
+        if(list->style_list[i] == style) {
+            found = true;
+            break;
+        }
+    }
+    if(found == false) return;
+
+    if(list->style_cnt == 1) {
+        lv_mem_free(list->style_list);
+        list->style_list = NULL;
+        list->style_cnt = 0;
+        list->has_local = 0;
+        return;
+    }
+
+    lv_style_t ** new_classes = lv_mem_realloc(list->style_list, sizeof(lv_style_t *) * (list->style_cnt - 1));
+    LV_ASSERT_MEM(new_classes);
+    if(new_classes == NULL) {
+        LV_LOG_WARN("lv_style_list_remove_style: couldn't reallocate class list");
+        return;
+    }
+    uint8_t j;
+    for(i = 0, j = 0; i < list->style_cnt; i++) {
+        if(list->style_list[i] == style) continue;
+        new_classes[j] = list->style_list[i];
+        j++;
+
+    }
+
+    list->style_cnt--;
+    list->style_list = new_classes;
+}
+
+void lv_style_list_reset(lv_style_list_t * list)
+{
+    if(list->has_local) {
+        lv_style_t * local = lv_style_list_get_style(list, 0);
+        lv_style_reset(local);
+        lv_mem_free(local);
+    }
+    if(list->style_cnt > 0) lv_mem_free(list->style_list);
+    list->style_list = NULL;
+    list->style_cnt = 0;
+    list->has_local = 0;
+}
+
+
+void lv_style_reset(lv_style_t * style)
+{
+    lv_mem_free(style->map);
+    style->map = NULL;
+    style->size = 0;
+}
+
+void lv_style_set_int(lv_style_t * style, lv_style_property_t prop, lv_style_int_t value)
+{
+    int32_t id = get_property_index(style, prop);
+    /*The property already exists but not sure it's state is the same*/
+    if(id >= 0) {
+        lv_style_attr_t attr_found;
+        lv_style_attr_t attr_goal;
+
+        attr_found.full = *(style->map + id + 1);
+        attr_goal.full = (prop >> 8) & 0xFFU;
+
+        if(attr_found.bits.state == attr_goal.bits.state) {
+            memcpy(style->map + id + sizeof(lv_style_property_t), &value, sizeof(lv_style_int_t));
+            return;
+        }
+    }
+
+    /*Add new property if not exists yet*/
+    style->size += sizeof(lv_style_property_t) + sizeof(lv_style_int_t);
+    style->map = lv_mem_realloc(style->map, style->size);
+    LV_ASSERT_MEM(style->map);
+    if(style == NULL) return;
+
+    memcpy(style->map + style->size - (sizeof(lv_style_property_t) + sizeof(lv_style_int_t)), &prop, sizeof(lv_style_property_t));
+    memcpy(style->map + style->size - sizeof(lv_style_int_t), &value, sizeof(lv_style_int_t));
+}
+
+void lv_style_set_color(lv_style_t * style, lv_style_property_t prop, lv_color_t color)
+{
+    int32_t id = get_property_index(style, prop);
+    /*The property already exists but not sure it's state is the same*/
+    if(id >= 0) {
+        lv_style_attr_t attr_found;
+        lv_style_attr_t attr_goal;
+
+        attr_found.full = *(style->map + id + 1);
+        attr_goal.full = (prop >> 8) & 0xFFU;
+
+        if(attr_found.bits.state == attr_goal.bits.state) {
+            memcpy(style->map + id + sizeof(lv_style_property_t), &color, sizeof(lv_color_t));
+            return;
+        }
+    }
+
+    /*Add new property if not exists yet*/
+    style->size += sizeof(lv_style_property_t) + sizeof(lv_color_t);
+    style->map = lv_mem_realloc(style->map, style->size);
+    LV_ASSERT_MEM(style->map);
+    if(style == NULL) return;
+
+    memcpy(style->map + style->size - (sizeof(lv_style_property_t) + sizeof(lv_color_t)), &prop, sizeof(lv_style_property_t));
+    memcpy(style->map + style->size - sizeof(lv_color_t), &color, sizeof(lv_color_t));
+}
+
+void lv_style_set_opa(lv_style_t * style, lv_style_property_t prop, lv_opa_t opa)
+{
+    int32_t id = get_property_index(style, prop);
+    /*The property already exists but not sure it's state is the same*/
+    if(id >= 0) {
+        lv_style_attr_t attr_found;
+        lv_style_attr_t attr_goal;
+
+        attr_found.full = *(style->map + id + 1);
+        attr_goal.full = (prop >> 8) & 0xFFU;
+
+        if(attr_found.bits.state == attr_goal.bits.state) {
+            memcpy(style->map + id + sizeof(lv_style_property_t), &opa, sizeof(lv_opa_t));
+            return;
+        }
+    }
+
+    /*Add new property if not exists yet*/
+    style->size += sizeof(lv_style_property_t) + sizeof(lv_opa_t);
+    style->map = lv_mem_realloc(style->map, style->size);
+    LV_ASSERT_MEM(style->map);
+    if(style == NULL) return;
+
+    memcpy(style->map + style->size - (sizeof(lv_style_property_t) + sizeof(lv_opa_t)), &prop, sizeof(lv_style_property_t));
+    memcpy(style->map + style->size - sizeof(lv_opa_t), &opa, sizeof(lv_opa_t));
+}
+
+void lv_style_set_ptr(lv_style_t * style, lv_style_property_t prop, const void * p)
+{
+    int32_t id = get_property_index(style, prop);
+    /*The property already exists but not sure it's state is the same*/
+    if(id >= 0) {
+        lv_style_attr_t attr_found;
+        lv_style_attr_t attr_goal;
+
+        attr_found.full = *(style->map + id + 1);
+        attr_goal.full = (prop >> 8) & 0xFFU;
+
+        if(attr_found.bits.state == attr_goal.bits.state) {
+            memcpy(style->map + id + sizeof(lv_style_property_t), &p, sizeof(void *));
+            return;
+        }
+    }
+
+    /*Add new property if not exists yet*/
+    style->size += sizeof(lv_style_property_t) + sizeof(void *);
+    style->map = lv_mem_realloc(style->map, style->size);
+    LV_ASSERT_MEM(style->map);
+    if(style == NULL) return;
+
+    memcpy(style->map + style->size - (sizeof(lv_style_property_t) + sizeof(void *)), &prop, sizeof(lv_style_property_t));
+    memcpy(style->map + style->size - sizeof(void *), &p, sizeof(void *));
+}
+
+
+/**
+ * Get the a property from a style.
+ * Take into account the style state and return the property which matches the best.
+ * @param style pointer to a style where to search
+ * @param prop the property, might contain ORed style states too
+ * @param res buffer to store the result
+ * @return the weight of the found property (how well it fits to the style state).
+ *         Higher number is means better fit
+ *         -1 if the not found (`res` will be undefined)
+ */
+int16_t lv_style_get_int(const lv_style_t * style, lv_style_property_t prop, lv_style_int_t * res)
+{
+    if(style == NULL) return -1;
+    if(style->map == NULL) return -1;
+    int32_t id = get_property_index(style, prop);
+    if(id < 0) {
+        return -1;
+    } else {
+        memcpy(res, &style->map[id + sizeof(lv_style_property_t)], sizeof(lv_style_int_t));
+        lv_style_attr_t attr_act;
+        attr_act.full = style->map[id + 1];
+
+        lv_style_attr_t attr_goal;
+        attr_goal.full = (prop >> 8) & 0xFF;
+
+        return attr_act.bits.state & attr_goal.bits.state;
+    }
+}
+
+
+int16_t lv_style_get_opa(const lv_style_t * style, lv_style_property_t prop, lv_opa_t * res)
+{
+    if(style == NULL) return -1;
+    if(style->map == NULL) return -1;
+    int32_t id = get_property_index(style, prop);
+    if(id < 0) {
+        return -1;
+    } else {
+        memcpy(res, &style->map[id + sizeof(lv_style_property_t)], sizeof(lv_opa_t));
+        lv_style_attr_t attr_act;
+        attr_act.full = style->map[id + 1];
+
+        lv_style_attr_t attr_goal;
+        attr_goal.full = (prop >> 8) & 0xFF;
+
+        return attr_act.bits.state & attr_goal.bits.state;
+    }
+}
+
+int16_t lv_style_get_color(const lv_style_t * style, lv_style_property_t prop, lv_color_t * res)
+{
+    if(style == NULL) return -1;
+    if(style->map == NULL) return -1;
+    int32_t id = get_property_index(style, prop);
+    if(id < 0) {
+        return -1;
+    } else {
+        memcpy(res, &style->map[id + sizeof(lv_style_property_t)], sizeof(lv_color_t));
+        lv_style_attr_t attr_act;
+        attr_act.full = style->map[id + 1];
+
+        lv_style_attr_t attr_goal;
+        attr_goal.full = (prop >> 8) & 0xFF;
+
+        return attr_act.bits.state & attr_goal.bits.state;
+    }
+}
+
+
+int16_t lv_style_get_ptr(const lv_style_t * style, lv_style_property_t prop, void ** res)
+{
+    if(style == NULL) return -1;
+    if(style->map == NULL) return -1;
+    int32_t id = get_property_index(style, prop);
+    if(id < 0) {
+        return -1;
+    } else {
+        memcpy(res, &style->map[id + sizeof(lv_style_property_t)], sizeof(void*));
+        lv_style_attr_t attr_act;
+        attr_act.full = style->map[id + 1];
+
+        lv_style_attr_t attr_goal;
+        attr_goal.full = (prop >> 8) & 0xFF;
+
+        return attr_act.bits.state & attr_goal.bits.state;
+    }
+}
+
+
+void lv_style_list_set_local_int(lv_style_list_t * list, lv_style_property_t prop, lv_style_int_t value)
+{
+    lv_style_t * local = get_local_style(list);
+    lv_style_set_int(local, prop, value);
+}
+
+void lv_style_list_set_local_opa(lv_style_list_t * list, lv_style_property_t prop, lv_opa_t value)
+{
+    lv_style_t * local = get_local_style(list);
+    lv_style_set_opa(local, prop, value);
+}
+
+void lv_style_list_set_local_color(lv_style_list_t * list, lv_style_property_t prop, lv_color_t value)
+{
+    lv_style_t * local = get_local_style(list);
+    lv_style_set_color(local, prop, value);
+}
+
+void lv_style_list_set_local_ptr(lv_style_list_t * list, lv_style_property_t prop, const void * value)
+{
+    lv_style_t * local = get_local_style(list);
+    lv_style_set_ptr(local, prop, value);
+}
+
+
+lv_res_t lv_style_list_get_int(lv_style_list_t * list, lv_style_property_t prop, lv_style_int_t * value)
+{
+    if(list == NULL) return LV_RES_INV;
+    if(list->style_list == NULL) return LV_RES_INV;
+
+    lv_style_attr_t attr;
+    attr.full = prop >> 8;
+    int16_t weight_goal = attr.full;
+
+    int16_t weight_act;
+    int16_t weight = -1;
+
+    lv_style_int_t value_act;
+
+    int16_t ci;
+    for(ci = 0; ci < list->style_cnt; ci++) {
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        weight_act = lv_style_get_int(class, prop, &value_act);
+        /*On perfect match return the value immediately*/
+        if(weight_act == weight_goal) {
+            *value = value_act;
+            return LV_RES_OK;
+        }
+        /*If the found ID is better the current candidate then use it*/
+        else if(weight_act > weight) {
+            weight =  weight_act;
+            *value = value_act;
+        }
+    }
+
+    if(weight >= 0) return LV_RES_OK;
+    else return LV_RES_INV;
+
+}
+
+
+lv_res_t lv_style_list_get_color(lv_style_list_t * list, lv_style_property_t prop, lv_color_t * value)
+{
+    if(list == NULL) return LV_RES_INV;
+    if(list->style_list == NULL) return LV_RES_INV;
+
+    lv_style_attr_t attr;
+    attr.full = prop >> 8;
+    int16_t weight_goal = attr.full;
+
+    int16_t weight_act;
+    int16_t weight = -1;
+
+    lv_color_t value_act;
+
+    int16_t ci;
+    for(ci = 0; ci < list->style_cnt; ci++) {
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        weight_act = lv_style_get_color(class, prop, &value_act);
+        /*On perfect match return the value immediately*/
+        if(weight_act == weight_goal) {
+            *value = value_act;
+            return LV_RES_OK;
+        }
+        /*If the found ID is better the current candidate then use it*/
+        else if(weight_act > weight) {
+            weight =  weight_act;
+            *value = value_act;
+        }
+    }
+
+    if(weight >= 0)  return LV_RES_OK;
+    else return LV_RES_INV;
+}
+
+
+
+lv_res_t lv_style_list_get_opa(lv_style_list_t * list, lv_style_property_t prop, lv_opa_t * value)
+{
+    if(list == NULL) return LV_RES_INV;
+    if(list->style_list == NULL) return LV_RES_INV;
+
+    lv_style_attr_t attr;
+    attr.full = prop >> 8;
+    int16_t weight_goal = attr.full;
+
+    int16_t weight_act;
+    int16_t weight = -1;
+
+    lv_opa_t value_act = LV_OPA_TRANSP;
+
+    int16_t ci;
+    for(ci = 0; ci < list->style_cnt; ci++) {
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        weight_act = lv_style_get_opa(class, prop, &value_act);
+        /*On perfect match return the value immediately*/
+        if(weight_act == weight_goal) {
+            *value = value_act;
+            return LV_RES_OK;
+        }
+        /*If the found ID is better the current candidate then use it*/
+        else if(weight_act > weight) {
+            weight =  weight_act;
+            *value = value_act;
+        }
+    }
+
+    if(weight >= 0)  return LV_RES_OK;
+    else return LV_RES_INV;
+}
+
+
+lv_res_t lv_style_list_get_ptr(lv_style_list_t * list, lv_style_property_t prop, void ** value)
+{
+    if(list == NULL) return LV_RES_INV;
+    if(list->style_list == NULL) return LV_RES_INV;
+
+    lv_style_attr_t attr;
+    attr.full = prop >> 8;
+    int16_t weight_goal = attr.full;
+
+    int16_t weight_act;
+    int16_t weight = -1;
+
+    void * value_act = NULL;
+
+    int16_t ci;
+    for(ci = 0; ci < list->style_cnt; ci++) {
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        weight_act = lv_style_get_ptr(class, prop, &value_act);
+        /*On perfect match return the value immediately*/
+        if(weight_act == weight_goal) {
+            *value = value_act;
+            return LV_RES_OK;
+        }
+        /*If the found ID is better the current candidate then use it*/
+        else if(weight_act > weight) {
+            weight =  weight_act;
+            *value = value_act;
+        }
+    }
+
+    if(weight >= 0)  return LV_RES_OK;
+    else return LV_RES_INV;
 }
 
 #if LV_USE_ANIMATION
@@ -293,31 +574,119 @@ void lv_style_anim_init(lv_anim_t * a)
     a->ready_cb = style_animation_common_end_cb;
 
     lv_style_anim_dsc_t * dsc;
+
     dsc = lv_mem_alloc(sizeof(lv_style_anim_dsc_t));
     LV_ASSERT_MEM(dsc);
     if(dsc == NULL) return;
     dsc->ready_cb   = NULL;
     dsc->style_anim = NULL;
-    lv_style_copy(&dsc->style_start, &lv_style_plain);
-    lv_style_copy(&dsc->style_end, &lv_style_plain);
+    lv_style_init(&dsc->style_start);
+    lv_style_init(&dsc->style_end);
 
     a->var = (void *)dsc;
 }
 
 void lv_style_anim_set_styles(lv_anim_t * a, lv_style_t * to_anim, const lv_style_t * start, const lv_style_t * end)
 {
-
     lv_style_anim_dsc_t * dsc = a->var;
     dsc->style_anim           = to_anim;
-    memcpy(&dsc->style_start, start, sizeof(lv_style_t));
-    memcpy(&dsc->style_end, end, sizeof(lv_style_t));
-    memcpy(dsc->style_anim, start, sizeof(lv_style_t));
+
+    lv_style_copy(&dsc->style_start, start);
+    lv_style_copy(&dsc->style_end, end);
 }
 #endif
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+
+static inline int32_t get_property_index(const lv_style_t * style, lv_style_property_t prop)
+{
+    uint8_t id_to_find = prop & 0xFF;
+    lv_style_attr_t attr;
+    attr.full = (prop >> 8) & 0xFF;
+
+    int16_t weight = -1;
+    int16_t id_guess = -1;
+
+    static const uint8_t size[16] = {
+    		sizeof(lv_style_int_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_style_int_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_style_int_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_style_int_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_style_int_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_color_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_color_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_color_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_color_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_color_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_opa_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_opa_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_opa_t) + sizeof(lv_style_property_t),
+    		sizeof(lv_opa_t) + sizeof(lv_style_property_t),
+    		sizeof(void*) + sizeof(lv_style_property_t),
+    		sizeof(void*) + sizeof(lv_style_property_t),
+    };
+
+    size_t i = 0;
+    while(i < style->size) {
+
+        if(style->map[i] == id_to_find) {
+			lv_style_attr_t attr_act;
+			attr_act.full = style->map[i + 1];
+
+            /*If the state perfectly matches return this property*/
+            if(attr_act.bits.state == attr.bits.state) {
+                return i;
+            }
+            /* Be sure the property not specifies other state than the requested.
+             * E.g. For HOVER+PRESS, HOVER only is OK, but HOVER+FOCUS not*/
+            else if((attr_act.bits.state & (~attr.bits.state)) == 0) {
+                /* Use this property if it describes better the requested state than the current candidate.
+                 * E.g. for HOVER+FOCUS+PRESS prefer HOVER+FOCUS over FOCUS*/
+                if(attr_act.bits.state > weight) {
+                    weight = attr_act.bits.state;
+                    id_guess = i;
+                }
+            }
+        }
+
+        /*Go to the next property*/
+        i+=size[style->map[i] & 0xF];
+//        if((style->map[i] & 0xF) < LV_STYLE_ID_COLOR) i+= sizeof(lv_style_int_t);
+//        else if((style->map[i] & 0xF) < LV_STYLE_ID_OPA) i+= sizeof(lv_color_t);
+//        else if((style->map[i] & 0xF) < LV_STYLE_ID_PTR) i+= sizeof(lv_opa_t);
+//        else i+= sizeof(void*);
+//
+//        i += sizeof(lv_style_property_t);
+    }
+
+    return id_guess;
+}
+
+
+static lv_style_t * get_local_style(lv_style_list_t * list)
+{
+
+    if(list->has_local) return lv_style_list_get_style(list, 0);
+
+
+    lv_style_t * local_style = lv_mem_alloc(sizeof(lv_style_t));
+    LV_ASSERT_MEM(local_style);
+    if(local_style == NULL) {
+        LV_LOG_WARN("get_local_style: couldn't create local style");
+        return NULL;
+    }
+    lv_style_init(local_style);
+
+    lv_style_list_add_style(list, local_style);
+    list->has_local = 1;
+
+    return local_style;
+}
+
+
 #if LV_USE_ANIMATION
+
 /**
  * Used by the style animations to set the values of a style according to start and end style.
  * @param dsc the 'animated variable' set by lv_style_anim_create()
@@ -329,7 +698,77 @@ static void style_animator(lv_style_anim_dsc_t * dsc, lv_anim_value_t val)
     const lv_style_t * end   = &dsc->style_end;
     lv_style_t * act         = dsc->style_anim;
 
-    lv_style_mix(start, end, act, val);
+    size_t i = 0;
+    lv_style_property_t prop_act;
+    while(i < start->size) {
+        prop_act = start->map[i] + (start->map[i + 1] << 8);
+
+        /*Value*/
+        if((start->map[i] & 0xF) < LV_STYLE_ID_COLOR) {
+            lv_style_int_t v1;
+            memcpy(&v1, &start->map[i + sizeof(lv_style_property_t)], sizeof(lv_style_int_t));
+
+            int16_t res2;
+            lv_style_int_t v2;
+            res2 = lv_style_get_int(end, prop_act, &v2);
+
+            if(res2 >= 0) {
+                lv_style_int_t vres = v1 + ((int32_t)((int32_t)(v2-v1) * val) >> 8);
+                lv_style_set_int(act, prop_act, vres);
+            }
+
+            i+= sizeof(lv_style_int_t);
+        }
+        /*Color*/
+        else if((start->map[i] & 0xF) < LV_STYLE_ID_OPA) {
+            lv_color_t color1;
+            memcpy(&color1, &start->map[i + sizeof(lv_style_property_t)], sizeof(lv_color_t));
+
+            int16_t res2;
+            lv_color_t color2;
+            res2 = lv_style_get_color(end, prop_act, &color2);
+
+            if(res2 >= 0) {
+                lv_color_t color_res = val == 256 ? color2 : lv_color_mix(color2, color1, (lv_opa_t)val);
+                lv_style_set_color(act, prop_act, color_res);
+            }
+
+            i+= sizeof(lv_color_t);
+        }
+        /*Opa*/
+        else if((start->map[i] & 0xF) < LV_STYLE_ID_PTR) {
+            lv_opa_t opa1;
+            memcpy(&opa1, &start->map[i + sizeof(lv_style_property_t)], sizeof(lv_opa_t));
+
+            int16_t res2;
+            lv_opa_t opa2;
+            res2 = lv_style_get_opa(end, prop_act, &opa2);
+
+            if(res2 >= 0) {
+                lv_opa_t opa_res = opa1 + ((uint16_t)((uint16_t)(opa2 - opa1) * val) >> 8);
+                lv_style_set_opa(act, prop_act, opa_res);
+            }
+
+            i+= sizeof(lv_opa_t);
+        }
+        else {
+            void * p1;
+            memcpy(p1, &start->map[i + sizeof(lv_style_property_t)], sizeof(void *));
+
+            int16_t res2;
+            void * p2;
+            res2 = lv_style_get_ptr(end, prop_act, &p2);
+
+            if(res2 >= 0) {
+                if(val > 128) lv_style_set_ptr(act, prop_act, p2);
+                else if(val > 128) lv_style_set_ptr(act, prop_act, p1);
+            }
+
+            i+= sizeof(void*);
+        }
+
+        i += sizeof(lv_style_property_t);
+    }
 
     lv_obj_report_style_mod(dsc->style_anim);
 }

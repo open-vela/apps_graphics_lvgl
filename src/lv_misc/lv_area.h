@@ -13,14 +13,10 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+#include "../lv_conf_internal.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
 
 /*********************
  *      DEFINES
@@ -148,9 +144,10 @@ void lv_area_join(lv_area_t * a_res_p, const lv_area_t * a1_p, const lv_area_t *
  * Check if a point is on an area
  * @param a_p pointer to an area
  * @param p_p pointer to a point
+ * @param radius radius of area (e.g. for rounded rectangle)
  * @return false:the point is out of the area
  */
-bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p);
+bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coord_t radius);
 
 /**
  * Check if two area has common parts
@@ -162,11 +159,12 @@ bool lv_area_is_on(const lv_area_t * a1_p, const lv_area_t * a2_p);
 
 /**
  * Check if an area is fully on an other
- * @param ain_p pointer to an area which could be on aholder_p
- * @param aholder pointer to an area which could involve ain_p
- * @return
+ * @param ain_p pointer to an area which could be in 'aholder_p'
+ * @param aholder_p pointer to an area which could involve 'ain_p'
+ * @param radius radius of `aholder_p` (e.g. for rounded rectangle)
+ * @return true: `ain_p` is fully inside `aholder_p`
  */
-bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p);
+bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, lv_coord_t radius);
 
 /**
  * Increment or decrement an area's size by a single amount

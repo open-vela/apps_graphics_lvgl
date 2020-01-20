@@ -13,11 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #if LV_USE_SPINBOX != 0
 
@@ -54,11 +50,13 @@ typedef struct
 
 /*Styles*/
 enum {
-    LV_SPINBOX_STYLE_BG,
-    LV_SPINBOX_STYLE_SB,
-    LV_SPINBOX_STYLE_CURSOR,
+    LV_SPINBOX_PART_BG = LV_TA_PART_BG,
+    LV_SPINBOX_PART_SCRLBAR = LV_TA_PART_SCRLBAR,
+    LV_SPINBOX_PART_CURSOR = LV_TA_PART_CURSOR,
+    _LV_SPINBOX_PART_VIRTUAL_LAST = _LV_TA_PART_VIRTUAL_LAST,
+    _LV_SPINBOX_PART_REAL_LAST = _LV_TA_PART_REAL_LAST,
 };
-typedef uint8_t lv_spinbox_style_t;
+typedef uint8_t lv_spinbox_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -75,17 +73,6 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy);
 /*=====================
  * Setter functions
  *====================*/
-
-/**
- * Set a style of a spinbox.
- * @param templ pointer to template object
- * @param type which style should be set
- * @param style pointer to a style
- */
-static inline void lv_spinbox_set_style(lv_obj_t * spinbox, lv_spinbox_style_t type, lv_style_t * style)
-{
-    lv_ta_set_style(spinbox, type, style);
-}
 
 /**
  * Set spinbox value
@@ -128,17 +115,6 @@ void lv_spinbox_set_padding_left(lv_obj_t * spinbox, uint8_t padding);
 /*=====================
  * Getter functions
  *====================*/
-
-/**
- * Get style of a spinbox.
- * @param templ pointer to template object
- * @param type which style should be get
- * @return style pointer to the style
- */
-static inline const lv_style_t * lv_spinbox_get_style(lv_obj_t * spinbox, lv_spinbox_style_t type)
-{
-    return lv_ta_get_style(spinbox, type);
-}
 
 /**
  * Get the spinbox numeral value (user has to convert to float according to its digit format)
