@@ -784,7 +784,7 @@ static void indev_proc_press(lv_indev_proc_t * proc)
             proc->types.pointer.drag_in_prog   = 0;
             proc->types.pointer.drag_sum.x     = 0;
             proc->types.pointer.drag_sum.y     = 0;
-            proc->types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
+            proc->types.pointer.drag_dir = LV_DRAG_DIR_NONE;
             proc->types.pointer.gesture_sent   = 0;
             proc->types.pointer.gesture_sum.x  = 0;
             proc->types.pointer.gesture_sum.y  = 0;
@@ -1031,7 +1031,7 @@ static void indev_proc_reset_query_handler(lv_indev_t * indev)
         indev->proc.longpr_rep_timestamp            = 0;
         indev->proc.types.pointer.drag_sum.x        = 0;
         indev->proc.types.pointer.drag_sum.y        = 0;
-        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
+        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_NONE;
         indev->proc.types.pointer.drag_throw_vect.x = 0;
         indev->proc.types.pointer.drag_throw_vect.y = 0;
         indev->proc.types.pointer.gesture_sum.x     = 0;
@@ -1066,7 +1066,7 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t *point)
 
         /*If then the children was not ok, and this obj is clickable
          * and it or its parent is not hidden then save this object*/
-        if(found_p == NULL && lv_obj_get_click(obj) != false && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_OBJ_STATE_DISABLED) == 0) {
+        if(found_p == NULL && lv_obj_get_click(obj) != false) {
             lv_obj_t * hidden_i = obj;
             while(hidden_i != NULL) {
                 if(lv_obj_get_hidden(hidden_i) == true) break;
