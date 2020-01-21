@@ -1,14 +1,26 @@
 /**
  * GENERATED FILE, DO NOT EDIT IT!
- * @file lv_conf_checker.h
+ * @file lv_conf_internal.h
  * Make sure all the defines of lv_conf.h have a default value
 **/
 
-#ifndef LV_CONF_CHECKER_H
-#define LV_CONF_CHECKER_H
+#ifndef LV_CONF_INTERNAL_H
+#define LV_CONF_INTERNAL_H
 /* clang-format off */
 
 #include <stdint.h>
+
+#if defined(LV_CONF_PATH)
+#define __LV_TO_STR_AUX(x) #x
+#define __LV_TO_STR(x) __LV_TO_STR_AUX(x)
+#include __LV_TO_STR(LV_CONF_PATH)
+#undef __LV_TO_STR_AUX
+#undef __LV_TO_STR
+#elif defined(LV_CONF_INCLUDE_SIMPLE)
+#include "lv_conf.h"
+#else
+#include "../../lv_conf.h"
+#endif
 
 /*====================
    Graphical settings
@@ -170,6 +182,17 @@
 #define LV_INDEV_DEF_LONG_PRESS_REP_TIME  100
 #endif
 
+
+/* Gesture threshold in pixels */
+#ifndef LV_INDEV_DEF_GESTURE_LIMIT
+#define LV_INDEV_DEF_GESTURE_LIMIT        50
+#endif
+
+/* Gesture min velocity at release before swipe (pixels)*/
+#ifndef LV_INDEV_DEF_GESTURE_MIN_VELOCITY
+#define LV_INDEV_DEF_GESTURE_MIN_VELOCITY 3
+#endif
+
 /*==================
  * Feature usage
  *==================*/
@@ -217,16 +240,6 @@
 /*========================
  * Image decoder and cache
  *========================*/
-
-/* 1: Enable indexed (palette) images */
-#ifndef LV_IMG_CF_INDEXED
-#define LV_IMG_CF_INDEXED       1
-#endif
-
-/* 1: Enable alpha indexed images */
-#ifndef LV_IMG_CF_ALPHA
-#define LV_IMG_CF_ALPHA         1
-#endif
 
 /* Default image cache size. Image caching keeps the images opened.
  * If only the built-in image formats are used there is no real advantage of caching.
@@ -722,6 +735,11 @@
 /*Line meter (dependencies: *;)*/
 #ifndef LV_USE_LMETER
 #define LV_USE_LMETER   1
+#endif
+
+/*Mask (dependencies: -)*/
+#ifndef LV_USE_OBJMASK
+#define LV_USE_OBJMASK  0
 #endif
 
 /*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
