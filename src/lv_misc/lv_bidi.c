@@ -188,25 +188,17 @@ bool lv_bidi_letter_is_neutral(uint32_t letter)
 uint16_t lv_bidi_get_logical_pos(const char * str_in, char **bidi_txt, uint32_t len, lv_bidi_dir_t base_dir, uint32_t visual_pos, bool *is_rtl)
 {
     uint32_t pos_conv_len = get_txt_len(str_in, len);
-    char * buf = lv_mem_buf_get(len + 1);
+    void *buf = lv_mem_buf_get(len + pos_conv_len * sizeof(uint16_t));
     if(buf == NULL) return (uint16_t) -1;
-
-    uint16_t *pos_conv_buf = lv_mem_buf_get(pos_conv_len * sizeof(uint16_t));
-    if(pos_conv_buf == NULL) {
-        lv_mem_buf_release(buf);
-        return (uint16_t) -1;
-    }
-
     if (bidi_txt) *bidi_txt = buf;
 
+    uint16_t *pos_conv_buf = (uint16_t*) ((char*)buf + len);
     lv_bidi_process_paragraph(str_in, bidi_txt? *bidi_txt: NULL, len, base_dir, pos_conv_buf, pos_conv_len);
 
     if (is_rtl) *is_rtl = IS_RTL_POS(pos_conv_buf[visual_pos]);
 
     if(bidi_txt == NULL) lv_mem_buf_release(buf);
-    uint16_t res = GET_POS(pos_conv_buf[visual_pos]);
-    lv_mem_buf_release(pos_conv_buf);
-    return res;
+    return GET_POS(pos_conv_buf[visual_pos]);
 }
 
 /**
@@ -224,30 +216,19 @@ uint16_t lv_bidi_get_logical_pos(const char * str_in, char **bidi_txt, uint32_t 
 uint16_t lv_bidi_get_visual_pos(const char * str_in, char **bidi_txt, uint16_t len, lv_bidi_dir_t base_dir, uint32_t logical_pos, bool *is_rtl)
 {
     uint32_t pos_conv_len = get_txt_len(str_in, len);
-    char * buf = lv_mem_buf_get(len + 1);
+    void *buf = lv_mem_buf_get(len + pos_conv_len * sizeof(uint16_t));
     if(buf == NULL) return (uint16_t) -1;
-
-    uint16_t *pos_conv_buf = lv_mem_buf_get(pos_conv_len * sizeof(uint16_t));
-    if(pos_conv_buf == NULL) {
-        lv_mem_buf_release(buf);
-        return (uint16_t) -1;
-    }
-
     if (bidi_txt) *bidi_txt = buf;
 
+    uint16_t *pos_conv_buf = (uint16_t*) ((char*)buf + len);
     lv_bidi_process_paragraph(str_in, bidi_txt ? *bidi_txt: NULL, len, base_dir, pos_conv_buf, pos_conv_len);
-
     for (uint16_t i = 0; i < pos_conv_len; i++){
         if (GET_POS(pos_conv_buf[i]) == logical_pos){
-
             if (is_rtl) *is_rtl = IS_RTL_POS(pos_conv_buf[i]);
-            lv_mem_buf_release(pos_conv_buf);
-
             if(bidi_txt == NULL) lv_mem_buf_release(buf);
             return i;
         }
     }
-    lv_mem_buf_release(pos_conv_buf);
     if(bidi_txt == NULL) lv_mem_buf_release(buf);
     return (uint16_t) -1;
 }
@@ -385,8 +366,8 @@ static uint32_t get_txt_len(const char * txt, uint32_t max_len)
 
 static void fill_pos_conv(uint16_t * out, uint16_t len, uint16_t index)
 {
-    uint16_t i;
-    for (i = 0; i < len; i++) {
+    for (uint16_t i = 0; i < len; i++)
+    {
         out[i] = SET_RTL_POS(index, false);
         index++;
     }
