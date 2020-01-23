@@ -46,16 +46,16 @@ static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t tickness,
  * @param style style of the arc (`body.thickness`, `body.main_color`, `body.opa` is used)
  * @param opa_scale scale down all opacities by the factor
  */
-void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius, const lv_area_t * clip_area,
-        uint16_t start_angle, uint16_t end_angle, const lv_style_t * style, lv_opa_t opa_scale)
+void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius,  uint16_t start_angle, uint16_t end_angle, const lv_area_t * clip_area, lv_draw_line_dsc_t * dsc)
 {
-    lv_style_t circle_style;
-    lv_style_copy(&circle_style, style);
-    circle_style.body.radius = LV_RADIUS_CIRCLE;
-    circle_style.body.opa = LV_OPA_TRANSP;
-    circle_style.body.border.width = style->line.width;
-    circle_style.body.border.color = style->line.color;
-    circle_style.body.border.opa = style->line.opa;
+    lv_draw_rect_dsc_t cir_dsc;
+    lv_draw_rect_dsc_init(&cir_dsc);
+    cir_dsc.radius = LV_RADIUS_CIRCLE;
+    cir_dsc.bg_opa = LV_OPA_TRANSP;
+    cir_dsc.border_opa = dsc->opa;
+    cir_dsc.border_color = dsc->color;
+    cir_dsc.border_width = dsc->width;
+    cir_dsc.border_blend_mode = dsc->blend_mode;
 
     lv_draw_mask_angle_param_t mask_angle_param;
     lv_draw_mask_angle_init(&mask_angle_param, center_x, center_y, start_angle, end_angle);
@@ -68,32 +68,36 @@ void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius, cons
     area.x2 = center_x + radius - 1;  /*-1 because the center already belongs to the left/bottom part*/
     area.y2 = center_y + radius - 1;
 
-    lv_draw_rect(&area, clip_area, &circle_style, LV_OPA_COVER);
+    lv_draw_rect(&area, clip_area, &cir_dsc);
 
     lv_draw_mask_remove_id(mask_angle_id);
 
-    if(style->line.rounded) {
-        circle_style.body.main_color = style->line.color;
-        circle_style.body.grad_color = style->line.color;
-        circle_style.body.opa        = LV_OPA_COVER;
-        circle_style.body.border.width = 0;
+    if(dsc->round_start || dsc->round_end) {
+        cir_dsc.bg_color        = dsc->color;
+        cir_dsc.bg_opa        = dsc->opa;
+        cir_dsc.bg_blend_mode = dsc->blend_mode;
+        cir_dsc.border_width = 0;
 
         lv_area_t round_area;
-        get_rounded_area(start_angle, radius, style->line.width, &round_area);
-        round_area.x1 += center_x;
-        round_area.x2 += center_x;
-        round_area.y1 += center_y;
-        round_area.y2 += center_y;
+        if(dsc->round_start) {
+            get_rounded_area(start_angle, radius, dsc->width, &round_area);
+            round_area.x1 += center_x;
+            round_area.x2 += center_x;
+            round_area.y1 += center_y;
+            round_area.y2 += center_y;
 
-        lv_draw_rect(&round_area, clip_area, &circle_style, opa_scale);
+            lv_draw_rect(&round_area, clip_area, &cir_dsc);
+        }
 
-        get_rounded_area(end_angle, radius, style->line.width, &round_area);
-        round_area.x1 += center_x;
-        round_area.x2 += center_x;
-        round_area.y1 += center_y;
-        round_area.y2 += center_y;
+        if(dsc->round_end) {
+            get_rounded_area(end_angle, radius, dsc->width, &round_area);
+            round_area.x1 += center_x;
+            round_area.x2 += center_x;
+            round_area.y1 += center_y;
+            round_area.y2 += center_y;
 
-        lv_draw_rect(&round_area, clip_area, &circle_style, opa_scale);
+            lv_draw_rect(&round_area, clip_area, &cir_dsc);
+        }
     }
 }
 
