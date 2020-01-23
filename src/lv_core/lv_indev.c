@@ -784,7 +784,7 @@ static void indev_proc_press(lv_indev_proc_t * proc)
             proc->types.pointer.drag_in_prog   = 0;
             proc->types.pointer.drag_sum.x     = 0;
             proc->types.pointer.drag_sum.y     = 0;
-            proc->types.pointer.drag_dir = LV_DRAG_DIR_NONE;
+            proc->types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
             proc->types.pointer.gesture_sent   = 0;
             proc->types.pointer.gesture_sum.x  = 0;
             proc->types.pointer.gesture_sum.y  = 0;
@@ -951,7 +951,7 @@ static void indev_proc_release(lv_indev_proc_t * proc)
                 parent = lv_obj_get_parent(parent);
                 if(parent == NULL) break;
 
-                /*Ignore is the protected against click focus*/
+                /*Ignore if the protected against click focus*/
                 if(lv_obj_is_protected(parent, LV_PROTECT_CLICK_FOCUS)) {
                     parent = NULL;
                     break;
@@ -973,13 +973,19 @@ static void indev_proc_release(lv_indev_proc_t * proc)
         /* Send defocus to the lastly "active" object and foucus to the new one.
          * Do not send the events if they was sent by the click focus*/
         if(proc->types.pointer.last_pressed != indev_obj_act && click_focus_sent == false) {
-            lv_event_send(proc->types.pointer.last_pressed, LV_EVENT_DEFOCUSED, NULL);
-            if(indev_reset_check(proc)) return;
+            if(lv_obj_is_protected(indev_obj_act, LV_PROTECT_CLICK_FOCUS) == false) {
+                lv_signal_send(proc->types.pointer.last_pressed, LV_SIGNAL_DEFOCUS, NULL);
+                if(indev_reset_check(proc)) return;
+                lv_event_send(proc->types.pointer.last_pressed, LV_EVENT_DEFOCUSED, NULL);
+                if(indev_reset_check(proc)) return;
 
-            lv_event_send(proc->types.pointer.act_obj, LV_EVENT_FOCUSED, NULL);
-            if(indev_reset_check(proc)) return;
+                lv_signal_send(proc->types.pointer.act_obj, LV_SIGNAL_FOCUS, NULL);
+                if(indev_reset_check(proc)) return;
+                lv_event_send(proc->types.pointer.act_obj, LV_EVENT_FOCUSED, NULL);
+                if(indev_reset_check(proc)) return;
 
-            proc->types.pointer.last_pressed = indev_obj_act;
+                proc->types.pointer.last_pressed = indev_obj_act;
+            }
         }
 
         if(indev_reset_check(proc)) return;
@@ -1031,7 +1037,7 @@ static void indev_proc_reset_query_handler(lv_indev_t * indev)
         indev->proc.longpr_rep_timestamp            = 0;
         indev->proc.types.pointer.drag_sum.x        = 0;
         indev->proc.types.pointer.drag_sum.y        = 0;
-        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_NONE;
+        indev->proc.types.pointer.drag_dir = LV_DRAG_DIR_BOTH;
         indev->proc.types.pointer.drag_throw_vect.x = 0;
         indev->proc.types.pointer.drag_throw_vect.y = 0;
         indev->proc.types.pointer.gesture_sum.x     = 0;
@@ -1066,7 +1072,7 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t *point)
 
         /*If then the children was not ok, and this obj is clickable
          * and it or its parent is not hidden then save this object*/
-        if(found_p == NULL && lv_obj_get_click(obj) != false) {
+        if(found_p == NULL && lv_obj_get_click(obj) != false && (lv_obj_get_state(obj, LV_OBJ_PART_MAIN) & LV_OBJ_STATE_DISABLED) == 0) {
             lv_obj_t * hidden_i = obj;
             while(hidden_i != NULL) {
                 if(lv_obj_get_hidden(hidden_i) == true) break;
