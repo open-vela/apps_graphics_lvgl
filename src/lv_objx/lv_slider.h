@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_SLIDER != 0
 
@@ -32,30 +36,21 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-
-enum {
-	LV_SLIDER_TYPE_NORMAL,
-	LV_SLIDER_TYPE_SYM,
-	LV_SLIDER_TYPE_RANGE
-};
-typedef uint8_t lv_slider_type_t;
 /*Data of slider*/
 typedef struct
 {
     lv_bar_ext_t bar; /*Ext. of ancestor*/
     /*New data for this type */
-    lv_style_list_t style_knob; /*Style of the knob*/
-	lv_area_t left_knob_area;
-	lv_area_t right_knob_area;
-	int16_t *value_to_set; /* Which bar value to set */
-    uint8_t dragging :1;        /*1: the slider is being dragged*/
+    const lv_style_t * style_knob; /*Style of the knob*/
+    int16_t drag_value;            /*Store a temporal value during press until release (Handled by the library)*/
+    uint8_t knob_in : 1;           /*1: Draw the knob inside the bar*/
 } lv_slider_ext_t;
 
 /** Built-in styles of slider*/
 enum {
-    LV_SLIDER_PART_BG, /** Slider background style. */
-    LV_SLIDER_PART_INDIC, /** Slider indicator (filled area) style. */
-    LV_SLIDER_PART_KNOB, /** Slider knob style. */
+    LV_SLIDER_STYLE_BG, /** Slider background style. */
+    LV_SLIDER_STYLE_INDIC, /** Slider indicator (filled area) style. */
+    LV_SLIDER_STYLE_KNOB, /** Slider knob style. */
 };
 typedef uint8_t lv_slider_style_t;
 
@@ -87,17 +82,6 @@ static inline void lv_slider_set_value(lv_obj_t * slider, int16_t value, lv_anim
 }
 
 /**
- * Set a new value for the left knob of a slider
- * @param slider pointer to a slider object
- * @param left_value new value
- * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
- */
-static inline void lv_slider_set_left_value(lv_obj_t * slider, int16_t left_value, lv_anim_enable_t anim)
-{
-    lv_bar_set_start_value(slider, left_value, anim);
-}
-
-/**
  * Set minimum and the maximum values of a bar
  * @param slider pointer to the slider object
  * @param min minimum value
@@ -124,36 +108,37 @@ static inline void lv_slider_set_anim_time(lv_obj_t * slider, uint16_t anim_time
  * @param slider pointer to a bar object
  * @param anim_time the animation time in milliseconds.
  */
-static inline void lv_slider_set_type(lv_obj_t * slider, lv_slider_type_t type)
+static inline void lv_slider_set_sym(lv_obj_t * slider, bool en)
 {
-	if(type == LV_SLIDER_TYPE_NORMAL)
-		lv_bar_set_type(slider, LV_BAR_TYPE_NORMAL);
-	else if(type == LV_SLIDER_TYPE_SYM)
-		lv_bar_set_type(slider, LV_BAR_TYPE_SYM);
-	else if(type == LV_SLIDER_TYPE_RANGE)
-		lv_bar_set_type(slider, LV_BAR_TYPE_CUSTOM);
+    lv_bar_set_sym(slider, en);
 }
+
+/**
+ * Set the 'knob in' attribute of a slider
+ * @param slider pointer to slider object
+ * @param in true: the knob is drawn always in the slider;
+ *           false: the knob can be out on the edges
+ */
+void lv_slider_set_knob_in(lv_obj_t * slider, bool in);
+
+/**
+ * Set a style of a slider
+ * @param slider pointer to a slider object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_slider_set_style(lv_obj_t * slider, lv_slider_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
  *====================*/
 
 /**
- * Get the value of the main knob of a slider
+ * Get the value of a slider
  * @param slider pointer to a slider object
- * @return the value of the main knob of the slider
+ * @return the value of the slider
  */
 int16_t lv_slider_get_value(const lv_obj_t * slider);
-
-/**
- * Get the value of the left knob of a slider
- * @param slider pointer to a slider object
- * @return the value of the left knob of the slider
- */
-static inline int16_t lv_slider_get_left_value(const lv_obj_t * slider)
-{
-    return lv_bar_get_start_value(slider);
-}
 
 /**
  * Get the minimum value of a slider
@@ -183,13 +168,6 @@ static inline int16_t lv_slider_get_max_value(const lv_obj_t * slider)
 bool lv_slider_is_dragged(const lv_obj_t * slider);
 
 /**
- * Get an image to display on the knob of the slider
- * @param slider pointer to a slider object
- * @return the image source: pointer to an `lv_img_dsc_t` variable or a path to an image  (not an `lv_img` object)
- */
-const void * lv_slider_get_knob_img(lv_obj_t * slider, const void * img_src);
-
-/**
  * Get the animation time of the slider
  * @param slider pointer to a slider object
  * @return the animation time in milliseconds.
@@ -204,16 +182,26 @@ static inline uint16_t lv_slider_get_anim_time(lv_obj_t * slider)
  * @param slider pointer to a bar object
  * @return true: symmetric is enabled; false: disable
  */
-static inline lv_slider_type_t lv_slider_get_type(lv_obj_t * slider)
+static inline bool lv_slider_get_sym(lv_obj_t * slider)
 {
-	lv_bar_type_t type = lv_bar_get_type(slider);
-	if(type == LV_BAR_TYPE_SYM)
-		return LV_SLIDER_TYPE_SYM;
-	else if(type == LV_BAR_TYPE_CUSTOM)
-		return LV_SLIDER_TYPE_RANGE;
-	else
-		return LV_SLIDER_TYPE_NORMAL;
+    return lv_bar_get_sym(slider);
 }
+
+/**
+ * Get the 'knob in' attribute of a slider
+ * @param slider pointer to slider object
+ * @return true: the knob is drawn always in the slider;
+ *         false: the knob can be out on the edges
+ */
+bool lv_slider_get_knob_in(const lv_obj_t * slider);
+
+/**
+ * Get a style of a slider
+ * @param slider pointer to a slider object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_slider_get_style(const lv_obj_t * slider, lv_slider_style_t type);
 
 /**********************
  *      MACROS
