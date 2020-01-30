@@ -25,12 +25,12 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src, lv_draw_img_dsc_t * draw_dsc);
+static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src,
+	const lv_style_t * style, uint16_t angle, lv_point_t * pivot, uint16_t zoom, bool antialaias, lv_opa_t opa_scale);
 
-static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_draw_img_dsc_t * draw_dsc,
-	bool chroma_key, bool alpha_byte);
+static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_opa_t opa,
+	bool chroma_key, bool alpha_byte, const lv_style_t * style, uint16_t angle, lv_point_t * pivot, uint16_t zoom, bool antialaias);
 
-void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg);
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -43,16 +43,6 @@ void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const cha
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc)
-{
-    memset(dsc, 0x00, sizeof(lv_draw_img_dsc_t));
-    dsc->recolor = LV_COLOR_BLACK;
-    dsc->opa = LV_OPA_COVER;
-    dsc->zoom = LV_IMG_ZOOM_NONE;
-    dsc->antialias = LV_ANTIALIAS;
-
-}
-
 /**
  * Draw an image
  * @param coords the coordinates of the image
@@ -64,20 +54,23 @@ void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc)
  * @param antialias anti-alias transformations (rotate, zoom) or not
  * @param opa_scale scale down all opacities by the factor
  */
-void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, lv_draw_img_dsc_t * dsc)
+void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, const lv_style_t * style,
+	uint16_t angle, lv_point_t * center, uint16_t zoom, bool antialias, lv_opa_t opa_scale)
 {
     if(src == NULL) {
         LV_LOG_WARN("Image draw: src is NULL");
-        show_error(coords, mask, "No\ndata");
+        lv_draw_rect(coords, mask, &lv_style_plain, LV_OPA_COVER);
+        lv_draw_label(coords, mask, &lv_style_plain, LV_OPA_COVER, "No\ndata", LV_TXT_FLAG_NONE, NULL, NULL, NULL, LV_BIDI_DIR_LTR);
         return;
     }
 
     lv_res_t res;
-    res = lv_img_draw_core(coords, mask, src, dsc);
+    res = lv_img_draw_core(coords, mask, src, style, angle, center, zoom, antialias, opa_scale);
 
     if(res == LV_RES_INV) {
         LV_LOG_WARN("Image draw error");
-        show_error(coords, mask, "No\ndata");
+        lv_draw_rect(coords, mask, &lv_style_plain, LV_OPA_COVER);
+        lv_draw_label(coords, mask, &lv_style_plain, LV_OPA_COVER, "No\ndata", LV_TXT_FLAG_NONE, NULL,  NULL, NULL, LV_BIDI_DIR_LTR);
         return;
     }
 }
@@ -198,11 +191,13 @@ lv_img_src_t lv_img_src_get_type(const void * src)
  *   STATIC FUNCTIONS
  **********************/
 
-static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src, lv_draw_img_dsc_t * draw_dsc)
+static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mask, const void * src,
+	const lv_style_t * style, uint16_t angle, lv_point_t * pivot, uint16_t zoom, bool antialias, lv_opa_t opa_scale)
 {
-    if(draw_dsc->opa <= LV_OPA_MIN) return LV_RES_OK;
+    lv_opa_t opa =
+            opa_scale == LV_OPA_COVER ? style->image.opa : (uint16_t)((uint16_t)style->image.opa * opa_scale) >> 8;
 
-    lv_img_cache_entry_t * cdsc = lv_img_cache_open(src, draw_dsc->recolor);
+    lv_img_cache_entry_t * cdsc = lv_img_cache_open(src, style);
 
     if(cdsc == NULL) return LV_RES_INV;
 
@@ -211,26 +206,27 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
 
     if(cdsc->dec_dsc.error_msg != NULL) {
         LV_LOG_WARN("Image draw error");
-
-        show_error(coords, mask, cdsc->dec_dsc.error_msg);
+        lv_draw_rect(coords, mask, &lv_style_plain, LV_OPA_COVER);
+        lv_draw_label(coords, mask, &lv_style_plain, LV_OPA_COVER, cdsc->dec_dsc.error_msg, LV_TXT_FLAG_NONE, NULL, NULL, NULL, LV_BIDI_DIR_LTR);
     }
     /* The decoder open could open the image and gave the entire uncompressed image.
      * Just draw it!*/
     else if(cdsc->dec_dsc.img_data) {
         lv_area_t map_area_rot;
         lv_area_copy(&map_area_rot, coords);
-        if(draw_dsc->angle || draw_dsc->zoom != LV_IMG_ZOOM_NONE) {
+        if(angle || zoom != LV_IMG_ZOOM_NONE) {
             /*Get the exact area which is required to show the rotated image*/
             lv_coord_t pivot_x = lv_area_get_width(coords) / 2 + coords->x1;
             lv_coord_t pivot_y = lv_area_get_height(coords) / 2 + coords->y1;
 
-            pivot_x = draw_dsc->pivot.x + coords->x1;
-            pivot_y = draw_dsc->pivot.y + coords->y1;
-
-                lv_coord_t w = lv_area_get_width(coords);
-            lv_coord_t w_zoom = (((w * draw_dsc->zoom) >> 8) - w) / 2;
+            if (pivot){
+                pivot_x = pivot->x + coords->x1;
+                pivot_y = pivot->y + coords->y1;
+            }
+            lv_coord_t w = lv_area_get_width(coords);
+            lv_coord_t w_zoom = (((w * zoom) >> 8) - w) / 2;
             lv_coord_t h = lv_area_get_height(coords);
-            lv_coord_t h_zoom = (((h * draw_dsc->zoom) >> 8) - h) / 2;
+            lv_coord_t h_zoom = (((h * zoom) >> 8) - h) / 2;
 
             lv_area_t norm;
             norm.x1 = coords->x1 - pivot_x - w_zoom;
@@ -238,8 +234,8 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
             norm.x2 = coords->x2 - pivot_x + w_zoom;
             norm.y2 = coords->y2 - pivot_y + h_zoom;
 
-            int16_t sinma = lv_trigo_sin(draw_dsc->angle);
-            int16_t cosma = lv_trigo_sin(draw_dsc->angle + 90);
+            int16_t sinma = lv_trigo_sin(angle);
+            int16_t cosma = lv_trigo_sin(angle + 90);
 
             lv_point_t lt;
             lv_point_t rt;
@@ -271,7 +267,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
                                  successfully.*/
         }
 
-        lv_draw_map(coords, &mask_com, cdsc->dec_dsc.img_data, draw_dsc, chroma_keyed, alpha_byte);
+        lv_draw_map(coords, &mask_com, cdsc->dec_dsc.img_data, opa, chroma_keyed, alpha_byte, style, angle, pivot, zoom, antialias);
     }
     /* The whole uncompressed image is not available. Try to read it line-by-line*/
     else {
@@ -308,7 +304,7 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
             }
 
 
-            lv_draw_map(&line, &mask_line, buf, draw_dsc, chroma_keyed, alpha_byte);
+            lv_draw_map(&line, &mask_line, buf, opa, chroma_keyed, alpha_byte, style, 0, NULL, LV_IMG_ZOOM_NONE, false);
             line.y1++;
             line.y2++;
             y++;
@@ -333,8 +329,13 @@ static lv_res_t lv_img_draw_core(const lv_area_t * coords, const lv_area_t * mas
  * @param zoom zoom factor
  * @param antialias anti-alias transformations (rotate, zoom) or not
  */
-static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_draw_img_dsc_t * draw_dsc, bool chroma_key, bool alpha_byte)
+static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area, const uint8_t * map_p, lv_opa_t opa,
+	bool chroma_key, bool alpha_byte, const lv_style_t * style, uint16_t angle, lv_point_t * pivot, uint16_t zoom, bool antialaias)
 {
+
+    if(opa < LV_OPA_MIN) return;
+    if(opa > LV_OPA_MAX) opa = LV_OPA_COVER;
+
     /* Use the clip area as draw area*/
     lv_area_t draw_area;
     lv_area_copy(&draw_area, clip_area);
@@ -353,10 +354,10 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
     uint8_t other_mask_cnt = lv_draw_mask_get_cnt();
 
     /*The simplest case just copy the pixels into the VDB*/
-    if(other_mask_cnt == 0 && draw_dsc->angle == 0 && draw_dsc->zoom == LV_IMG_ZOOM_NONE &&
+    if(other_mask_cnt == 0 && angle == 0 && zoom == LV_IMG_ZOOM_NONE &&
        chroma_key == false && alpha_byte == false &&
-       draw_dsc->opa == LV_OPA_COVER && draw_dsc->recolor_opa == LV_OPA_TRANSP) {
-        lv_blend_map(clip_area, map_area, (lv_color_t *)map_p, NULL, LV_DRAW_MASK_RES_FULL_COVER, LV_OPA_COVER, draw_dsc->blend_mode);
+       opa == LV_OPA_COVER && style->image.intense == LV_OPA_TRANSP) {
+        lv_blend_map(clip_area, map_area, (lv_color_t *)map_p, NULL, LV_DRAW_MASK_RES_FULL_COVER, LV_OPA_COVER, style->image.blend_mode);
     }
     /*In the other cases every pixel need to be checked one-by-one*/
     else {
@@ -394,7 +395,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
         }
 
 
-        bool transform = draw_dsc->angle != 0 || draw_dsc->zoom != LV_IMG_ZOOM_NONE ? true : false;
+        bool transform = angle != 0 || zoom != LV_IMG_ZOOM_NONE ? true : false;
         lv_img_transform_dsc_t trans_dsc;
         memset(&trans_dsc, 0, sizeof(lv_img_transform_dsc_t));
         if(transform) {
@@ -403,22 +404,26 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
             else if(chroma_key) cf = LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED;
 
 
-            trans_dsc.cfg.angle = draw_dsc->angle;
-            trans_dsc.cfg.zoom = draw_dsc->zoom;
+            trans_dsc.cfg.angle = angle;
+            trans_dsc.cfg.zoom = zoom;
             trans_dsc.cfg.src = map_p;
             trans_dsc.cfg.src_w = map_w;
             trans_dsc.cfg.src_h = map_h;
             trans_dsc.cfg.cf = cf;
-            trans_dsc.cfg.pivot_x = draw_dsc->pivot.x;
-            trans_dsc.cfg.pivot_y = draw_dsc->pivot.y;
-            trans_dsc.cfg.color = draw_dsc->recolor;
-            trans_dsc.cfg.antialias = draw_dsc->antialias;
+            trans_dsc.cfg.pivot_x = map_w / 2;
+            trans_dsc.cfg.pivot_y = map_h / 2;
+            if (pivot){
+                trans_dsc.cfg.pivot_x = pivot->x;
+                trans_dsc.cfg.pivot_y = pivot->y;
+            }
+            trans_dsc.cfg.color = style->image.color;
+            trans_dsc.cfg.antialias = antialaias;
 
             lv_img_buf_transform_init(&trans_dsc);
         }
 
         lv_draw_mask_res_t mask_res;
-        mask_res = (alpha_byte || chroma_key || draw_dsc->angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
+        mask_res = (alpha_byte || chroma_key || angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
         lv_coord_t x;
         lv_coord_t y;
         for(y = 0; y < lv_area_get_height(&draw_area); y++) {
@@ -464,8 +469,8 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                     }
                 }
 
-                if(draw_dsc->recolor_opa != 0) {
-                    c = lv_color_mix(draw_dsc->recolor, c, draw_dsc->recolor_opa);
+                if(style->image.intense != 0) {
+                    c = lv_color_mix(style->image.color, c, style->image.intense);
                 }
 
                 map2[px_i].full = c.full;
@@ -487,13 +492,13 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
             if(px_i + lv_area_get_width(&draw_area) < mask_buf_size) {
                 blend_area.y2 ++;
             } else {
-                lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, draw_dsc->opa, draw_dsc->blend_mode);
+                lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, opa, style->image.blend_mode);
 
                 blend_area.y1 = blend_area.y2 + 1;
                 blend_area.y2 = blend_area.y1;
 
                 px_i = 0;
-                mask_res = (alpha_byte || chroma_key || draw_dsc->angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
+                mask_res = (alpha_byte || chroma_key || angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
 
                 /*Prepare the `mask_buf`if there are other masks*/
                 if(other_mask_cnt) {
@@ -504,23 +509,10 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
         /*Flush the last part*/
         if(blend_area.y1 != blend_area.y2) {
             blend_area.y2--;
-            lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, draw_dsc->opa, draw_dsc->blend_mode);
+            lv_blend_map(clip_area, &blend_area, map2, mask_buf, mask_res, opa, style->image.blend_mode);
         }
 
         lv_mem_buf_release(mask_buf);
         lv_mem_buf_release(map2);
     }
 }
-
-void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg)
-{
-    lv_draw_rect_dsc_t rect_dsc;
-    lv_draw_rect_dsc_init(&rect_dsc);
-    rect_dsc.bg_color = LV_COLOR_WHITE;
-    lv_draw_rect(coords, clip_area, &rect_dsc);
-
-    lv_draw_label_dsc_t label_dsc;
-    lv_draw_label_dsc_init(&label_dsc);
-    lv_draw_label(coords, clip_area, &label_dsc, msg, NULL);
-}
-
