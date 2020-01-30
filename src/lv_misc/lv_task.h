@@ -14,11 +14,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,6 +27,8 @@ extern "C" {
 #ifndef LV_ATTRIBUTE_TASK_HANDLER
 #define LV_ATTRIBUTE_TASK_HANDLER
 #endif
+
+#define LV_NO_TASK_READY 0xFFFFFFFF
 /**********************
  *      TYPEDEFS
  **********************/
@@ -84,8 +82,9 @@ void lv_task_core_init(void);
 
 /**
  * Call it  periodically to handle lv_tasks.
+ * @return time till it needs to be run next (in ms)
  */
-LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void);
+LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void);
 
 //! @endcond
 

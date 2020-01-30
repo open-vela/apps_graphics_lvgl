@@ -13,11 +13,6 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
 
 #include "lv_obj.h"
 
@@ -272,13 +267,6 @@ bool lv_group_get_click_focus(const lv_group_t * group);
  * @param en: true: wrapping enabled; false: wrapping disabled
  */
 bool lv_group_get_wrap(lv_group_t * group);
-
-/**
- * Notify the group that current theme changed and style modification callbacks need to be
- * refreshed.
- * @param group pointer to group. If NULL then all groups are notified.
- */
-void lv_group_report_style_mod(lv_group_t * group);
 
 /**********************
  *      MACROS
