@@ -124,7 +124,7 @@ void lv_inv_area(lv_disp_t * disp, const lv_area_t * area_p)
         /*Save only if this area is not in one of the saved areas*/
         uint16_t i;
         for(i = 0; i < disp->inv_p; i++) {
-            if(lv_area_is_in(&com_area, &disp->inv_areas[i]) != false) return;
+            if(lv_area_is_in(&com_area, &disp->inv_areas[i], 0) != false) return;
         }
 
         /*Save the area*/
@@ -175,6 +175,10 @@ void lv_disp_refr_task(lv_task_t * task)
 	lv_task_set_prio(task, LV_TASK_PRIO_OFF);
 
     disp_refr = task->user_data;
+
+
+//    extern rect_cache_t cache[];
+//    extern uint32_t cp;
 
     lv_refr_join_area();
 
@@ -428,7 +432,7 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
     lv_obj_t * found_p = NULL;
 
     /*If this object is fully cover the draw area check the children too */
-    if(lv_area_is_in(area_p, &obj->coords) && obj->hidden == 0) {
+    if(lv_area_is_in(area_p, &obj->coords, 0) && obj->hidden == 0) {
         lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
         if(design_res == LV_DESIGN_RES_MASKED) return NULL;
 
@@ -443,14 +447,9 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
             }
         }
 
-        /*If no better children check this object*/
+        /*If no better children use this object*/
         if(found_p == NULL) {
-            const lv_style_t * style = lv_obj_get_style(obj);
-            if(style->body.opa == LV_OPA_COVER && design_res == LV_DESIGN_RES_COVER &&
-               lv_obj_get_opa_scale(obj) == LV_OPA_COVER &&
-               style->body.blend_mode == LV_BLEND_MODE_NORMAL &&
-               style->body.border.blend_mode == LV_BLEND_MODE_NORMAL &&
-               style->image.blend_mode == LV_BLEND_MODE_NORMAL) {
+            if(design_res == LV_DESIGN_RES_COVER) {
                 found_p = obj;
             }
         }
@@ -534,14 +533,19 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
 
 #if MASK_AREA_DEBUG
         static lv_color_t debug_color = LV_COLOR_RED;
-        LV_STYLE_CREATE(style_debug, &lv_style_plain);
-        style_debug.body.main_color = debug_color;
-        style_debug.body.grad_color = debug_color;
-        style_debug.body.border.width = 2;
-        style_debug.body.border.color.full = (debug_color.full + 0x13) * 9;
-        lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &style_debug, LV_OPA_50);
+        lv_draw_rect_dsc_t draw_dsc;
+        lv_draw_rect_dsc_init(&draw_dsc);
+        draw_dsc.bg_color.full = debug_color.full;
+        draw_dsc.bg_opa = LV_OPA_50;
+        draw_dsc.border_width = 2;
+        draw_dsc.border_color.full = (debug_color.full + 0x13) * 9;
+
+        lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &draw_dsc);
         debug_color.full *= 17;
         debug_color.full += 0xA1;
+#if LV_COLOR_DEPTH == 32
+        debug_color.ch.alpha = 0xff;
+#endif
 #endif
         /*Create a new 'obj_mask' without 'ext_size' because the children can't be visible there*/
         lv_obj_get_coords(obj, &obj_area);
