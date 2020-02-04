@@ -13,11 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #if LV_USE_LIST != 0
 
@@ -52,32 +48,21 @@ typedef struct
 {
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
-    const lv_style_t * styles_btn[_LV_BTN_STATE_NUM]; /*Styles of the list element buttons*/
-    const lv_style_t * style_img;                     /*Style of the list element images on buttons*/
-    uint16_t size;                                    /*the number of items(buttons) in the list*/
-
-    uint8_t single_mode : 1; /* whether single selected mode is enabled */
 
 #if LV_USE_GROUP
-    lv_obj_t * last_sel;     /* The last selected button. It will be reverted when the list is focused again */
-    lv_obj_t * selected_btn; /* The button is currently being selected*/
-    /*Used to make the last clicked button pressed (selected) when the list become focused and
-     * `click_focus == 1`*/
-    lv_obj_t * last_clicked_btn;
+    lv_obj_t * last_sel_btn;     /* The last selected button. It will be reverted when the list is focused again */
+    lv_obj_t * act_sel_btn; /* The button is currently being selected*/
 #endif
 } lv_list_ext_t;
 
 /** List styles. */
 enum {
-    LV_LIST_STYLE_BG, /**< List background style */
-    LV_LIST_STYLE_SCRL, /**< List scrollable area style. */
-    LV_LIST_STYLE_SB, /**< List scrollbar style. */
-    LV_LIST_STYLE_EDGE_FLASH, /**< List edge flash style. */
-    LV_LIST_STYLE_BTN_REL, /**< Same meaning as the ordinary button styles. */
-    LV_LIST_STYLE_BTN_PR,
-    LV_LIST_STYLE_BTN_TGL_REL,
-    LV_LIST_STYLE_BTN_TGL_PR,
-    LV_LIST_STYLE_BTN_INA,
+    LV_LIST_PART_BG = LV_PAGE_PART_BG, /**< List background style */
+    LV_LIST_PART_SCRLBAR = LV_PAGE_PART_SCRLBAR, /**< List scrollbar style. */
+    LV_LIST_PART_EDGE_FLASH = LV_PAGE_PART_EDGE_FLASH, /**< List edge flash style. */
+    _LV_LIST_PART_VIRTUAL_LAST = _LV_PAGE_PART_VIRTUAL_LAST,
+    LV_LIST_PART_SCRL = LV_PAGE_PART_SCRL, /**< List scrollable area style. */
+    _LV_LIST_PART_REAL_LAST = _LV_PAGE_PART_REAL_LAST,
 };
 typedef uint8_t lv_list_style_t;
 
@@ -125,13 +110,6 @@ bool lv_list_remove(const lv_obj_t * list, uint16_t index);
  * Setter functions
  *====================*/
 
-/**
- * Set single button selected mode, only one button will be selected if enabled.
- * @param list pointer to the currently pressed list object
- * @param mode enable(true)/disable(false) single selected mode.
- */
-void lv_list_set_single_mode(lv_obj_t * list, bool mode);
-
 #if LV_USE_GROUP
 
 /**
@@ -140,7 +118,7 @@ void lv_list_set_single_mode(lv_obj_t * list, bool mode);
  * @param btn pointer to a button to select
  *            NULL to not select any buttons
  */
-void lv_list_set_btn_selected(lv_obj_t * list, lv_obj_t * btn);
+void lv_list_focus_btn(lv_obj_t * list, lv_obj_t * btn);
 #endif
 
 /**
@@ -185,14 +163,6 @@ static inline void lv_list_set_anim_time(lv_obj_t * list, uint16_t anim_time)
 }
 
 /**
- * Set a style of a list
- * @param list pointer to a list object
- * @param type which style should be set
- * @param style pointer to a style
- */
-void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, const lv_style_t * style);
-
-/**
  * Set layout of a list
  * @param list pointer to a list object
  * @param layout which layout should be used
@@ -202,12 +172,6 @@ void lv_list_set_layout(lv_obj_t * list, lv_layout_t layout);
 /*=====================
  * Getter functions
  *====================*/
-
-/**
- * Get single button selected mode.
- * @param list pointer to the currently pressed list object.
- */
-bool lv_list_get_single_mode(lv_obj_t * list);
 
 /**
  * Get the text of a list element
@@ -315,14 +279,6 @@ static inline uint16_t lv_list_get_anim_time(const lv_obj_t * list)
 {
     return lv_page_get_anim_time(list);
 }
-
-/**
- * Get a style of a list
- * @param list pointer to a list object
- * @param type which style should be get
- * @return style pointer to a style
- *  */
-const lv_style_t * lv_list_get_style(const lv_obj_t * list, lv_list_style_t type);
 
 /*=====================
  * Other functions

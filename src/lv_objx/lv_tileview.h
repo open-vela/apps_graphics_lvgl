@@ -13,11 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#ifdef LV_CONF_INCLUDE_SIMPLE
-#include "lv_conf.h"
-#else
-#include "../../../lv_conf.h"
-#endif
+#include "../lv_conf_internal.h"
 
 #if LV_USE_TILEVIEW != 0
 
@@ -46,15 +42,16 @@ typedef struct
     uint8_t drag_bottom_en : 1;
     uint8_t drag_left_en : 1;
     uint8_t drag_right_en : 1;
-    uint8_t drag_hor : 1;
-    uint8_t drag_ver : 1;
 } lv_tileview_ext_t;
 
-/*Styles*/
+/*Parts of the Tileview*/
 enum {
-    LV_TILEVIEW_STYLE_MAIN,
+    LV_TILEVIEW_PART_BG = LV_PAGE_PART_BG,
+    LV_TILEVIEW_PART_SCRLBAR = LV_PAGE_PART_SCRLBAR,
+    LV_TILEVIEW_PART_EDGE_FLASH = LV_PAGE_PART_EDGE_FLASH,
+    _LV_TILEVIEW_PART_VIRTUAL_LAST = _LV_PAGE_PART_VIRTUAL_LAST,
+    _LV_TILEVIEW_PART_REAL_LAST = _LV_PAGE_PART_REAL_LAST
 };
-typedef uint8_t lv_tileview_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -121,18 +118,16 @@ static inline void lv_tileview_set_anim_time(lv_obj_t * tileview, uint16_t anim_
     lv_page_set_anim_time(tileview, anim_time);
 }
 
-/**
- * Set a style of a tileview.
- * @param tileview pointer to tileview object
- * @param type which style should be set
- * @param style pointer to a style
- */
-void lv_tileview_set_style(lv_obj_t * tileview, lv_tileview_style_t type, const lv_style_t * style);
-
 /*=====================
  * Getter functions
  *====================*/
-
+/**
+* Get the tile to be shown
+* @param tileview pointer to a tileview object
+* @param x column id (0, 1, 2...)
+* @param y line id (0, 1, 2...)
+*/
+void lv_tileview_get_tile_act(lv_obj_t * tileview, lv_coord_t *x, lv_coord_t *y);
 /**
  * Get the scroll propagation property
  * @param tileview pointer to a Tileview
@@ -152,14 +147,6 @@ static inline uint16_t lv_tileview_get_anim_time(lv_obj_t * tileview)
 {
     return lv_page_get_anim_time(tileview);
 }
-
-/**
- * Get style of a tileview.
- * @param tileview pointer to tileview object
- * @param type which style should be get
- * @return style pointer to the style
- */
-const lv_style_t * lv_tileview_get_style(const lv_obj_t * tileview, lv_tileview_style_t type);
 
 /*=====================
  * Other functions
