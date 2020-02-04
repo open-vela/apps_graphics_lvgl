@@ -26,9 +26,8 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_arc_design(lv_obj_t * arc, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param);
-static lv_style_list_t * lv_arc_get_style(lv_obj_t * arc, uint8_t part);
 
 /**********************
  *  STATIC VARIABLES
@@ -56,52 +55,50 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("arc create started");
 
     /*Create the ancestor of arc*/
-    lv_obj_t * arc = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(arc);
-    if(arc == NULL) return NULL;
+    lv_obj_t * new_arc = lv_obj_create(par, copy);
+    LV_ASSERT_MEM(new_arc);
+    if(new_arc == NULL) return NULL;
 
     /*Allocate the arc type specific extended data*/
-    lv_arc_ext_t * ext = lv_obj_allocate_ext_attr(arc, sizeof(lv_arc_ext_t));
+    lv_arc_ext_t * ext = lv_obj_allocate_ext_attr(new_arc, sizeof(lv_arc_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(arc);
-        return NULL;
-    }
+    if(ext == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(arc);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(arc);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_arc);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_arc);
 
     /*Initialize the allocated 'ext' */
-    ext->bg_angle_start = 135;
-    ext->bg_angle_end   = 45;
-    ext->arc_angle_start = 135;
-    ext->arc_angle_end   = 270;
-    lv_style_list_init(&ext->style_arc);
-
-
-    lv_obj_set_size(arc, LV_DPI, LV_DPI);
+    ext->angle_start = 45;
+    ext->angle_end   = 315;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(arc, lv_arc_signal);
-    lv_obj_set_design_cb(arc, lv_arc_design);
+    lv_obj_set_signal_cb(new_arc, lv_arc_signal);
+    lv_obj_set_design_cb(new_arc, lv_arc_design);
 
     /*Init the new arc arc*/
     if(copy == NULL) {
-        lv_theme_apply(arc, LV_THEME_ARC);
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_arc_set_style(new_arc, LV_ARC_STYLE_MAIN, th->style.arc);
+        } else {
+            lv_arc_set_style(new_arc, LV_ARC_STYLE_MAIN, &lv_style_plain_color);
+        }
+
     }
     /*Copy an existing arc*/
     else {
         lv_arc_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
-        ext->arc_angle_start        = copy_ext->arc_angle_start;
-        ext->arc_angle_end          = copy_ext->arc_angle_end;
+        ext->angle_start        = copy_ext->angle_start;
+        ext->angle_end          = copy_ext->angle_end;
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(arc);
+        lv_obj_refresh_style(new_arc);
     }
 
     LV_LOG_INFO("arc created");
 
-    return arc;
+    return new_arc;
 }
 
 /*======================
@@ -117,41 +114,39 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
  *====================*/
 
 /**
- * Set the start angle of an arc. 0 deg: right, 90 bottom: right etc.
+ * Set the start and end angles of an arc. 0 deg: bottom, 90 deg: right etc.
  * @param arc pointer to an arc object
  * @param start the start angle [0..360]
+ * @param end the end angle [0..360]
  */
-void lv_arc_set_start_angle(lv_obj_t * arc, int16_t start)
+void lv_arc_set_angles(lv_obj_t * arc, uint16_t start, uint16_t end)
 {
     LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
 
     lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
 
-    if(start > 360) start -= 360;
-    if(start < 0) start += 360;
+    if(start > 360) start = 360;
+    if(end > 360) end = 360;
 
-    ext->arc_angle_start = start;
+    ext->angle_start = start;
+    ext->angle_end   = end;
 
     lv_obj_invalidate(arc);
 }
 
 /**
- * Set the start angle of an arc. 0 deg: right, 90 bottom: right etc.
- * @param arc pointer to an arc object
- * @param start the start angle [0..360]
- */
-void lv_arc_set_end_angle(lv_obj_t * arc, int16_t end)
+ * Set a style of a arc.
+ * @param arc pointer to arc object
+ * @param type which style should be set
+ * @param style pointer to a style
+ *  */
+void lv_arc_set_style(lv_obj_t * arc, lv_arc_style_t type, const lv_style_t * style)
 {
     LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
 
-    lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
-
-    if(end > 360) end -= 360;
-    if(end < 0) end += 360;
-
-    ext->arc_angle_end= end;
-
-    lv_obj_invalidate(arc);
+    switch(type) {
+        case LV_ARC_STYLE_MAIN: lv_obj_set_style(arc, style); break;
+    }
 }
 
 /*=====================
@@ -169,7 +164,7 @@ uint16_t lv_arc_get_angle_start(lv_obj_t * arc)
 
     lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
 
-    return ext->arc_angle_start;
+    return ext->angle_start;
 }
 
 /**
@@ -183,7 +178,27 @@ uint16_t lv_arc_get_angle_end(lv_obj_t * arc)
 
     lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
 
-    return ext->arc_angle_end;
+    return ext->angle_end;
+}
+
+/**
+ * Get style of a arc.
+ * @param arc pointer to arc object
+ * @param type which style should be get
+ * @return style pointer to the style
+ *  */
+const lv_style_t * lv_arc_get_style(const lv_obj_t * arc, lv_arc_style_t type)
+{
+    LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
+
+    const lv_style_t * style = NULL;
+
+    switch(type) {
+        case LV_ARC_STYLE_MAIN: style = lv_obj_get_style(arc); break;
+        default: style = NULL; break;
+    }
+
+    return style;
 }
 
 /*=====================
@@ -201,44 +216,66 @@ uint16_t lv_arc_get_angle_end(lv_obj_t * arc)
 /**
  * Handle the drawing related tasks of the arcs
  * @param arc pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_arc_design(lv_obj_t * arc, const lv_area_t * mask, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
-        return LV_DESIGN_RES_NOT_COVER;
+        return false;
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
         lv_arc_ext_t * ext       = lv_obj_get_ext_attr(arc);
+        const lv_style_t * style = lv_arc_get_style(arc, LV_ARC_STYLE_MAIN);
 
         lv_coord_t r       = (LV_MATH_MIN(lv_obj_get_width(arc), lv_obj_get_height(arc))) / 2;
         lv_coord_t x       = arc->coords.x1 + lv_obj_get_width(arc) / 2;
         lv_coord_t y       = arc->coords.y1 + lv_obj_get_height(arc) / 2;
+        lv_opa_t opa_scale = lv_obj_get_opa_scale(arc);
+        lv_draw_arc(x, y, r, mask, ext->angle_start, ext->angle_end, style, opa_scale);
 
-        lv_draw_line_dsc_t arc_dsc;
-        lv_draw_line_dsc_init(&arc_dsc);
-        lv_obj_init_draw_line_dsc(arc, LV_ARC_PART_BG, &arc_dsc);
+        /*Draw circle on the ends if enabled */
+        if(style->line.rounded) {
+            lv_coord_t thick_half = style->line.width / 2;
+            lv_coord_t cir_x      = ((r - thick_half) * lv_trigo_sin(ext->angle_start) >> LV_TRIGO_SHIFT);
+            lv_coord_t cir_y      = ((r - thick_half) * lv_trigo_sin(ext->angle_start + 90) >> LV_TRIGO_SHIFT);
 
-        lv_draw_arc(x, y, r, ext->bg_angle_start, ext->bg_angle_end, clip_area, &arc_dsc);
+            lv_style_t cir_style;
+            lv_style_copy(&cir_style, &lv_style_plain);
+            cir_style.body.grad_color = style->line.color;
+            cir_style.body.main_color = cir_style.body.grad_color;
+            cir_style.body.radius     = LV_RADIUS_CIRCLE;
+            lv_area_t cir_area;
+            cir_area.x1 = cir_x + x - thick_half;
+            cir_area.y1 = cir_y + y - thick_half;
+            cir_area.x2 = cir_x + x + thick_half;
+            cir_area.y2 = cir_y + y + thick_half;
 
+            lv_draw_rect(&cir_area, mask, &cir_style, opa_scale);
 
-        lv_draw_line_dsc_init(&arc_dsc);
-        lv_obj_init_draw_line_dsc(arc, LV_ARC_PART_ARC, &arc_dsc);
+            cir_x = ((r - thick_half) * lv_trigo_sin(ext->angle_end) >> LV_TRIGO_SHIFT);
+            cir_y = ((r - thick_half) * lv_trigo_sin(ext->angle_end + 90) >> LV_TRIGO_SHIFT);
 
-        lv_draw_arc(x, y, r, ext->arc_angle_start, ext->arc_angle_end, clip_area, &arc_dsc);
+            cir_area.x1 = cir_x + x - thick_half;
+            cir_area.y1 = cir_y + y - thick_half;
+            cir_area.x2 = cir_x + x + thick_half;
+            cir_area.y2 = cir_y + y + thick_half;
+
+            lv_draw_rect(&cir_area, mask, &cir_style, opa_scale);
+        }
+
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
     }
 
-    return LV_DESIGN_RES_OK;
+    return true;
 }
 
 /**
@@ -251,12 +288,6 @@ static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area
 static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
 {
     lv_res_t res;
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_get_style_info_t * info = param;
-        info->result = lv_arc_get_style(arc, info->part);
-        if(info->result != NULL) return LV_RES_OK;
-        else return ancestor_signal(arc, sign, param);
-    }
 
     /* Include the ancient signal function */
     res = ancestor_signal(arc, sign, param);
@@ -271,31 +302,4 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
     return res;
 }
 
-/**
- * Get the style descriptor of a part of the object
- * @param arc pointer the object
- * @param part the part of the object. (LV_ARC_PART_...)
- * @return pointer to the style descriptor of the specified part
- */
-static lv_style_list_t * lv_arc_get_style(lv_obj_t * arc, uint8_t part)
-{
-    LV_ASSERT_OBJ(arc, LV_OBJX_NAME);
-
-    lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
-
-    lv_style_list_t * style_dsc_p;
-
-    switch(part) {
-    case LV_ARC_PART_BG:
-        style_dsc_p = &arc->style_list;
-        break;
-    case LV_ARC_PART_ARC:
-        style_dsc_p = &ext->style_arc;
-        break;
-    default:
-        style_dsc_p = NULL;
-    }
-
-    return style_dsc_p;
-}
 #endif
