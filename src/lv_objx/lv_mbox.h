@@ -57,10 +57,13 @@ typedef struct
 
 /** Message box styles. */
 enum {
-    LV_MBOX_PART_BG = LV_CONT_PART_MAIN,
-
-    LV_MBOX_PART_BTN_BG = _LV_CONT_PART_REAL_LAST,
-    LV_MBOX_PART_BTN,
+    LV_MBOX_STYLE_BG,
+    LV_MBOX_STYLE_BTN_BG, /**< Same meaning as ordinary button styles. */
+    LV_MBOX_STYLE_BTN_REL,
+    LV_MBOX_STYLE_BTN_PR,
+    LV_MBOX_STYLE_BTN_TGL_REL,
+    LV_MBOX_STYLE_BTN_TGL_PR,
+    LV_MBOX_STYLE_BTN_INA,
 };
 typedef uint8_t lv_mbox_style_t;
 
@@ -168,6 +171,14 @@ const char * lv_mbox_get_active_btn_text(lv_obj_t * mbox);
  * @return animation length in  milliseconds (0: no animation)
  */
 uint16_t lv_mbox_get_anim_time(const lv_obj_t * mbox);
+
+/**
+ * Get a style of a message box
+ * @param mbox pointer to a message box object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_mbox_get_style(const lv_obj_t * mbox, lv_mbox_style_t type);
 
 /**
  * Get whether recoloring is enabled

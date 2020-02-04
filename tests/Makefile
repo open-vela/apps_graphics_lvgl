@@ -11,16 +11,14 @@ OPTIMIZATION ?= -O3 -g0
 
 CFLAGS ?= -I$(LVGL_DIR)/ $(DEFINES) $(WARNINGS) $(OPTIMIZATION) -I$(LVGL_DIR) -I.
 
-LDFLAGS ?=  -lpng
+LDFLAGS ?=  
 BIN ?= demo
 
 
 #Collect the files to compile
-MAINSRC = ./lv_test_main.c
+MAINSRC = ./test_main.c
 
 include ../lvgl.mk
-
-CSRCS += lv_test_assert.c
 
 OBJEXT ?= .o
 
