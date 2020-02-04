@@ -39,7 +39,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_preload_design(lv_obj_t * preload, const lv_area_t * clip_area, lv_design_mode_t mode);
+static bool lv_preload_design(lv_obj_t * preload, const lv_area_t * mask, lv_design_mode_t mode);
 static lv_res_t lv_preload_signal(lv_obj_t * preload, lv_signal_t sign, void * param);
 
 /**********************
@@ -68,54 +68,57 @@ lv_obj_t * lv_preload_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("preload create started");
 
     /*Create the ancestor of pre loader*/
-    lv_obj_t * preload = lv_arc_create(par, copy);
-    LV_ASSERT_MEM(preload);
-    if(preload == NULL) return NULL;
+    lv_obj_t * new_preload = lv_arc_create(par, copy);
+    LV_ASSERT_MEM(new_preload);
+    if(new_preload == NULL) return NULL;
 
     /*Allocate the pre loader type specific extended data*/
-    lv_preload_ext_t * ext = lv_obj_allocate_ext_attr(preload, sizeof(lv_preload_ext_t));
+    lv_preload_ext_t * ext = lv_obj_allocate_ext_attr(new_preload, sizeof(lv_preload_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(preload);
-        return NULL;
-    }
+    if(ext == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(preload);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(preload);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_preload);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_preload);
 
     /*Initialize the allocated 'ext' */
     ext->arc_length = LV_PRELOAD_DEF_ARC_LENGTH;
     ext->anim_type  = LV_PRELOAD_DEF_ANIM;
     ext->anim_dir   = LV_PRELOAD_DIR_FORWARD;
-    ext->time = LV_PRELOAD_DEF_SPIN_TIME;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(preload, lv_preload_signal);
-//    lv_obj_set_design_cb(preload, lv_preload_design);
+    lv_obj_set_signal_cb(new_preload, lv_preload_signal);
+    lv_obj_set_design_cb(new_preload, lv_preload_design);
 
-    /*Init the new preloader preloader*/
+    /*Init the new pre loader pre loader*/
     if(copy == NULL) {
-        ext->arc.bg_angle_start = 0;
-        ext->arc.bg_angle_end = 360;
-        lv_obj_set_size(preload, LV_DPI, LV_DPI);
-        lv_theme_apply(preload, LV_THEME_PRELOAD);
+        lv_obj_set_size(new_preload, LV_DPI / 2, LV_DPI / 2);
+
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_preload_set_style(new_preload, LV_PRELOAD_STYLE_MAIN, th->style.preload);
+        } else {
+            lv_obj_set_style(new_preload, &lv_style_pretty_color);
+        }
+
+        ext->time = LV_PRELOAD_DEF_SPIN_TIME;
 
     }
-    /*Copy an existing preloader*/
+    /*Copy an existing pre loader*/
     else {
         lv_preload_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
         ext->arc_length             = copy_ext->arc_length;
         ext->time                   = copy_ext->time;
         ext->anim_dir               = copy_ext->anim_dir;
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(preload);
+        lv_obj_refresh_style(new_preload);
     }
 
-    lv_preload_set_type(preload, ext->anim_type);
+    lv_preload_set_type(new_preload, ext->anim_type);
 
     LV_LOG_INFO("preload created");
 
-    return preload;
+    return new_preload;
 }
 
 /*======================
@@ -155,6 +158,21 @@ void lv_preload_set_spin_time(lv_obj_t * preload, uint16_t time)
  *====================*/
 
 /**
+ * Set a style of a pre loader.
+ * @param preload pointer to pre loader object
+ * @param type which style should be set
+ * @param style pointer to a style
+ *  */
+void lv_preload_set_style(lv_obj_t * preload, lv_preload_style_t type, const lv_style_t * style)
+{
+    LV_ASSERT_OBJ(preload, LV_OBJX_NAME);
+
+    switch(type) {
+        case LV_PRELOAD_STYLE_MAIN: lv_arc_set_style(preload, LV_ARC_STYLE_MAIN, style); break;
+    }
+}
+
+/**
  * Set the animation type of a preloadeer.
  * @param preload pointer to pre loader object
  * @param type animation type of the preload
@@ -174,11 +192,11 @@ void lv_preload_set_type(lv_obj_t * preload, lv_preload_type_t type)
             a.var = preload;
             if(ext->anim_dir == LV_PRELOAD_DIR_FORWARD) {
                 /* Clockwise */
-                a.start = 0;
-                a.end   = 360;
-            } else {
                 a.start = 360;
                 a.end   = 0;
+            } else {
+                a.start = 0;
+                a.end   = 360;
             }
             a.exec_cb        = (lv_anim_exec_xcb_t)lv_preload_spinner_anim;
             a.path_cb        = lv_anim_path_ease_in_out;
@@ -195,11 +213,11 @@ void lv_preload_set_type(lv_obj_t * preload, lv_preload_type_t type)
             b.var = preload;
             if(ext->anim_dir == LV_PRELOAD_DIR_FORWARD) {
                 /* Clockwise */
-                b.start = ext->arc_length;
-                b.end   = 360 - ext->arc_length;
-            } else {
                 b.start = 360 - ext->arc_length;
                 b.end   = ext->arc_length;
+            } else {
+                b.start = ext->arc_length;
+                b.end   = 360 - ext->arc_length;
             }
             b.exec_cb        = (lv_anim_exec_xcb_t)lv_preload_set_arc_length;
             b.path_cb        = lv_anim_path_ease_in_out;
@@ -221,11 +239,11 @@ void lv_preload_set_type(lv_obj_t * preload, lv_preload_type_t type)
             a.var = preload;
             if(ext->anim_dir == LV_PRELOAD_DIR_FORWARD) {
                 /* Clockwise */
-                a.start = 0;
-                a.end   = 360;
-            } else {
                 a.start = 360;
                 a.end   = 0;
+            } else {
+                a.start = 0;
+                a.end   = 360;
             }
             a.exec_cb        = (lv_anim_exec_xcb_t)lv_preload_spinner_anim;
             a.path_cb        = (LV_PRELOAD_TYPE_CONSTANT_ARC == type ?
@@ -282,6 +300,26 @@ uint16_t lv_preload_get_spin_time(const lv_obj_t * preload)
 }
 
 /**
+ * Get style of a pre loader.
+ * @param preload pointer to pre loader object
+ * @param type which style should be get
+ * @return style pointer to the style
+ *  */
+const lv_style_t * lv_preload_get_style(const lv_obj_t * preload, lv_preload_style_t type)
+{
+    LV_ASSERT_OBJ(preload, LV_OBJX_NAME);
+
+    const lv_style_t * style = NULL;
+
+    switch(type) {
+        case LV_PRELOAD_STYLE_MAIN: style = lv_arc_get_style(preload, LV_ARC_STYLE_MAIN); break;
+        default: style = NULL; break;
+    }
+
+    return style;
+}
+
+/**
  * Get the animation type of a preloadeer.
  * @param preload pointer to pre loader object
  * @return animation type
@@ -314,15 +352,13 @@ void lv_preload_spinner_anim(void * ptr, lv_anim_value_t val)
     lv_obj_t * preload     = ptr;
     lv_preload_ext_t * ext = lv_obj_get_ext_attr(preload);
 
-    int16_t angle_start = val - ext->arc_length / 2 - 90;
-    if(angle_start < 0) angle_start += 360;
+    int16_t angle_start = val - ext->arc_length / 2 + 180;
     int16_t angle_end   = angle_start + ext->arc_length;
 
     angle_start = angle_start % 360;
     angle_end   = angle_end % 360;
 
-    lv_arc_set_start_angle(preload, angle_start);
-    lv_arc_set_end_angle(preload, angle_end);
+    lv_arc_set_angles(preload, angle_start, angle_end);
 }
 
 /**********************
@@ -332,55 +368,54 @@ void lv_preload_spinner_anim(void * ptr, lv_anim_value_t val)
 /**
  * Handle the drawing related tasks of the pre loaders
  * @param preload pointer to an object
- * @param clip_area the object will be drawn only in this area
+ * @param mask the object will be drawn only in this area
  * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
  *             LV_DESIGN_DRAW: draw the object (always return 'true')
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ * @param return true/false, depends on 'mode'
  */
-static lv_design_res_t lv_preload_design(lv_obj_t * preload, const lv_area_t * clip_area, lv_design_mode_t mode)
+static bool lv_preload_design(lv_obj_t * preload, const lv_area_t * mask, lv_design_mode_t mode)
 {
-//    /*Return false if the object is not covers the mask_p area*/
-//    if(mode == LV_DESIGN_COVER_CHK) {
-//        return LV_DESIGN_RES_NOT_COVER;
-//    }
-//    /*Draw the object*/
-//    else if(mode == LV_DESIGN_DRAW_MAIN) {
-//
-//        /*Draw a circle as background*/
-//        const lv_style_t * style = lv_arc_get_style(preload, LV_ARC_STYLE_MAIN);
-//        if(style->body.border.width > 0) {
-//            lv_coord_t r = (LV_MATH_MIN(lv_obj_get_width(preload), lv_obj_get_height(preload))) / 2;
-//            r -= LV_MATH_MIN(style->body.padding.left, style->body.padding.top);
-//
-//            lv_coord_t x = preload->coords.x1 + lv_obj_get_width(preload) / 2;
-//            lv_coord_t y = preload->coords.y1 + lv_obj_get_height(preload) / 2;
-//
-//            lv_style_t bg_style;
-//            lv_style_copy(&bg_style, &lv_style_plain);
-//            bg_style.body.opa          = LV_OPA_TRANSP;
-//            bg_style.body.radius       = LV_RADIUS_CIRCLE;
-//            bg_style.body.border.color = style->body.border.color;
-//            bg_style.body.border.width = style->body.border.width;
-//            bg_style.body.border.opa = style->body.border.opa;
-//
-//            lv_area_t bg_area;
-//            bg_area.x1 = x - r;
-//            bg_area.y1 = y - r;
-//            bg_area.x2 = x + r;
-//            bg_area.y2 = y + r;
-//
-//            lv_draw_rect(&bg_area, clip_area, &bg_style, lv_obj_get_opa_scale(preload));
-//        }
-//        /*Draw the arc above the background circle */
-//        ancestor_design(preload, clip_area, mode);
-//    }
-//    /*Post draw when the children are drawn*/
-//    else if(mode == LV_DESIGN_DRAW_POST) {
-//    }
+    /*Return false if the object is not covers the mask_p area*/
+    if(mode == LV_DESIGN_COVER_CHK) {
+        return false;
+    }
+    /*Draw the object*/
+    else if(mode == LV_DESIGN_DRAW_MAIN) {
 
-    return LV_DESIGN_RES_OK;
+        /*Draw a circle as background*/
+        const lv_style_t * style = lv_arc_get_style(preload, LV_ARC_STYLE_MAIN);
+        if(style->body.border.width > 0) {
+            lv_coord_t r = (LV_MATH_MIN(lv_obj_get_width(preload), lv_obj_get_height(preload))) / 2;
+            r -= LV_MATH_MIN(style->body.padding.left, style->body.padding.top);
+
+            lv_coord_t x = preload->coords.x1 + lv_obj_get_width(preload) / 2;
+            lv_coord_t y = preload->coords.y1 + lv_obj_get_height(preload) / 2;
+
+            lv_style_t bg_style;
+            lv_style_copy(&bg_style, &lv_style_plain);
+            bg_style.body.opa          = LV_OPA_TRANSP;
+            bg_style.body.radius       = LV_RADIUS_CIRCLE;
+            bg_style.body.border.color = style->body.border.color;
+            bg_style.body.border.width = style->body.border.width;
+
+            lv_area_t bg_area;
+            bg_area.x1 = x - r;
+            bg_area.y1 = y - r;
+            bg_area.x2 = x + r;
+            bg_area.y2 = y + r;
+
+            lv_draw_rect(&bg_area, mask, &bg_style, lv_obj_get_opa_scale(preload));
+        }
+        /*Draw the arc above the background circle */
+        ancestor_design(preload, mask, mode);
+    }
+    /*Post draw when the children are drawn*/
+    else if(mode == LV_DESIGN_DRAW_POST) {
+    }
+
+    return true;
 }
 
 /**
