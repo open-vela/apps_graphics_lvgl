@@ -122,6 +122,13 @@ typedef int16_t lv_coord_t;
  * Time between `LV_EVENT_LONG_PRESSED_REPEAT */
 #define LV_INDEV_DEF_LONG_PRESS_REP_TIME  100
 
+
+/* Gesture threshold in pixels */
+#define LV_INDEV_DEF_GESTURE_LIMIT        50
+
+/* Gesture min velocity at release before swipe (pixels)*/
+#define LV_INDEV_DEF_GESTURE_MIN_VELOCITY 3
+
 /*==================
  * Feature usage
  *==================*/
@@ -506,6 +513,9 @@ typedef void * lv_obj_user_data_t;
 /*Line meter (dependencies: *;)*/
 #define LV_USE_LMETER   1
 
+/*Mask (dependencies: -)*/
+#define LV_USE_OBJMASK  0
+
 /*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
 #define LV_USE_MBOX     1
 
@@ -582,9 +592,6 @@ typedef void * lv_obj_user_data_t;
 #endif
 
 /*--END OF LV_CONF_H--*/
-
-/*Be sure every define has a default value*/
-#include "lvgl/src/lv_conf_checker.h"
 
 #endif /*LV_CONF_H*/
 

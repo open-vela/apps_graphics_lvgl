@@ -16,7 +16,7 @@
 
 #include "../lv_core/lv_debug.h"
 #include "../lv_draw/lv_draw.h"
-#include "../lv_draw/lv_draw_basic.h"
+#include "../lv_draw/lv_draw_mask.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_color.h"
@@ -47,6 +47,7 @@ static void lv_cont_refr_autofit(lv_obj_t * cont);
 /**********************
  *  STATIC VARIABLES
  **********************/
+static lv_design_cb_t ancestor_design;
 static lv_signal_cb_t ancestor_signal;
 
 /**********************
@@ -74,10 +75,14 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
     if(new_cont == NULL) return NULL;
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_cont);
+    if(ancestor_design == NULL) ancestor_design= lv_obj_get_design_cb(new_cont);
 
     lv_obj_allocate_ext_attr(new_cont, sizeof(lv_cont_ext_t));
     lv_cont_ext_t * ext = lv_obj_get_ext_attr(new_cont);
-    if(ext == NULL) return NULL;
+    if(ext == NULL) {
+        lv_obj_del(new_cont);
+        return NULL;
+    }
 
     LV_ASSERT_MEM(ext);
     ext->fit_left   = LV_FIT_NONE;
