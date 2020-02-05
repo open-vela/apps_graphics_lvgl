@@ -97,8 +97,6 @@ void * lv_mem_realloc(void * data_p, size_t new_size);
  */
 void lv_mem_defrag(void);
 
-lv_res_t lv_mem_test(void);
-
 /**
  * Give information about the work memory of dynamic allocation
  * @param mon_p pointer to a dm_mon_p variable,
