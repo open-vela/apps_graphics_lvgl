@@ -26,7 +26,7 @@ extern "C" {
 #error "lv_ddlist: lv_label is required. Enable it in lv_conf.h (LV_USE_LABEL  1) "
 #endif
 
-#include "../lv_objx/lv_btn.h"
+#include "../lv_core/lv_obj.h"
 #include "../lv_objx/lv_page.h"
 #include "../lv_objx/lv_label.h"
 
@@ -37,45 +37,29 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-
-enum {
-    LV_DDLIST_DIR_DOWN,
-    LV_DDLIST_DIR_UP,
-    LV_DDLIST_DIR_LEFT,
-    LV_DDLIST_DIR_RIGHT,
-};
-
-typedef uint8_t lv_ddlist_dir_t;
-
 /*Data of drop down list*/
 typedef struct
 {
-    lv_btn_ext_t btn; /*Ext. of ancestor*/
+    lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
-    lv_obj_t * page;             /*The dropped down list*/
-    const char * text;           /*Text to display on the ddlist's button*/
-    const char * symbol;         /*Arrow or other icon when the drop-down list is closed*/
-    const char * options;
-    lv_style_list_t style_selected; /*Style of the selected option*/
-    lv_style_list_t style_page;     /*Style of the dropped down list*/
-    lv_style_list_t style_scrlbar; /*Style of the scroll bar*/
-    lv_coord_t max_height;        /*Height of the ddlist when opened. (0: auto-size)*/
+    lv_obj_t * label;             /*Label for the options*/
+    const lv_style_t * sel_style; /*Style of the selected option*/
+    const char * symbol;            /*Arrow or other icon when the drop-down list is closed*/
     uint16_t option_cnt;          /*Number of options*/
-    uint16_t sel_opt_id;          /*Index of the currently selected option*/
-    uint16_t sel_opt_id_orig;     /*Store the original index on focus*/
-    uint16_t pr_opt_id;             /*Index of the currently pressed option*/
-    uint16_t anim_time;
-    lv_ddlist_dir_t dir         :2;
-    uint8_t show_selected  :1;
+    uint16_t sel_opt_id;          /*Index of the current option*/
+    uint16_t sel_opt_id_ori;      /*Store the original index on focus*/
+    uint8_t opened : 1;           /*1: The list is opened (handled by the library)*/
+    uint8_t force_sel : 1;        /*1: Keep the selection highlight even if the list is closed*/
+    uint8_t stay_open : 1;        /*1: Don't close the list when a new item is selected*/
+    lv_coord_t fix_height;        /*Height of the ddlist when opened. (0: auto-size)*/
 } lv_ddlist_ext_t;
 
 enum {
-    LV_DDLIST_PART_BTN = LV_BTN_PART_MAIN,
-    LV_DDLIST_PART_LIST = _LV_BTN_PART_REAL_LAST,
-    LV_DDLIST_PART_SCRLBAR,
-    LV_DDLIST_PART_SELECTED,
+    LV_DDLIST_STYLE_BG,
+    LV_DDLIST_STYLE_SEL,
+    LV_DDLIST_STYLE_SB,
 };
-typedef uint8_t lv_ddlist_part_t;
+typedef uint8_t lv_ddlist_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -108,12 +92,20 @@ void lv_ddlist_set_options(lv_obj_t * ddlist, const char * options);
 void lv_ddlist_set_selected(lv_obj_t * ddlist, uint16_t sel_opt);
 
 /**
- * Set a maximum height for the drop down list
+ * Set a fix height for the drop down list
  * If 0 then the opened ddlist will be auto. sized else the set height will be applied.
  * @param ddlist pointer to a drop down list
  * @param h the height when the list is opened (0: auto size)
  */
-void lv_ddlist_set_max_height(lv_obj_t * ddlist, lv_coord_t h);
+void lv_ddlist_set_fix_height(lv_obj_t * ddlist, lv_coord_t h);
+
+/**
+ * Set a fix width for the drop down list
+ * @param ddlist pointer to a drop down list
+ * @param w the width when the list is opened (0: auto size)
+ */
+void lv_ddlist_set_fix_width(lv_obj_t * ddlist, lv_coord_t w);
+
 
 /**
  * Set an arrow or other symbol to display when the drop-down list is closed.
@@ -121,6 +113,12 @@ void lv_ddlist_set_max_height(lv_obj_t * ddlist, lv_coord_t h);
  * @param symbol a text like `LV_SYMBOL_DOWN` or NULL to not draw icon
  */
 void lv_ddlist_set_symbol(lv_obj_t * ddlist, const char * symbol);
+/**
+ * Leave the list opened when a new value is selected
+ * @param ddlist pointer to drop down list object
+ * @param en enable/disable "stay open" feature
+ */
+void lv_ddlist_set_stay_open(lv_obj_t * ddlist, bool en);
 
 /**
  * Set the scroll bar mode of a drop down list
@@ -142,11 +140,19 @@ static inline void lv_ddlist_set_anim_time(lv_obj_t * ddlist, uint16_t anim_time
 }
 
 /**
- * Set the direction of the a drop down list
+ * Set a style of a drop down list
  * @param ddlist pointer to a drop down list object
- * @param dir LV_DDLIST_DIR_LEF/RIGHT/TOP/BOTTOM
+ * @param type which style should be set
+ * @param style pointer to a style
+ *  */
+void lv_ddlist_set_style(lv_obj_t * ddlist, lv_ddlist_style_t type, const lv_style_t * style);
+
+/**
+ * Set the alignment of the labels in a drop down list
+ * @param ddlist pointer to a drop down list object
+ * @param align alignment of labels
  */
-void lv_ddlist_set_dir(lv_obj_t * ddlist, lv_ddlist_dir_t dir);
+void lv_ddlist_set_align(lv_obj_t * ddlist, lv_label_align_t align);
 
 /*=====================
  * Getter functions
@@ -186,7 +192,7 @@ void lv_ddlist_get_selected_str(const lv_obj_t * ddlist, char * buf, uint16_t bu
  * @param ddlist pointer to a drop down list object
  * @return the height if the ddlist is opened (0: auto size)
  */
-lv_coord_t lv_ddlist_get_max_height(const lv_obj_t * ddlist);
+lv_coord_t lv_ddlist_get_fix_height(const lv_obj_t * ddlist);
 
 /**
  * Get the symbol to draw when the drop-down list is closed
@@ -196,11 +202,10 @@ lv_coord_t lv_ddlist_get_max_height(const lv_obj_t * ddlist);
 const char * lv_ddlist_get_symbol(lv_obj_t * ddlist);
 
 /**
- * Get the symbol to draw when the drop-down list is closed
+ * Get whether the drop down list stay open after selecting a  value or not
  * @param ddlist pointer to drop down list object
- * @return the symbol or NULL if not enabled
  */
-lv_ddlist_dir_t lv_ddlist_get_dir(const lv_obj_t * ddlist);
+bool lv_ddlist_get_stay_open(lv_obj_t * ddlist);
 
 /**
  * Get the scroll bar mode of a drop down list
@@ -221,6 +226,14 @@ static inline uint16_t lv_ddlist_get_anim_time(const lv_obj_t * ddlist)
 {
     return lv_page_get_anim_time(ddlist);
 }
+
+/**
+ * Get a style of a drop down list
+ * @param ddlist pointer to a drop down list object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_ddlist_get_style(const lv_obj_t * ddlist, lv_ddlist_style_t type);
 
 /**
  * Get the alignment of the labels in a drop down list
