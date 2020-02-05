@@ -30,15 +30,22 @@ extern "C" {
 typedef struct
 {
     /*New data for this type */
-    lv_coord_t angle_start;
-    lv_coord_t angle_end;
+    lv_coord_t arc_angle_start;
+    lv_coord_t arc_angle_end;
+    lv_coord_t bg_angle_start;
+    lv_coord_t bg_angle_end;
+    lv_style_list_t style_arc;
 } lv_arc_ext_t;
 
-/*Styles*/
+/*Parts of the arc*/
 enum {
-    LV_ARC_STYLE_MAIN,
+    LV_ARC_PART_BG = LV_OBJ_PART_MAIN,
+    LV_ARC_PART_ARC,
+    _LV_ARC_PART_VIRTUAL_LAST,
+
+    _LV_ARC_PART_REAL_LAST = _LV_OBJ_PART_REAL_LAST,
 };
-typedef uint8_t lv_arc_style_t;
+typedef uint8_t lv_arc_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -82,15 +89,6 @@ void lv_arc_set_end_angle(lv_obj_t * arc, int16_t end);
  */
 void lv_arc_set_angles(lv_obj_t * arc, uint16_t start, uint16_t end);
 
-
-/**
- * Set a style of a arc.
- * @param arc pointer to arc object
- * @param type which style should be set
- * @param style pointer to a style
- *  */
-void lv_arc_set_style(lv_obj_t * arc, lv_arc_style_t type, const lv_style_t * style);
-
 /*=====================
  * Getter functions
  *====================*/
@@ -108,14 +106,6 @@ uint16_t lv_arc_get_angle_start(lv_obj_t * arc);
  * @return the end angle [0..360]
  */
 uint16_t lv_arc_get_angle_end(lv_obj_t * arc);
-
-/**
- * Get style of a arc.
- * @param arc pointer to arc object
- * @param type which style should be get
- * @return style pointer to the style
- *  */
-const lv_style_t * lv_arc_get_style(const lv_obj_t * arc, lv_arc_style_t type);
 
 /*=====================
  * Other functions
