@@ -11,7 +11,6 @@
 #include "../lv_hal/lv_hal_disp.h"
 #include "../lv_core/lv_refr.h"
 #include "../lv_misc/lv_bidi.h"
-#include "../lv_core/lv_debug.h"
 
 /*********************
  *      DEFINES
@@ -60,59 +59,53 @@ static const uint8_t bpp4_opa_table[16] = {0,  17, 34,  51,  /*Opacity mapping w
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc)
-{
-    memset(dsc, 0x00, sizeof(lv_draw_label_dsc_t));
-    dsc->opa = LV_OPA_COVER;
-    dsc->color = LV_COLOR_BLACK;
-    dsc->font = LV_FONT_DEFAULT;
-    dsc->sel_start = LV_DRAW_LABEL_NO_TXT_SEL;
-    dsc->sel_end = LV_DRAW_LABEL_NO_TXT_SEL;
-    dsc->sel_color = LV_COLOR_BLUE;
-    dsc->bidi_dir = LV_BIDI_DIR_LTR;
-}
-
 /**
  * Write a text
  * @param coords coordinates of the label
  * @param mask the label will be drawn only in this area
- * @param dsc pointer to draw descriptor
- * @param txt `\0` terminated text to write
+ * @param style pointer to a style
+ * @param opa_scale scale down all opacities by the factor
+ * @param txt 0 terminated text to write
+ * @param flag settings for the text from 'txt_flag_t' enum
+ * @param offset text offset in x and y direction (NULL if unused)
+ * @param sel make the text selected in the range by drawing a background there
  */
-void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_label_dsc_t * dsc,
-                   const char * txt, lv_draw_label_hint_t * hint)
+void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, const lv_style_t * style, lv_opa_t opa_scale,
+                   const char * txt, lv_txt_flag_t flag, lv_point_t * offset, lv_draw_label_txt_sel_t * sel,
+                   lv_draw_label_hint_t * hint, lv_bidi_dir_t bidi_dir)
 {
-    if(dsc->opa <= LV_OPA_MIN) return;
-    const lv_font_t * font = dsc->font;
-    int32_t w;
+    const lv_font_t * font = style->text.font;
+    lv_coord_t w;
 
     /*No need to waste processor time if string is empty*/
     if (txt[0] == '\0')  return;
 
-    if((dsc->flag & LV_TXT_FLAG_EXPAND) == 0) {
+    if((flag & LV_TXT_FLAG_EXPAND) == 0) {
         /*Normally use the label's width as width*/
         w = lv_area_get_width(coords);
     } else {
         /*If EXAPND is enabled then not limit the text's width to the object's width*/
         lv_point_t p;
-        lv_txt_get_size(&p, txt, dsc->font, dsc->letter_space, dsc->line_space, LV_COORD_MAX,
-                dsc->flag);
+        lv_txt_get_size(&p, txt, style->text.font, style->text.letter_space, style->text.line_space, LV_COORD_MAX,
+                flag);
         w = p.x;
     }
 
-    int32_t line_height = lv_font_get_line_height(font) + dsc->line_space;
+    lv_coord_t line_height = lv_font_get_line_height(font) + style->text.line_space;
 
     /*Init variables for the first line*/
-    int32_t line_width = 0;
+    lv_coord_t line_width = 0;
     lv_point_t pos;
     pos.x = coords->x1;
     pos.y = coords->y1;
 
-    int32_t x_ofs = 0;
-    int32_t y_ofs = 0;
-    x_ofs = dsc->ofs_x;
-    y_ofs = dsc->ofs_y;
-    pos.y += y_ofs;
+    lv_coord_t x_ofs = 0;
+    lv_coord_t y_ofs = 0;
+    if(offset != NULL) {
+        x_ofs = offset->x;
+        y_ofs = offset->y;
+        pos.y += y_ofs;
+    }
 
     uint32_t line_start     = 0;
     int32_t last_line_start = -1;
@@ -133,13 +126,13 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
     }
 
 
-    uint32_t line_end = line_start + lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+    uint32_t line_end = line_start + lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
 
     /*Go the first visible line*/
     while(pos.y + line_height < mask->y1) {
         /*Go to next line*/
         line_start = line_end;
-        line_end += lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+        line_end += lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
         pos.y += line_height;
 
         /*Save at the threshold coordinate*/
@@ -153,52 +146,53 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
     }
 
     /*Align to middle*/
-    if(dsc->flag & LV_TXT_FLAG_CENTER) {
-        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+    if(flag & LV_TXT_FLAG_CENTER) {
+        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
 
         pos.x += (lv_area_get_width(coords) - line_width) / 2;
 
     }
     /*Align to the right*/
-    else if(dsc->flag & LV_TXT_FLAG_RIGHT) {
-        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+    else if(flag & LV_TXT_FLAG_RIGHT) {
+        line_width = lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
         pos.x += lv_area_get_width(coords) - line_width;
     }
 
-    lv_opa_t opa = dsc->opa;
+    lv_opa_t opa = opa_scale == LV_OPA_COVER ? style->text.opa : (uint16_t)((uint16_t)style->text.opa * opa_scale) >> 8;
 
-    uint16_t sel_start = dsc->sel_start;
-    uint16_t sel_end = dsc->sel_end;
-    if(sel_start > sel_end) {
-        uint16_t tmp = sel_start;
-        sel_start = sel_end;
-        sel_end = tmp;
+    uint16_t sel_start = 0xFFFF;
+    uint16_t sel_end = 0xFFFF;
+    if(sel) {
+        sel_start = sel->start;
+        sel_end = sel->end;
+        if(sel_start > sel_end) {
+            uint16_t tmp = sel_start;
+            sel_start = sel_end;
+            sel_end = tmp;
+        }
     }
 
-//    lv_style_t line_style;
-//    if(dsc->underline || dsc->strikethrough) {
-//        lv_style_copy(&line_style, style);
-//        line_style.line.color = dsc->color;
-//        line_style.line.width = (dsc->font->line_height + 5) / 10;    /*+5 for rounding*/
-//        line_style.line.opa = dsc->opa;
-//        line_style.line.blend_mode = dsc->blend_mode;
-//    }
+    lv_style_t line_style;
+    if(style->text.underline || style->text.strikethrough) {
+        lv_style_copy(&line_style, style);
+        line_style.line.color = style->text.color;
+        line_style.line.width = (style->text.font->line_height + 5) / 10;    /*+5 for rounding*/
+        line_style.line.opa = style->text.opa;
+        line_style.line.blend_mode = style->text.blend_mode;
+    }
 
     cmd_state_t cmd_state = CMD_STATE_WAIT;
     uint32_t i;
     uint16_t par_start = 0;
     lv_color_t recolor;
-    int32_t letter_w;
-
-
-    lv_draw_rect_dsc_t draw_dsc_sel;
-    lv_draw_rect_dsc_init(&draw_dsc_sel);
-    draw_dsc_sel.bg_color = dsc->sel_color;
-
-    int32_t pos_x_start = pos.x;
+    lv_coord_t letter_w;
+    lv_style_t sel_style;
+    lv_style_copy(&sel_style, &lv_style_plain_color);
+    sel_style.body.main_color = sel_style.body.grad_color = style->text.sel_color;
+    lv_coord_t pos_x_start = pos.x;
     /*Write out all lines*/
     while(txt[line_start] != '\0') {
-        pos.x += x_ofs;
+        if(offset != NULL) pos.x += x_ofs;
 
         /*Write all letter of a line*/
         cmd_state = CMD_STATE_WAIT;
@@ -207,8 +201,9 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
         uint32_t letter_next;
 #if LV_USE_BIDI
         char *bidi_txt = lv_mem_buf_get(line_end - line_start + 1);
-        lv_bidi_process_paragraph(txt + line_start, bidi_txt, line_end - line_start, dsc->bidi_dir, NULL, 0);
+        lv_bidi_process_paragraph(txt + line_start, bidi_txt, line_end - line_start, bidi_dir, NULL, 0);
 #else
+        (void)bidi_dir;
         const char *bidi_txt = txt + line_start;
 #endif
 
@@ -218,7 +213,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 #if LV_USE_BIDI
                 logical_char_pos = lv_txt_encoded_get_char_id(txt, line_start);
                 uint16_t t = lv_txt_encoded_get_char_id(bidi_txt, i);
-                logical_char_pos += lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, dsc->bidi_dir, t, NULL);
+                logical_char_pos += lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, bidi_dir, t, NULL);
 #else
                 logical_char_pos = lv_txt_encoded_get_char_id(txt, line_start + i);
 #endif
@@ -229,7 +224,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 
 
             /*Handle the re-color command*/
-            if((dsc->flag & LV_TXT_FLAG_RECOLOR) != 0) {
+            if((flag & LV_TXT_FLAG_RECOLOR) != 0) {
                 if(letter == (uint32_t)LV_TXT_COLOR_CMD[0]) {
                     if(cmd_state == CMD_STATE_WAIT) { /*Start char*/
                         par_start = i;
@@ -257,7 +252,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                             b       = (hex_char_to_num(buf[4]) << 4) + hex_char_to_num(buf[5]);
                             recolor = lv_color_make(r, g, b);
                         } else {
-                            recolor.full = dsc->color.full;
+                            recolor.full = style->text.color.full;
                         }
                         cmd_state = CMD_STATE_IN; /*After the parameter the text is in the command*/
                     }
@@ -265,7 +260,7 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                 }
             }
 
-            lv_color_t color = dsc->color;
+            lv_color_t color = style->text.color;
 
             if(cmd_state == CMD_STATE_IN) color = recolor;
 
@@ -276,38 +271,38 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
                     lv_area_t sel_coords;
                     sel_coords.x1 = pos.x;
                     sel_coords.y1 = pos.y;
-                    sel_coords.x2 = pos.x + letter_w + dsc->letter_space - 1;
+                    sel_coords.x2 = pos.x + letter_w + style->text.letter_space - 1;
                     sel_coords.y2 = pos.y + line_height - 1;
-                    lv_draw_rect(&sel_coords, mask, &draw_dsc_sel);
+                    lv_draw_rect(&sel_coords, mask, &sel_style, opa);
                 }
             }
 
             lv_draw_letter(&pos, mask, font, letter, color, opa);
 
             if(letter_w > 0) {
-                pos.x += letter_w + dsc->letter_space;
+                pos.x += letter_w + style->text.letter_space;
             }
         }
 
-//        if(dsc->strikethrough) {
-//            lv_point_t p1;
-//            lv_point_t p2;
-//            p1.x = pos_x_start;
-//            p1.y = pos.y + (dsc->font->line_height / 2)  + style->line.width / 2;
-//            p2.x = pos.x;
-//            p2.y = p1.y;
-//            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
-//        }
-//
-//        if(dsc->underline) {
-//            lv_point_t p1;
-//            lv_point_t p2;
-//            p1.x = pos_x_start;
-//            p1.y = pos.y + dsc->font->line_height - dsc->font->base_line + style->line.width / 2 + 1;
-//            p2.x = pos.x;
-//            p2.y = p1.y;
-//            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
-//        }
+        if(style->text.strikethrough) {
+            lv_point_t p1;
+            lv_point_t p2;
+            p1.x = pos_x_start;
+            p1.y = pos.y + (style->text.font->line_height / 2)  + style->line.width / 2;
+            p2.x = pos.x;
+            p2.y = p1.y;
+            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
+        }
+
+        if(style->text.underline) {
+            lv_point_t p1;
+            lv_point_t p2;
+            p1.x = pos_x_start;
+            p1.y = pos.y + style->text.font->line_height - style->text.font->base_line + style->line.width / 2 + 1;
+            p2.x = pos.x;
+            p2.y = p1.y;
+            lv_draw_line(&p1, &p2, mask, &line_style, opa_scale);
+        }
 
 #if LV_USE_BIDI
         lv_mem_buf_release(bidi_txt);
@@ -315,21 +310,21 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 #endif
         /*Go to next line*/
         line_start = line_end;
-        line_end += lv_txt_get_next_line(&txt[line_start], font, dsc->letter_space, w, dsc->flag);
+        line_end += lv_txt_get_next_line(&txt[line_start], font, style->text.letter_space, w, flag);
 
         pos.x = coords->x1;
         /*Align to middle*/
-        if(dsc->flag & LV_TXT_FLAG_CENTER) {
+        if(flag & LV_TXT_FLAG_CENTER) {
             line_width =
-                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
 
             pos.x += (lv_area_get_width(coords) - line_width) / 2;
 
         }
         /*Align to the right*/
-        else if(dsc->flag & LV_TXT_FLAG_RIGHT) {
+        else if(flag & LV_TXT_FLAG_RIGHT) {
             line_width =
-                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, dsc->letter_space, dsc->flag);
+                    lv_txt_get_width(&txt[line_start], line_end - line_start, font, style->text.letter_space, flag);
             pos.x += lv_area_get_width(coords) - line_width;
         }
 
@@ -338,8 +333,6 @@ void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask, lv_draw_lab
 
         if(pos.y > mask->y2) return;
     }
-
-    LV_ASSERT_MEM_INTEGRITY();
 }
 
 /**********************
@@ -378,8 +371,8 @@ static void lv_draw_letter(const lv_point_t * pos_p, const lv_area_t * clip_area
         return;
     }
 
-    int32_t pos_x = pos_p->x + g.ofs_x;
-    int32_t pos_y = pos_p->y + (font_p->line_height - font_p->base_line) - g.box_h - g.ofs_y;
+    lv_coord_t pos_x = pos_p->x + g.ofs_x;
+    lv_coord_t pos_y = pos_p->y + (font_p->line_height - font_p->base_line) - g.box_h - g.ofs_y;
 
     /*If the letter is completely out of mask don't draw it */
     if(pos_x + g.box_w < clip_area->x1 ||
@@ -406,12 +399,12 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
 {
 
     const uint8_t * bpp_opa_table;
-    uint32_t bitmask_init;
-    uint32_t bitmask;
-    uint32_t bpp = g->bpp;
-    if(bpp == 3) bpp = 4;
+    uint8_t bitmask_init;
+    uint8_t bitmask;
 
-    switch(bpp) {
+    if(g->bpp == 3) g->bpp = 4;
+
+    switch(g->bpp) {
     case 1:
         bpp_opa_table = bpp1_opa_table;
         bitmask_init  = 0x80;
@@ -435,32 +428,32 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
 
 
 
-    int32_t col, row;
-    int32_t box_w = g->box_w;
-    int32_t box_h = g->box_h;
-    int32_t width_byte_scr = box_w >> 3; /*Width in bytes (on the screen finally) (e.g. w = 11 -> 2 bytes wide)*/
-    if(box_w & 0x7) width_byte_scr++;
-    int32_t width_bit = box_w * bpp; /*Letter width in bits*/
+    lv_coord_t col, row;
+
+    uint8_t width_byte_scr = g->box_w >> 3; /*Width in bytes (on the screen finally) (e.g. w = 11 -> 2 bytes wide)*/
+    if(g->box_w & 0x7) width_byte_scr++;
+    uint16_t width_bit = g->box_w * g->bpp; /*Letter width in bits*/
+
 
     /* Calculate the col/row start/end on the map*/
-    int32_t col_start = pos_x >= clip_area->x1 ? 0 : clip_area->x1 - pos_x;
-    int32_t col_end   = pos_x + box_w <= clip_area->x2 ? box_w : clip_area->x2 - pos_x + 1;
-    int32_t row_start = pos_y >= clip_area->y1 ? 0 : clip_area->y1 - pos_y;
-    int32_t row_end   = pos_y + box_h <= clip_area->y2 ? box_h : clip_area->y2 - pos_y + 1;
+    lv_coord_t col_start = pos_x >= clip_area->x1 ? 0 : clip_area->x1 - pos_x;
+    lv_coord_t col_end   = pos_x + g->box_w <= clip_area->x2 ? g->box_w : clip_area->x2 - pos_x + 1;
+    lv_coord_t row_start = pos_y >= clip_area->y1 ? 0 : clip_area->y1 - pos_y;
+    lv_coord_t row_end   = pos_y + g->box_h <= clip_area->y2 ? g->box_h : clip_area->y2 - pos_y + 1;
 
     /*Move on the map too*/
-    uint32_t bit_ofs = (row_start * width_bit) + (col_start * bpp);
+    uint32_t bit_ofs = (row_start * width_bit) + (col_start * g->bpp);
     map_p += bit_ofs >> 3;
 
     uint8_t letter_px;
     lv_opa_t px_opa;
-    uint32_t col_bit;
+    uint16_t col_bit;
     col_bit = bit_ofs & 0x7; /* "& 0x7" equals to "% 8" just faster */
 
-    uint32_t mask_buf_size = box_w * box_h > LV_HOR_RES_MAX ? box_w * box_h : LV_HOR_RES_MAX;
+    uint32_t mask_buf_size = g->box_w * g->box_h > LV_HOR_RES_MAX ? g->box_w * g->box_h : LV_HOR_RES_MAX;
     lv_opa_t * mask_buf = lv_mem_buf_get(mask_buf_size);
-    int32_t mask_p = 0;
-    int32_t mask_p_start;
+    lv_coord_t mask_p = 0;
+    lv_coord_t mask_p_start;
 
     lv_area_t fill_area;
     fill_area.x1 = col_start + pos_x;
@@ -476,13 +469,13 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
         for(col = col_start; col < col_end; col++) {
 
             /*Load the pixel's opacity into the mask*/
-            letter_px = (*map_p & bitmask) >> (8 - col_bit - bpp);
+            letter_px = (*map_p & bitmask) >> (8 - col_bit - g->bpp);
             if(letter_px != 0) {
                 if(opa == LV_OPA_COVER) {
-                    px_opa = bpp == 8 ? letter_px : bpp_opa_table[letter_px];
+                    px_opa = g->bpp == 8 ? letter_px : bpp_opa_table[letter_px];
                 } else {
-                    px_opa = bpp == 8 ? (uint32_t)((uint32_t)letter_px * opa) >> 8
-                            : (uint32_t)((uint32_t)bpp_opa_table[letter_px] * opa) >> 8;
+                    px_opa = g->bpp == 8 ? (uint16_t)((uint16_t)letter_px * opa) >> 8
+                            : (uint16_t)((uint16_t)bpp_opa_table[letter_px] * opa) >> 8;
                 }
 
                 mask_buf[mask_p] = px_opa;
@@ -492,9 +485,9 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
             }
 
             /*Go to the next column*/
-            if(col_bit < 8 - bpp) {
-                col_bit += bpp;
-                bitmask = bitmask >> bpp;
+            if(col_bit < 8 - g->bpp) {
+                col_bit += g->bpp;
+                bitmask = bitmask >> g->bpp;
             } else {
                 col_bit = 0;
                 bitmask = bitmask_init;
@@ -525,7 +518,7 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
             mask_p = 0;
         }
 
-        col_bit += ((box_w - col_end) + col_start) * bpp;
+        col_bit += ((g->box_w - col_end) + col_start) * g->bpp;
 
         map_p += (col_bit >> 3);
         col_bit = col_bit & 0x7;
@@ -546,12 +539,12 @@ static void draw_letter_normal(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph
 static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_dsc_t * g, const lv_area_t * clip_area, const uint8_t * map_p, lv_color_t color, lv_opa_t opa)
 {
     const uint8_t * bpp_opa_table;
-    uint32_t bitmask_init;
-    uint32_t bitmask;
-    uint32_t bpp = g->bpp;
-    if(bpp == 3) bpp = 4;
+    uint8_t bitmask_init;
+    uint8_t bitmask;
 
-    switch(bpp) {
+    if(g->bpp == 3) g->bpp = 4;
+
+    switch(g->bpp) {
     case 1:
         bpp_opa_table = bpp1_opa_table;
         bitmask_init  = 0x80;
@@ -573,40 +566,38 @@ static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_
         return; /*Invalid bpp. Can't render the letter*/
     }
 
-    int32_t col, row;
+    lv_coord_t col, row;
 
-    int32_t box_w = g->box_w;
-    int32_t box_h = g->box_h;
-    int32_t width_byte_scr = box_w >> 3; /*Width in bytes (on the screen finally) (e.g. w = 11 -> 2 bytes wide)*/
-    if(box_w & 0x7) width_byte_scr++;
-    int32_t width_bit = box_w * bpp; /*Letter width in bits*/
+    uint8_t width_byte_scr = g->box_w >> 3; /*Width in bytes (on the screen finally) (e.g. w = 11 -> 2 bytes wide)*/
+    if(g->box_w & 0x7) width_byte_scr++;
+    uint16_t width_bit = g->box_w * g->bpp; /*Letter width in bits*/
 
 
     /* Calculate the col/row start/end on the map*/
-    int32_t col_start = pos_x >= clip_area->x1 ? 0 : (clip_area->x1 - pos_x) * 3;
-    int32_t col_end   = pos_x + box_w / 3 <= clip_area->x2 ? box_w : (clip_area->x2 - pos_x + 1) * 3;
-    int32_t row_start = pos_y >= clip_area->y1 ? 0 : clip_area->y1 - pos_y;
-    int32_t row_end   = pos_y + box_h <= clip_area->y2 ? box_h : clip_area->y2 - pos_y + 1;
+    lv_coord_t col_start = pos_x >= clip_area->x1 ? 0 : (clip_area->x1 - pos_x) * 3;
+    lv_coord_t col_end   = pos_x + g->box_w / 3 <= clip_area->x2 ? g->box_w : (clip_area->x2 - pos_x + 1) * 3;
+    lv_coord_t row_start = pos_y >= clip_area->y1 ? 0 : clip_area->y1 - pos_y;
+    lv_coord_t row_end   = pos_y + g->box_h <= clip_area->y2 ? g->box_h : clip_area->y2 - pos_y + 1;
 
     /*Move on the map too*/
-    int32_t bit_ofs = (row_start * width_bit) + (col_start * bpp);
+    uint32_t bit_ofs = (row_start * width_bit) + (col_start * g->bpp);
     map_p += bit_ofs >> 3;
 
     uint8_t letter_px;
     lv_opa_t px_opa;
-    int32_t col_bit;
+    uint16_t col_bit;
     col_bit = bit_ofs & 0x7; /* "& 0x7" equals to "% 8" just faster */
 
-    int32_t mask_buf_size = box_w * box_h > LV_HOR_RES_MAX ? g->box_w * g->box_h : LV_HOR_RES_MAX;
+    uint32_t mask_buf_size = g->box_w * g->box_h > LV_HOR_RES_MAX ? g->box_w * g->box_h : LV_HOR_RES_MAX;
     lv_opa_t * mask_buf = lv_mem_buf_get(mask_buf_size);
-    int32_t mask_p = 0;
-    int32_t mask_p_start;
+    lv_coord_t mask_p = 0;
+    lv_coord_t mask_p_start;
     lv_color_t * color_buf = lv_mem_buf_get(mask_buf_size * sizeof(lv_color_t));
 
     lv_disp_t * disp    = lv_refr_get_disp_refreshing();
     lv_disp_buf_t * vdb = lv_disp_get_buf(disp);
 
-    int32_t vdb_width     = lv_area_get_width(&vdb->area);
+    lv_coord_t vdb_width     = lv_area_get_width(&vdb->area);
     lv_color_t * vdb_buf_tmp = vdb->buf_act;
 
     /*Set a pointer on VDB to the first pixel of the letter*/
@@ -632,18 +623,18 @@ static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_
 #endif
 
     for(row = row_start ; row < row_end; row++) {
-        uint32_t subpx_cnt = 0;
+        uint8_t subpx_cnt = 0;
         bitmask = bitmask_init >> col_bit;
         mask_p_start = mask_p;
         for(col = col_start; col < col_end; col++) {
             /*Load the pixel's opacity into the mask*/
-            letter_px = (*map_p & bitmask) >> (8 - col_bit - bpp);
+            letter_px = (*map_p & bitmask) >> (8 - col_bit - g->bpp);
             if(letter_px != 0) {
                 if(opa == LV_OPA_COVER) {
-                    px_opa = bpp == 8 ? letter_px : bpp_opa_table[letter_px];
+                    px_opa = g->bpp == 8 ? letter_px : bpp_opa_table[letter_px];
                 } else {
-                    px_opa = bpp == 8 ? (uint32_t)((uint32_t)letter_px * opa) >> 8
-                            : (uint32_t)((uint32_t)bpp_opa_table[letter_px] * opa) >> 8;
+                    px_opa = g->bpp == 8 ? (uint16_t)((uint16_t)letter_px * opa) >> 8
+                            : (uint16_t)((uint16_t)bpp_opa_table[letter_px] * opa) >> 8;
                 }
             } else {
                 px_opa = 0;
@@ -665,17 +656,17 @@ static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_
 #endif
 
 #if LV_SUBPX_BGR
-                res_color.ch.blue = (uint326_t)((uint32_t)txt_rgb[0] * font_rgb[0] + (bg_rgb[0] * (255 - font_rgb[0]))) >> 8;
-                res_color.ch.red = (uint32_t)((uint32_t)txt_rgb[2] * font_rgb[2] + (bg_rgb[2] * (255 - font_rgb[2]))) >> 8;
+                res_color.ch.blue = (uint16_t)((uint16_t)txt_rgb[0] * font_rgb[0] + (bg_rgb[0] * (255 - font_rgb[0]))) >> 8;
+                res_color.ch.red = (uint16_t)((uint16_t)txt_rgb[2] * font_rgb[2] + (bg_rgb[2] * (255 - font_rgb[2]))) >> 8;
 #else
-                res_color.ch.red = (uint32_t)((uint16_t)txt_rgb[0] * font_rgb[0] + (bg_rgb[0] * (255 - font_rgb[0]))) >> 8;
-                res_color.ch.blue = (uint32_t)((uint16_t)txt_rgb[2] * font_rgb[2] + (bg_rgb[2] * (255 - font_rgb[2]))) >> 8;
+                res_color.ch.red = (uint16_t)((uint16_t)txt_rgb[0] * font_rgb[0] + (bg_rgb[0] * (255 - font_rgb[0]))) >> 8;
+                res_color.ch.blue = (uint16_t)((uint16_t)txt_rgb[2] * font_rgb[2] + (bg_rgb[2] * (255 - font_rgb[2]))) >> 8;
 #endif
 
 #if LV_COLOR_16_SWAP == 0
-                        res_color.ch.green = (uint32_t)((uint32_t)txt_rgb[1] * font_rgb[1] + (bg_rgb[1] * (255 - font_rgb[1]))) >> 8;
+                        res_color.ch.green = (uint16_t)((uint16_t)txt_rgb[1] * font_rgb[1] + (bg_rgb[1] * (255 - font_rgb[1]))) >> 8;
 #else
-                        uint8_t green = (uint32_t)((uint32_t)txt_rgb[1] * font_rgb[1] + (bg_rgb[1] * (255 - font_rgb[1]))) >> 8;
+                        uint8_t green = (uint16_t)((uint16_t)txt_rgb[1] * font_rgb[1] + (bg_rgb[1] * (255 - font_rgb[1]))) >> 8;
                         res_color.ch.green_h = green >> 3;
                         res_color.ch.green_l = green & 0x7;
 #endif
@@ -690,9 +681,9 @@ static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_
             }
 
             /*Go to the next column*/
-            if(col_bit < 8 - bpp) {
-                col_bit += bpp;
-                bitmask = bitmask >> bpp;
+            if(col_bit < 8 - g->bpp) {
+                col_bit += g->bpp;
+                bitmask = bitmask >> g->bpp;
             } else {
                 col_bit = 0;
                 bitmask = bitmask_init;
@@ -718,7 +709,7 @@ static void draw_letter_subpx(lv_coord_t pos_x, lv_coord_t pos_y, lv_font_glyph_
             mask_p = 0;
         }
 
-        col_bit += ((box_w - col_end) + col_start) * bpp;
+        col_bit += ((g->box_w - col_end) + col_start) * g->bpp;
 
         map_p += (col_bit >> 3);
         col_bit = col_bit & 0x7;
