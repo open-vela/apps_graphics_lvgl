@@ -29,26 +29,11 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-typedef struct {
-    lv_opa_t opa;
-
-    uint16_t angle;
-    lv_point_t pivot;
-    uint16_t zoom;
-
-    lv_opa_t recolor_opa;
-    lv_color_t recolor;
-
-    lv_blend_mode_t blend_mode;
-
-    uint8_t antialias       :1;
-} lv_draw_img_dsc_t;
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
-void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc);
 /**
  * Draw an image
  * @param coords the coordinates of the image
@@ -60,7 +45,8 @@ void lv_draw_img_dsc_init(lv_draw_img_dsc_t * dsc);
  * @param antialias anti-alias transformations (rotate, zoom) or not
  * @param opa_scale scale down all opacities by the factor
  */
-void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, lv_draw_img_dsc_t * dsc);
+void lv_draw_img(const lv_area_t * coords, const lv_area_t * mask, const void * src, const lv_style_t * style,
+			uint16_t angle, lv_point_t * center, uint16_t zoom, bool antialaias, lv_opa_t opa_scale);
 
 /**
  * Get the type of an image source
