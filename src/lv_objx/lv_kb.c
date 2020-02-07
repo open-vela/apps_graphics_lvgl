@@ -29,70 +29,56 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_kb_signal(lv_obj_t * kb, lv_signal_t sign, void * param);
-static void lv_kb_update_map(lv_obj_t * kb);
 
 /**********************
  *  STATIC VARIABLES
  **********************/
 static lv_signal_cb_t ancestor_signal;
 /* clang-format off */
-static const char * const default_kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", LV_SYMBOL_BACKSPACE, "\n",
+static const char * kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", LV_SYMBOL_BACKSPACE, "\n",
                                    "ABC", "a", "s", "d", "f", "g", "h", "j", "k", "l", LV_SYMBOL_NEW_LINE, "\n",
                                    "_", "-", "z", "x", "c", "v", "b", "n", "m", ".", ",", ":", "\n",
                                    LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
 
-static const lv_btnm_ctrl_t default_kb_ctrl_lc_map[] = {
+static const lv_btnm_ctrl_t kb_ctrl_lc_map[] = {
     LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
     LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
-static const char * const default_kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", LV_SYMBOL_BACKSPACE, "\n",
+static const char * kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", LV_SYMBOL_BACKSPACE, "\n",
                                    "abc", "A", "S", "D", "F", "G", "H", "J", "K", "L", LV_SYMBOL_NEW_LINE, "\n",
                                    "_", "-", "Z", "X", "C", "V", "B", "N", "M", ".", ",", ":", "\n",
                                    LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
 
-static const lv_btnm_ctrl_t default_kb_ctrl_uc_map[] = {
+static const lv_btnm_ctrl_t kb_ctrl_uc_map[] = {
     LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
     LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
-static const char * const default_kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
+static const char * kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
                                      "abc", "+", "-", "/", "*", "=", "%", "!", "?", "#", "<", ">", "\n",
                                      "\\",  "@", "$", "(", ")", "{", "}", "[", "]", ";", "\"", "'", "\n",
                                      LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
 
-static const lv_btnm_ctrl_t default_kb_ctrl_spec_map[] = {
+static const lv_btnm_ctrl_t kb_ctrl_spec_map[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, LV_KB_CTRL_BTN_FLAGS | 2,
     LV_KB_CTRL_BTN_FLAGS | 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
-static const char * const default_kb_map_num[] = {"1", "2", "3", LV_SYMBOL_CLOSE, "\n",
+static const char * kb_map_num[] = {"1", "2", "3", LV_SYMBOL_CLOSE, "\n",
                                     "4", "5", "6", LV_SYMBOL_OK, "\n",
                                     "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
                                     "+/-", "0", ".", LV_SYMBOL_LEFT, LV_SYMBOL_RIGHT, ""};
 
-static const lv_btnm_ctrl_t default_kb_ctrl_num_map[] = {
+static const lv_btnm_ctrl_t kb_ctrl_num_map[] = {
         1, 1, 1, LV_KB_CTRL_BTN_FLAGS | 2,
         1, 1, 1, LV_KB_CTRL_BTN_FLAGS | 2,
         1, 1, 1, 2,
         1, 1, 1, 1, 1};
 /* clang-format on */
-
-static const char * * kb_map[4] = { 
-    (const char * *)default_kb_map_lc, 
-    (const char * *)default_kb_map_uc, 
-    (const char * *)default_kb_map_spec,
-    (const char * *)default_kb_map_num
-};
-static const lv_btnm_ctrl_t * kb_ctrl[4] = { 
-    default_kb_ctrl_lc_map, 
-    default_kb_ctrl_uc_map, 
-    default_kb_ctrl_spec_map,
-    default_kb_ctrl_num_map
-};
 
 /**********************
  *      MACROS
@@ -113,45 +99,52 @@ lv_obj_t * lv_kb_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("keyboard create started");
 
     /*Create the ancestor of keyboard*/
-    lv_obj_t * kb = lv_btnm_create(par, copy);
-    LV_ASSERT_MEM(kb);
-    if(kb == NULL) return NULL;
+    lv_obj_t * new_kb = lv_btnm_create(par, copy);
+    LV_ASSERT_MEM(new_kb);
+    if(new_kb == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(kb);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_kb);
 
     /*Allocate the keyboard type specific extended data*/
-    lv_kb_ext_t * ext = lv_obj_allocate_ext_attr(kb, sizeof(lv_kb_ext_t));
+    lv_kb_ext_t * ext = lv_obj_allocate_ext_attr(new_kb, sizeof(lv_kb_ext_t));
     LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(kb);
-        return NULL;
-    }
+    if(ext == NULL) return NULL;
 
     /*Initialize the allocated 'ext' */
 
     ext->ta         = NULL;
-    ext->mode       = LV_KB_MODE_TEXT_LOWER;
+    ext->mode       = LV_KB_MODE_TEXT;
     ext->cursor_mng = 0;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(kb, lv_kb_signal);
+    lv_obj_set_signal_cb(new_kb, lv_kb_signal);
 
     /*Init the new keyboard keyboard*/
     if(copy == NULL) {
         /* Set a size which fits into the parent.
          * Don't use `par` directly because if the window is created on a page it is moved to the
          * scrollable so the parent has changed */
-        lv_obj_set_size(kb, lv_obj_get_width_fit(lv_obj_get_parent(kb)),
-        lv_obj_get_height_fit(lv_obj_get_parent(kb)) / 2);
-        lv_obj_align(kb, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
-        lv_obj_set_event_cb(kb, lv_kb_def_event_cb);
-        lv_obj_set_base_dir(kb, LV_BIDI_DIR_LTR);
+        lv_obj_set_size(new_kb, lv_obj_get_width_fit(lv_obj_get_parent(new_kb)),
+                        lv_obj_get_height_fit(lv_obj_get_parent(new_kb)) / 2);
 
-        lv_btnm_set_map(kb, kb_map[ext->mode]);
-        lv_btnm_set_ctrl_map(kb, kb_ctrl[ext->mode]);
+        lv_obj_align(new_kb, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
+        lv_obj_set_event_cb(new_kb, lv_kb_def_event_cb);
+        lv_btnm_set_map(new_kb, kb_map_lc);
+        lv_btnm_set_ctrl_map(new_kb, kb_ctrl_lc_map);
+        lv_obj_set_base_dir(new_kb, LV_BIDI_DIR_LTR);
 
-        lv_theme_apply(kb, LV_THEME_KB);
-
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BG, th->style.kb.bg);
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BTN_REL, th->style.kb.btn.rel);
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BTN_PR, th->style.kb.btn.pr);
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BTN_TGL_REL, th->style.kb.btn.tgl_rel);
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BTN_TGL_PR, th->style.kb.btn.tgl_pr);
+            lv_kb_set_style(new_kb, LV_KB_STYLE_BTN_INA, th->style.kb.btn.ina);
+        } else {
+            /*Let the button matrix's styles*/
+        }
     }
     /*Copy an existing keyboard*/
     else {
@@ -161,16 +154,13 @@ lv_obj_t * lv_kb_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->mode              = copy_ext->mode;
         ext->cursor_mng        = copy_ext->cursor_mng;
 
-        lv_btnm_set_map(kb, kb_map[ext->mode]);
-        lv_btnm_set_ctrl_map(kb, kb_ctrl[ext->mode]);
-
         /*Refresh the style with new signal function*/
-//        lv_obj_refresh_style(new_kb);
+        lv_obj_refresh_style(new_kb);
     }
 
     LV_LOG_INFO("keyboard created");
 
-    return kb;
+    return new_kb;
 }
 
 /*=====================
@@ -188,17 +178,20 @@ void lv_kb_set_ta(lv_obj_t * kb, lv_obj_t * ta)
     if(ta) LV_ASSERT_OBJ(ta, "lv_ta");
 
     lv_kb_ext_t * ext = lv_obj_get_ext_attr(kb);
+    lv_cursor_type_t cur_type;
 
     /*Hide the cursor of the old Text area if cursor management is enabled*/
     if(ext->ta && ext->cursor_mng) {
-        lv_ta_set_cursor_hidden(ext->ta, true);
+        cur_type = lv_ta_get_cursor_type(ext->ta);
+        lv_ta_set_cursor_type(ext->ta, cur_type | LV_CURSOR_HIDDEN);
     }
 
     ext->ta = ta;
 
     /*Show the cursor of the new Text area if cursor management is enabled*/
     if(ext->ta && ext->cursor_mng) {
-        lv_ta_set_cursor_hidden(ext->ta, false);
+        cur_type = lv_ta_get_cursor_type(ext->ta);
+        lv_ta_set_cursor_type(ext->ta, cur_type & (~LV_CURSOR_HIDDEN));
     }
 }
 
@@ -215,8 +208,16 @@ void lv_kb_set_mode(lv_obj_t * kb, lv_kb_mode_t mode)
     if(ext->mode == mode) return;
 
     ext->mode = mode;
-    lv_btnm_set_map(kb, kb_map[mode]);
-    lv_btnm_set_ctrl_map(kb, kb_ctrl[mode]);
+    if(mode == LV_KB_MODE_TEXT) {
+        lv_btnm_set_map(kb, kb_map_lc);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_lc_map);
+    } else if(mode == LV_KB_MODE_NUM) {
+        lv_btnm_set_map(kb, kb_map_num);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_num_map);
+    } else if(mode == LV_KB_MODE_TEXT_UPPER) {
+        lv_btnm_set_map(kb, kb_map_uc);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_uc_map);
+    }
 }
 
 /**
@@ -234,41 +235,35 @@ void lv_kb_set_cursor_manage(lv_obj_t * kb, bool en)
     ext->cursor_mng = en == false ? 0 : 1;
 
     if(ext->ta) {
+        lv_cursor_type_t cur_type;
+        cur_type = lv_ta_get_cursor_type(ext->ta);
 
         if(ext->cursor_mng) {
-            lv_ta_set_cursor_hidden(ext->ta, false);
+            lv_ta_set_cursor_type(ext->ta, cur_type & (~LV_CURSOR_HIDDEN));
         } else {
-            lv_ta_set_cursor_hidden(ext->ta, true);
+            lv_ta_set_cursor_type(ext->ta, cur_type | LV_CURSOR_HIDDEN);
         }
     }
 }
 
 /**
- * Set a new map for the keyboard
- * @param kb pointer to a Keyboard object
- * @param mode keyboard map to alter 'lv_kb_mode_t'
- * @param map pointer to a string array to describe the map.
- *            See 'lv_btnm_set_map()' for more info.
- */
-void lv_kb_set_map(lv_obj_t * kb, lv_kb_mode_t mode, const char * map[])
-{
-    kb_map[mode] = map;
-    lv_kb_update_map(kb);
-}
-
-/**
- * Set the button control map (hidden, disabled etc.) for the keyboard. The
- * control map array will be copied and so may be deallocated after this
- * function returns.
+ * Set a style of a keyboard
  * @param kb pointer to a keyboard object
- * @param mode keyboard ctrl map to alter 'lv_kb_mode_t'
- * @param ctrl_map pointer to an array of `lv_btn_ctrl_t` control bytes.
- *                 See: `lv_btnm_set_ctrl_map` for more details.
+ * @param type which style should be set
+ * @param style pointer to a style
  */
-void lv_kb_set_ctrl_map(lv_obj_t * kb, lv_kb_mode_t mode, const lv_btnm_ctrl_t ctrl_map[])
+void lv_kb_set_style(lv_obj_t * kb, lv_kb_style_t type, const lv_style_t * style)
 {
-    kb_ctrl[mode] = ctrl_map;
-    lv_kb_update_map(kb);
+    LV_ASSERT_OBJ(kb, LV_OBJX_NAME);
+
+    switch(type) {
+        case LV_KB_STYLE_BG: lv_btnm_set_style(kb, LV_BTNM_STYLE_BG, style); break;
+        case LV_KB_STYLE_BTN_REL: lv_btnm_set_style(kb, LV_BTNM_STYLE_BTN_REL, style); break;
+        case LV_KB_STYLE_BTN_PR: lv_btnm_set_style(kb, LV_BTNM_STYLE_BTN_PR, style); break;
+        case LV_KB_STYLE_BTN_TGL_REL: lv_btnm_set_style(kb, LV_BTNM_STYLE_BTN_TGL_REL, style); break;
+        case LV_KB_STYLE_BTN_TGL_PR: lv_btnm_set_style(kb, LV_BTNM_STYLE_BTN_TGL_PR, style); break;
+        case LV_KB_STYLE_BTN_INA: lv_btnm_set_style(kb, LV_BTNM_STYLE_BTN_INA, style); break;
+    }
 }
 
 /*=====================
@@ -314,6 +309,31 @@ bool lv_kb_get_cursor_manage(const lv_obj_t * kb)
     return ext->cursor_mng == 0 ? false : true;
 }
 
+/**
+ * Get a style of a keyboard
+ * @param kb pointer to a keyboard object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_kb_get_style(const lv_obj_t * kb, lv_kb_style_t type)
+{
+    LV_ASSERT_OBJ(kb, LV_OBJX_NAME);
+
+    const lv_style_t * style = NULL;
+
+    switch(type) {
+        case LV_KB_STYLE_BG: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BG); break;
+        case LV_KB_STYLE_BTN_REL: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BTN_REL); break;
+        case LV_KB_STYLE_BTN_PR: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BTN_PR); break;
+        case LV_KB_STYLE_BTN_TGL_REL: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BTN_TGL_REL); break;
+        case LV_KB_STYLE_BTN_TGL_PR: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BTN_TGL_PR); break;
+        case LV_KB_STYLE_BTN_INA: style = lv_btnm_get_style(kb, LV_BTNM_STYLE_BTN_INA); break;
+        default: style = NULL; break;
+    }
+
+    return style;
+}
+
 /*=====================
  * Other functions
  *====================*/
@@ -342,19 +362,16 @@ void lv_kb_def_event_cb(lv_obj_t * kb, lv_event_t event)
 
     /*Do the corresponding action according to the text of the button*/
     if(strcmp(txt, "abc") == 0) {
-				ext->mode = LV_KB_MODE_TEXT_LOWER;
-				lv_btnm_set_map(kb, kb_map[LV_KB_MODE_TEXT_LOWER]);
-				lv_btnm_set_ctrl_map(kb, kb_ctrl[LV_KB_MODE_TEXT_LOWER]);
+        lv_btnm_set_map(kb, kb_map_lc);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_lc_map);
         return;
     } else if(strcmp(txt, "ABC") == 0) {
-				ext->mode = LV_KB_MODE_TEXT_UPPER;
-				lv_btnm_set_map(kb, kb_map[LV_KB_MODE_TEXT_UPPER]);
-				lv_btnm_set_ctrl_map(kb, kb_ctrl[LV_KB_MODE_TEXT_UPPER]);
+        lv_btnm_set_map(kb, kb_map_uc);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_uc_map);
         return;
     } else if(strcmp(txt, "1#") == 0) {
-				ext->mode = LV_KB_MODE_SPECIAL;
-				lv_btnm_set_map(kb, kb_map[LV_KB_MODE_SPECIAL]);
-				lv_btnm_set_ctrl_map(kb, kb_ctrl[LV_KB_MODE_SPECIAL]);
+        lv_btnm_set_map(kb, kb_map_spec);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_spec_map);
         return;
     } else if(strcmp(txt, LV_SYMBOL_CLOSE) == 0) {
         if(kb->event_cb != lv_kb_def_event_cb) {
@@ -434,30 +451,21 @@ static lv_res_t lv_kb_signal(lv_obj_t * kb, lv_signal_t sign, void * param)
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     } else if(sign == LV_SIGNAL_FOCUS) {
         lv_kb_ext_t * ext = lv_obj_get_ext_attr(kb);
-        /*Show the cursor of the Text area if cursor management is enabled*/
+        /*Show the cursor of the new Text area if cursor management is enabled*/
         if(ext->ta && ext->cursor_mng) {
-            lv_ta_set_cursor_hidden(ext->ta, false);
+            lv_cursor_type_t cur_type = lv_ta_get_cursor_type(ext->ta);
+            lv_ta_set_cursor_type(ext->ta, cur_type & (~LV_CURSOR_HIDDEN));
         }
     } else if(sign == LV_SIGNAL_DEFOCUS) {
         lv_kb_ext_t * ext = lv_obj_get_ext_attr(kb);
-        /*Show the cursor of the Text area if cursor management is enabled*/
+        /*Show the cursor of the new Text area if cursor management is enabled*/
         if(ext->ta && ext->cursor_mng) {
-            lv_ta_set_cursor_hidden(ext->ta, true);
+            lv_cursor_type_t cur_type = lv_ta_get_cursor_type(ext->ta);
+            lv_ta_set_cursor_type(ext->ta, cur_type | LV_CURSOR_HIDDEN);
         }
     }
 
     return res;
-}
-
-/**
- * Update the key map for the current mode
- * @param kb pointer to a keyboard object
- */
-static void lv_kb_update_map(lv_obj_t * kb)
-{
-	lv_kb_ext_t * ext = lv_obj_get_ext_attr(kb);
-	lv_btnm_set_map(kb, kb_map[ext->mode]);
-	lv_btnm_set_ctrl_map(kb, kb_ctrl[ext->mode]);
 }
 
 #endif

@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -23,9 +27,9 @@ extern "C" {
 #include "../lv_misc/lv_mem.h"
 #include "../lv_misc/lv_ll.h"
 #include "../lv_misc/lv_color.h"
+#include "../lv_misc/lv_log.h"
 #include "../lv_misc/lv_bidi.h"
 #include "../lv_hal/lv_hal.h"
-#include "../lv_draw/lv_draw_rect.h"
 
 /*********************
  *      DEFINES
@@ -42,9 +46,9 @@ extern "C" {
 
 #define LV_MAX_ANCESTOR_NUM 8
 
-#define LV_EXT_CLICK_AREA_OFF   0
-#define LV_EXT_CLICK_AREA_TINY  1
-#define LV_EXT_CLICK_AREA_FULL  2
+#define LV_EXT_CLICK_AREA_OFF 0
+#define LV_EXT_CLICK_AREA_TINY 1
+#define LV_EXT_CLICK_AREA_FULL 2
 
 /**********************
  *      TYPEDEFS
@@ -61,21 +65,11 @@ enum {
 };
 typedef uint8_t lv_design_mode_t;
 
-
-/** Design results */
-enum {
-    LV_DESIGN_RES_OK,          /**< Draw ready */
-    LV_DESIGN_RES_COVER,       /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is fully covered*/
-    LV_DESIGN_RES_NOT_COVER,   /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is not covered*/
-    LV_DESIGN_RES_MASKED,      /**< Returned on `LV_DESIGN_COVER_CHK` if the areas is masked out (children also not cover)*/
-};
-typedef uint8_t lv_design_res_t;
-
 /**
  * The design callback is used to draw the object on the screen.
  * It accepts the object, a mask area, and the mode in which to draw the object.
  */
-typedef lv_design_res_t (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode);
+typedef bool (*lv_design_cb_t)(struct _lv_obj_t * obj, const lv_area_t * mask_p, lv_design_mode_t mode);
 
 enum {
     LV_EVENT_PRESSED,             /**< The object has been pressed*/
@@ -90,11 +84,9 @@ enum {
     LV_EVENT_DRAG_BEGIN,		  
     LV_EVENT_DRAG_END,
     LV_EVENT_DRAG_THROW_BEGIN,
-    LV_EVENT_GESTURE,			/**< The object has been getture*/
     LV_EVENT_KEY,
     LV_EVENT_FOCUSED,
     LV_EVENT_DEFOCUSED,
-    LV_EVENT_LEAVE,
     LV_EVENT_VALUE_CHANGED,		 /**< The object's value has changed (i.e. slider moved) */
     LV_EVENT_INSERT,
     LV_EVENT_REFRESH,
@@ -118,17 +110,14 @@ enum {
     /*General signals*/
     LV_SIGNAL_CLEANUP, /**< Object is being deleted */
     LV_SIGNAL_CHILD_CHG, /**< Child was removed/added */
-    LV_SIGNAL_COORD_CHG, /**< Object coordinates/size have changed */
+    LV_SIGNAL_CORD_CHG, /**< Object coordinates/size have changed */
     LV_SIGNAL_PARENT_SIZE_CHG, /**< Parent's size has changed */
     LV_SIGNAL_STYLE_CHG,    /**< Object's style has changed */
     LV_SIGNAL_BASE_DIR_CHG, /**<The base dir has changed*/
     LV_SIGNAL_REFR_EXT_DRAW_PAD, /**< Object's extra padding has changed */
     LV_SIGNAL_GET_TYPE, /**< LittlevGL needs to retrieve the object's type */
-    LV_SIGNAL_GET_STYLE, /**<Get the style of an object*/
-    LV_SIGNAL_GET_STATE_DSC, /**<Get the state of the object*/
 
     /*Input device related*/
-    LV_SIGNAL_HIT_TEST,          /**< Advanced hit-testing */
     LV_SIGNAL_PRESSED,           /**< The object has been pressed*/
     LV_SIGNAL_PRESSING,          /**< The object is being pressed (called continuously while pressing)*/
     LV_SIGNAL_PRESS_LOST,        /**< User is still pressing but slid cursor/finger off of the object */
@@ -136,10 +125,7 @@ enum {
     LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
     LV_SIGNAL_DRAG_BEGIN,	
-    LV_SIGNAL_DRAG_THROW_BEGIN,
-    LV_SIGNAL_DRAG_END,                                   
-    LV_SIGNAL_GESTURE,			/**< The object has been gesture*/
-    LV_SIGNAL_LEAVE,            /**< Another object is clicked or chosen via an input device */
+    LV_SIGNAL_DRAG_END,
 
     /*Group related*/
     LV_SIGNAL_FOCUS,
@@ -151,6 +137,32 @@ typedef uint8_t lv_signal_t;
 
 typedef lv_res_t (*lv_signal_cb_t)(struct _lv_obj_t * obj, lv_signal_t sign, void * param);
 
+/** Object alignment. */
+enum {
+    LV_ALIGN_CENTER = 0,
+    LV_ALIGN_IN_TOP_LEFT,
+    LV_ALIGN_IN_TOP_MID,
+    LV_ALIGN_IN_TOP_RIGHT,
+    LV_ALIGN_IN_BOTTOM_LEFT,
+    LV_ALIGN_IN_BOTTOM_MID,
+    LV_ALIGN_IN_BOTTOM_RIGHT,
+    LV_ALIGN_IN_LEFT_MID,
+    LV_ALIGN_IN_RIGHT_MID,
+    LV_ALIGN_OUT_TOP_LEFT,
+    LV_ALIGN_OUT_TOP_MID,
+    LV_ALIGN_OUT_TOP_RIGHT,
+    LV_ALIGN_OUT_BOTTOM_LEFT,
+    LV_ALIGN_OUT_BOTTOM_MID,
+    LV_ALIGN_OUT_BOTTOM_RIGHT,
+    LV_ALIGN_OUT_LEFT_TOP,
+    LV_ALIGN_OUT_LEFT_MID,
+    LV_ALIGN_OUT_LEFT_BOTTOM,
+    LV_ALIGN_OUT_RIGHT_TOP,
+    LV_ALIGN_OUT_RIGHT_MID,
+    LV_ALIGN_OUT_RIGHT_BOTTOM,
+};
+typedef uint8_t lv_align_t;
+
 #if LV_USE_OBJ_REALIGN
 typedef struct
 {
@@ -161,8 +173,71 @@ typedef struct
     uint8_t auto_realign : 1;
     uint8_t origo_align : 1; /**< 1: the origo (center of the object) was aligned with
                                 `lv_obj_align_origo`*/
-} lv_realign_t;
+} lv_reailgn_t;
 #endif
+
+enum {
+    LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
+    LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
+    LV_DRAG_DIR_ALL = 0x3, /**< Object can be dragged in all directions. */
+};
+
+typedef uint8_t lv_drag_dir_t;
+
+typedef struct _lv_obj_t
+{
+    struct _lv_obj_t * par; /**< Pointer to the parent object*/
+    lv_ll_t child_ll;       /**< Linked list to store the children objects*/
+
+    lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
+
+    lv_event_cb_t event_cb; /**< Event callback function */
+    lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
+    lv_design_cb_t design_cb; /**< Object type specific design function*/
+
+    void * ext_attr;            /**< Object type specific extended data*/
+    const lv_style_t * style_p; /**< Pointer to the object's style*/
+
+#if LV_USE_GROUP != 0
+    void * group_p; /**< Pointer to the group of the object*/
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
+    uint8_t ext_click_pad_hor; /**< Extra click padding in horizontal direction */
+    uint8_t ext_click_pad_ver; /**< Extra click padding in vertical direction */
+#endif
+
+#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
+    lv_area_t ext_click_pad;   /**< Extra click padding area. */
+#endif
+
+    /*Attributes and states*/
+    uint8_t click : 1;          /**< 1: Can be pressed by an input device*/
+    uint8_t drag : 1;           /**< 1: Enable the dragging*/
+    uint8_t drag_throw : 1;     /**< 1: Enable throwing with drag*/
+    uint8_t drag_parent : 1;    /**< 1: Parent will be dragged instead*/
+    uint8_t hidden : 1;         /**< 1: Object is hidden*/
+    uint8_t top : 1;            /**< 1: If the object or its children is clicked it goes to the foreground*/
+    uint8_t opa_scale_en : 1;   /**< 1: opa_scale is set*/
+    uint8_t parent_event : 1;   /**< 1: Send the object's events to the parent too. */
+    lv_drag_dir_t drag_dir : 2; /**<  Which directions the object can be dragged in */
+    lv_bidi_dir_t base_dir : 2; /**< Base direction of texts related to this object */
+    uint8_t reserved : 3;       /**<  Reserved for future use*/
+    uint8_t protect;            /**< Automatically happening actions can be prevented. 'OR'ed values from
+                                   `lv_protect_t`*/
+    lv_opa_t opa_scale;         /**< Scale down the opacity by this factor. Effects all children as well*/
+
+    lv_coord_t ext_draw_pad; /**< EXTtend the size in every direction for drawing. */
+
+#if LV_USE_OBJ_REALIGN
+    lv_reailgn_t realign;       /**< Information about the last call to ::lv_obj_align. */
+#endif
+
+#if LV_USE_USER_DATA
+    lv_obj_user_data_t user_data; /**< Custom user data for object. */
+#endif
+
+} lv_obj_t;
 
 /*Protect some attributes (max. 8 bit)*/
 enum {
@@ -178,114 +253,12 @@ enum {
 };
 typedef uint8_t lv_protect_t;
 
-enum {
-    LV_OBJ_STATE_NORMAL  =   0,
-    LV_OBJ_STATE_CHECKED  =  (LV_STYLE_STATE_CHECKED >> LV_STYLE_STATE_POS),
-    LV_OBJ_STATE_FOCUS  =    (LV_STYLE_STATE_FOCUS >> LV_STYLE_STATE_POS),
-    LV_OBJ_STATE_EDIT  =     (LV_STYLE_STATE_EDIT >> LV_STYLE_STATE_POS),
-    LV_OBJ_STATE_HOVER  =    (LV_STYLE_STATE_HOVER >> LV_STYLE_STATE_POS),
-    LV_OBJ_STATE_PRESSED  =  (LV_STYLE_STATE_PRESSED >> LV_STYLE_STATE_POS),
-    LV_OBJ_STATE_DISABLED =  (LV_STYLE_STATE_DISABLED >> LV_STYLE_STATE_POS),
-};
-
-typedef uint8_t lv_obj_state_t;
-
-typedef struct {
-    lv_obj_state_t act;
-    lv_obj_state_t prev;
-    uint8_t anim;
-}lv_obj_state_dsc_t;
-
-typedef struct _lv_obj_t
-{
-    struct _lv_obj_t * parent; /**< Pointer to the parent object*/
-    lv_ll_t child_ll;       /**< Linked list to store the children objects*/
-
-    lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
-
-    lv_event_cb_t event_cb; /**< Event callback function */
-    lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
-    lv_design_cb_t design_cb; /**< Object type specific design function*/
-
-    void * ext_attr;            /**< Object type specific extended data*/
-    lv_style_list_t  style_list;
-
-
-#if LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_TINY
-    uint8_t ext_click_pad_hor; /**< Extra click padding in horizontal direction */
-    uint8_t ext_click_pad_ver; /**< Extra click padding in vertical direction */
-#elif LV_USE_EXT_CLICK_AREA == LV_EXT_CLICK_AREA_FULL
-    lv_area_t ext_click_pad;   /**< Extra click padding area. */
-#endif
-
-    lv_coord_t ext_draw_pad; /**< EXTtend the size in every direction for drawing. */
-
-    /*Attributes and states*/
-    uint8_t click           :1;  /**< 1: Can be pressed by an input device*/
-    uint8_t drag            :1;  /**< 1: Enable the dragging*/
-    uint8_t drag_throw      :1;  /**< 1: Enable throwing with drag*/
-    uint8_t drag_parent     :1;  /**< 1: Parent will be dragged instead*/
-    uint8_t hidden          :1;  /**< 1: Object is hidden*/
-    uint8_t top             :1;  /**< 1: If the object or its children is clicked it goes to the foreground*/
-    uint8_t parent_event    :1;  /**< 1: Send the object's events to the parent too. */
-    uint8_t adv_hittest     :1;  /**< 1: Use advanced hit-testing (slower) */
-    uint8_t gesture_parent : 1; /**< 1: Parent will be gesture instead*/
-
-    lv_drag_dir_t drag_dir  :2;  /**<  Which directions the object can be dragged in */
-    lv_bidi_dir_t base_dir  :2;  /**< Base direction of texts related to this object */
-
-#if LV_USE_GROUP != 0
-    void * group_p;
-#endif
-
-    uint8_t protect;            /**< Automatically happening actions can be prevented.
-                                     'OR'ed values from `lv_protect_t`*/
-    lv_obj_state_dsc_t state_dsc;
-
-#if LV_USE_OBJ_REALIGN
-    lv_realign_t realign;       /**< Information about the last call to ::lv_obj_align. */
-#endif
-
-#if LV_USE_USER_DATA
-    lv_obj_user_data_t user_data; /**< Custom user data for object. */
-#endif
-
-} lv_obj_t;
-
-enum {
-    LV_OBJ_PART_MAIN,
-    _LV_OBJ_PART_VIRTUAL_LAST = 0x01,
-    _LV_OBJ_PART_REAL_LAST =    0x40,
-    _LV_OBJ_PART_ALL = 0xFF,
-};
-
-typedef uint8_t lv_obj_part_t;
-
 /** Used by `lv_obj_get_type()`. The object's and its ancestor types are stored here*/
 typedef struct
 {
     const char * type[LV_MAX_ANCESTOR_NUM]; /**< [0]: the actual type, [1]: ancestor, [2] #1's ancestor
                                                ... [x]: "lv_obj" */
 } lv_obj_type_t;
-
-typedef struct
-{
-    lv_point_t *point;
-    bool result;
-} lv_hit_test_info_t;
-
-
-typedef struct
-{
-    uint8_t part;
-    lv_style_list_t * result;
-} lv_get_style_info_t;
-
-typedef struct
-{
-    uint8_t part;
-    lv_obj_state_dsc_t * result;
-} lv_get_state_info_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -299,7 +272,7 @@ void lv_init(void);
 
 /**
  * Deinit the 'lv' library
- * Currently only implemented when not using custom allocators, or GC is enabled.
+ * Currently only implemented when not using custorm allocators, or GC is enabled.
  */
 #if LV_ENABLE_GC || !LV_MEM_CUSTOM
 void lv_deinit(void);
@@ -484,20 +457,6 @@ void lv_obj_set_ext_click_area(lv_obj_t * obj, lv_coord_t left, lv_coord_t right
  */
 void lv_obj_set_style(lv_obj_t * obj, const lv_style_t * style);
 
-void lv_obj_set_style_color(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_color_t color);
-
-void lv_obj_set_style_int(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_style_int_t value);
-
-void lv_obj_set_style_opa(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, lv_opa_t opa);
-
-void lv_obj_set_style_ptr(lv_obj_t * obj, uint8_t type, lv_style_property_t prop, const void * p);
-
-void lv_obj_add_style(lv_obj_t * obj, uint8_t type, lv_style_t * style);
-
-void lv_obj_add_theme(void * obj, uint8_t part, uint16_t name);
-
-void lv_obj_reset_style(lv_obj_t * obj, uint8_t type);
-
 /**
  * Notify an object about its style is modified
  * @param obj pointer to an object
@@ -521,13 +480,6 @@ void lv_obj_report_style_mod(lv_style_t * style);
  * @param en true: hide the object
  */
 void lv_obj_set_hidden(lv_obj_t * obj, bool en);
-
-/**
- * Set whether advanced hit-testing is enabled on an object
- * @param obj pointer to an object
- * @param en true: advanced hit-testing is enabled
- */
-void lv_obj_set_adv_hittest(lv_obj_t * obj, bool en);
 
 /**
  * Enable or disable the clicking of an object
@@ -574,23 +526,13 @@ void lv_obj_set_drag_throw(lv_obj_t * obj, bool en);
 void lv_obj_set_drag_parent(lv_obj_t * obj, bool en);
 
 /**
-* Enable to use parent for gesture related operations.
-* If trying to gesture the object the parent will be moved instead
-* @param obj pointer to an object
-* @param en true: enable the 'gesture parent' for the object
-*/
-void lv_obj_set_gesture_parent(lv_obj_t * obj, bool en);
-
-/**
  * Propagate the events to the parent too
  * @param obj pointer to an object
  * @param en true: enable the event propagation
  */
 void lv_obj_set_parent_event(lv_obj_t * obj, bool en);
 
-
 void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir);
-
 /**
  * Set the opa scale enable parameter (required to set opa_scale with `lv_obj_set_opa_scale()`)
  * @param obj pointer to an object
@@ -621,12 +563,6 @@ void lv_obj_set_protect(lv_obj_t * obj, uint8_t prot);
  * @param prot 'OR'-ed values from `lv_protect_t`
  */
 void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot);
-
-void lv_obj_set_state(lv_obj_t * obj, lv_obj_state_t state);
-
-void lv_obj_add_state(lv_obj_t * obj, lv_obj_state_t state);
-
-void lv_obj_clear_state(lv_obj_t * obj, lv_obj_state_t state);
 
 /**
  * Set a an event handler function for an object.
@@ -671,14 +607,12 @@ const void * lv_event_get_data(void);
  */
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
 
-
 /**
  * Send an event to the object
  * @param obj pointer to an object
  * @param event the type of the event from `lv_event_t`.
- * @return LV_RES_OK or LV_RES_INV
  */
-lv_res_t lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
+void lv_signal_send(lv_obj_t * obj, lv_signal_t signal, void * param);
 
 /**
  * Set a new design function for an object
@@ -871,105 +805,12 @@ lv_coord_t lv_obj_get_ext_draw_pad(const lv_obj_t * obj);
  * Appearance get
  *---------------*/
 
-lv_style_int_t lv_obj_get_style_int(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-lv_color_t lv_obj_get_style_color(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-lv_opa_t lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-const void * lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t type, lv_style_property_t prop);
-
-
-lv_style_list_t * lv_obj_get_style_list(const lv_obj_t * obj, uint8_t type);
-
-#define LV_OBJ_STYLE_SET_GET_DECLARE(prop_name, func_name, value_type, style_type)          \
-static inline value_type lv_obj_get_style_##func_name (const lv_obj_t * obj, uint8_t part)  \
-{                                                                                           \
-    return (value_type) lv_obj_get_style##style_type (obj, part, LV_STYLE_##prop_name);     \
-}                                                                                           \
-static inline void lv_obj_set_style_##func_name (lv_obj_t * obj, uint8_t part, lv_style_state_t state, value_type value)  \
-{                                                                                           \
-    lv_obj_set_style##style_type (obj, part, LV_STYLE_##prop_name | state, value);                  \
-}                                                                                           \
-static inline int16_t lv_style_get_##func_name (lv_style_t * style, void * res)             \
-{                                                                                           \
-    return lv_style_get##style_type (style, LV_STYLE_##prop_name, res);                     \
-}                                                                                           \
-static inline void lv_style_set_##func_name (lv_style_t * style, lv_style_state_t state, value_type value)          \
-{                                                                                           \
-    lv_style_set##style_type (style, LV_STYLE_##prop_name | (state), value);                          \
-}                                                                                           \
-
-
-LV_OBJ_STYLE_SET_GET_DECLARE(RADIUS, radius, lv_style_int_t,_int);
-LV_OBJ_STYLE_SET_GET_DECLARE(CLIP_CORNER, clip_corner, bool, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(TRANSITION_TIME, transition_time, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(OPA_SCALE, opa_scale, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(PAD_TOP, pad_top, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(PAD_BOTTOM, pad_bottom, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(PAD_LEFT, pad_left, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(PAD_RIGHT, pad_right, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(PAD_INNER, pad_inner, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_BLEND_MODE, bg_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_MAIN_STOP, bg_main_stop, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_GRAD_STOP, bg_grad_stop, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_GRAD_DIR, bg_grad_dir, lv_grad_dir_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_COLOR, bg_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_GRAD_COLOR, bg_grad_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(BG_OPA, bg_opa, lv_opa_t , _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_WIDTH, border_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_SIDE, border_side, lv_border_side_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_BLEND_MODE, border_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_POST, border_post, bool, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_COLOR, border_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(BORDER_OPA, border_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_WIDTH, shadow_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_OFFSET_X, shadow_offset_x, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_OFFSET_Y, shadow_offset_y, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_SPREAD, shadow_spread, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_BLEND_MODE, shadow_blend_mode, lv_blend_mode_t, _int );
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_COLOR, shadow_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(SHADOW_OPA, shadow_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(PATTERN_BLEND_MODE, pattern_blend_mode, lv_blend_mode_t, _int );
-LV_OBJ_STYLE_SET_GET_DECLARE(PATTERN_RECOLOR, pattern_recolor, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(PATTERN_OPA, pattern_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(PATTERN_RECOLOR_OPA, pattern_recolor_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(PATTERN_IMAGE, pattern_image, const void *, _ptr);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_LETTER_SPACE, value_letter_space, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_LINE_SPACE, value_line_space, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_BLEND_MODE, value_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_OFS_X, value_ofs_x, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_OFS_Y, value_ofs_y, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_ALIGN, value_align, lv_align_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_COLOR, value_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_OPA, value_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_FONT, value_font, const lv_font_t * , _ptr);
-LV_OBJ_STYLE_SET_GET_DECLARE(VALUE_STR, value_str, const char * , _ptr);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_LETTER_SPACE, letter_space, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_LINE_SPACE, line_space, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_BLEND_MODE, text_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_COLOR, text_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_SEL_COLOR, text_sel_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_OPA, text_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_FONT, font, const lv_font_t * , _ptr);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_WIDTH, line_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_BLEND_MODE, line_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_DASH_WIDTH, line_dash_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_DASH_GAP, line_dash_gap, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_ROUNDED, line_rounded, bool, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_COLOR, line_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(LINE_OPA, line_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(IMAGE_BLEND_MODE, image_blend_mode, lv_blend_mode_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(IMAGE_RECOLOR, image_recolor, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(IMAGE_OPA, image_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(IMAGE_RECOLOR_OPA, image_recolor_opa, lv_opa_t, _opa);
-LV_OBJ_STYLE_SET_GET_DECLARE(SIZE, size, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_WIDTH, scale_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_BORDER_WIDTH, scale_border_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_END_BORDER_WIDTH, scale_end_border_width, lv_style_int_t, _int);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_COLOR, scale_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_GRAD_COLOR, scale_grad_color, lv_color_t, _color);
-LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_END_COLOR, scale_end_color, lv_color_t, _color);
+/**
+ * Get the style pointer of an object (if NULL get style of the parent)
+ * @param obj pointer to an object
+ * @return pointer to a style
+ */
+const lv_style_t * lv_obj_get_style(const lv_obj_t * obj);
 
 /*-----------------
  * Attribute get
@@ -981,13 +822,6 @@ LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_END_COLOR, scale_end_color, lv_color_t, _colo
  * @return true: the object is hidden
  */
 bool lv_obj_get_hidden(const lv_obj_t * obj);
-
-/**
- * Get whether advanced hit-testing is enabled on an object
- * @param obj pointer to an object
- * @return true: advanced hit-testing is enabled
- */
-bool lv_obj_get_adv_hittest(const lv_obj_t * obj);
 
 /**
  * Get the click enable attribute of an object
@@ -1038,12 +872,6 @@ bool lv_obj_get_drag_parent(const lv_obj_t * obj);
  */
 bool lv_obj_get_parent_event(const lv_obj_t * obj);
 
-/**
-* Get the gesture parent attribute of an object
-* @param obj pointer to an object
-* @return true: gesture parent is enabled
-*/
-bool lv_obj_get_gesture_parent(const lv_obj_t * obj);
 
 lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj);
 
@@ -1076,10 +904,6 @@ uint8_t lv_obj_get_protect(const lv_obj_t * obj);
  */
 bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
 
-lv_obj_state_dsc_t * lv_obj_get_state_dsc(const lv_obj_t * obj, uint8_t part);
-
-lv_obj_state_t lv_obj_get_state(const lv_obj_t * obj, uint8_t part);
-
 /**
  * Get the signal function of an object
  * @param obj pointer to an object
@@ -1104,24 +928,6 @@ lv_event_cb_t lv_obj_get_event_cb(const lv_obj_t * obj);
 /*------------------
  * Other get
  *-----------------*/
-
-/**
- * Check if a given screen-space point is on an object's coordinates.
- * 
- * This method is intended to be used mainly by advanced hit testing algorithms to check
- * whether the point is even within the object (as an optimization).
- * @param obj object to check
- * @param point screen-space point
- */
-bool lv_obj_is_point_on_coords(lv_obj_t * obj, const lv_point_t * point);
-
-/**
- * Hit-test an object given a particular point in screen space.
- * @param obj object to hit-test
- * @param point screen-space point
- * @return true if the object is considered under the point
- */
-bool lv_obj_hittest(lv_obj_t * obj, lv_point_t * point);
 
 /**
  * Get the ext pointer
@@ -1191,24 +997,6 @@ bool lv_obj_is_focused(const lv_obj_t * obj);
  * @return LV_RES_OK
  */
 lv_res_t lv_obj_handle_get_type_signal(lv_obj_type_t * buf, const char * name);
-
-
-
-/**
- * Initialize a rectangle descriptor from an object's styles
- * @param obj pointer to an object
- * @param type type of style. E.g.  `LV_OBJ_STYLE_MAIN`, `LV_BTN_STYLE_REL` or `LV_PAGE_STYLE_SCRL`
- * @param draw_dsc the descriptor the initialize
- * @note Only the relevant fields will be set.
- * E.g. if `border width == 0` the other border properties won't be evaluated.
- */
-void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t type, lv_draw_rect_dsc_t * draw_dsc);
-
-void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t type, lv_draw_label_dsc_t * draw_dsc);
-
-void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * draw_dsc);
-
-void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t * draw_dsc);
 
 /**********************
  *      MACROS
