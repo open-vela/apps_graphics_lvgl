@@ -44,13 +44,19 @@ typedef struct
     const lv_color_t * needle_colors; /*Color of the needles (lv_color_t my_colors[needle_num])*/
     const void * needle_img;
     lv_point_t needle_img_pivot;
+    lv_style_list_t style_needle;
+    lv_style_list_t style_strong;
     uint8_t needle_count;             /*Number of needles*/
     uint8_t label_count;              /*Number of labels on the scale*/
 } lv_gauge_ext_t;
 
 /*Styles*/
 enum {
-    LV_GAUGE_STYLE_MAIN,
+    LV_GAUGE_PART_MAIN = LV_LMETER_PART_MAIN,
+    LV_GAUGE_PART_STRONG = _LV_LMETER_PART_VIRTUAL_LAST,
+    LV_GAUGE_PART_NEEDLE,
+    _LV_GAUGE_PART_VIRTUAL_LAST = _LV_LMETER_PART_VIRTUAL_LAST,
+    _LV_GAUGE_PART_REAL_LAST = _LV_LMETER_PART_REAL_LAST,
 };
 typedef uint8_t lv_gauge_style_t;
 
@@ -238,18 +244,6 @@ lv_coord_t lv_gauge_get_needle_img_pivot_x(lv_obj_t * gauge);
  * @return the X coordinate of rotation center of the image
  */
 lv_coord_t lv_gauge_get_needle_img_pivot_y(lv_obj_t * gauge);
-
-/**
- * Get the style of a gauge
- * @param gauge pointer to a gauge object
- * @param type which style should be get (can be only `LV_GAUGE_STYLE_MAIN`)
- * @return pointer to the gauge's style
- */
-static inline const lv_style_t * lv_gauge_get_style(const lv_obj_t * gauge, lv_gauge_style_t type)
-{
-    (void)type; /*Unused*/
-    return lv_obj_get_style(gauge);
-}
 
 /**********************
  *      MACROS
