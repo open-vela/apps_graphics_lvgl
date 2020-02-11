@@ -94,14 +94,9 @@ int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3)
 
     return v1 + v2 + v3 + v4;
 }
-#define SQRT_BITSPERLONG 32
-#define TOP2BITS(x) (x >> (SQRT_BITSPERLONG-2))
-#define SQRT_CORE  r = (r << 2) + TOP2BITS(x); x <<= 2; \
-    a <<= 1; \
-    e = (a << 1) + 1; \
-    if (r >= e)  { r -= e;  a++; } \
+#define BITSPERLONG 32UL
 
-#define SQRT_CORE_8_TIMES SQRT_CORE SQRT_CORE SQRT_CORE SQRT_CORE SQRT_CORE SQRT_CORE SQRT_CORE SQRT_CORE
+#define TOP2BITS(x) ((x & (3UL << (BITSPERLONG-2))) >> (BITSPERLONG-2))
 
 void lv_sqrt(uint32_t x, lv_sqrt_res_t * q)
 {
@@ -204,7 +199,7 @@ void lv_sqrt(uint32_t x, lv_sqrt_res_t * q)
              240, 244, 248, 252, 0,
 
      };
-    if(x <= 1024) {
+    if(x <= 64) {
         x--;
         q->i = ci[x];
         q->f = cf[x];
@@ -221,10 +216,16 @@ void lv_sqrt(uint32_t x, lv_sqrt_res_t * q)
     uint32_t r = 0L;                   /* remainder        */
     uint32_t e = 0L;                   /* trial product    */
 
-    /*Unroll the loop*/
-    SQRT_CORE_8_TIMES
-    SQRT_CORE_8_TIMES
-    SQRT_CORE_8_TIMES
+    uint32_t i;
+    for (i = 0; i < BITSPERLONG / 2 + 8; i++) {
+          r = (r << 2) + TOP2BITS(x); x <<= 2;
+          a <<= 1;
+          e = (a << 1) + 1;
+          if (r >= e)  {
+                r -= e;
+                a++;
+          }
+    }
 
     q->f = a & 0xFF;
     q->i = a >> 8;
