@@ -8,8 +8,10 @@
  *********************/
 
 #include "../lv_core/lv_debug.h"
+#include "../lv_themes/lv_theme.h"
 #include "lv_imgbtn.h"
 #include "lv_label.h"
+
 
 #if LV_USE_IMGBTN != 0
 
@@ -55,20 +57,20 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("image button create started");
 
     /*Create the ancestor of image button*/
-    lv_obj_t * new_imgbtn = lv_btn_create(par, copy);
-    LV_ASSERT_MEM(new_imgbtn);
-    if(new_imgbtn == NULL) return NULL;
+    lv_obj_t * imgbtn = lv_btn_create(par, copy);
+    LV_ASSERT_MEM(imgbtn);
+    if(imgbtn == NULL) return NULL;
 
     /*Allocate the image button type specific extended data*/
-    lv_imgbtn_ext_t * ext = lv_obj_allocate_ext_attr(new_imgbtn, sizeof(lv_imgbtn_ext_t));
+    lv_imgbtn_ext_t * ext = lv_obj_allocate_ext_attr(imgbtn, sizeof(lv_imgbtn_ext_t));
     LV_ASSERT_MEM(ext);
     if(ext == NULL) {
-        lv_obj_del(new_imgbtn);
+        lv_obj_del(imgbtn);
         return NULL;
     }
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_imgbtn);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_imgbtn);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(imgbtn);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(imgbtn);
 
         /*Initialize the allocated 'ext' */
 #if LV_IMGBTN_TILED == 0
@@ -82,12 +84,12 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->act_cf = LV_IMG_CF_UNKNOWN;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(new_imgbtn, lv_imgbtn_signal);
-    lv_obj_set_design_cb(new_imgbtn, lv_imgbtn_design);
+    lv_obj_set_signal_cb(imgbtn, lv_imgbtn_signal);
+    lv_obj_set_design_cb(imgbtn, lv_imgbtn_design);
 
     /*Init the new image button image button*/
     if(copy == NULL) {
-
+        lv_theme_apply(imgbtn, LV_THEME_IMGBTN);
     }
     /*Copy an existing image button*/
     else {
@@ -100,12 +102,12 @@ lv_obj_t * lv_imgbtn_create(lv_obj_t * par, const lv_obj_t * copy)
         memcpy((void*)ext->img_src_right, copy_ext->img_src_right, sizeof(ext->img_src_right));
 #endif
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(new_imgbtn);
+        lv_obj_refresh_style(imgbtn);
     }
 
     LV_LOG_INFO("image button created");
 
-    return new_imgbtn;
+    return imgbtn;
 }
 
 /*=====================
@@ -166,19 +168,6 @@ void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src
 }
 
 #endif
-
-/**
- * Set a style of a image button.
- * @param imgbtn pointer to image button object
- * @param type which style should be set
- * @param style pointer to a style
- */
-void lv_imgbtn_set_style(lv_obj_t * imgbtn, lv_imgbtn_style_t type, const lv_style_t * style)
-{
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
-    lv_btn_set_style(imgbtn, type, style);
-}
 
 /*=====================
  * Getter functions
@@ -248,19 +237,6 @@ const void * lv_imgbtn_get_src_right(lv_obj_t * imgbtn, lv_btn_state_t state)
 
 #endif
 
-/**
- * Get style of a image button.
- * @param imgbtn pointer to image button object
- * @param type which style should be get
- * @return style pointer to the style
- */
-const lv_style_t * lv_imgbtn_get_style(const lv_obj_t * imgbtn, lv_imgbtn_style_t type)
-{
-    LV_ASSERT_OBJ(imgbtn, LV_OBJX_NAME);
-
-    return lv_btn_get_style(imgbtn, type);
-}
-
 /*=====================
  * Other functions
  *====================*/
@@ -290,7 +266,7 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
         lv_imgbtn_ext_t * ext = lv_obj_get_ext_attr(imgbtn);
         lv_design_res_t cover = LV_DESIGN_RES_NOT_COVER;
         if(ext->act_cf == LV_IMG_CF_TRUE_COLOR || ext->act_cf == LV_IMG_CF_RAW) {
-            cover = lv_area_is_in(clip_area, &imgbtn->coords) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
+            cover = lv_area_is_in(clip_area, &imgbtn->coords, 0) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
         }
 
         return cover;
@@ -300,14 +276,18 @@ static lv_design_res_t lv_imgbtn_design(lv_obj_t * imgbtn, const lv_area_t * cli
         /*Just draw an image*/
         lv_imgbtn_ext_t * ext    = lv_obj_get_ext_attr(imgbtn);
         lv_btn_state_t state     = lv_imgbtn_get_state(imgbtn);
-        const lv_style_t * style = lv_imgbtn_get_style(imgbtn, state);
-        lv_opa_t opa_scale       = lv_obj_get_opa_scale(imgbtn);
 #if LV_IMGBTN_TILED == 0
         const void * src = ext->img_src[state];
         if(lv_img_src_get_type(src) == LV_IMG_SRC_SYMBOL) {
-            lv_draw_label(&imgbtn->coords, clip_area, style, opa_scale, src, LV_TXT_FLAG_NONE, NULL, NULL, NULL,  lv_obj_get_base_dir(imgbtn));
+            lv_draw_label_dsc_t label_dsc;
+            lv_draw_label_dsc_init(&label_dsc);
+            lv_obj_init_draw_label_dsc(imgbtn, LV_IMGBTN_PART_MAIN, &label_dsc);
+            lv_draw_label(&imgbtn->coords, clip_area, &label_dsc, src, NULL);
         } else {
-            lv_draw_img(&imgbtn->coords, clip_area, src, style, 0, NULL, LV_IMG_ZOOM_NONE, false, opa_scale);
+            lv_draw_img_dsc_t img_dsc;
+            lv_draw_img_dsc_init(&img_dsc);
+            lv_obj_init_draw_img_dsc(imgbtn, LV_IMGBTN_PART_MAIN, &img_dsc);
+            lv_draw_img(&imgbtn->coords, clip_area, src, &img_dsc);
         }
 #else
         const void * src = ext->img_src_left[state];
@@ -422,9 +402,9 @@ static void refr_img(lv_obj_t * imgbtn)
 
     lv_res_t info_res = LV_RES_OK;
     if(lv_img_src_get_type(src) == LV_IMG_SRC_SYMBOL) {
-        const lv_style_t * style = ext->btn.styles[state];
-        header.h = lv_font_get_line_height(style->text.font);
-        header.w = lv_txt_get_width(src, (uint16_t)strlen(src), style->text.font, style->text.letter_space, LV_TXT_FLAG_NONE);
+        const lv_font_t * font = lv_obj_get_style_font(imgbtn, LV_IMGBTN_PART_MAIN);
+        header.h = lv_font_get_line_height(font);
+        header.w = lv_txt_get_width(src, (uint16_t)strlen(src), font, 0, LV_TXT_FLAG_NONE);
         header.always_zero = 0;
         header.cf = LV_IMG_CF_ALPHA_1BIT;
     } else {

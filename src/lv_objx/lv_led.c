@@ -20,7 +20,7 @@
 
 #define LV_LED_WIDTH_DEF (LV_DPI / 3)
 #define LV_LED_HEIGHT_DEF (LV_DPI / 3)
-#define LV_LED_BRIGHT_OFF 100
+#define LV_LED_BRIGHT_OFF 60
 #define LV_LED_BRIGHT_ON 255
 
 /**********************
@@ -58,37 +58,31 @@ lv_obj_t * lv_led_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("led create started");
 
     /*Create the ancestor basic object*/
-    lv_obj_t * new_led = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_led);
-    if(new_led == NULL) return NULL;
+    lv_obj_t * led = lv_obj_create(par, copy);
+    LV_ASSERT_MEM(led);
+    if(led == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_led);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(new_led);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(led);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(led);
 
     /*Allocate the object type specific extended data*/
-    lv_led_ext_t * ext = lv_obj_allocate_ext_attr(new_led, sizeof(lv_led_ext_t));
+    lv_led_ext_t * ext = lv_obj_allocate_ext_attr(led, sizeof(lv_led_ext_t));
     LV_ASSERT_MEM(ext);
     if(ext == NULL) {
-        lv_obj_del(new_led);
+        lv_obj_del(led);
         return NULL;
     }
 
     ext->bright = LV_LED_BRIGHT_ON;
 
-    lv_obj_set_signal_cb(new_led, lv_led_signal);
-    lv_obj_set_design_cb(new_led, lv_led_design);
+    lv_obj_set_signal_cb(led, lv_led_signal);
+    lv_obj_set_design_cb(led, lv_led_design);
 
     /*Init the new led object*/
     if(copy == NULL) {
-        lv_obj_set_size(new_led, LV_LED_WIDTH_DEF, LV_LED_HEIGHT_DEF);
+        lv_obj_set_size(led, LV_LED_WIDTH_DEF, LV_LED_HEIGHT_DEF);
 
-        /*Set the default styles*/
-        lv_theme_t * th = lv_theme_get_current();
-        if(th) {
-            lv_led_set_style(new_led, LV_LED_STYLE_MAIN, th->style.led);
-        } else {
-            lv_led_set_style(new_led, LV_LED_STYLE_MAIN, &lv_style_pretty_color);
-        }
+        lv_theme_apply(led,LV_THEME_LED);
     }
     /*Copy an existing object*/
     else {
@@ -96,12 +90,12 @@ lv_obj_t * lv_led_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->bright             = copy_ext->bright;
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(new_led);
+        lv_obj_refresh_style(led);
     }
 
     LV_LOG_INFO("led created");
 
-    return new_led;
+    return led;
 }
 
 /*=====================
@@ -203,31 +197,22 @@ static lv_design_res_t lv_led_design(lv_obj_t * led, const lv_area_t * clip_area
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
         /*Make darker colors in a temporary style according to the brightness*/
         lv_led_ext_t * ext       = lv_obj_get_ext_attr(led);
-        const lv_style_t * style = lv_obj_get_style(led);
 
-        /* Store the real pointer because of 'lv_group'
-         * If the object is in focus 'lv_obj_get_style()' will give a pointer to tmp style
-         * and to the real object style. It is important because of style change tricks below*/
-        const lv_style_t * style_ori_p = led->style_p;
-
-        /*Create a temporal style*/
-        lv_style_t leds_tmp;
-        memcpy(&leds_tmp, style, sizeof(leds_tmp));
+        lv_draw_rect_dsc_t rect_dsc;
+        lv_draw_rect_dsc_init(&rect_dsc);
+        lv_obj_init_draw_rect_dsc(led, LV_LED_PART_MAIN, &rect_dsc);
 
         /*Mix. the color with black proportionally with brightness*/
-        leds_tmp.body.main_color   = lv_color_mix(leds_tmp.body.main_color, LV_COLOR_BLACK, ext->bright);
-        leds_tmp.body.grad_color   = lv_color_mix(leds_tmp.body.grad_color, LV_COLOR_BLACK, ext->bright);
-        leds_tmp.body.border.color = lv_color_mix(leds_tmp.body.border.color, LV_COLOR_BLACK, ext->bright);
+        rect_dsc.bg_color   = lv_color_mix(rect_dsc.bg_color, LV_COLOR_BLACK, ext->bright);
+        rect_dsc.bg_grad_color   = lv_color_mix(rect_dsc.bg_grad_color, LV_COLOR_BLACK, ext->bright);
+        rect_dsc.border_color = lv_color_mix(rect_dsc.border_color, LV_COLOR_BLACK, ext->bright);
+        rect_dsc.shadow_color = lv_color_mix(rect_dsc.shadow_color, LV_COLOR_BLACK, ext->bright);
 
-        /*Set the current swidth according to brightness proportionally between LV_LED_BRIGHT_OFF
+        /*Set the current shadow width according to brightness proportionally between LV_LED_BRIGHT_OFF
          * and LV_LED_BRIGHT_ON*/
-        uint16_t bright_tmp = ext->bright;
-        leds_tmp.body.shadow.width =
-            ((bright_tmp - LV_LED_BRIGHT_OFF) * style->body.shadow.width) / (LV_LED_BRIGHT_ON - LV_LED_BRIGHT_OFF);
+        rect_dsc.shadow_width = ((ext->bright - LV_LED_BRIGHT_OFF) * rect_dsc.shadow_width) / (LV_LED_BRIGHT_ON - LV_LED_BRIGHT_OFF);
 
-        led->style_p = &leds_tmp;
-        ancestor_design(led, clip_area, mode);
-        led->style_p = style_ori_p; /*Restore the ORIGINAL style pointer*/
+        lv_draw_rect(&led->coords, clip_area, &rect_dsc);
     }
     return LV_DESIGN_RES_OK;
 }
