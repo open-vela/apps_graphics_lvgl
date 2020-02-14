@@ -27,7 +27,6 @@
  *  STATIC PROTOTYPES
  **********************/
 static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * param);
-static lv_style_list_t * lv_spinbox_get_style(lv_obj_t * ta, uint8_t part);
 static void lv_spinbox_updatevalue(lv_obj_t * spinbox);
 
 /**********************
@@ -55,7 +54,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("spinbox create started");
 
     /*Create the ancestor of spinbox*/
-    lv_obj_t * new_spinbox = lv_textarea_create(par, copy);
+    lv_obj_t * new_spinbox = lv_ta_create(par, copy);
     LV_ASSERT_MEM(new_spinbox);
     if(new_spinbox == NULL) return NULL;
 
@@ -79,8 +78,9 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->range_max          = 99999;
     ext->range_min          = -99999;
 
-    lv_textarea_set_one_line(new_spinbox, true);
-    lv_textarea_set_cursor_click_pos(new_spinbox, true);
+    lv_ta_set_cursor_type(new_spinbox, LV_CURSOR_BLOCK);
+    lv_ta_set_one_line(new_spinbox, true);
+    lv_ta_set_cursor_click_pos(new_spinbox, false);
 
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(new_spinbox, lv_spinbox_signal);
@@ -88,7 +88,13 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Init the new spinbox spinbox*/
     if(copy == NULL) {
-
+        /*Set the default styles*/
+        lv_theme_t * th = lv_theme_get_current();
+        if(th) {
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_BG, th->style.spinbox.bg);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_CURSOR, th->style.spinbox.cursor);
+            lv_spinbox_set_style(new_spinbox, LV_SPINBOX_STYLE_SB, th->style.spinbox.sb);
+        }
     }
     /*Copy an existing spinbox*/
     else {
@@ -100,7 +106,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_spinbox_set_step(new_spinbox, copy_ext->step);
 
         /*Refresh the style with new signal function*/
-//        lv_obj_refresh_style(new_spinbox);
+        lv_obj_refresh_style(new_spinbox);
     }
 
     lv_spinbox_updatevalue(new_spinbox);
@@ -329,12 +335,6 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
 {
 
     lv_res_t res = LV_RES_OK;
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_get_style_info_t * info = param;
-        info->result = lv_spinbox_get_style(spinbox, info->part);
-        if(info->result != NULL) return LV_RES_OK;
-        else return ancestor_signal(spinbox, sign, param);
-    }
 
     /* Include the ancient signal function */
     if(sign != LV_SIGNAL_CONTROL) {
@@ -395,42 +395,13 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
         } else if(c == LV_KEY_DOWN) {
             lv_spinbox_decrement(spinbox);
         } else {
-            lv_textarea_add_char(spinbox, c);
+            lv_ta_add_char(spinbox, c);
         }
     }
 
     return res;
 }
 
-/**
- * Get the style descriptor of a part of the object
- * @param page pointer the object
- * @param part the part from `lv_spinbox_part_t`. (LV_SPINBOX_PART_...)
- * @return pointer to the style descriptor of the specified part
- */
-static lv_style_list_t * lv_spinbox_get_style(lv_obj_t * ta, uint8_t part)
-{
-    LV_ASSERT_OBJ(ta, LV_OBJX_NAME);
-
-    lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(ta);
-    lv_style_list_t * style_dsc_p;
-
-    switch(part) {
-    case LV_SPINBOX_PART_BG:
-        style_dsc_p = &ta->style_list;
-        break;
-    case LV_SPINBOX_PART_SCRLBAR:
-        style_dsc_p = &ext->ta.page.sb.style;
-        break;
-    case LV_SPINBOX_PART_CURSOR:
-        style_dsc_p = &ext->ta.cursor.style;
-        break;
-    default:
-        style_dsc_p = NULL;
-    }
-
-    return style_dsc_p;
-}
 static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
 {
     lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(spinbox);
@@ -492,7 +463,7 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
     }
 
     /*Refresh the text*/
-    lv_textarea_set_text(spinbox, (char *)buf);
+    lv_ta_set_text(spinbox, (char *)buf);
 
     /*Set the cursor position*/
     int32_t step    = ext->step;
@@ -506,7 +477,7 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
 
     cur_pos += (ext->digit_padding_left - cur_shift_left);
 
-    lv_textarea_set_cursor_pos(spinbox, cur_pos);
+    lv_ta_set_cursor_pos(spinbox, cur_pos);
 }
 
 #endif

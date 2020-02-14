@@ -15,11 +15,11 @@ extern "C" {
  *********************/
 #include "../lv_conf_internal.h"
 
-#if LV_USE_TEXTAREABVIEW != 0
+#if LV_USE_TABVIEW != 0
 
 /*Testing of dependencies*/
-#if LV_USE_BTNMATRIX == 0
-#error "lv_tabview: lv_btnm is required. Enable it in lv_conf.h (LV_USE_BTNMATRIX  1) "
+#if LV_USE_BTNM == 0
+#error "lv_tabview: lv_btnm is required. Enable it in lv_conf.h (LV_USE_BTNM  1) "
 #endif
 
 #if LV_USE_PAGE == 0
@@ -67,16 +67,15 @@ typedef struct
 } lv_tabview_ext_t;
 
 enum {
-    LV_TABVIEW_PART_BG = LV_OBJ_PART_MAIN,
-    _LV_TABVIEW_PART_VIRTUAL_LAST = _LV_OBJ_PART_VIRTUAL_LAST,
-
-    LV_TABVIEW_PART_BG_SCRL = _LV_OBJ_PART_REAL_LAST,
-    LV_TABVIEW_PART_TAB,
-    LV_TABVIEW_PART_TAB_BG,
-    LV_TABVIEW_PART_INDIC,
-    _LV_TABVIEW_PART_REAL_LAST,
+    LV_TABVIEW_STYLE_BG,
+    LV_TABVIEW_STYLE_INDIC,
+    LV_TABVIEW_STYLE_BTN_BG,
+    LV_TABVIEW_STYLE_BTN_REL,
+    LV_TABVIEW_STYLE_BTN_PR,
+    LV_TABVIEW_STYLE_BTN_TGL_REL,
+    LV_TABVIEW_STYLE_BTN_TGL_PR,
 };
-typedef uint8_t lv_tabview_part_t;
+typedef uint8_t lv_tabview_style_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -128,6 +127,14 @@ void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, lv_anim_enable_t an
 void lv_tabview_set_anim_time(lv_obj_t * tabview, uint16_t anim_time);
 
 /**
+ * Set the style of a tab view
+ * @param tabview pointer to a tan view object
+ * @param type which style should be set
+ * @param style pointer to the new style
+ */
+void lv_tabview_set_style(lv_obj_t * tabview, lv_tabview_style_t type, const lv_style_t * style);
+
+/**
  * Set the position of tab select buttons
  * @param tabview pointer to a tab view object
  * @param btns_pos which button position
@@ -167,6 +174,14 @@ lv_obj_t * lv_tabview_get_tab(const lv_obj_t * tabview, uint16_t id);
 uint16_t lv_tabview_get_anim_time(const lv_obj_t * tabview);
 
 /**
+ * Get a style of a tab view
+ * @param tabview pointer to a ab view object
+ * @param type which style should be get
+ * @return style pointer to a style
+ */
+const lv_style_t * lv_tabview_get_style(const lv_obj_t * tabview, lv_tabview_style_t type);
+
+/**
  * Get position of tab select buttons
  * @param tabview pointer to a ab view object
  */
@@ -176,7 +191,7 @@ lv_tabview_btns_pos_t lv_tabview_get_btns_pos(const lv_obj_t * tabview);
  *      MACROS
  **********************/
 
-#endif /*LV_USE_TEXTAREABVIEW*/
+#endif /*LV_USE_TABVIEW*/
 
 #ifdef __cplusplus
 } /* extern "C" */
