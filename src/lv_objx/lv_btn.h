@@ -36,23 +36,12 @@ extern "C" {
 /** Possible states of a button.
  * It can be used not only by buttons but other button-like objects too*/
 enum {
-    /**Released*/
-    LV_BTN_STATE_REL,
-
-    /**Pressed*/
-    LV_BTN_STATE_PR,
-
-    /**Toggled released*/
-    LV_BTN_STATE_TGL_REL,
-
-    /**Toggled pressed*/
-    LV_BTN_STATE_TGL_PR,
-
-    /**Inactive*/
-    LV_BTN_STATE_INA,
-
-    /**Number of states*/
-    _LV_BTN_STATE_NUM,
+    LV_BTN_STATE_RELEASED,
+    LV_BTN_STATE_PRESSED,
+    LV_BTN_STATE_CHECKED_RELEASED,
+    LV_BTN_STATE_CHECKED_PRESSED,
+    LV_BTN_STATE_DISABLED,
+    _LV_BTN_STATE_LAST, /* Number of states*/
 };
 typedef uint8_t lv_btn_state_t;
 
@@ -62,46 +51,17 @@ typedef struct
     /** Ext. of ancestor*/
     lv_cont_ext_t cont;
 
-    /*New data for this type */
-
-    /**Styles in each state*/
-    const lv_style_t * styles[_LV_BTN_STATE_NUM];
-#if LV_BTN_INK_EFFECT
-    /** [ms] Time of ink fill effect (0: disable ink effect)*/
-    uint16_t ink_in_time;
-
-    /** [ms] Wait before the ink disappears */
-    uint16_t ink_wait_time;
-
-    /** [ms] Time of ink disappearing*/
-    uint16_t ink_out_time;
-#endif
-
-    /** Current state of the button from 'lv_btn_state_t' enum*/
-    lv_btn_state_t state : 3;
-
     /** 1: Toggle enabled*/
     uint8_t toggle : 1;
 } lv_btn_ext_t;
 
 /**Styles*/
 enum {
-    /** Release style */
-    LV_BTN_STYLE_REL,
-
-    /**Pressed style*/
-    LV_BTN_STYLE_PR,
-
-    /** Toggle released style*/
-    LV_BTN_STYLE_TGL_REL,
-
-    /** Toggle pressed style */
-    LV_BTN_STYLE_TGL_PR,
-
-    /** Inactive style*/
-    LV_BTN_STYLE_INA,
+    LV_BTN_PART_MAIN = LV_OBJ_PART_MAIN ,
+    _LV_BTN_PART_VIRTUAL_LAST,
+    _LV_BTN_PART_REAL_LAST = _LV_OBJ_PART_REAL_LAST,
 };
-typedef uint8_t lv_btn_style_t;
+typedef uint8_t lv_btn_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -124,7 +84,7 @@ lv_obj_t * lv_btn_create(lv_obj_t * par, const lv_obj_t * copy);
  * @param btn pointer to a button object
  * @param tgl true: enable toggled states, false: disable
  */
-void lv_btn_set_toggle(lv_obj_t * btn, bool tgl);
+void lv_btn_set_checkable(lv_obj_t * btn, bool tgl);
 
 /**
  * Set the state of the button
@@ -213,7 +173,7 @@ void lv_btn_set_ink_out_time(lv_obj_t * btn, uint16_t time);
  * @param type which style should be set
  * @param style pointer to a style
  *  */
-void lv_btn_set_style(lv_obj_t * btn, lv_btn_style_t type, const lv_style_t * style);
+void lv_btn_set_style(lv_obj_t * btn, lv_btn_part_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -231,7 +191,7 @@ lv_btn_state_t lv_btn_get_state(const lv_obj_t * btn);
  * @param btn pointer to a button object
  * @return true: toggle enabled, false: disabled
  */
-bool lv_btn_get_toggle(const lv_obj_t * btn);
+bool lv_btn_get_checkable(const lv_obj_t * btn);
 
 /**
  * Get the layout of a button
@@ -282,35 +242,6 @@ static inline lv_fit_t lv_btn_get_fit_bottom(const lv_obj_t * btn)
 {
     return lv_cont_get_fit_bottom(btn);
 }
-
-/**
- * Get time of the ink in effect (draw a circle on click to animate in the new state)
- * @param btn pointer to a button object
- * @return the time of the ink animation
- */
-uint16_t lv_btn_get_ink_in_time(const lv_obj_t * btn);
-
-/**
- * Get the wait time before the ink disappears
- * @param btn pointer to a button object
- * @return the time of the ink animation
- */
-uint16_t lv_btn_get_ink_wait_time(const lv_obj_t * btn);
-
-/**
- * Get time of the ink out effect (animate to the releases state)
- * @param btn pointer to a button object
- * @return the time of the ink animation
- */
-uint16_t lv_btn_get_ink_out_time(const lv_obj_t * btn);
-
-/**
- * Get style of a button.
- * @param btn pointer to button object
- * @param type which style should be get
- * @return style pointer to the style
- *  */
-const lv_style_t * lv_btn_get_style(const lv_obj_t * btn, lv_btn_style_t type);
 
 /**********************
  *      MACROS

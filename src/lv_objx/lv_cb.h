@@ -49,12 +49,8 @@ typedef struct
 
 /** Checkbox styles. */
 enum {
-    LV_CB_STYLE_BG, /**< Style of object background. */
-    LV_CB_STYLE_BOX_REL, /**< Style of box (released). */
-    LV_CB_STYLE_BOX_PR, /**< Style of box (pressed). */
-    LV_CB_STYLE_BOX_TGL_REL, /**< Style of box (released but checked). */
-    LV_CB_STYLE_BOX_TGL_PR, /**< Style of box (pressed and checked). */
-    LV_CB_STYLE_BOX_INA, /**< Style of disabled box */
+    LV_CB_PART_BG = LV_BTN_PART_MAIN,  /**< Style of object background. */
+    LV_CB_PART_BULLET = _LV_BTN_PART_REAL_LAST, /**< Style of box (released). */
 };
 typedef uint8_t lv_cb_style_t;
 
@@ -97,7 +93,7 @@ void lv_cb_set_static_text(lv_obj_t * cb, const char * txt);
  */
 static inline void lv_cb_set_checked(lv_obj_t * cb, bool checked)
 {
-    lv_btn_set_state(cb, checked ? LV_BTN_STATE_TGL_REL : LV_BTN_STATE_REL);
+    lv_btn_set_state(cb, checked ? LV_BTN_STATE_CHECKED_RELEASED: LV_BTN_STATE_RELEASED);
 }
 
 /**
@@ -106,7 +102,7 @@ static inline void lv_cb_set_checked(lv_obj_t * cb, bool checked)
  */
 static inline void lv_cb_set_inactive(lv_obj_t * cb)
 {
-    lv_btn_set_state(cb, LV_BTN_STATE_INA);
+    lv_btn_set_state(cb, LV_BTN_STATE_DISABLED);
 }
 
 /**
@@ -135,7 +131,7 @@ const char * lv_cb_get_text(const lv_obj_t * cb);
  */
 static inline bool lv_cb_is_checked(const lv_obj_t * cb)
 {
-    return lv_btn_get_state(cb) == LV_BTN_STATE_REL ? false : true;
+    return lv_btn_get_state(cb) == LV_BTN_STATE_RELEASED ? false : true;
 }
 
 /**
@@ -145,16 +141,9 @@ static inline bool lv_cb_is_checked(const lv_obj_t * cb)
  */
 static inline bool lv_cb_is_inactive(const lv_obj_t * cb)
 {
-    return lv_btn_get_state(cb) == LV_BTN_STATE_INA ? true :false;
+    return lv_btn_get_state(cb) == LV_BTN_STATE_DISABLED ? true :false;
 }
 
-/**
- * Get a style of a button
- * @param cb pointer to check box object
- * @param type which style should be get
- * @return style pointer to the style
- *  */
-const lv_style_t * lv_cb_get_style(const lv_obj_t * cb, lv_cb_style_t type);
 
 /**********************
  *      MACROS

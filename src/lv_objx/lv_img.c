@@ -36,6 +36,7 @@
  **********************/
 static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area, lv_design_mode_t mode);
 static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param);
+static lv_style_list_t * lv_img_get_style(lv_obj_t * img, uint8_t type);
 
 /**********************
  *  STATIC VARIABLES
@@ -60,28 +61,28 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
 {
     LV_LOG_TRACE("image create started");
 
-    lv_obj_t * new_img = NULL;
+    lv_obj_t * img = NULL;
 
     /*Create a basic object*/
-    new_img = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_img);
-    if(new_img == NULL) return NULL;
+    img = lv_obj_create(par, copy);
+    LV_ASSERT_MEM(img);
+    if(img == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_img);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(img);
 
     /*Extend the basic object to image object*/
-    lv_img_ext_t * ext = lv_obj_allocate_ext_attr(new_img, sizeof(lv_img_ext_t));
+    lv_img_ext_t * ext = lv_obj_allocate_ext_attr(img, sizeof(lv_img_ext_t));
     LV_ASSERT_MEM(ext);
     if(ext == NULL) {
-        lv_obj_del(new_img);
+        lv_obj_del(img);
         return NULL;
     }
 
     ext->src       = NULL;
     ext->src_type  = LV_IMG_SRC_UNKNOWN;
     ext->cf        = LV_IMG_CF_UNKNOWN;
-    ext->w         = lv_obj_get_width(new_img);
-    ext->h         = lv_obj_get_height(new_img);
+    ext->w         = lv_obj_get_width(img);
+    ext->h         = lv_obj_get_height(img);
     ext->angle = 0;
     ext->zoom = LV_IMG_ZOOM_NONE;
     ext->antialias = LV_ANTIALIAS ? 1 : 0;
@@ -92,34 +93,33 @@ lv_obj_t * lv_img_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->pivot.y = 0;
 
     /*Init the new object*/
-    lv_obj_set_signal_cb(new_img, lv_img_signal);
-    lv_obj_set_design_cb(new_img, lv_img_design);
+    lv_obj_set_signal_cb(img, lv_img_signal);
+    lv_obj_set_design_cb(img, lv_img_design);
 
     if(copy == NULL) {
-        lv_obj_set_click(new_img, false);
-        lv_obj_set_adv_hittest(new_img, true); /*Images have fast hit-testing*/
+        lv_theme_apply(img, LV_THEME_IMAGE);
+        lv_obj_set_click(img, false);
+        lv_obj_set_adv_hittest(img, true); /*Images have fast hit-testing*/
         /* Enable auto size for non screens
          * because image screens are wallpapers
          * and must be screen sized*/
         if(par != NULL) {
             ext->auto_size = 1;
-            lv_obj_set_style(new_img, NULL); /*Inherit the style  by default*/
         } else {
             ext->auto_size = 0;
-            lv_obj_set_style(new_img, &lv_style_plain); /*Set a style for screens*/
         }
     } else {
         lv_img_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
         ext->auto_size          = copy_ext->auto_size;
-        lv_img_set_src(new_img, copy_ext->src);
+        lv_img_set_src(img, copy_ext->src);
 
-        /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(new_img);
+//        /*Refresh the style with new signal function*/
+        lv_obj_refresh_style(img);
     }
 
     LV_LOG_INFO("image created");
 
-    return new_img;
+    return img;
 }
 
 /*=====================
@@ -192,9 +192,11 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
 
     if(src_type == LV_IMG_SRC_SYMBOL) {
         /*`lv_img_dsc_get_info` couldn't set the with and height of a font so set it here*/
-        const lv_style_t * style = lv_img_get_style(img, LV_IMG_STYLE_MAIN);
+        const lv_font_t * font = lv_obj_get_style_font(img, LV_IMG_PART_MAIN);
+        lv_style_int_t letter_space = lv_obj_get_style_text_letter_space(img, LV_IMG_PART_MAIN);
+        lv_style_int_t line_space = lv_obj_get_style_text_line_space(img, LV_IMG_PART_MAIN);
         lv_point_t size;
-        lv_txt_get_size(&size, src_img, style->text.font, style->text.letter_space, style->text.line_space,
+        lv_txt_get_size(&size, src_img, font, letter_space, line_space,
                         LV_COORD_MAX, LV_TXT_FLAG_NONE);
         header.w = size.x;
         header.h = size.y;
@@ -212,7 +214,7 @@ void lv_img_set_src(lv_obj_t * img, const void * src_img)
     }
 
     /*Provide enough room for the rotated corners*/
-    if(ext->angle) lv_obj_refresh_ext_draw_pad(img);
+    if(ext->angle || ext->zoom != LV_IMG_ZOOM_NONE) lv_obj_refresh_ext_draw_pad(img);
 
     lv_obj_invalidate(img);
 }
@@ -280,11 +282,24 @@ void lv_img_set_pivot(lv_obj_t * img, lv_coord_t pivot_x, lv_coord_t pivot_y)
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
 	if (ext->pivot.x == pivot_x && ext->pivot.y == pivot_y) return;
 
-    lv_obj_invalidate(img);
+    lv_area_t a;
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
+
     ext->pivot.x = pivot_x;
     ext->pivot.y = pivot_y;
     lv_obj_refresh_ext_draw_pad(img);
-    lv_obj_invalidate(img);
+
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
 }
 
 /**
@@ -300,10 +315,23 @@ void lv_img_set_angle(lv_obj_t * img, int16_t angle)
     lv_img_ext_t * ext = lv_obj_get_ext_attr(img);
     if(angle == ext->angle) return;
 
-    lv_obj_invalidate(img);
+    lv_area_t a;
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
+
     ext->angle = angle;
     lv_obj_refresh_ext_draw_pad(img);
-    lv_obj_invalidate(img);
+
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
 }
 
 /**
@@ -323,10 +351,23 @@ void lv_img_set_zoom(lv_obj_t * img, uint16_t zoom)
 
     if(zoom == 0) zoom = 1;
 
-    lv_obj_invalidate(img);
+    lv_area_t a;
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
+
     ext->zoom = zoom;
     lv_obj_refresh_ext_draw_pad(img);
-    lv_obj_invalidate(img);
+
+    lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
+    a.x1 += img->coords.x1;
+    a.y1 += img->coords.y1;
+    a.x2 += img->coords.x1;
+    a.y2 += img->coords.y1;
+    lv_obj_invalidate_area(img, &a);
 }
 
 /**
@@ -492,7 +533,6 @@ bool lv_img_get_antialias(lv_obj_t * img)
  */
 static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
-    const lv_style_t * style = lv_obj_get_style(img);
     lv_img_ext_t * ext       = lv_obj_get_ext_attr(img);
 
     if(mode == LV_DESIGN_COVER_CHK) {
@@ -500,49 +540,102 @@ static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area
         if(ext->src_type == LV_IMG_SRC_UNKNOWN || ext->src_type == LV_IMG_SRC_SYMBOL || ext->angle != 0) return LV_DESIGN_RES_NOT_COVER;
 
         if(ext->cf == LV_IMG_CF_TRUE_COLOR || ext->cf == LV_IMG_CF_RAW) {
-            cover = lv_area_is_in(clip_area, &img->coords) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
+            cover = lv_area_is_in(clip_area, &img->coords, 0) ? LV_DESIGN_RES_COVER : LV_DESIGN_RES_NOT_COVER;
         }
 
-        const lv_style_t * style = lv_img_get_style(img, LV_IMG_STYLE_MAIN);
-        if(style->image.opa < LV_OPA_MAX) return false;
+        if(lv_obj_get_style_image_opa(img, LV_IMG_PART_MAIN) < LV_OPA_MAX) return false;
 
         return cover;
     } else if(mode == LV_DESIGN_DRAW_MAIN) {
         if(ext->h == 0 || ext->w == 0) return true;
-        lv_area_t coords;
-        lv_opa_t opa_scale = lv_obj_get_opa_scale(img);
+        lv_area_t img_coords;
 
-        lv_obj_get_coords(img, &coords);
+        lv_obj_get_coords(img, &img_coords);
+
+        lv_draw_rect_dsc_t bg_dsc;
+        lv_draw_rect_dsc_init(&bg_dsc);
+        lv_obj_init_draw_rect_dsc(img, LV_IMG_PART_MAIN, &bg_dsc);
+
+        /*If the border is drawn later disable loading its properties*/
+        if(lv_obj_get_style_border_post(img, LV_OBJ_PART_MAIN)) {
+            bg_dsc.border_opa = LV_OPA_TRANSP;
+        }
+        lv_area_t bg_coords;
+        lv_area_copy(&bg_coords, &img_coords);
+        bg_coords.x1 -= lv_obj_get_style_pad_left(img, LV_IMG_PART_MAIN);
+        bg_coords.x2 += lv_obj_get_style_pad_right(img, LV_IMG_PART_MAIN);
+        bg_coords.y1 -= lv_obj_get_style_pad_top(img, LV_IMG_PART_MAIN);
+        bg_coords.y2 += lv_obj_get_style_pad_bottom(img, LV_IMG_PART_MAIN);
+
+        lv_draw_rect(&bg_coords, clip_area, &bg_dsc);
+
+        if(lv_obj_get_style_clip_corner(img, LV_OBJ_PART_MAIN)) {
+            lv_draw_mask_radius_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_radius_param_t));
+
+            lv_coord_t r = lv_obj_get_style_radius(img, LV_OBJ_PART_MAIN);
+
+            lv_draw_mask_radius_init(mp, &bg_coords, r, false);
+            /*Add the mask and use `img+8` as custom id. Don't use `obj` directly because it might be used by the user*/
+            lv_draw_mask_add(mp, img + 8);
+        }
 
         if(ext->src_type == LV_IMG_SRC_FILE || ext->src_type == LV_IMG_SRC_VARIABLE) {
-            coords.x1 += ext->offset.x;
-            coords.y1 += ext->offset.y;
+            img_coords.x1 += ext->offset.x;
+            img_coords.y1 += ext->offset.y;
 
-            if(coords.x1 > img->coords.x1) coords.x1 -= ext->w;
-            if(coords.y1 > img->coords.y1) coords.y1 -= ext->h;
+            if(img_coords.x1 > img->coords.x1) img_coords.x1 -= ext->w;
+            if(img_coords.y1 > img->coords.y1) img_coords.y1 -= ext->h;
 
             LV_LOG_TRACE("lv_img_design: start to draw image");
-            lv_area_t cords_tmp;
-            cords_tmp.y1 = coords.y1;
-            cords_tmp.y2 = coords.y1 + ext->h - 1;
 
-            for(; cords_tmp.y1 <= coords.y2; cords_tmp.y1 += ext->h, cords_tmp.y2 += ext->h) {
-                cords_tmp.x1 = coords.x1;
-                cords_tmp.x2 = coords.x1 + ext->w - 1;
-                for(; cords_tmp.x1 <= coords.x2; cords_tmp.x1 += ext->w, cords_tmp.x2 += ext->w) {
-                    lv_draw_img(&cords_tmp, clip_area, ext->src, style, ext->angle, &ext->pivot, ext->zoom, ext->antialias, opa_scale);
+            lv_draw_img_dsc_t img_dsc;
+            lv_draw_img_dsc_init(&img_dsc);
+            lv_obj_init_draw_img_dsc(img, LV_IMG_PART_MAIN, &img_dsc);
+            img_dsc.angle = ext->angle;
+            img_dsc.zoom = ext->zoom;
+            img_dsc.pivot.x = ext->pivot.x;
+            img_dsc.pivot.y = ext->pivot.y;
+
+            lv_area_t cords_tmp;
+            cords_tmp.y1 = img_coords.y1;
+            cords_tmp.y2 = img_coords.y1 + ext->h - 1;
+
+            for(; cords_tmp.y1 <= img_coords.y2; cords_tmp.y1 += ext->h, cords_tmp.y2 += ext->h) {
+                cords_tmp.x1 = img_coords.x1;
+                cords_tmp.x2 = img_coords.x1 + ext->w - 1;
+                for(; cords_tmp.x1 <= img_coords.x2; cords_tmp.x1 += ext->w, cords_tmp.x2 += ext->w) {
+                    lv_draw_img(&cords_tmp, clip_area, ext->src, &img_dsc);
                 }
             }
         } else if(ext->src_type == LV_IMG_SRC_SYMBOL) {
             LV_LOG_TRACE("lv_img_design: start to draw symbol");
-            lv_style_t style_mod;
-            lv_style_copy(&style_mod, style);
-            style_mod.text.color = style->image.color;
-            lv_draw_label(&coords, clip_area, &style_mod, opa_scale, ext->src, LV_TXT_FLAG_NONE, NULL, NULL, NULL, lv_obj_get_base_dir(img));
+            lv_draw_label_dsc_t label_dsc;
+            lv_draw_label_dsc_init(&label_dsc);
+            lv_obj_init_draw_label_dsc(img, LV_IMG_PART_MAIN, &label_dsc);
+
+            label_dsc.color = lv_obj_get_style_image_recolor(img, LV_IMG_PART_MAIN);
+            lv_draw_label(&img_coords, clip_area, &label_dsc, ext->src, NULL);
         } else {
             /*Trigger the error handler of image drawer*/
             LV_LOG_WARN("lv_img_design: image source type is unknown");
-            lv_draw_img(&img->coords, clip_area, NULL, style, 0, NULL, LV_IMG_ZOOM_NONE, false, opa_scale);
+            lv_draw_img(&img->coords, clip_area, NULL, NULL);
+        }
+    } else if(mode == LV_DESIGN_DRAW_POST) {
+        if(lv_obj_get_style_clip_corner(img, LV_OBJ_PART_MAIN)) {
+            lv_draw_mask_radius_param_t * param = lv_draw_mask_remove_custom(img + 8);
+            lv_mem_buf_release(param);
+        }
+
+        lv_draw_rect_dsc_t draw_dsc;
+        lv_draw_rect_dsc_init(&draw_dsc);
+
+        /*If the border is drawn later disable loading other properties*/
+        if(lv_obj_get_style_border_post(img, LV_OBJ_PART_MAIN)) {
+            draw_dsc.bg_opa = LV_OPA_TRANSP;
+            draw_dsc.pattern_opa = LV_OPA_TRANSP;
+            draw_dsc.shadow_opa = LV_OPA_TRANSP;
+            lv_obj_init_draw_rect_dsc(img, LV_OBJ_PART_MAIN, &draw_dsc);
+            lv_draw_rect(&img->coords, clip_area, &draw_dsc);
         }
     }
 
@@ -559,6 +652,13 @@ static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area
 static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
 {
     lv_res_t res;
+    if(sign == LV_SIGNAL_GET_STYLE) {
+
+        lv_get_style_info_t * info = param;
+        info->result = lv_img_get_style(img, info->part);
+        if(info->result != NULL) return LV_RES_OK;
+        else return ancestor_signal(img, sign, param);
+    }
 
     /* Include the ancient signal function */
     res = ancestor_signal(img, sign, param);
@@ -581,57 +681,26 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
     } else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         /*If the image has angle provide enough room for the rotated corners */
         if(ext->angle || ext->zoom != LV_IMG_ZOOM_NONE) {
-            int32_t w = ext->w;
-            int32_t h = ext->h;
-
-            lv_area_t norm;
-            norm.x1 = 0 - ext->pivot.x;
-            norm.y1 = 0 - ext->pivot.y;
-            norm.x2 = w - ext->pivot.x;
-            norm.y2 = h - ext->pivot.y;
-
-            int16_t sinma = lv_trigo_sin(ext->angle);
-            int16_t cosma = lv_trigo_sin(ext->angle + 90);
-
-            lv_point_t lt;
-            lv_point_t rt;
-            lv_point_t lb;
-            lv_point_t rb;
-
-            lv_coord_t xt;
-            lv_coord_t yt;
-
-            xt = (norm.x1 * ext->zoom) >> 8;
-            yt = (norm.y1 * ext->zoom) >> 8;
-            lt.x = ((cosma * xt - sinma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.x;
-            lt.y = ((sinma * xt + cosma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.y;
-
-            xt = (norm.x2 * ext->zoom) >> 8;
-            yt = (norm.y1 * ext->zoom) >> 8;
-            rt.x = ((cosma * xt - sinma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.x;
-            rt.y = ((sinma * xt + cosma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.y;
-
-            xt = (norm.x1 * ext->zoom) >> 8;
-            yt = (norm.y2 * ext->zoom) >> 8;
-            lb.x = ((cosma * xt - sinma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.x;
-            lb.y = ((sinma * xt + cosma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.y;
-
-            xt = (norm.x2 * ext->zoom) >> 8;
-            yt = (norm.y2 * ext->zoom) >> 8;
-            rb.x = ((cosma * xt - sinma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.x;
-            rb.y = ((sinma * xt + cosma * yt) >> LV_TRIGO_SHIFT) + ext->pivot.y;
-
             lv_area_t a;
-            a.x1 = LV_MATH_MIN(lb.x, LV_MATH_MIN(lt.x, LV_MATH_MIN(rb.x, rt.x)));
-            a.x2 = LV_MATH_MAX(lb.x, LV_MATH_MAX(lt.x, LV_MATH_MAX(rb.x, rt.x)));
-            a.y1 = LV_MATH_MIN(lb.y, LV_MATH_MIN(lt.y, LV_MATH_MIN(rb.y, rt.y)));
-            a.y2 = LV_MATH_MAX(lb.y, LV_MATH_MAX(lt.y, LV_MATH_MAX(rb.y, rt.y)));
-
+            lv_img_buf_get_transformed_area(&a, ext->w, ext->h, ext->angle, ext->zoom, &ext->pivot);
             img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, - a.x1);
             img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, - a.y1);
             img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, a.x2 - ext->w);
             img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, a.y2 - ext->h);
         }
+
+        /*Handle the padding of the background*/
+        lv_style_int_t left = lv_obj_get_style_pad_left(img, LV_IMG_PART_MAIN);
+        lv_style_int_t right = lv_obj_get_style_pad_right(img, LV_IMG_PART_MAIN);
+        lv_style_int_t top = lv_obj_get_style_pad_top(img, LV_IMG_PART_MAIN);
+        lv_style_int_t bottom = lv_obj_get_style_pad_bottom(img, LV_IMG_PART_MAIN);
+
+        img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, left);
+        img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, right);
+        img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, top);
+        img->ext_draw_pad = LV_MATH_MAX(img->ext_draw_pad, bottom);
+
+
     } else if(sign == LV_SIGNAL_HIT_TEST) {
         lv_hit_test_info_t *info = param;
         if(ext->zoom != 256 && ext->angle == 0) {
@@ -655,6 +724,21 @@ static lv_res_t lv_img_signal(lv_obj_t * img, lv_signal_t sign, void * param)
     }
 
     return res;
+}
+
+
+static lv_style_list_t * lv_img_get_style(lv_obj_t * img, uint8_t type)
+{
+    lv_style_list_t * style_dsc_p;
+    switch(type) {
+    case LV_IMG_PART_MAIN:
+        style_dsc_p = &img->style_list;
+        break;
+    default:
+        style_dsc_p = NULL;
+    }
+
+    return style_dsc_p;
 }
 
 #endif
