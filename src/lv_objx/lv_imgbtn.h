@@ -39,7 +39,7 @@ typedef struct
     lv_btn_ext_t btn; /*Ext. of ancestor*/
     /*New data for this type */
 #if LV_IMGBTN_TILED == 0
-    const void * img_src[_LV_BTN_STATE_NUM]; /*Store images to each state*/
+    const void * img_src[_LV_BTN_STATE_LAST]; /*Store images to each state*/
 #else
     const void * img_src_left[_LV_BTN_STATE_NUM];  /*Store left side images to each state*/
     const void * img_src_mid[_LV_BTN_STATE_NUM];   /*Store center images to each state*/
@@ -48,15 +48,11 @@ typedef struct
     lv_img_cf_t act_cf; /*Color format of the currently active image*/
 } lv_imgbtn_ext_t;
 
-/*Styles*/
+/*Parts of the image button*/
 enum {
-    LV_IMGBTN_STYLE_REL, /**< Same meaning as ordinary button styles. */
-    LV_IMGBTN_STYLE_PR,
-    LV_IMGBTN_STYLE_TGL_REL,
-    LV_IMGBTN_STYLE_TGL_PR,
-    LV_IMGBTN_STYLE_INA,
+    LV_IMGBTN_PART_MAIN = LV_BTN_PART_MAIN,
 };
-typedef uint8_t lv_imgbtn_style_t;
+typedef uint8_t lv_imgbtn_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -109,9 +105,9 @@ void lv_imgbtn_set_src(lv_obj_t * imgbtn, lv_btn_state_t state, const void * src
  * @param imgbtn pointer to an image button object
  * @param tgl true: enable toggled states, false: disable
  */
-static inline void lv_imgbtn_set_toggle(lv_obj_t * imgbtn, bool tgl)
+static inline void lv_imgbtn_set_checkable(lv_obj_t * imgbtn, bool tgl)
 {
-    lv_btn_set_toggle(imgbtn, tgl);
+    lv_btn_set_checkable(imgbtn, tgl);
 }
 
 /**
@@ -132,14 +128,6 @@ static inline void lv_imgbtn_toggle(lv_obj_t * imgbtn)
 {
     lv_btn_toggle(imgbtn);
 }
-
-/**
- * Set a style of a image button.
- * @param imgbtn pointer to image button object
- * @param type which style should be set
- * @param style pointer to a style
- */
-void lv_imgbtn_set_style(lv_obj_t * imgbtn, lv_imgbtn_style_t type, const lv_style_t * style);
 
 /*=====================
  * Getter functions
@@ -196,18 +184,10 @@ static inline lv_btn_state_t lv_imgbtn_get_state(const lv_obj_t * imgbtn)
  * @param imgbtn pointer to a image button object
  * @return ture: toggle enabled, false: disabled
  */
-static inline bool lv_imgbtn_get_toggle(const lv_obj_t * imgbtn)
+static inline bool lv_imgbtn_get_checkable(const lv_obj_t * imgbtn)
 {
-    return lv_btn_get_toggle(imgbtn);
+    return lv_btn_get_checkable(imgbtn);
 }
-
-/**
- * Get style of a image button.
- * @param imgbtn pointer to image button object
- * @param type which style should be get
- * @return style pointer to the style
- */
-const lv_style_t * lv_imgbtn_get_style(const lv_obj_t * imgbtn, lv_imgbtn_style_t type);
 
 /*=====================
  * Other functions
