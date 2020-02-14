@@ -117,9 +117,9 @@ lv_res_t lv_img_decoder_get_info(const char * src, lv_img_header_t * header)
  * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
  *         LV_RES_INV: none of the registered image decoders were able to open the image.
  */
-lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_color_t color)
+lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, const lv_style_t * style)
 {
-    dsc->color     = color;
+    dsc->style     = style;
     dsc->src_type  = lv_img_src_get_type(src);
     dsc->user_data = NULL;
 
@@ -569,7 +569,7 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
                                            68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255};
 
     /*Simply fill the buffer with the color. Later only the alpha value will be modified.*/
-    lv_color_t bg_color = dsc->color;
+    lv_color_t bg_color = dsc->style->image.color;
     lv_coord_t i;
     for(i = 0; i < len; i++) {
 #if LV_COLOR_DEPTH == 8 || LV_COLOR_DEPTH == 1
@@ -643,9 +643,10 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
 #endif
     }
 
+    uint8_t byte_act = 0;
     uint8_t val_act;
     for(i = 0; i < len; i++) {
-        val_act = (*data_tmp & (mask << pos)) >> pos;
+        val_act = (data_tmp[byte_act] & (mask << pos)) >> pos;
 
         buf[i * LV_IMG_PX_SIZE_ALPHA_BYTE + LV_IMG_PX_SIZE_ALPHA_BYTE - 1] =
             dsc->header.cf == LV_IMG_CF_ALPHA_8BIT ? val_act : opa_table[val_act];
