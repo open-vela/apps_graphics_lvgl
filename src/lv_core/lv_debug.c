@@ -49,6 +49,11 @@ bool lv_debug_check_null(const void * p)
     return false;
 }
 
+bool lv_debug_check_mem_integrity(void)
+{
+    return lv_mem_test() == LV_RES_OK ? true : false;
+}
+
 bool lv_debug_check_obj_type(const lv_obj_t * obj, const char * obj_type)
 {
     if(obj_type[0] == '\0') return true;
@@ -87,10 +92,10 @@ bool lv_debug_check_style(const lv_style_t * style)
     if(style == NULL) return true;  /*NULL style is still valid*/
 
 #if LV_USE_ASSERT_STYLE
-    if(style->debug_sentinel != LV_STYLE_DEGUG_SENTINEL_VALUE) {
-        LV_LOG_WARN("Invalid style (local variable or not initialized?)");
-        return false;
-    }
+//    if(style->debug_sentinel != LV_STYLE_DEGUG_SENTINEL_VALUE) {
+//        LV_LOG_WARN("Invalid style (local variable or not initialized?)");
+//        return false;
+//    }
 #endif
 
     return true;
