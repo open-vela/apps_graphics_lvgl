@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_FILESYSTEM
 
@@ -30,9 +34,8 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-
 /**
- * Errors in the file system module.
+ * Errors in the filesystem module.
  */
 enum {
     LV_FS_RES_OK = 0,
