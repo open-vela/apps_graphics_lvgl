@@ -145,6 +145,12 @@ typedef void * lv_anim_user_data_t;
 /* 1: Enable shadow drawing*/
 #define LV_USE_SHADOW           1
 
+/* 1: Use other blend modes than normal (`LV_BLEND_MODE_...`)*/
+#define LV_USE_BLEND_MODES      1
+
+/* 1: Use the `opa_scale` style property to set the opacity of an object and its children at once*/
+#define LV_USE_OPA_SCALE        1
+
 /* 1: Enable object groups (for keyboard/encoder navigation) */
 #define LV_USE_GROUP            1
 #if LV_USE_GROUP
@@ -367,7 +373,7 @@ typedef void * lv_font_user_data_t;
 
 /* If a word is at least this long, will break wherever "prettiest"
  * To disable, set to a value <= 0 */
-#define LV_TXT_LINE_BREAK_LONG_LEN          12
+#define LV_TXT_LINE_BREAK_LONG_LEN          0
 
 /* Minimum number of characters in a long word to put on a line before a break.
  * Depends on LV_TXT_LINE_BREAK_LONG_LEN. */
@@ -405,8 +411,17 @@ typedef void * lv_font_user_data_t;
  *  LV_OBJ SETTINGS
  *==================*/
 
+#if LV_USE_USER_DATA
 /*Declare the type of the user data of object (can be e.g. `void *`, `int`, `struct`)*/
 typedef void * lv_obj_user_data_t;
+/*Provide a function to free user data*/
+#define LV_USE_USER_DATA_FREE 0
+#if LV_USE_USER_DATA_FREE
+#  define LV_USER_DATA_FREE_INCLUDE  "something.h"  /*Header for user data free function*/
+/* Function prototype : void user_data_free(lv_obj_t * obj); */
+#  define LV_USER_DATA_FREE  (user_data_free)       /*Invoking for user data free function*/
+#endif
+#endif
 
 /*1: enable `lv_obj_realaign()` based on `lv_obj_align()` parameters*/
 #define LV_USE_OBJ_REALIGN          1
@@ -416,7 +431,7 @@ typedef void * lv_obj_user_data_t;
  * LV_EXT_CLICK_AREA_TINY: The extra area can be adjusted horizontally and vertically (0..255 px)
  * LV_EXT_CLICK_AREA_FULL: The extra area can be adjusted in all 4 directions (-32k..+32k px)
  */
-#define LV_USE_EXT_CLICK_AREA  LV_EXT_CLICK_AREA_OFF
+#define LV_USE_EXT_CLICK_AREA  LV_EXT_CLICK_AREA_TINY
 
 /*==================
  *  LV OBJ X USAGE

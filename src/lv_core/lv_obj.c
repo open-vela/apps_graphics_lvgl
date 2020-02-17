@@ -31,6 +31,11 @@
 #include LV_GC_INCLUDE
 #endif /* LV_ENABLE_GC */
 
+
+#if defined(LV_USER_DATA_FREE_INCLUDE)
+#include LV_USER_DATA_FREE_INCLUDE
+#endif /* LV_USE_USER_DATA_FREE */
+
 /*********************
  *      DEFINES
  *********************/
@@ -370,6 +375,11 @@ lv_res_t lv_obj_del(lv_obj_t * obj)
         /*Remove the animations from this object*/
 #if LV_USE_ANIMATION
     lv_anim_del(obj, NULL);
+#endif
+
+    /*Delete the user data*/
+#if LV_USE_USER_DATA_FREE
+    LV_USER_DATA_FREE(obj);
 #endif
 
     /*Recursively delete the children*/
@@ -1411,6 +1421,7 @@ void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
 
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
+    /*Get the transition time for the new state*/
     lv_obj_state_dsc_t dsc_ori = obj->state_dsc;
     obj->state_dsc.act = new_state;
     obj->state_dsc.prev = new_state;
@@ -1420,6 +1431,7 @@ void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
     lv_style_int_t t = 0;
 #endif
     obj->state_dsc = dsc_ori;
+
     if(t == 0) {
 #if LV_USE_ANIMATION
         lv_anim_del(obj, obj_state_anim_cb);
@@ -1443,16 +1455,17 @@ void lv_obj_set_state(lv_obj_t * obj, lv_state_t new_state)
             obj->state_dsc.anim = 0;
         }
 
-        /* Create (or recreate) the animation from where it was deleted.
-         * Calculate the remaining time proportionally too.*/
-        t = ((t - obj->state_dsc.anim) * t)  / 255;
-
-        lv_anim_t a;
-        lv_anim_init(&a);
-        lv_anim_set_exec_cb(&a, obj, obj_state_anim_cb);
-        lv_anim_set_values(&a, obj->state_dsc.anim, 255);
-        lv_anim_set_time(&a, t, 0);
-        lv_anim_create(&a);
+        if(obj->state_dsc.prev != obj->state_dsc.act) {
+            t = t - ((obj->state_dsc.anim * t)  / 255);
+            lv_anim_t a;
+            lv_anim_init(&a);
+            lv_anim_set_exec_cb(&a, obj, obj_state_anim_cb);
+            lv_anim_set_values(&a, obj->state_dsc.anim, 255);
+            lv_anim_set_time(&a, t, 0);
+            lv_anim_create(&a);
+        } else {
+            lv_obj_refresh_style(obj);
+        }
 #endif
     }
 
@@ -2810,6 +2823,7 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
 {
     draw_dsc->radius = lv_obj_get_style_radius(obj, part);
 
+#if LV_USE_OPA_SCALE
     lv_opa_t opa_scale = lv_obj_get_style_opa_scale(obj, part);
     if(opa_scale <= LV_OPA_MIN) {
     	draw_dsc->bg_opa = LV_OPA_TRANSP;
@@ -2819,6 +2833,7 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
         draw_dsc->value_opa = LV_OPA_TRANSP;
         return;
     }
+#endif
 
     if(draw_dsc->bg_opa != LV_OPA_TRANSP) {
         draw_dsc->bg_opa = lv_obj_get_style_bg_opa(obj, part);
@@ -2830,7 +2845,10 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 draw_dsc->bg_main_color_stop =  lv_obj_get_style_bg_main_stop(obj, part);
                 draw_dsc->bg_grad_color_stop =  lv_obj_get_style_bg_grad_stop(obj, part);
             }
+
+#if LV_USE_BLEND_MODES
             draw_dsc->bg_blend_mode = lv_obj_get_style_bg_blend_mode(obj, part);
+#endif
         }
     }
 
@@ -2842,7 +2860,9 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 draw_dsc->border_side = lv_obj_get_style_border_side(obj, part);
                 draw_dsc->border_color = lv_obj_get_style_border_color(obj, part);
             }
+#if LV_USE_BLEND_MODES
             draw_dsc->border_blend_mode = lv_obj_get_style_border_blend_mode(obj, part);
+#endif
         }
     }
 
@@ -2855,7 +2875,9 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 draw_dsc->outline_pad = lv_obj_get_style_outline_pad(obj, part);
                 draw_dsc->outline_color = lv_obj_get_style_outline_color(obj, part);
             }
+#if LV_USE_BLEND_MODES
             draw_dsc->outline_blend_mode = lv_obj_get_style_outline_blend_mode(obj, part);
+#endif
         }
     }
 
@@ -2864,7 +2886,6 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
         if(draw_dsc->pattern_image) {
             draw_dsc->pattern_opa = lv_obj_get_style_pattern_opa(obj, part);
             if(draw_dsc->pattern_opa > LV_OPA_MIN) {
-                draw_dsc->pattern_blend_mode = lv_obj_get_style_pattern_blend_mode(obj, part);
                 draw_dsc->pattern_recolor_opa = lv_obj_get_style_pattern_recolor_opa(obj, part);
                 draw_dsc->pattern_repeat = lv_obj_get_style_pattern_repeat(obj, part);
                 if(lv_img_src_get_type(draw_dsc->pattern_image) == LV_IMG_SRC_SYMBOL) {
@@ -2873,10 +2894,13 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 } else if(draw_dsc->pattern_recolor_opa > LV_OPA_MIN ) {
                     draw_dsc->pattern_recolor = lv_obj_get_style_pattern_recolor(obj, part);
                 }
+#if LV_USE_BLEND_MODES
+                draw_dsc->pattern_blend_mode = lv_obj_get_style_pattern_blend_mode(obj, part);
+#endif
             }
         }
     }
-
+#if LV_USE_SHADOW
     if(draw_dsc->shadow_opa > LV_OPA_MIN) {
         draw_dsc->shadow_width = lv_obj_get_style_shadow_width(obj, part);
         if(draw_dsc->shadow_width) {
@@ -2886,10 +2910,13 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 draw_dsc->shadow_ofs_y = lv_obj_get_style_shadow_offset_y(obj, part);
                 draw_dsc->shadow_spread = lv_obj_get_style_shadow_spread(obj, part);
                 draw_dsc->shadow_color = lv_obj_get_style_shadow_color(obj, part);
+#if LV_USE_BLEND_MODES
                 draw_dsc->shadow_blend_mode = lv_obj_get_style_shadow_blend_mode(obj, part);
+#endif
             }
         }
     }
+#endif
 
     if(draw_dsc->value_opa > LV_OPA_MIN) {
         draw_dsc->value_str = lv_obj_get_style_value_str(obj, part);
@@ -2903,11 +2930,14 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
                 draw_dsc->value_letter_space = lv_obj_get_style_value_letter_space(obj, part);
                 draw_dsc->value_line_space = lv_obj_get_style_value_line_space(obj, part);
                 draw_dsc->value_align = lv_obj_get_style_value_align(obj, part);
+#if LV_USE_BLEND_MODES
                 draw_dsc->value_blend_mode = lv_obj_get_style_value_blend_mode(obj, part);
+#endif
             }
         }
     }
 
+#if LV_USE_OPA_SCALE
     if(opa_scale < LV_OPA_MAX) {
         draw_dsc->bg_opa = (uint16_t)((uint16_t)draw_dsc->bg_opa * opa_scale) >> 8;
         draw_dsc->border_opa = (uint16_t)((uint16_t)draw_dsc->border_opa * opa_scale) >> 8;
@@ -2915,6 +2945,7 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint8_t part, lv_draw_rect_dsc_t 
         draw_dsc->pattern_opa = (uint16_t)((uint16_t)draw_dsc->pattern_opa * opa_scale) >> 8;
         draw_dsc->value_opa = (uint16_t)((uint16_t)draw_dsc->value_opa * opa_scale) >> 8;
     }
+#endif
 }
 
 void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_t * draw_dsc)
@@ -2922,18 +2953,21 @@ void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_
     draw_dsc->opa = lv_obj_get_style_text_opa(obj, part);
     if(draw_dsc->opa <= LV_OPA_MIN) return;
 
+#if LV_USE_OPA_SCALE
     lv_opa_t opa_scale = lv_obj_get_style_opa_scale(obj, part);
     if(opa_scale < LV_OPA_MAX) {
         draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
     }
     if(draw_dsc->opa <= LV_OPA_MIN) return;
+#endif
 
     draw_dsc->color = lv_obj_get_style_text_color(obj, part);
     draw_dsc->letter_space = lv_obj_get_style_text_letter_space(obj, part);
     draw_dsc->line_space = lv_obj_get_style_text_line_space(obj, part);
+    draw_dsc->decor = lv_obj_get_style_text_decor(obj, part);
+#if LV_USE_BLEND_MODES
     draw_dsc->blend_mode = lv_obj_get_style_text_blend_mode(obj, part);
-    draw_dsc->underline = lv_obj_get_style_text_underline(obj, part);
-    draw_dsc->strikethrough = lv_obj_get_style_text_strikethrough(obj, part);
+#endif
 
     draw_dsc->font = lv_obj_get_style_text_font(obj, part);
 
@@ -2947,11 +2981,14 @@ void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * 
 {
     draw_dsc->opa = lv_obj_get_style_image_opa(obj, part);
     if(draw_dsc->opa <= LV_OPA_MIN)  return;
+
+#if LV_USE_OPA_SCALE
     lv_opa_t opa_scale = lv_obj_get_style_opa_scale(obj, part);
     if(opa_scale < LV_OPA_MAX) {
         draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
     }
     if(draw_dsc->opa <= LV_OPA_MIN)  return;
+#endif
 
     draw_dsc->angle = 0;
     draw_dsc->zoom = LV_IMG_ZOOM_NONE;
@@ -2961,24 +2998,28 @@ void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * 
     draw_dsc->recolor_opa = lv_obj_get_style_image_recolor_opa(obj, part);
     draw_dsc->recolor = lv_obj_get_style_image_recolor(obj, part);
 
+#if LV_USE_BLEND_MODES
     draw_dsc->blend_mode = lv_obj_get_style_image_blend_mode(obj, part);
+#endif
 }
 
 void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t * draw_dsc)
 {
     draw_dsc->opa = lv_obj_get_style_line_opa(obj, part);
     if(draw_dsc->opa <= LV_OPA_MIN)  return;
+
+#if LV_USE_OPA_SCALE
     lv_opa_t opa_scale = lv_obj_get_style_opa_scale(obj, part);
     if(opa_scale < LV_OPA_MAX) {
         draw_dsc->opa = (uint16_t)((uint16_t)draw_dsc->opa * opa_scale) >> 8;
     }
     if(draw_dsc->opa <= LV_OPA_MIN)  return;
+#endif
 
     draw_dsc->width = lv_obj_get_style_line_width(obj, part);
     if(draw_dsc->width == 0) return;
 
     draw_dsc->color = lv_obj_get_style_line_color(obj, part);
-    draw_dsc->blend_mode = lv_obj_get_style_line_blend_mode(obj, part);
 
     draw_dsc->dash_width = lv_obj_get_style_line_dash_width(obj, part);
     if(draw_dsc->dash_width) {
@@ -2987,6 +3028,10 @@ void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint8_t part, lv_draw_line_dsc_t 
 
     draw_dsc->round_start = lv_obj_get_style_line_rounded(obj, part);
     draw_dsc->round_end = draw_dsc->round_start;
+
+#if LV_USE_BLEND_MODES
+    draw_dsc->blend_mode = lv_obj_get_style_line_blend_mode(obj, part);
+#endif
 }
 
 /**
