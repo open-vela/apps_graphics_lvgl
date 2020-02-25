@@ -170,6 +170,17 @@
 #define LV_INDEV_DEF_LONG_PRESS_REP_TIME  100
 #endif
 
+
+/* Gesture threshold in pixels */
+#ifndef LV_INDEV_DEF_GESTURE_LIMIT
+#define LV_INDEV_DEF_GESTURE_LIMIT        50
+#endif
+
+/* Gesture min velocity at release before swipe (pixels)*/
+#ifndef LV_INDEV_DEF_GESTURE_MIN_VELOCITY
+#define LV_INDEV_DEF_GESTURE_MIN_VELOCITY 3
+#endif
+
 /*==================
  * Feature usage
  *==================*/
@@ -350,6 +361,13 @@
 #define LV_USE_ASSERT_MEM       1
 #endif
 
+/*Check the integrity of `lv_mem` after critical operations. (Slow)*/
+#ifndef LV_USE_ASSERT_MEM_INTEGRITY
+#ifndef LV_USE_ASSERT_MEM_INTEGRITY
+#define LV_USE_ASSERT_MEM_INTEGRITY       0
+#endif
+#endif
+
 /* Check the strings.
  * Search for NULL, very long strings, invalid characters, and unnatural repetitions. (Slow)
  * If disabled `LV_USE_ASSERT_NULL` will be performed instead (if it's enabled) */
@@ -369,38 +387,6 @@
 #endif
 
 #endif /*LV_USE_DEBUG*/
-
-/*================
- *  THEME USAGE
- *================*/
-#ifndef LV_THEME_LIVE_UPDATE
-#define LV_THEME_LIVE_UPDATE    0   /*1: Allow theme switching at run time. Uses 8..10 kB of RAM*/
-#endif
-
-#ifndef LV_USE_THEME_TEMPL
-#define LV_USE_THEME_TEMPL      0   /*Just for test*/
-#endif
-#ifndef LV_USE_THEME_DEFAULT
-#define LV_USE_THEME_DEFAULT    0   /*Built mainly from the built-in styles. Consumes very few RAM*/
-#endif
-#ifndef LV_USE_THEME_ALIEN
-#define LV_USE_THEME_ALIEN      0   /*Dark futuristic theme*/
-#endif
-#ifndef LV_USE_THEME_NIGHT
-#define LV_USE_THEME_NIGHT      0   /*Dark elegant theme*/
-#endif
-#ifndef LV_USE_THEME_MONO
-#define LV_USE_THEME_MONO       0   /*Mono color theme for monochrome displays*/
-#endif
-#ifndef LV_USE_THEME_MATERIAL
-#define LV_USE_THEME_MATERIAL   0   /*Flat theme with bold colors and light shadows*/
-#endif
-#ifndef LV_USE_THEME_ZEN
-#define LV_USE_THEME_ZEN        0   /*Peaceful, mainly light theme */
-#endif
-#ifndef LV_USE_THEME_NEMO
-#define LV_USE_THEME_NEMO       0   /*Water-like theme based on the movie "Finding Nemo"*/
-#endif
 
 /*==================
  *    FONT USAGE
@@ -451,11 +437,6 @@
 #define LV_FONT_CUSTOM_DECLARE
 #endif
 
-/*Always set a default font from the built-in fonts*/
-#ifndef LV_FONT_DEFAULT
-#define LV_FONT_DEFAULT        &lv_font_roboto_16
-#endif
-
 /* Enable it if you have fonts with a lot of characters.
  * The limit depends on the font size, font face and bpp
  * but with > 10,000 characters if you see issues probably you need to enable it.*/
@@ -472,6 +453,40 @@
 #endif
 
 /*Declare the type of the user data of fonts (can be e.g. `void *`, `int`, `struct`)*/
+
+/*================
+ *  THEME USAGE
+ *================*/
+
+/*Always enable at least on theme*/
+#ifndef LV_USE_THEME_MATERIAL
+#define LV_USE_THEME_MATERIAL    1   /*A fast and impressive theme*/
+#endif
+
+#ifndef LV_THEME_DEFAULT_INIT
+#define LV_THEME_DEFAULT_INIT               lv_theme_material_init
+#endif
+#ifndef LV_THEME_DEFAULT_COLOR_PRIMARY
+#define LV_THEME_DEFAULT_COLOR_PRIMARY      LV_COLOR_RED
+#endif
+#ifndef LV_THEME_DEFAULT_COLOR_SECONDARY
+#define LV_THEME_DEFAULT_COLOR_SECONDARY    LV_COLOR_BLUE
+#endif
+#ifndef LV_THEME_DEFAULT_FLAGS
+#define LV_THEME_DEFAULT_FLAGS              LV_THEME_MATERIAL_FLAG_NONE
+#endif
+#ifndef LV_THEME_DEFAULT_FONT_SMALL
+#define LV_THEME_DEFAULT_FONT_SMALL         &lv_font_roboto_16
+#endif
+#ifndef LV_THEME_DEFAULT_FONT_NORMAL
+#define LV_THEME_DEFAULT_FONT_NORMAL        &lv_font_roboto_16
+#endif
+#ifndef LV_THEME_DEFAULT_FONT_SUBTITLE
+#define LV_THEME_DEFAULT_FONT_SUBTITLE      &lv_font_roboto_16
+#endif
+#ifndef LV_THEME_DEFAULT_FONT_TITLE
+#define LV_THEME_DEFAULT_FONT_TITLE         &lv_font_roboto_16
+#endif
 
 /*=================
  *  Text settings
@@ -596,8 +611,8 @@
 #endif
 
 /*Button matrix (dependencies: -)*/
-#ifndef LV_USE_BTNM
-#define LV_USE_BTNM     1
+#ifndef LV_USE_BTNMATRIX
+#define LV_USE_BTNMATRIX     1
 #endif
 
 /*Calendar (dependencies: -)*/
@@ -611,8 +626,8 @@
 #endif
 
 /*Check box (dependencies: lv_btn, lv_label)*/
-#ifndef LV_USE_CB
-#define LV_USE_CB       1
+#ifndef LV_USE_CHECKBOX
+#define LV_USE_CHECKBOX       1
 #endif
 
 /*Chart (dependencies: -)*/
@@ -636,17 +651,17 @@
 #endif
 
 /*Drop down list (dependencies: lv_page, lv_label, lv_symbol_def.h)*/
-#ifndef LV_USE_DDLIST
-#define LV_USE_DDLIST    1
+#ifndef LV_USE_DROPDOWN
+#define LV_USE_DROPDOWN    1
 #endif
-#if LV_USE_DDLIST != 0
+#if LV_USE_DROPDOWN != 0
 /*Open and close default animation time [ms] (0: no animation)*/
-#ifndef LV_DDLIST_DEF_ANIM_TIME
-#  define LV_DDLIST_DEF_ANIM_TIME     200
+#ifndef LV_DROPDOWN_DEF_ANIM_TIME
+#  define LV_DROPDOWN_DEF_ANIM_TIME     200
 #endif
 #endif
 
-/*Gauge (dependencies:lv_bar, lv_lmeter)*/
+/*Gauge (dependencies:lv_bar, lv_linemeter)*/
 #ifndef LV_USE_GAUGE
 #define LV_USE_GAUGE    1
 #endif
@@ -668,8 +683,8 @@
 #endif
 
 /*Keyboard (dependencies: lv_btnm)*/
-#ifndef LV_USE_KB
-#define LV_USE_KB       1
+#ifndef LV_USE_KEYBOARD
+#define LV_USE_KEYBOARD       1
 #endif
 
 /*Label (dependencies: -*/
@@ -720,13 +735,18 @@
 #endif
 
 /*Line meter (dependencies: *;)*/
-#ifndef LV_USE_LMETER
-#define LV_USE_LMETER   1
+#ifndef LV_USE_LINEMETER
+#define LV_USE_LINEMETER   1
+#endif
+
+/*Mask (dependencies: -)*/
+#ifndef LV_USE_OBJMASK
+#define LV_USE_OBJMASK  0
 #endif
 
 /*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
-#ifndef LV_USE_MBOX
-#define LV_USE_MBOX     1
+#ifndef LV_USE_MSGBOX
+#define LV_USE_MSGBOX     1
 #endif
 
 /*Page (dependencies: lv_cont)*/
@@ -741,18 +761,18 @@
 #endif
 
 /*Preload (dependencies: lv_arc, lv_anim)*/
-#ifndef LV_USE_PRELOAD
-#define LV_USE_PRELOAD      1
+#ifndef LV_USE_SPINNER
+#define LV_USE_SPINNER      1
 #endif
-#if LV_USE_PRELOAD != 0
-#ifndef LV_PRELOAD_DEF_ARC_LENGTH
-#  define LV_PRELOAD_DEF_ARC_LENGTH   60      /*[deg]*/
+#if LV_USE_SPINNER != 0
+#ifndef LV_SPINNER_DEF_ARC_LENGTH
+#  define LV_SPINNER_DEF_ARC_LENGTH   60      /*[deg]*/
 #endif
-#ifndef LV_PRELOAD_DEF_SPIN_TIME
-#  define LV_PRELOAD_DEF_SPIN_TIME    1000    /*[ms]*/
+#ifndef LV_SPINNER_DEF_SPIN_TIME
+#  define LV_SPINNER_DEF_SPIN_TIME    1000    /*[ms]*/
 #endif
-#ifndef LV_PRELOAD_DEF_ANIM
-#  define LV_PRELOAD_DEF_ANIM         LV_PRELOAD_TYPE_SPINNING_ARC
+#ifndef LV_SPINNER_DEF_ANIM
+#  define LV_SPINNER_DEF_ANIM         LV_SPINNER_TYPE_SPINNING_ARC
 #endif
 #endif
 
@@ -783,20 +803,20 @@
 #endif
 
 /*Switch (dependencies: lv_slider)*/
-#ifndef LV_USE_SW
-#define LV_USE_SW       1
+#ifndef LV_USE_SWITCH
+#define LV_USE_SWITCH       1
 #endif
 
 /*Text area (dependencies: lv_label, lv_page)*/
-#ifndef LV_USE_TA
-#define LV_USE_TA       1
+#ifndef LV_USE_TEXTAREA
+#define LV_USE_TEXTAREA       1
 #endif
-#if LV_USE_TA != 0
-#ifndef LV_TA_DEF_CURSOR_BLINK_TIME
-#  define LV_TA_DEF_CURSOR_BLINK_TIME 400     /*ms*/
+#if LV_USE_TEXTAREA != 0
+#ifndef LV_TEXTAREA_DEF_CURSOR_BLINK_TIME
+#  define LV_TEXTAREA_DEF_CURSOR_BLINK_TIME 400     /*ms*/
 #endif
-#ifndef LV_TA_DEF_PWD_SHOW_TIME
-#  define LV_TA_DEF_PWD_SHOW_TIME     1500    /*ms*/
+#ifndef LV_TEXTAREA_DEF_PWD_SHOW_TIME
+#  define LV_TEXTAREA_DEF_PWD_SHOW_TIME     1500    /*ms*/
 #endif
 #endif
 
