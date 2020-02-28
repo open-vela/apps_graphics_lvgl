@@ -13,6 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #include "lv_obj.h"
 
@@ -51,7 +56,8 @@ typedef void (*lv_group_focus_cb_t)(struct _lv_group_t *);
  * Groups can be used to logically hold objects so that they can be individually focused.
  * They are NOT for laying out objects on a screen (try `lv_cont` for that).
  */
-typedef struct _lv_group_t {
+typedef struct _lv_group_t
+{
     lv_ll_t obj_ll;        /**< Linked list to store the objects in the group */
     lv_obj_t ** obj_focus; /**< The object in focus*/
 
@@ -266,6 +272,13 @@ bool lv_group_get_click_focus(const lv_group_t * group);
  * @param en: true: wrapping enabled; false: wrapping disabled
  */
 bool lv_group_get_wrap(lv_group_t * group);
+
+/**
+ * Notify the group that current theme changed and style modification callbacks need to be
+ * refreshed.
+ * @param group pointer to group. If NULL then all groups are notified.
+ */
+void lv_group_report_style_mod(lv_group_t * group);
 
 /**********************
  *      MACROS
