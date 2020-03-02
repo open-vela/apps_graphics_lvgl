@@ -440,9 +440,6 @@ void lv_img_buf_transform_init(lv_img_transform_dsc_t * dsc)
        dsc->cfg.cf == LV_IMG_CF_TRUE_COLOR_CHROMA_KEYED) {
         dsc->tmp.native_color = 1;
     }
-    else {
-        dsc->tmp.native_color = 0;
-    }
 
     dsc->tmp.img_dsc.data = dsc->cfg.src;
     dsc->tmp.img_dsc.header.always_zero = 0;
