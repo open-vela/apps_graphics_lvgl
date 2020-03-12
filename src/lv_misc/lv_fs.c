@@ -15,7 +15,7 @@
 #include "lv_gc.h"
 
 #if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
+#include LV_GC_INCLUDE
 #endif /* LV_ENABLE_GC */
 
 /*********************
@@ -27,7 +27,7 @@
  * free function, otherwise compilation would fail.
  */
 #ifdef free
-    #undef free
+#undef free
 #endif
 
 /**********************
@@ -163,10 +163,11 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
 lv_fs_res_t lv_fs_remove(const char * path)
 {
     if(path == NULL) return LV_FS_RES_INV_PARAM;
+    lv_fs_drv_t * drv = NULL;
 
     char letter = path[0];
 
-    lv_fs_drv_t * drv = lv_fs_get_drv(letter);
+    drv = lv_fs_get_drv(letter);
     if(drv == NULL) return LV_FS_RES_NOT_EX;
     if(drv->ready_cb != NULL) {
         if(drv->ready_cb(drv) == false) return LV_FS_RES_HW_ERR;
@@ -422,8 +423,7 @@ lv_fs_res_t lv_fs_dir_close(lv_fs_dir_t * rddir_p)
 
     if(rddir_p->drv->dir_close_cb == NULL) {
         res = LV_FS_RES_NOT_IMP;
-    }
-    else {
+    } else {
         res = rddir_p->drv->dir_close_cb(rddir_p->drv, rddir_p->dir_d);
     }
 
@@ -454,8 +454,7 @@ lv_fs_res_t lv_fs_free_space(char letter, uint32_t * total_p, uint32_t * free_p)
 
     if(drv->free_space_cb == NULL) {
         res = LV_FS_RES_NOT_IMP;
-    }
-    else {
+    } else {
         uint32_t total_tmp = 0;
         uint32_t free_tmp  = 0;
         res                = drv->free_space_cb(drv, &total_tmp, &free_tmp);
@@ -503,7 +502,8 @@ lv_fs_drv_t * lv_fs_get_drv(char letter)
 {
     lv_fs_drv_t * drv;
 
-    LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv)
+    {
         if(drv->letter == letter) {
             return drv;
         }
@@ -521,7 +521,8 @@ char * lv_fs_get_letters(char * buf)
     lv_fs_drv_t * drv;
     uint8_t i = 0;
 
-    LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv)
+    {
         buf[i] = drv->letter;
         i++;
     }
@@ -542,8 +543,7 @@ const char * lv_fs_get_ext(const char * fn)
     for(i = strlen(fn); i > 0; i--) {
         if(fn[i] == '.') {
             return &fn[i + 1];
-        }
-        else if(fn[i] == '/' || fn[i] == '\\') {
+        } else if(fn[i] == '/' || fn[i] == '\\') {
             return ""; /*No extension if a '\' or '/' found*/
         }
     }
@@ -631,8 +631,7 @@ static const char * lv_fs_get_real_path(const char * path)
     while(*path != '\0') {
         if(*path == ':' || *path == '\\' || *path == '/') {
             path++;
-        }
-        else {
+        } else {
             break;
         }
     }
