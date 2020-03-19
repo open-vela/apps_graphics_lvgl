@@ -212,12 +212,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
 
         memset(new_obj, 0x00, sizeof(lv_obj_t));
 
-#if LV_USE_BIDI
-        new_obj->base_dir     = LV_BIDI_BASE_DIR_DEF;
-#else
-        new_obj->base_dir     = LV_BIDI_DIR_LTR;
-#endif
-
         /*Set coordinates to full screen size*/
         new_obj->coords.x1    = 0;
         new_obj->coords.y1    = 0;
@@ -235,14 +229,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
 
         memset(new_obj, 0x00, sizeof(lv_obj_t));
 
-        new_obj->parent = parent;
-
-#if LV_USE_BIDI
-        new_obj->base_dir     = LV_BIDI_DIR_INHERIT;
-#else
-        new_obj->base_dir     = LV_BIDI_DIR_LTR;
-#endif
-
         new_obj->coords.y1    = parent->coords.y1;
         new_obj->coords.y2    = parent->coords.y1 + LV_OBJ_DEF_HEIGHT;
         if(lv_obj_get_base_dir(new_obj) == LV_BIDI_DIR_RTL) {
@@ -255,6 +241,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         }
     }
 
+    new_obj->parent = parent;
 
     lv_ll_init(&(new_obj->child_ll), sizeof(lv_obj_t));
 
@@ -304,6 +291,13 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
     new_obj->parent_event = 0;
     new_obj->gesture_parent = 1;
     new_obj->state = LV_STATE_DEFAULT;
+
+#if LV_USE_BIDI
+    if(parent == NULL) new_obj->base_dir     = LV_BIDI_BASE_DIR_DEF;
+    else new_obj->base_dir     = LV_BIDI_DIR_INHERIT;
+#else
+    new_obj->base_dir     = LV_BIDI_DIR_LTR;
+#endif
 
     new_obj->ext_attr = NULL;
 
@@ -3110,9 +3104,6 @@ void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_
         draw_dsc->color = lv_obj_get_style_text_sel_color(obj, part);
     }
 
-#if LV_USE_BIDI
-        draw_dsc->bidi_dir = lv_obj_get_base_dir(obj);
-#endif
 }
 
 void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * draw_dsc)
