@@ -390,13 +390,13 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
 
         /*Prepare the `mask_buf`if there are other masks*/
         if(other_mask_cnt) {
-            lv_memset_ff(mask_buf,mask_buf_size);
+            memset(mask_buf, 0xFF, mask_buf_size);
         }
 
 
         bool transform = draw_dsc->angle != 0 || draw_dsc->zoom != LV_IMG_ZOOM_NONE ? true : false;
         lv_img_transform_dsc_t trans_dsc;
-        lv_memset_00(&trans_dsc, sizeof(lv_img_transform_dsc_t));
+        memset(&trans_dsc, 0, sizeof(lv_img_transform_dsc_t));
         if(transform) {
             lv_img_cf_t cf = LV_IMG_CF_TRUE_COLOR;
             if(alpha_byte) cf = LV_IMG_CF_TRUE_COLOR_ALPHA;
@@ -415,12 +415,6 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
             trans_dsc.cfg.antialias = draw_dsc->antialias;
 
             lv_img_buf_transform_init(&trans_dsc);
-        }
-
-		uint16_t recolor_premult[3] = {0};
-		lv_opa_t recolor_opa_inv = 255 - draw_dsc->recolor_opa;
-        if(draw_dsc->recolor_opa != 0) {
-            lv_color_premult(draw_dsc->recolor, draw_dsc->recolor_opa, recolor_premult);
         }
 
         lv_draw_mask_res_t mask_res;
@@ -479,7 +473,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                 }
 
                 if(draw_dsc->recolor_opa != 0) {
-                    c = lv_color_mix_premult(recolor_premult, c, recolor_opa_inv);
+                    c = lv_color_mix(draw_dsc->recolor, c, draw_dsc->recolor_opa);
                 }
 
                 map2[px_i].full = c.full;
@@ -491,7 +485,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                 mask_res_sub = lv_draw_mask_apply(mask_buf + px_i_start, draw_area.x1 + vdb->area.x1, y + draw_area.y1 + vdb->area.y1,
                                                   lv_area_get_width(&draw_area));
                 if(mask_res_sub == LV_DRAW_MASK_RES_FULL_TRANSP) {
-                    lv_memset_00(mask_buf + px_i_start, lv_area_get_width(&draw_area));
+                    memset(mask_buf + px_i_start, 0x00, lv_area_get_width(&draw_area));
                     mask_res = LV_DRAW_MASK_RES_CHANGED;
                 }
                 else if(mask_res_sub == LV_DRAW_MASK_RES_CHANGED) {
@@ -514,7 +508,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
 
                 /*Prepare the `mask_buf`if there are other masks*/
                 if(other_mask_cnt) {
-                    lv_memset_ff(mask_buf, mask_buf_size);
+                    memset(mask_buf, 0xFF, mask_buf_size);
                 }
             }
         }
