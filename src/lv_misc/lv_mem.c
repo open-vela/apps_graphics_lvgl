@@ -56,12 +56,6 @@ typedef struct {
 
 #endif /* LV_ENABLE_GC */
 
-#ifdef LV_ARCH_64
-#define ALIGN_MASK	0x7
-#else
-#define ALIGN_MASK	0x3
-#endif
-
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -83,11 +77,6 @@ static uint32_t zero_mem; /*Give the address of this variable if 0 byte should b
 /**********************
  *      MACROS
  **********************/
-
-#define COPY32 *d32 = *s32; d32++; s32++;
-#define COPY8 *d8 = *s8; d8++; s8++;
-#define SET32(x) *d32 = x; d32++;
-#define REPEAT8(expr) expr expr expr expr expr expr expr expr
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -122,7 +111,7 @@ void lv_mem_init(void)
 void lv_mem_deinit(void)
 {
 #if LV_MEM_CUSTOM == 0
-    lv_memset_00(work_mem, (LV_MEM_SIZE / sizeof(MEM_UNIT)) * sizeof(MEM_UNIT));
+    memset(work_mem, 0x00, (LV_MEM_SIZE / sizeof(MEM_UNIT)) * sizeof(MEM_UNIT));
     lv_mem_ent_t * full = (lv_mem_ent_t *)work_mem;
     full->header.s.used = 0;
     /*The total mem size id reduced by the first header and the close patterns */
@@ -189,7 +178,7 @@ void * lv_mem_alloc(size_t size)
 #endif                /* LV_MEM_CUSTOM */
 
 #if LV_MEM_ADD_JUNK
-    if(alloc != NULL) lv_memset(alloc, 0xaa, size);
+    if(alloc != NULL) memset(alloc, 0xaa, size);
 #endif
 
     if(alloc == NULL) LV_LOG_WARN("Couldn't allocate memory");
@@ -207,7 +196,7 @@ void lv_mem_free(const void * data)
     if(data == NULL) return;
 
 #if LV_MEM_ADD_JUNK
-    lv_memset((void *)data, 0xbb, lv_mem_get_size(data));
+    memset((void *)data, 0xbb, lv_mem_get_size(data));
 #endif
 
 #if LV_ENABLE_GC == 0
@@ -386,7 +375,7 @@ lv_res_t lv_mem_test(void)
 void lv_mem_monitor(lv_mem_monitor_t * mon_p)
 {
     /*Init the data*/
-    lv_memset(mon_p, 0, sizeof(lv_mem_monitor_t));
+    memset(mon_p, 0, sizeof(lv_mem_monitor_t));
 #if LV_MEM_CUSTOM == 0
     lv_mem_ent_t * e;
     e = NULL;
@@ -509,226 +498,6 @@ void lv_mem_buf_free_all(void)
         }
     }
 }
-
-/**
- * Same as `memcpy` but optimized for 4 byte operation.
- * `dst` and `src` should be word aligned else normal `memcpy` will be used
- * @param dst pointer to the destination buffer
- * @param src pointer to the source buffer
- * @param len number of byte to copy
- */
-void * lv_memcpy(void * dst, const void * src, size_t len)
-{
-	uint8_t * d8 = dst;
-	const uint8_t * s8 = src;
-
-	lv_uintptr_t d_align = (lv_uintptr_t)d8 & ALIGN_MASK;
-	lv_uintptr_t s_align = (lv_uintptr_t)s8 & ALIGN_MASK;
-
-	/*Byte copy for unaligned memories*/
-	if(s_align != d_align) {
-	    while(len > 32) {
-	        REPEAT8(COPY8);
-            REPEAT8(COPY8);
-            REPEAT8(COPY8);
-            REPEAT8(COPY8);
-	        len -= 32;
-	    }
-	    while(len) {
-	        COPY8
-	        len--;
-	    }
-	    return dst;
-	}
-
-
-	/*Make the memories aligned*/
-	if(d_align) {
-	    d_align = ALIGN_MASK + 1 - d_align;
-        while(d_align && len) {
-            COPY8;
-            d_align--;
-            len--;
-        }
-	}
-
-	uint32_t * d32 = (uint32_t*)d8;
-	const uint32_t * s32 = (uint32_t*)s8;
-	while(len > 32) {
-	    REPEAT8(COPY32)
-		len -= 32;
-	}
-
-	while(len > 4) {
-		COPY32;
-		len -= 4;
-	}
-
-	d8 = (uint8_t *)d32;
-	s8 = (const uint8_t *)s32;
-	while(len) {
-	    COPY8
-		len--;
-	}
-
-	return dst;
-}
-
-
-/**
- * Same as `memset` but optimized for 4 byte operation.
- * `dst` should be word aligned else normal `memcpy` will be used
- * @param dst pointer to the destination buffer
- * @param v value to set [0..255]
- * @param len number of byte to set
- */
-void lv_memset(void * dst, uint8_t v, size_t len)
-{
-	uint8_t * d8 = (uint8_t *) dst;
-
-	uintptr_t d_align = (lv_uintptr_t) d8 & ALIGN_MASK;
-
-	/*Make the address aligned*/
-    if(d_align) {
-        d_align = ALIGN_MASK + 1 - d_align;
-        while(d_align && len) {
-            *d8 = v;
-            d8++;
-            len--;
-            d_align--;
-        }
-    }
-
-	uint32_t v32 = v + (v << 8) + (v << 16) + (v << 24);
-
-	uint32_t * d32 = (uint32_t*)d8;
-
-	while(len > 32) {
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		SET32(v32);
-		len -= 32;
-	}
-
-	while(len > 4) {
-		SET32(v32);
-		len -= 4;
-	}
-
-
-	d8 = (uint8_t *)d32;
-	while(len) {
-		*d8 = v;
-		d8++;
-		len--;
-	}
-}
-
-/**
- * Same as `memset(dst, 0x00, len)` but optimized for 4 byte operation.
- * `dst` should be word aligned else normal `memcpy` will be used
- * @param dst pointer to the destination buffer
- * @param len number of byte to set
- */
-void lv_memset_00(void * dst, size_t len)
-{
-	uint8_t * d8 = (uint8_t*) dst;
-    uintptr_t d_align = (lv_uintptr_t) d8 & ALIGN_MASK;
-
-
-    /*Make the address aligned*/
-    if(d_align) {
-        d_align = ALIGN_MASK + 1 - d_align;
-        while(d_align && len) {
-            *d8 = 0x00;
-            d8++;
-            len--;
-            d_align--;
-        }
-    }
-
-    uint32_t * d32 = (uint32_t*)d8;
-	while(len > 32) {
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		SET32(0);
-		len -= 32;
-	}
-
-	while(len > 4) {
-		SET32(0);
-		len -= 4;
-	}
-
-
-	d8 = (uint8_t *)d32;
-	while(len) {
-		*d8 = 0;
-		d8++;
-		len--;
-	}
-}
-
-/**
- * Same as `memset(dst, 0xFF, len)` but optimized for 4 byte operation.
- * `dst` should be word aligned else normal `memcpy` will be used
- * @param dst pointer to the destination buffer
- * @param len number of byte to set
- */
-void lv_memset_ff(void * dst, size_t len)
-{
-	uint8_t * d8 = (uint8_t*) dst;
-    uintptr_t d_align = (lv_uintptr_t) d8 & ALIGN_MASK;
-
-
-    /*Make the address aligned*/
-    if(d_align) {
-        d_align = ALIGN_MASK + 1 - d_align;
-        while(d_align && len) {
-            *d8 = 0xFF;
-            d8++;
-            len--;
-            d_align--;
-        }
-    }
-
-    uint32_t * d32 = (uint32_t*)d8;
-	while(len > 32) {
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		SET32(0xFFFFFFFF);
-		len -= 32;
-	}
-
-	while(len > 4) {
-		SET32(0xFFFFFFFF);
-		len -= 4;
-	}
-
-
-	d8 = (uint8_t *)d32;
-	while(len) {
-		*d8 = 0xFF;
-		d8++;
-		len--;
-	}
-}
-
 
 /**********************
  *   STATIC FUNCTIONS
