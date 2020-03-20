@@ -1,4 +1,4 @@
-/**
+ /**
  * @file lv_gauge.c
  *
  */
@@ -27,7 +27,7 @@
 #define LV_GAUGE_DEF_NEEDLE_COLOR LV_COLOR_RED
 #define LV_GAUGE_DEF_LABEL_COUNT 6
 #define LV_GAUGE_DEF_LINE_COUNT 21 /*Should be: ((label_cnt - 1) * internal_lines) + 1*/
-#define LV_GAUGE_DEF_ANGLE 220
+#define LV_GAUGE_DEF_ANGLE 270
 
 /**********************
  *      TYPEDEFS
@@ -84,7 +84,6 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->values        = NULL;
     ext->needle_colors = NULL;
     ext->label_count   = LV_GAUGE_DEF_LABEL_COUNT;
-    ext->format_cb     = NULL;
 
     ext->needle_img = 0;
     ext->needle_img_pivot.x = 0;
@@ -119,7 +118,6 @@ lv_obj_t * lv_gauge_create(lv_obj_t * par, const lv_obj_t * copy)
             ext->values[i] = copy_ext->values[i];
         }
         ext->label_count = copy_ext->label_count;
-        ext->format_cb   = copy_ext->format_cb;
 
         /*Refresh the style with new signal function*/
         lv_obj_refresh_style(new_gauge, LV_STYLE_PROP_ALL);
@@ -175,7 +173,7 @@ void lv_gauge_set_needle_count(lv_obj_t * gauge, uint8_t needle_cnt, const lv_co
  * @param needle_id the id of the needle
  * @param value the new value
  */
-void lv_gauge_set_value(lv_obj_t * gauge, uint8_t needle_id, int32_t value)
+void lv_gauge_set_value(lv_obj_t * gauge, uint8_t needle_id, int16_t value)
 {
     LV_ASSERT_OBJ(gauge, LV_OBJX_NAME);
 
@@ -239,20 +237,6 @@ void lv_gauge_set_needle_img(lv_obj_t * gauge, const void * img, lv_coord_t pivo
     lv_obj_invalidate(gauge);
 }
 
-/**
- * Assign a function to format gauge values
- * @param gauge pointer to a gauge object
- * @param format_cb pointer to function of lv_gauge_format_cb_t
- */
-void lv_gauge_set_formatter_cb(lv_obj_t * gauge, lv_gauge_format_cb_t format_cb)
-{
-    LV_ASSERT_OBJ(gauge, LV_OBJX_NAME);
-
-    lv_gauge_ext_t * ext = lv_obj_get_ext_attr(gauge);
-
-    ext->format_cb = format_cb;
-}
-
 /*=====================
  * Getter functions
  *====================*/
@@ -263,7 +247,7 @@ void lv_gauge_set_formatter_cb(lv_obj_t * gauge, lv_gauge_format_cb_t format_cb)
  * @param needle the id of the needle
  * @return the value of the needle [min,max]
  */
-int32_t lv_gauge_get_value(const lv_obj_t * gauge, uint8_t needle)
+int16_t lv_gauge_get_value(const lv_obj_t * gauge, uint8_t needle)
 {
     LV_ASSERT_OBJ(gauge, LV_OBJX_NAME);
 
@@ -470,8 +454,8 @@ static void lv_gauge_draw_labels(lv_obj_t * gauge, const lv_area_t * mask)
     int16_t scale_angle      = lv_linemeter_get_scale_angle(gauge);
     uint16_t label_num       = ext->label_count;
     int16_t angle_ofs        = 90 + (360 - scale_angle) / 2;
-    int32_t min              = lv_gauge_get_min_value(gauge);
-    int32_t max              = lv_gauge_get_max_value(gauge);
+    int16_t min              = lv_gauge_get_min_value(gauge);
+    int16_t max              = lv_gauge_get_max_value(gauge);
 
     lv_draw_label_dsc_t label_dsc;
     lv_draw_label_dsc_init(&label_dsc);
@@ -488,13 +472,10 @@ static void lv_gauge_draw_labels(lv_obj_t * gauge, const lv_area_t * mask)
         lv_coord_t x = (int32_t)((int32_t)lv_trigo_sin(angle + 90) * r) / LV_TRIGO_SIN_MAX;
         x += x_ofs;
 
-        int32_t scale_act = (int32_t)((int32_t)(max - min) * i) / (label_num - 1);
+        int16_t scale_act = (int32_t)((int32_t)(max - min) * i) / (label_num - 1);
         scale_act += min;
-        if(ext->format_cb == NULL)
-            lv_utils_num_to_str(scale_act, scale_txt);
-        else
-            ext->format_cb(gauge, scale_txt, sizeof(scale_txt), scale_act);
-        
+        lv_utils_num_to_str(scale_act, scale_txt);
+
         lv_area_t label_cord;
         lv_point_t label_size;
         lv_txt_get_size(&label_size, scale_txt, label_dsc.font, label_dsc.letter_space, label_dsc.line_space,
