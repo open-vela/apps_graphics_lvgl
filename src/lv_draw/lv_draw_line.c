@@ -178,7 +178,7 @@ static void draw_line_hor(const lv_point_t * point1, const lv_point_t * point2, 
         lv_opa_t * mask_buf = lv_mem_buf_get(draw_area_w);
         int32_t h;
         for(h = draw_area.y1; h <= draw_area.y2; h++) {
-            lv_memset_ff(mask_buf, draw_area_w);
+            memset(mask_buf, LV_OPA_COVER, draw_area_w);
             lv_draw_mask_res_t mask_res = lv_draw_mask_apply(mask_buf, vdb->area.x1 + draw_area.x1, vdb->area.y1 + h, draw_area_w);
 
             if(dashed) {
@@ -281,7 +281,7 @@ static void draw_line_ver(const lv_point_t * point1, const lv_point_t * point2, 
 
         int32_t h;
         for(h = draw_area.y1; h <= draw_area.y2; h++) {
-            lv_memset_ff(mask_buf, draw_area_w);
+            memset(mask_buf, LV_OPA_COVER, draw_area_w);
             lv_draw_mask_res_t mask_res = lv_draw_mask_apply(mask_buf, vdb->area.x1 + draw_area.x1, vdb->area.y1 + h, draw_area_w);
 
             if(dashed) {
@@ -347,7 +347,7 @@ static void draw_line_skew(const lv_point_t * point1, const lv_point_t * point2,
     if(flat) wcorr_i = (LV_MATH_ABS(ydiff) << 5) / LV_MATH_ABS(xdiff);
     else wcorr_i = (LV_MATH_ABS(xdiff) << 5) / LV_MATH_ABS(ydiff);
 
-    w = (w * wcorr[wcorr_i] + 63) >> 7;     /*+ 63 for rounding*/
+    w = (w * wcorr[wcorr_i]) >> 7;
     int32_t w_half0 = w >> 1;
     int32_t w_half1 = w_half0 + (w & 0x1); /*Compensate rounding error*/
 
@@ -431,7 +431,7 @@ static void draw_line_skew(const lv_point_t * point1, const lv_point_t * point2,
 
     /*Fill the first row with 'color'*/
     for(h = draw_area.y1 + disp_area->y1; h <= draw_area.y2 + disp_area->y1; h++) {
-        lv_memset_ff(mask_buf, draw_area_w);
+        memset(mask_buf, LV_OPA_COVER, draw_area_w);
 
         if(!flat) {
             /*Where is the current point?*/
