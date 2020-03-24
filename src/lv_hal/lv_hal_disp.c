@@ -12,14 +12,15 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "lv_hal.h"
-#include "../lv_core/lv_debug.h"
 #include "../lv_misc/lv_mem.h"
+#include "../lv_misc/lv_gc.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_obj.h"
 #include "../lv_core/lv_refr.h"
-#include "../lv_misc/lv_gc.h"
+#include "../lv_themes/lv_theme.h"
 
 #if defined(LV_GC_INCLUDE)
-#include LV_GC_INCLUDE
+    #include LV_GC_INCLUDE
 #endif /* LV_ENABLE_GC */
 
 /*********************
@@ -134,23 +135,25 @@ lv_disp_t * lv_disp_drv_register(lv_disp_drv_t * driver)
     lv_disp_t * disp_def_tmp = disp_def;
     disp_def                 = disp; /*Temporarily change the default screen to create the default screens on the
                                         new display*/
+    /*Create a refresh task*/
+    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_REFR_TASK_PRIO, disp);
+    LV_ASSERT_MEM(disp->refr_task);
+    if(disp->refr_task == NULL) return NULL;
 
     disp->inv_p = 0;
+    disp->last_activity_time = 0;
 
     disp->act_scr   = lv_obj_create(NULL, NULL); /*Create a default screen on the display*/
     disp->top_layer = lv_obj_create(NULL, NULL); /*Create top layer on the display*/
     disp->sys_layer = lv_obj_create(NULL, NULL); /*Create sys layer on the display*/
-    lv_obj_set_style(disp->top_layer, &lv_style_transp);
-    lv_obj_set_style(disp->sys_layer, &lv_style_transp);
+    lv_obj_reset_style_list(disp->top_layer, LV_OBJ_PART_MAIN);
+    lv_obj_reset_style_list(disp->sys_layer, LV_OBJ_PART_MAIN);
+    lv_obj_set_click(disp->top_layer, false);
+    lv_obj_set_click(disp->sys_layer, false);
 
     lv_obj_invalidate(disp->act_scr);
 
     disp_def = disp_def_tmp; /*Revert the default display*/
-
-    /*Create a refresh task*/
-    disp->refr_task = lv_task_create(lv_disp_refr_task, LV_DISP_DEF_REFR_PERIOD, LV_TASK_PRIO_MID, disp);
-    LV_ASSERT_MEM(disp->refr_task);
-    if(disp->refr_task == NULL) return NULL;
 
     lv_task_ready(disp->refr_task); /*Be sure the screen will be refreshed immediately on start up*/
 
@@ -167,8 +170,7 @@ void lv_disp_drv_update(lv_disp_t * disp, lv_disp_drv_t * new_drv)
     memcpy(&disp->driver, new_drv, sizeof(lv_disp_drv_t));
 
     lv_obj_t * scr;
-    LV_LL_READ(disp->scr_ll, scr)
-    {
+    LV_LL_READ(disp->scr_ll, scr) {
         lv_obj_set_size(scr, lv_disp_get_hor_res(disp), lv_disp_get_ver_res(disp));
     }
 }
@@ -192,7 +194,7 @@ void lv_disp_remove(lv_disp_t * disp)
         indev = lv_indev_get_next(indev);
     }
 
-    lv_ll_rem(&LV_GC_ROOT(_lv_disp_ll), disp);
+    lv_ll_remove(&LV_GC_ROOT(_lv_disp_ll), disp);
     lv_mem_free(disp);
 
     if(was_default) lv_disp_set_default(lv_ll_get_head(&LV_GC_ROOT(_lv_disp_ll)));
@@ -349,7 +351,8 @@ bool lv_disp_is_true_double_buf(lv_disp_t * disp)
 
     if(lv_disp_is_double_buf(disp) && disp->driver.buffer->size == scr_size) {
         return true;
-    } else {
+    }
+    else {
         return false;
     }
 }
