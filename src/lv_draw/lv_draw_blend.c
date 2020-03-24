@@ -64,17 +64,16 @@ static inline lv_color_t color_blend_true_color_subtractive(lv_color_t fg, lv_co
 
 
 #define FILL_NORMAL_MASK_PX(out_x,  color)                                                          \
-        if(*mask_tmp_x) {                                                                           \
-            if(disp_buf_tmp[out_x].full != color.full) {                 								\
-                if(*mask_tmp_x == LV_OPA_COVER) disp_buf_tmp[out_x] = color;                             \
-                else disp_buf_tmp[out_x] = lv_color_mix(color, disp_buf_tmp[out_x], *mask_tmp_x); ;          \
-            }                                                                                           \
-        }                                                                                                \
-		mask_tmp_x++;
-
+    if(*mask_tmp_x) {          \
+            if(*mask_tmp_x == LV_OPA_COVER) disp_buf_tmp[out_x] = color;                                 \
+            else if(disp_buf_tmp[out_x].full == color.full) disp_buf_tmp[out_x] = color;                 \
+            else disp_buf_tmp[out_x] = lv_color_mix(color, disp_buf_tmp[out_x], *mask_tmp_x);            \
+    }                                                                                               \
+    mask_tmp_x++;
 
 
 #define FILL_NORMAL_MASK_PX_SCR_TRANSP(out_x,  color)                                               \
+    if(*mask_tmp_x) {                                                                               \
         if(*mask_tmp_x != last_mask || last_dest_color.full != disp_buf_tmp[out_x].full) {          \
         	 if(disp->driver.screen_transp) {														\
 				lv_color_mix_with_alpha(disp_buf_tmp[x], disp_buf_tmp[out_x].ch.alpha, 				\
@@ -373,7 +372,7 @@ static void fill_normal(const lv_area_t * disp_area, lv_color_t * disp_buf,  con
         if(opa > LV_OPA_MAX) {
             for(y = draw_area->y1; y <= draw_area->y2; y++) {
                 const lv_opa_t * mask_tmp_x = &mask_tmp[draw_area->x1];
-#if 1
+#if 0
                 for(x = draw_area->x1; x <= draw_area->x2; x++) {
                     FILL_NORMAL_MASK_PX(x, color)
                 }
