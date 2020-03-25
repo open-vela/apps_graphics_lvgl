@@ -13,6 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+#include "../lv_core/lv_style.h"
 
 /*********************
  *      DEFINES
@@ -21,6 +22,16 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
+typedef struct {
+    lv_color_t color;
+    lv_style_int_t width;
+    lv_style_int_t dash_width;
+    lv_style_int_t dash_gap;
+    lv_opa_t opa;
+    lv_blend_mode_t blend_mode  : 2;
+    uint8_t round_start : 1;
+    uint8_t round_end   : 1;
+} lv_draw_line_dsc_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -35,7 +46,9 @@ extern "C" {
  * @param opa_scale scale down all opacities by the factor
  */
 void lv_draw_line(const lv_point_t * point1, const lv_point_t * point2, const lv_area_t * mask,
-                  const lv_style_t * style, lv_opa_t opa_scale);
+                  lv_draw_line_dsc_t * dsc);
+
+void lv_draw_line_dsc_init(lv_draw_line_dsc_t * dsc);
 
 /**********************
  *      MACROS
