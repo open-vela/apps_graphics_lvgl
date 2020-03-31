@@ -44,7 +44,8 @@ struct _disp_drv_t;
 /**
  * Structure for holding display buffer information.
  */
-typedef struct {
+typedef struct
+{
     void * buf1; /**< First display buffer. */
     void * buf2; /**< Second display buffer. */
 
@@ -52,16 +53,14 @@ typedef struct {
     void * buf_act;
     uint32_t size; /*In pixel count*/
     lv_area_t area;
-    volatile uint32_t flushing 	        :1;
-    volatile uint32_t flushing_last     :1;
-    volatile uint32_t last_area         :1;
-    volatile uint32_t last_part         :1;
+    volatile uint32_t flushing : 1;
 } lv_disp_buf_t;
 
 /**
  * Display Driver structure to be registered by HAL
  */
-typedef struct _disp_drv_t {
+typedef struct _disp_drv_t
+{
 
     lv_coord_t hor_res; /**< Horizontal resolution. */
     lv_coord_t ver_res; /**< Vertical resolution. */
@@ -125,7 +124,8 @@ struct _lv_obj_t;
  * Display structure.
  * ::lv_disp_drv_t is the first member of the structure.
  */
-typedef struct _disp_t {
+typedef struct _disp_t
+{
     /**< Driver to the display*/
     lv_disp_drv_t driver;
 
@@ -230,19 +230,15 @@ lv_coord_t lv_disp_get_ver_res(lv_disp_t * disp);
  */
 bool lv_disp_get_antialiasing(lv_disp_t * disp);
 
+//! @cond Doxygen_Suppress
+
 /**
  * Call in the display driver's `flush_cb` function when the flushing is finished
  * @param disp_drv pointer to display driver in `flush_cb` where this function is called
  */
 LV_ATTRIBUTE_FLUSH_READY void lv_disp_flush_ready(lv_disp_drv_t * disp_drv);
 
-/**
- * Tell if it's the last area of the refreshing process.
- * Can be called from `flush_cb` to execute some special display refreshing if needed when all areas area flushed.
- * @param disp_drv pointer to display driver
- * @return true: it's the last area to flush; false: there are other areas too which will be refreshed soon
- */
-LV_ATTRIBUTE_FLUSH_READY bool lv_disp_flush_is_last(lv_disp_drv_t * disp_drv);
+//! @endcond
 
 /**
  * Get the next display.
