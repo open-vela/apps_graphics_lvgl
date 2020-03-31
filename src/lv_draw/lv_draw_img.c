@@ -32,7 +32,8 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                         lv_draw_img_dsc_t * draw_dsc,
                         bool chroma_key, bool alpha_byte);
 
-void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg);
+static void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -354,9 +355,8 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
 
     /*The simplest case just copy the pixels into the VDB*/
     if(other_mask_cnt == 0 && draw_dsc->angle == 0 && draw_dsc->zoom == LV_IMG_ZOOM_NONE &&
-       chroma_key == false && alpha_byte == false &&
-       draw_dsc->opa == LV_OPA_COVER && draw_dsc->recolor_opa == LV_OPA_TRANSP) {
-        lv_blend_map(clip_area, map_area, (lv_color_t *)map_p, NULL, LV_DRAW_MASK_RES_FULL_COVER, LV_OPA_COVER,
+       chroma_key == false && alpha_byte == false && draw_dsc->recolor_opa == LV_OPA_TRANSP) {
+        lv_blend_map(clip_area, map_area, (lv_color_t *)map_p, NULL, LV_DRAW_MASK_RES_FULL_COVER, draw_dsc->opa,
                      draw_dsc->blend_mode);
     }
     /*In the other cases every pixel need to be checked one-by-one*/
@@ -448,7 +448,6 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
         }
         /*Most complicated case: transform or other mask or chroma keyed*/
         else {
-
             lv_img_transform_dsc_t trans_dsc;
             lv_memset_00(&trans_dsc, sizeof(lv_img_transform_dsc_t));
             if(transform) {
@@ -477,7 +476,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
             }
 
             lv_draw_mask_res_t mask_res;
-            mask_res = (alpha_byte || chroma_key || draw_dsc->angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
+            mask_res = (alpha_byte || chroma_key || draw_dsc->angle || draw_dsc->zoom != LV_IMG_ZOOM_NONE) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
             int32_t x;
             int32_t y;
             for(y = 0; y < draw_area_h; y++) {
@@ -516,7 +515,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                         }
                     }
                     else {
-                        /*Rotate*/
+                        /*Transform*/
                         bool ret;
                         int32_t rot_x = x + (disp_area->x1 + draw_area.x1) - map_area->x1;
                         int32_t rot_y = y + (disp_area->y1 + draw_area.y1) - map_area->y1;
@@ -563,7 +562,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
                     blend_area.y2 = blend_area.y1;
 
                     px_i = 0;
-                    mask_res = (alpha_byte || chroma_key || draw_dsc->angle) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
+                    mask_res = (alpha_byte || chroma_key || draw_dsc->angle || draw_dsc->zoom != LV_IMG_ZOOM_NONE) ? LV_DRAW_MASK_RES_CHANGED : LV_DRAW_MASK_RES_FULL_COVER;
 
                     /*Prepare the `mask_buf`if there are other masks*/
                     if(other_mask_cnt) {
@@ -583,7 +582,7 @@ static void lv_draw_map(const lv_area_t * map_area, const lv_area_t * clip_area,
     }
 }
 
-void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg)
+static void show_error(const lv_area_t * coords, const lv_area_t * clip_area, const char * msg)
 {
     lv_draw_rect_dsc_t rect_dsc;
     lv_draw_rect_dsc_init(&rect_dsc);

@@ -55,17 +55,17 @@ lv_obj_t * lv_linemeter_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("line meter create started");
 
     /*Create the ancestor of line meter*/
-    lv_obj_t * new_lmeter = lv_obj_create(par, copy);
-    LV_ASSERT_MEM(new_lmeter);
-    if(new_lmeter == NULL) return NULL;
+    lv_obj_t * linemeter = lv_obj_create(par, copy);
+    LV_ASSERT_MEM(linemeter);
+    if(linemeter == NULL) return NULL;
 
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(new_lmeter);
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(linemeter);
 
     /*Allocate the line meter type specific extended data*/
-    lv_linemeter_ext_t * ext = lv_obj_allocate_ext_attr(new_lmeter, sizeof(lv_linemeter_ext_t));
+    lv_linemeter_ext_t * ext = lv_obj_allocate_ext_attr(linemeter, sizeof(lv_linemeter_ext_t));
     LV_ASSERT_MEM(ext);
     if(ext == NULL) {
-        lv_obj_del(new_lmeter);
+        lv_obj_del(linemeter);
         return NULL;
     }
 
@@ -78,13 +78,13 @@ lv_obj_t * lv_linemeter_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->angle_ofs = 0;
 
     /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(new_lmeter, lv_linemeter_signal);
-    lv_obj_set_design_cb(new_lmeter, lv_linemeter_design);
+    lv_obj_set_signal_cb(linemeter, lv_linemeter_signal);
+    lv_obj_set_design_cb(linemeter, lv_linemeter_design);
 
     /*Init the new line meter line meter*/
     if(copy == NULL) {
-        lv_obj_set_size(new_lmeter, LV_DPI, LV_DPI);
-        lv_theme_apply(new_lmeter, LV_THEME_LINEMETER);
+        lv_obj_set_size(linemeter, 3 * LV_DPI / 2, 3 * LV_DPI / 2);
+        lv_theme_apply(linemeter, LV_THEME_LINEMETER);
     }
     /*Copy an existing line meter*/
     else {
@@ -95,13 +95,13 @@ lv_obj_t * lv_linemeter_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->max_value             = copy_ext->max_value;
         ext->cur_value             = copy_ext->cur_value;
 
-        //        /*Refresh the style with new signal function*/
-        //        lv_obj_refresh_style(new_lmeter);
+        /*Refresh the style with new signal function*/
+        lv_obj_refresh_style(linemeter, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("line meter created");
 
-    return new_lmeter;
+    return linemeter;
 }
 
 /*=====================
@@ -293,6 +293,7 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
     lv_draw_line_dsc_t line_dsc;
     lv_draw_line_dsc_init(&line_dsc);
     lv_obj_init_draw_line_dsc(lmeter, part, &line_dsc);
+    line_dsc.raw_end = 1;
 
     lv_style_int_t end_line_width = lv_obj_get_style_scale_end_line_width(lmeter, part);
 
@@ -334,18 +335,18 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
         int32_t cos_mid = (cos_low * (256 - angle_rem) + cos_high * angle_rem) >> 8;
 
         /*Use the interpolated values to get x and y coordinates*/
-        int32_t y_out = (int32_t)((int32_t)sin_mid * r_out_extra) >> (LV_TRIGO_SHIFT - 8);
-        int32_t x_out = (int32_t)((int32_t)cos_mid * r_out_extra) >> (LV_TRIGO_SHIFT - 8);
+        int32_t y_out_extra = (int32_t)((int32_t)sin_mid * r_out_extra) >> (LV_TRIGO_SHIFT - 8);
+        int32_t x_out_extra = (int32_t)((int32_t)cos_mid * r_out_extra) >> (LV_TRIGO_SHIFT - 8);
 
         /*Rounding*/
-        if(x_out > 0) x_out = (x_out + 127) >> 8;
-        else x_out = (x_out - 127) >> 8;
+        if(x_out_extra > 0) x_out_extra = (x_out_extra + 127) >> 8;
+        else x_out_extra = (x_out_extra - 127) >> 8;
 
-        if(y_out > 0) y_out = (y_out + 127) >> 8;
-        else y_out = (y_out - 127) >> 8;
+        if(y_out_extra > 0) y_out_extra = (y_out_extra + 127) >> 8;
+        else y_out_extra = (y_out_extra - 127) >> 8;
 
-        x_out += x_ofs;
-        y_out += y_ofs;
+        x_out_extra += x_ofs;
+        y_out_extra += y_ofs;
 
         /*Use smaller clip area only around the visible line*/
         int32_t y_in  = (int32_t)((int32_t)lv_trigo_sin(angle_normal + angle_ofs) * r_in) >> LV_TRIGO_SHIFT;
@@ -353,6 +354,12 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
 
         x_in += x_ofs;
         y_in += y_ofs;
+
+        int32_t y_out  = (int32_t)((int32_t)lv_trigo_sin(angle_normal + angle_ofs) * r_out) >> LV_TRIGO_SHIFT;
+        int32_t x_out  = (int32_t)((int32_t)lv_trigo_sin(angle_normal + 90 + angle_ofs) * r_out) >> LV_TRIGO_SHIFT;
+
+        x_out += x_ofs;
+        y_out += y_ofs;
 
         lv_area_t clip_sub;
         clip_sub.x1 = LV_MATH_MIN(x_in, x_out) - line_dsc.width;
@@ -368,8 +375,8 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
         p2.x = x_ofs;
         p2.y = y_ofs;
 
-        p1.x = x_out;
-        p1.y = y_out;
+        p1.x = x_out_extra;
+        p1.y = y_out_extra;
 
         if(i >= level) {
             line_dsc.color = end_color;
