@@ -19,16 +19,8 @@ extern "C" {
  *      DEFINES
  *********************/
 #define LV_MATH_MIN(a, b) ((a) < (b) ? (a) : (b))
-#define LV_MATH_MIN3(a, b, c) (LV_MATH_MIN(LV_MATH_MIN(a,b), c))
-#define LV_MATH_MIN4(a, b, c, d) (LV_MATH_MIN(LV_MATH_MIN(a,b), LV_MATH_MIN(c,d)))
-
 #define LV_MATH_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define LV_MATH_MAX3(a, b, c) (LV_MATH_MAX(LV_MATH_MAX(a,b), c))
-#define LV_MATH_MAX4(a, b, c, d) (LV_MATH_MAX(LV_MATH_MAX(a,b), LV_MATH_MAX(c,d)))
-
 #define LV_MATH_ABS(x) ((x) > 0 ? (x) : (-(x)))
-
-#define LV_MATH_UDIV255(x) ((uint32_t)((uint32_t) (x) * 0x8081) >> 0x17)
 
 #define LV_IS_SIGNED(t) (((t)(-1)) < ((t) 0))
 #define LV_UMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
@@ -41,17 +33,9 @@ extern "C" {
 #define LV_BEZIER_VAL_MAX 1024 /**< Max time in Bezier functions (not [0..1] to use integers) */
 #define LV_BEZIER_VAL_SHIFT 10 /**< log2(LV_BEZIER_VAL_MAX): used to normalize up scaled values*/
 
-
-
 /**********************
  *      TYPEDEFS
  **********************/
-
-typedef struct {
-    uint16_t i;
-    uint16_t f;
-} lv_sqrt_res_t;
-
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -75,8 +59,6 @@ int16_t lv_trigo_sin(int16_t angle);
  */
 int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
 
-void lv_sqrt(uint32_t x, lv_sqrt_res_t * q);
-
 /**
  * Calculate the atan2 of a vector.
  * @param x
@@ -84,6 +66,13 @@ void lv_sqrt(uint32_t x, lv_sqrt_res_t * q);
  * @return the angle in degree calculated from the given parameters in range of [0..360]
  */
 uint16_t lv_atan2(int x, int y);
+
+/**
+ * Calculate the integer square root of a number.
+ * @param num
+ * @return square root of 'num'
+ */
+uint32_t lv_sqrt(uint32_t num);
 
 /**********************
  *      MACROS
