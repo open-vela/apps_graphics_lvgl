@@ -9,6 +9,7 @@
 #include "lv_math.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*********************
  *      DEFINES
@@ -31,7 +32,10 @@ static const int16_t sin0_90_table[] = {
     17364, 17846, 18323, 18794, 19260, 19720, 20173, 20621, 21062, 21497, 21925, 22347, 22762, 23170, 23571, 23964,
     24351, 24730, 25101, 25465, 25821, 26169, 26509, 26841, 27165, 27481, 27788, 28087, 28377, 28659, 28932, 29196,
     29451, 29697, 29934, 30162, 30381, 30591, 30791, 30982, 31163, 31335, 31498, 31650, 31794, 31927, 32051, 32165,
-    32269, 32364, 32448, 32523, 32587, 32642, 32687, 32722, 32747, 32762, 32767};
+    32269, 32364, 32448, 32523, 32587, 32642, 32687, 32722, 32747, 32762, 32767
+};
+
+
 
 /**********************
  *      MACROS
@@ -55,13 +59,16 @@ int16_t lv_trigo_sin(int16_t angle)
 
     if(angle < 90) {
         ret = sin0_90_table[angle];
-    } else if(angle >= 90 && angle < 180) {
+    }
+    else if(angle >= 90 && angle < 180) {
         angle = 180 - angle;
         ret   = sin0_90_table[angle];
-    } else if(angle >= 180 && angle < 270) {
+    }
+    else if(angle >= 180 && angle < 270) {
         angle = angle - 180;
         ret   = -sin0_90_table[angle];
-    } else { /*angle >=270*/
+    }
+    else {   /*angle >=270*/
         angle = 360 - angle;
         ret   = -sin0_90_table[angle];
     }
@@ -93,6 +100,28 @@ int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3)
 
     return v1 + v2 + v3 + v4;
 }
+
+void lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask)
+{
+    x = x << 8; /*To get 4 bit precision. (sqrt(256) = 16 = 4 bit)*/
+
+    uint32_t root = 0;
+    uint32_t trial;
+    // http://ww1.microchip.com/...en/AppNotes/91040a.pdf
+    do {
+        trial = root + mask;
+        if ((uint32_t)trial * trial <= x) root = trial;
+        mask = mask >> 1;
+
+        trial = root + mask;
+        if ((uint32_t)trial * trial <= x) root = trial;
+        mask = mask >> 1;
+    } while(mask);
+
+    q->i = (uint32_t) root >> 4;
+    q->f = (uint32_t) (root & 0xf) << 4;
+}
+
 
 /**
  * Calculate the atan2 of a vector.
@@ -138,7 +167,8 @@ uint16_t lv_atan2(int x, int y)
     if(ux > uy) {
         degree = (uy * 45) / ux;   // degree result will be 0-45 range
         negflag += 0x10;    // octant flag bit
-    } else {
+    }
+    else {
         degree = (ux * 45) / uy;   // degree result will be 0-45 range
     }
 
@@ -150,7 +180,8 @@ uint16_t lv_atan2(int x, int y)
         if(tempdegree <= 41) comp++;
         if(tempdegree <= 37) comp++;
         if(tempdegree <= 32) comp++;  // max is 4 degrees compensated
-    } else { // else is lower half of range
+    }
+    else {   // else is lower half of range
         if(tempdegree >= 2) comp++;
         if(tempdegree >= 6) comp++;
         if(tempdegree >= 10) comp++;
@@ -168,34 +199,12 @@ uint16_t lv_atan2(int x, int y)
             degree = (180 + degree);
         else        // else is -Y +X
             degree = (180 - degree);
-    } else { // else is +Y
+    }
+    else {   // else is +Y
         if(negflag & 0x01)   // if +Y -X
             degree = (360 - degree);
     }
     return degree;
-}
-
-/**
- * Calculate the integer square root of a number.
- * @param num
- * @return square root of 'num'
- */
-uint32_t lv_sqrt(uint32_t num)
-{
-    // http://www.codecodex.com/wiki/Calculate_an_integer_square_root#C
-    uint32_t root  = 0;
-    uint32_t place = 0x40000000;
-
-    while(place > num) place >>= 2;
-    while(place) {
-        if(num >= root + place) {
-            num -= root + place;
-            root += (place << 1);
-        }
-        root >>= 1;
-        place >>= 2;
-    }
-    return root;
 }
 
 /**********************
