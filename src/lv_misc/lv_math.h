@@ -19,16 +19,8 @@ extern "C" {
  *      DEFINES
  *********************/
 #define LV_MATH_MIN(a, b) ((a) < (b) ? (a) : (b))
-#define LV_MATH_MIN3(a, b, c) (LV_MATH_MIN(LV_MATH_MIN(a,b), c))
-#define LV_MATH_MIN4(a, b, c, d) (LV_MATH_MIN(LV_MATH_MIN(a,b), LV_MATH_MIN(c,d)))
-
 #define LV_MATH_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define LV_MATH_MAX3(a, b, c) (LV_MATH_MAX(LV_MATH_MAX(a,b), c))
-#define LV_MATH_MAX4(a, b, c, d) (LV_MATH_MAX(LV_MATH_MAX(a,b), LV_MATH_MAX(c,d)))
-
 #define LV_MATH_ABS(x) ((x) > 0 ? (x) : (-(x)))
-
-#define LV_MATH_UDIV255(x) ((uint32_t)((uint32_t) (x) * 0x8081) >> 0x17)
 
 #define LV_IS_SIGNED(t) (((t)(-1)) < ((t) 0))
 #define LV_UMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
@@ -41,17 +33,9 @@ extern "C" {
 #define LV_BEZIER_VAL_MAX 1024 /**< Max time in Bezier functions (not [0..1] to use integers) */
 #define LV_BEZIER_VAL_SHIFT 10 /**< log2(LV_BEZIER_VAL_MAX): used to normalize up scaled values*/
 
-
-
 /**********************
  *      TYPEDEFS
  **********************/
-
-typedef struct {
-    uint16_t i;
-    uint16_t f;
-} lv_sqrt_res_t;
-
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -75,7 +59,7 @@ int16_t lv_trigo_sin(int16_t angle);
  */
 int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
 
-/*
+/**
  * Calculate the atan2 of a vector.
  * @param x
  * @param y
@@ -84,16 +68,11 @@ int32_t lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
 uint16_t lv_atan2(int x, int y);
 
 /**
- * Get the square root of a number
- * @param x integer which square root should be calculatoed
- * @param q store the result here. q->i: integer part, q->f: fractional part in 1/256 unit
- * @param mask: optional to skip some iterations if the magnitude of the root is known.
- * Set to 0x8000 by default.
- * If root < 16: mask = 0x80
- * If root < 256: mask = 0x800
- * Else: mask = 0x8000
+ * Calculate the integer square root of a number.
+ * @param num
+ * @return square root of 'num'
  */
-void lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask);
+uint32_t lv_sqrt(uint32_t num);
 
 /**********************
  *      MACROS
