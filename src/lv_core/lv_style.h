@@ -88,10 +88,9 @@ typedef union {
     uint8_t full;
 } lv_style_attr_t;
 
-
-#define LV_STYLE_ID_VALUE 0x0   /*max 8 pcs*/
-#define LV_STYLE_ID_COLOR 0x8   /*max 3 pcs*/
-#define LV_STYLE_ID_OPA   0xB   /*max 3 pcs*/
+#define LV_STYLE_ID_VALUE 0x0   /*max 9 pcs*/
+#define LV_STYLE_ID_COLOR 0x9   /*max 3 pcs*/
+#define LV_STYLE_ID_OPA   0xC   /*max 2 pcs*/
 #define LV_STYLE_ID_PTR   0xE   /*max 2 pcs*/
 
 enum {
@@ -108,6 +107,10 @@ enum {
     LV_STYLE_PROP_INIT(LV_STYLE_PAD_LEFT,           0x1, LV_STYLE_ID_VALUE + 2, LV_STYLE_ATTR_NONE),
     LV_STYLE_PROP_INIT(LV_STYLE_PAD_RIGHT,          0x1, LV_STYLE_ID_VALUE + 3, LV_STYLE_ATTR_NONE),
     LV_STYLE_PROP_INIT(LV_STYLE_PAD_INNER,          0x1, LV_STYLE_ID_VALUE + 4, LV_STYLE_ATTR_NONE),
+    LV_STYLE_PROP_INIT(LV_STYLE_MARGIN_TOP,         0x1, LV_STYLE_ID_VALUE + 5, LV_STYLE_ATTR_NONE),
+    LV_STYLE_PROP_INIT(LV_STYLE_MARGIN_BOTTOM,      0x1, LV_STYLE_ID_VALUE + 6, LV_STYLE_ATTR_NONE),
+    LV_STYLE_PROP_INIT(LV_STYLE_MARGIN_LEFT,        0x1, LV_STYLE_ID_VALUE + 7, LV_STYLE_ATTR_NONE),
+    LV_STYLE_PROP_INIT(LV_STYLE_MARGIN_RIGHT,       0x1, LV_STYLE_ID_VALUE + 8, LV_STYLE_ATTR_NONE),
 
     LV_STYLE_PROP_INIT(LV_STYLE_BG_BLEND_MODE,      0x2, LV_STYLE_ID_VALUE + 0, LV_STYLE_ATTR_NONE),
     LV_STYLE_PROP_INIT(LV_STYLE_BG_MAIN_STOP,       0x2, LV_STYLE_ID_VALUE + 1, LV_STYLE_ATTR_NONE),
@@ -729,6 +732,7 @@ static inline lv_res_t lv_style_list_get_data_ptr(lv_style_list_t * list, lv_sty
  *     lv_style_copy(&my_style, &style_to_copy);
  */
 #define LV_STYLE_CREATE(name, copy_p) static lv_style_t name; lv_style_init(&name); lv_style_copy(&name, copy);
+
 
 #ifdef __cplusplus
 } /* extern "C" */
