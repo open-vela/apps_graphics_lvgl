@@ -236,7 +236,7 @@ lv_task_t * lv_task_create_basic(void)
     new_task->task_cb = NULL;
     new_task->prio    = DEF_PRIO;
 
-    new_task->repeat_count = -1;
+    new_task->once     = 0;
     new_task->last_run = lv_tick_get();
 
     new_task->user_data = NULL;
@@ -341,13 +341,12 @@ void lv_task_ready(lv_task_t * task)
 }
 
 /**
- * Set the number of times a task will repeat. 
+ * Delete the lv_task after one call
  * @param task pointer to a lv_task.
- * @param repeat_count -1 : infinity;  0 : stop ;  n>0: residual times
  */
-void lv_task_set_repeat_count(lv_task_t * task, int32_t repeat_count)
+void lv_task_once(lv_task_t * task)
 {
-    task->repeat_count = repeat_count;
+    task->once = 1;
 }
 
 /**
@@ -399,12 +398,9 @@ static bool lv_task_exec(lv_task_t * task)
 
         /*Delete if it was a one shot lv_task*/
         if(task_deleted == false) { /*The task might be deleted by itself as well*/
-            if(task->repeat_count > 0) {
-                task->repeat_count--;
-            }
-            if(task->repeat_count == 0) {
+            if(task->once != 0) {
                 lv_task_del(task);
-            } 
+            }
         }
         exec = true;
     }
