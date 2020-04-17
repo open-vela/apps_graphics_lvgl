@@ -648,7 +648,9 @@ static void lv_cont_layout_pretty(lv_obj_t * cont)
  */
 static void lv_cont_layout_grid(lv_obj_t * cont)
 {
+
     lv_coord_t w_fit         =  lv_obj_get_width_fit(cont);
+    lv_coord_t h_obj         = lv_obj_get_height(lv_obj_get_child(cont, NULL));
     lv_coord_t inner = lv_obj_get_style_pad_inner(cont, LV_CONT_PART_MAIN);
     lv_coord_t y_ofs = inner + lv_obj_get_height(lv_obj_get_child(cont, NULL));
 
@@ -660,6 +662,7 @@ static void lv_cont_layout_grid(lv_obj_t * cont)
     lv_coord_t left = lv_obj_get_style_pad_left(cont, LV_CONT_PART_MAIN);
     lv_coord_t act_x = left;
     lv_coord_t act_y = lv_obj_get_style_pad_top(cont, LV_CONT_PART_MAIN);
+    uint16_t obj_cnt = 0;
     lv_obj_t * child;
     LV_LL_READ_BACK(cont->child_ll, child) {
         if(lv_obj_get_hidden(child) != false || lv_obj_is_protected(child, LV_PROTECT_POS) != false) continue;
