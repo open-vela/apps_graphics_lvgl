@@ -263,6 +263,9 @@
 #ifndef LV_USE_GPU
 #define LV_USE_GPU              1
 #endif
+#ifndef LV_USE_GPU_STM32_DMA2D
+#define LV_USE_GPU_STM32_DMA2D  0
+#endif
 
 /* 1: Enable file system (might be required for images */
 #ifndef LV_USE_FILESYSTEM
@@ -492,30 +495,6 @@
 #endif
 #ifndef LV_FONT_MONTSERRAT_32
 #define LV_FONT_MONTSERRAT_32    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_34
-#define LV_FONT_MONTSERRAT_34    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_36
-#define LV_FONT_MONTSERRAT_36    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_38
-#define LV_FONT_MONTSERRAT_38    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_40
-#define LV_FONT_MONTSERRAT_40    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_42
-#define LV_FONT_MONTSERRAT_42    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_44
-#define LV_FONT_MONTSERRAT_44    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_46
-#define LV_FONT_MONTSERRAT_46    0
-#endif
-#ifndef LV_FONT_MONTSERRAT_48
-#define LV_FONT_MONTSERRAT_48    0
 #endif
 
 /* Demonstrate special features */
@@ -765,7 +744,7 @@
 #endif
 #if LV_USE_CHART
 #ifndef LV_CHART_AXIS_TICK_LABEL_MAX_LEN
-#  define LV_CHART_AXIS_TICK_LABEL_MAX_LEN    256
+#  define LV_CHART_AXIS_TICK_LABEL_MAX_LEN    20
 #endif
 #endif
 
