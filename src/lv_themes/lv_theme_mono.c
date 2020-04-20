@@ -527,7 +527,7 @@ lv_theme_t * lv_theme_mono_init(lv_color_t color_primary, lv_color_t color_secon
     table_init();
     win_init();
 
-    theme.apply_xcb = lv_theme_mono_apply;
+    theme.apply_cb = lv_theme_mono_apply;
 
     return &theme;
 }
@@ -1032,8 +1032,8 @@ void lv_theme_mono_apply(lv_obj_t * obj, lv_theme_style_t name)
             list = lv_obj_get_style_list(obj, LV_CPICKER_PART_MAIN);
             lv_style_list_add_style(list, &style_bg);
 
-            lv_obj_clean_style_list(obj, LV_CPICKER_PART_KNOB);
-            list = lv_obj_get_style_list(obj, LV_CPICKER_PART_KNOB);
+            lv_obj_clean_style_list(obj, LV_CPICKER_PART_INDIC);
+            list = lv_obj_get_style_list(obj, LV_CPICKER_PART_INDIC);
             lv_style_list_add_style(list, &style_bg);
             lv_style_list_add_style(list, &style_round);
             break;
