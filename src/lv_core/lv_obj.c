@@ -40,8 +40,8 @@
  *      DEFINES
  *********************/
 #define LV_OBJX_NAME "lv_obj"
-#define LV_OBJ_DEF_WIDTH    (LV_DPI / 2)
-#define LV_OBJ_DEF_HEIGHT   (LV_DPI / 4)
+#define LV_OBJ_DEF_WIDTH    (LV_DPX(100))
+#define LV_OBJ_DEF_HEIGHT   (LV_DPX(50))
 
 /**********************
  *      TYPEDEFS
@@ -60,13 +60,13 @@ typedef struct {
         lv_color_t _color;
         lv_style_int_t _int;
         lv_opa_t _opa;
-        lv_style_fptr_dptr_t _ptr;
+        _lv_style_fptr_dptr_t _ptr;
     } start_value;
     union {
         lv_color_t _color;
         lv_style_int_t _int;
         lv_opa_t _opa;
-        lv_style_fptr_dptr_t _ptr;
+        _lv_style_fptr_dptr_t _ptr;
     } end_value;
 } lv_style_trans_t;
 
@@ -1235,7 +1235,7 @@ void _lv_obj_set_style_local_opa(lv_obj_t * obj, uint8_t part, lv_style_property
  *       For example: `lv_obj_style_get_border_opa()`
  * @note for performance reasons it's not checked if the property really has pointer type
  */
-void _lv_obj_set_style_local_ptr(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, lv_style_fptr_dptr_t value)
+void _lv_obj_set_style_local_ptr(lv_obj_t * obj, uint8_t part, lv_style_property_t prop, _lv_style_fptr_dptr_t value)
 {
     lv_style_list_t * style_dsc = lv_obj_get_style_list(obj, part);
     lv_style_list_set_local_ptr(style_dsc, prop, value);
@@ -1332,9 +1332,8 @@ void lv_obj_refresh_style(lv_obj_t * obj, lv_style_property_t prop)
 
         lv_obj_invalidate(obj);
 
-        if(prop == LV_STYLE_PROP_ALL || (prop & LV_STYLE_INHERIT_MASK))
-            /*Send style change signals*/
-            refresh_children_style(obj);
+        /*Send style change signals*/
+        if(prop == LV_STYLE_PROP_ALL || (prop & LV_STYLE_INHERIT_MASK)) refresh_children_style(obj);
     }
     else {
         lv_obj_invalidate(obj);
@@ -2513,14 +2512,14 @@ lv_opa_t _lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t part, lv_style_prop
  *       For example: `lv_obj_style_get_border_opa()`
  * @note for performance reasons it's not checked if the property really has pointer type
  */
-lv_style_fptr_dptr_t _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
+_lv_style_fptr_dptr_t _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_property_t prop)
 {
     lv_style_property_t prop_ori = prop;
 
     lv_style_attr_t attr;
     attr.full = prop_ori >> 8;
 
-    lv_style_fptr_dptr_t value_act;
+    _lv_style_fptr_dptr_t value_act;
     lv_res_t res = LV_RES_INV;
     const lv_obj_t * parent = obj;
     while(parent) {
@@ -2546,7 +2545,7 @@ lv_style_fptr_dptr_t _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, l
 
     /*Handle unset values*/
     prop = prop & (~LV_STYLE_STATE_MASK);
-    lv_style_fptr_dptr_t fd;
+    _lv_style_fptr_dptr_t fd;
     fd.dptr = NULL;
     fd.fptr = NULL;
     switch(prop) {
@@ -2556,7 +2555,7 @@ lv_style_fptr_dptr_t _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, l
             return fd;
 #if LV_USE_ANIMATION
         case LV_STYLE_TRANSITION_PATH:
-            fd.fptr = (lv_style_prop_cb_t)lv_anim_path_linear;
+            fd.fptr = (_lv_style_prop_xcb_t)lv_anim_path_linear;
             return fd;
 #endif
     }
@@ -3770,12 +3769,12 @@ static lv_style_trans_t * trans_create(lv_obj_t * obj, lv_style_property_t prop,
     else {      /*Ptr*/
         obj->state = prev_state;
         style_list->skip_trans = 1;
-        lv_style_fptr_dptr_t fd1 = _lv_obj_get_style_ptr(obj, part, prop);
+        _lv_style_fptr_dptr_t fd1 = _lv_obj_get_style_ptr(obj, part, prop);
         obj->state = new_state;
-        lv_style_fptr_dptr_t fd2 = _lv_obj_get_style_ptr(obj, part, prop);
+        _lv_style_fptr_dptr_t fd2 = _lv_obj_get_style_ptr(obj, part, prop);
         style_list->skip_trans = 0;
 
-        if(memcmp(&fd1, &fd2, sizeof(lv_style_fptr_dptr_t)) == 0)  return NULL;
+        if(memcmp(&fd1, &fd2, sizeof(_lv_style_fptr_dptr_t)) == 0)  return NULL;
         obj->state = prev_state;
         fd1 = _lv_obj_get_style_ptr(obj, part, prop);
         obj->state = new_state;
@@ -3853,7 +3852,7 @@ static void trans_anim_cb(lv_style_trans_t * tr, lv_anim_value_t v)
         _lv_style_set_opa(style, tr->prop, x);
     }
     else {
-        lv_style_fptr_dptr_t x;
+        _lv_style_fptr_dptr_t x;
         if(v < 128) x = tr->start_value._ptr;
         else x = tr->end_value._ptr;
         _lv_style_set_ptr(style, tr->prop, x);
