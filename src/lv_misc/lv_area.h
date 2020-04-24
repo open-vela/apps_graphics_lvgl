@@ -17,7 +17,6 @@ extern "C" {
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "lv_mem.h"
 
 /*********************
  *      DEFINES
@@ -99,7 +98,7 @@ void lv_area_set(lv_area_t * area_p, lv_coord_t x1, lv_coord_t y1, lv_coord_t x2
  */
 inline static void lv_area_copy(lv_area_t * dest, const lv_area_t * src)
 {
-    lv_memcpy_small(dest, src, sizeof(lv_area_t));
+    memcpy(dest, src, sizeof(lv_area_t));
 }
 
 /**

@@ -63,7 +63,6 @@ bool lv_debug_check_obj_type(const lv_obj_t * obj, const char * obj_type)
 
     uint8_t i;
     for(i = 0; i < LV_MAX_ANCESTOR_NUM; i++) {
-        if(types.type[i] == NULL) break;
         if(strcmp(types.type[i], obj_type) == 0) return true;
     }
 
@@ -160,7 +159,7 @@ void lv_debug_log_error(const char * msg, uint64_t value)
         char * bufp = buf;
 
         /*Add the function name*/
-        lv_memcpy(bufp, msg, msg_len);
+        memcpy(bufp, msg, msg_len);
         bufp += msg_len;
 
         /*Add value in hey*/
