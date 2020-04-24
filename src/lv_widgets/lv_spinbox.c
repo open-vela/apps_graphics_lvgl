@@ -217,8 +217,6 @@ void lv_spinbox_set_range(lv_obj_t * spinbox, int32_t range_min, int32_t range_m
         ext->value = ext->range_min;
         lv_obj_invalidate(spinbox);
     }
-
-    lv_spinbox_updatevalue(spinbox);
 }
 
 /**
@@ -514,7 +512,7 @@ static void lv_spinbox_updatevalue(lv_obj_t * spinbox)
     lv_spinbox_ext_t * ext = lv_obj_get_ext_attr(spinbox);
 
     char buf[LV_SPINBOX_MAX_DIGIT_COUNT + 8];
-    lv_memset_00(buf, sizeof(buf));
+    memset(buf, 0, sizeof(buf));
     char * buf_p = buf;
     uint8_t cur_shift_left = 0;
 
