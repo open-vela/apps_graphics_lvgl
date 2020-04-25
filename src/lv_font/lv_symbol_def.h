@@ -5,12 +5,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "../lv_conf_internal.h"
-
-/*-------------------------------
- * Symbols from FontAwsome font
- *-----------------------------*/
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 /* In the font converter use this list as range:
       61441, 61448, 61451, 61452, 61453, 61457, 61459, 61461, 61465, 61468,
@@ -81,11 +80,6 @@ extern "C" {
 
 /** Invalid symbol at (U+F8FF). If written before a string then `lv_img` will show it as a label*/
 #define LV_SYMBOL_DUMMY           "\xEF\xA3\xBF"
-
-/*-------------------------------
- * Symbols from "normal" font
- *-----------------------------*/
-#define LV_SYMBOL_BULLET          "\xE2\x80\xA2"   /*20042, 0x2022*/
 
 /*
  * The following list is generated using

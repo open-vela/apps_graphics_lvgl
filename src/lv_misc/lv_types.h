@@ -17,26 +17,18 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-
-#if __STDC_VERSION__ >= 199901L  // If c99 or newer, use stdint.h to determine arch size
-#include <stdint.h> 
+// Check windows
+#ifdef _WIN64
+#define LV_ARCH_64
 #endif
 
-
-// If __UINTPTR_MAX__ or UINTPTR_MAX are available, use them to determine arch size
-#if defined(__UINTPTR_MAX__) && __UINTPTR_MAX__ > 0xFFFFFFFF
+// Check GCC
+#ifdef __GNUC__
+#if defined(__x86_64__) || defined(__ppc64__)
 #define LV_ARCH_64
-
-#elif defined(UINTPTR_MAX) && UINTPTR_MAX > 0xFFFFFFFF
-#define LV_ARCH_64
-
-// Otherwise use compiler-dependent means to determine arch size
-#elif defined(_WIN64) || defined(__x86_64__) || defined(__ppc64__) || defined (__aarch64__)
-#define LV_ARCH_64
-
+#endif
 #endif
 
-          
 /**********************
  *      TYPEDEFS
  **********************/
@@ -51,23 +43,11 @@ enum {
 };
 typedef uint8_t lv_res_t;
 
-
-
-#if __STDC_VERSION__ >= 199901L  
-// If c99 or newer,  use the definition of uintptr_t directly from <stdint.h> 
-typedef uintptr_t lv_uintptr_t;
-
-#else
-
-// Otherwise, use the arch size determination
 #ifdef LV_ARCH_64
 typedef uint64_t lv_uintptr_t;
 #else
 typedef uint32_t lv_uintptr_t;
 #endif
-
-#endif
-
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -82,4 +62,3 @@ typedef uint32_t lv_uintptr_t;
 #endif
 
 #endif /*LV_TYPES_H*/
-
