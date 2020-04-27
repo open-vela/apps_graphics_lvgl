@@ -177,6 +177,7 @@ typedef void * lv_group_user_data_t;
 
 /* 1: Enable GPU interface*/
 #define LV_USE_GPU              1
+#define LV_USE_GPU_STM32_DMA2D  0
 
 /* 1: Enable file system (might be required for images */
 #define LV_USE_FILESYSTEM       1
@@ -438,11 +439,6 @@ typedef void * lv_font_user_data_t;
  * `LV_BIDI_DIR_AUTO` detect texts base direction */
 #define LV_BIDI_BASE_DIR_DEF  LV_BIDI_DIR_AUTO
 #endif
-
-/* Enable Arabic/Persian processing
- * In these languages characters should be replaced with
- * an other form based on their position in the text */
-#define LV_USE_ARABIC_PERSIAN_CHARS 0
 
 /*Change the built in (v)snprintf functions*/
 #define LV_SPRINTF_CUSTOM   0

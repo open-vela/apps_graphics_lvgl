@@ -263,6 +263,9 @@
 #ifndef LV_USE_GPU
 #define LV_USE_GPU              1
 #endif
+#ifndef LV_USE_GPU_STM32_DMA2D
+#define LV_USE_GPU_STM32_DMA2D  0
+#endif
 
 /* 1: Enable file system (might be required for images */
 #ifndef LV_USE_FILESYSTEM
@@ -658,13 +661,6 @@
 #ifndef LV_BIDI_BASE_DIR_DEF
 #define LV_BIDI_BASE_DIR_DEF  LV_BIDI_DIR_AUTO
 #endif
-#endif
-
-/* Enable Arabic/Persian processing
- * In these languages characters should be replaced with
- * an other form based on their position in the text */
-#ifndef LV_USE_ARABIC_PERSIAN_CHARS
-#define LV_USE_ARABIC_PERSIAN_CHARS 0
 #endif
 
 /*Change the built in (v)snprintf functions*/
