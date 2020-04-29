@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #if LV_USE_FILESYSTEM
 
@@ -30,9 +34,8 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-
 /**
- * Errors in the file system module.
+ * Errors in the filesystem module.
  */
 enum {
     LV_FS_RES_OK = 0,
@@ -60,7 +63,8 @@ enum {
 };
 typedef uint8_t lv_fs_mode_t;
 
-typedef struct _lv_fs_drv_t {
+typedef struct _lv_fs_drv_t
+{
     char letter;
     uint16_t file_size;
     uint16_t rddir_size;
@@ -87,12 +91,14 @@ typedef struct _lv_fs_drv_t {
 #endif
 } lv_fs_drv_t;
 
-typedef struct {
+typedef struct
+{
     void * file_d;
     lv_fs_drv_t * drv;
 } lv_fs_file_t;
 
-typedef struct {
+typedef struct
+{
     void * dir_d;
     lv_fs_drv_t * drv;
 } lv_fs_dir_t;
