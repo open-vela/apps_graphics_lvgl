@@ -263,9 +263,6 @@
 #ifndef LV_USE_GPU
 #define LV_USE_GPU              1
 #endif
-#ifndef LV_USE_GPU_STM32_DMA2D
-#define LV_USE_GPU_STM32_DMA2D  0
-#endif
 
 /* 1: Enable file system (might be required for images */
 #ifndef LV_USE_FILESYSTEM

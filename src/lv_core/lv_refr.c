@@ -458,9 +458,7 @@ static void lv_refr_area_part(const lv_area_t * area_p)
     /*In non double buffered mode, before rendering the next part wait until the previous image is
      * flushed*/
     if(lv_disp_is_double_buf(disp_refr) == false) {
-        while(vdb->flushing) {
-            if(disp_refr->driver.wait_cb) disp_refr->driver.wait_cb(&disp_refr->driver);
-        }
+        while(vdb->flushing) ;
     }
 
     lv_obj_t * top_p;
@@ -656,9 +654,7 @@ static void lv_refr_vdb_flush(void)
     /*In double buffered mode wait until the other buffer is flushed before flushing the current
      * one*/
     if(lv_disp_is_double_buf(disp_refr)) {
-        while(vdb->flushing) {
-            if(disp_refr->driver.wait_cb) disp_refr->driver.wait_cb(&disp_refr->driver);
-        }
+        while(vdb->flushing);
     }
 
     vdb->flushing = 1;
