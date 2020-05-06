@@ -44,8 +44,7 @@ struct _disp_drv_t;
 /**
  * Structure for holding display buffer information.
  */
-typedef struct
-{
+typedef struct {
     void * buf1; /**< First display buffer. */
     void * buf2; /**< Second display buffer. */
 
@@ -53,14 +52,18 @@ typedef struct
     void * buf_act;
     uint32_t size; /*In pixel count*/
     lv_area_t area;
-    volatile uint32_t flushing : 1;
+    volatile int
+    flushing;      /*1: flushing is in progress. (It can't be a bitfield because when it's cleared from IRQ Read-Modify-Write issue might occur)*/
+    volatile int
+    flushing_last; /*1: It was the last chunk to flush. (It can't be a bitfield because when it's cleared from IRQ Read-Modify-Write issue might occur)*/
+    volatile uint32_t last_area         : 1; /*1: the last area is being rendered*/
+    volatile uint32_t last_part         : 1; /*1: the last part of the current area is being rendered*/
 } lv_disp_buf_t;
 
 /**
  * Display Driver structure to be registered by HAL
  */
-typedef struct _disp_drv_t
-{
+typedef struct _disp_drv_t {
 
     lv_coord_t hor_res; /**< Horizontal resolution. */
     lv_coord_t ver_res; /**< Vertical resolution. */
@@ -80,6 +83,11 @@ typedef struct _disp_drv_t
     uint32_t screen_transp : 1;
 #endif
 
+    /** DPI (dot per inch) of the display.
+     * Set to `LV_DPI` from `lv_Conf.h` by default.
+     */
+    uint32_t dpi : 10;
+
     /** MANDATORY: Write the internal buffer (VDB) to the display. 'lv_disp_flush_ready()' has to be
      * called when finished */
     void (*flush_cb)(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
@@ -97,6 +105,11 @@ typedef struct _disp_drv_t
     /** OPTIONAL: Called after every refresh cycle to tell the rendering and flushing time + the
      * number of flushed pixels */
     void (*monitor_cb)(struct _disp_drv_t * disp_drv, uint32_t time, uint32_t px);
+
+    /** OPTIONAL: Called periodically while lvgl waits for operation to be completed.
+     * For example flushing or GPU
+     * User can execute very simple tasks here or yield the task */
+    void (*wait_cb)(struct _disp_drv_t * disp_drv);
 
 #if LV_USE_GPU
     /** OPTIONAL: Blend two memories using opacity (GPU only)*/
@@ -122,10 +135,9 @@ struct _lv_obj_t;
 
 /**
  * Display structure.
- * ::lv_disp_drv_t is the first member of the structure.
+ * @note `lv_disp_drv_t` should be the first member of the structure.
  */
-typedef struct _disp_t
-{
+typedef struct _disp_t {
     /**< Driver to the display*/
     lv_disp_drv_t driver;
 
@@ -146,6 +158,14 @@ typedef struct _disp_t
     /*Miscellaneous data*/
     uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
+
+
+typedef enum {
+    LV_DISP_SIZE_SMALL,
+    LV_DISP_SIZE_MEDIUM,
+    LV_DISP_SIZE_LARGE,
+    LV_DISP_SIZE_EXTRA_LARGE,
+} lv_disp_size_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -230,6 +250,20 @@ lv_coord_t lv_disp_get_ver_res(lv_disp_t * disp);
  */
 bool lv_disp_get_antialiasing(lv_disp_t * disp);
 
+/**
+ * Get the DPI of the display
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return dpi of the display
+ */
+uint32_t lv_disp_get_dpi(lv_disp_t * disp);
+
+/**
+ * Get the size category of the display based on it's hor. res. and dpi.
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return LV_DISP_SIZE_SMALL/MEDIUM/LARGE/EXTRA_LARGE
+ */
+lv_disp_size_t lv_disp_get_size_category(lv_disp_t * disp);
+
 //! @cond Doxygen_Suppress
 
 /**
@@ -237,6 +271,14 @@ bool lv_disp_get_antialiasing(lv_disp_t * disp);
  * @param disp_drv pointer to display driver in `flush_cb` where this function is called
  */
 LV_ATTRIBUTE_FLUSH_READY void lv_disp_flush_ready(lv_disp_drv_t * disp_drv);
+
+/**
+ * Tell if it's the last area of the refreshing process.
+ * Can be called from `flush_cb` to execute some special display refreshing if needed when all areas area flushed.
+ * @param disp_drv pointer to display driver
+ * @return true: it's the last area to flush; false: there are other areas too which will be refreshed soon
+ */
+LV_ATTRIBUTE_FLUSH_READY bool lv_disp_flush_is_last(lv_disp_drv_t * disp_drv);
 
 //! @endcond
 
