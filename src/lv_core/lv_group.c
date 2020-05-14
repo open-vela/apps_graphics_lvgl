@@ -14,7 +14,7 @@
 #include "../lv_misc/lv_gc.h"
 
 #if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
+#include LV_GC_INCLUDE
 #endif /* LV_ENABLE_GC */
 
 /*********************
@@ -28,6 +28,9 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static void style_mod_def(lv_group_t * group, lv_style_t * style);
+static void style_mod_edit_def(lv_group_t * group, lv_style_t * style);
+static void refresh_theme(lv_group_t * g, lv_theme_t * th);
 static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *),
                             void * (*move)(const lv_ll_t *, const void *));
 static void lv_group_refocus(lv_group_t * g);
@@ -48,9 +51,9 @@ static void obj_to_foreground(lv_obj_t * obj);
 /**
  * Init. the group module
  */
-void _lv_group_init(void)
+void lv_group_init(void)
 {
-    _lv_ll_init(&LV_GC_ROOT(_lv_group_ll), sizeof(lv_group_t));
+    lv_ll_init(&LV_GC_ROOT(_lv_group_ll), sizeof(lv_group_t));
 }
 
 /**
@@ -59,10 +62,10 @@ void _lv_group_init(void)
  */
 lv_group_t * lv_group_create(void)
 {
-    lv_group_t * group = _lv_ll_ins_head(&LV_GC_ROOT(_lv_group_ll));
+    lv_group_t * group = lv_ll_ins_head(&LV_GC_ROOT(_lv_group_ll));
     LV_ASSERT_MEM(group);
     if(group == NULL) return NULL;
-    _lv_ll_init(&group->obj_ll, sizeof(lv_obj_t *));
+    lv_ll_init(&group->obj_ll, sizeof(lv_obj_t *));
 
     group->obj_focus      = NULL;
     group->frozen         = 0;
@@ -73,8 +76,11 @@ lv_group_t * lv_group_create(void)
     group->wrap           = 1;
 
 #if LV_USE_USER_DATA
-   _lv_memset_00(&group->user_data, sizeof(lv_group_user_data_t));
+    memset(&group->user_data, 0, sizeof(lv_group_user_data_t));
 #endif
+
+    /*Initialize style modification callbacks from current theme*/
+    refresh_theme(group, lv_theme_get_current());
 
     return group;
 }
@@ -93,12 +99,13 @@ void lv_group_del(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(group->obj_ll, obj) {
+    LV_LL_READ(group->obj_ll, obj)
+    {
         (*obj)->group_p = NULL;
     }
 
-    _lv_ll_clear(&(group->obj_ll));
-    _lv_ll_remove(&LV_GC_ROOT(_lv_group_ll), group);
+    lv_ll_clear(&(group->obj_ll));
+    lv_ll_rem(&LV_GC_ROOT(_lv_group_ll), group);
     lv_mem_free(group);
 }
 
@@ -110,9 +117,11 @@ void lv_group_del(lv_group_t * group)
 void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
 {
     if(group == NULL) return;
+
     /*Do not add the object twice*/
     lv_obj_t ** obj_i;
-    _LV_LL_READ(group->obj_ll, obj_i) {
+    LV_LL_READ(group->obj_ll, obj_i)
+    {
         if((*obj_i) == obj) {
             LV_LOG_INFO("lv_group_add_obj: the object is already added to this group");
             return;
@@ -129,14 +138,14 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
     }
 
     obj->group_p     = group;
-    lv_obj_t ** next = _lv_ll_ins_tail(&group->obj_ll);
+    lv_obj_t ** next = lv_ll_ins_tail(&group->obj_ll);
     LV_ASSERT_MEM(next);
     if(next == NULL) return;
     *next = obj;
 
     /* If the head and the tail is equal then there is only one object in the linked list.
      * In this case automatically activate it*/
-    if(_lv_ll_get_head(&group->obj_ll) == next) {
+    if(lv_ll_get_head(&group->obj_ll) == next) {
         lv_group_refocus(group);
     }
 }
@@ -153,10 +162,8 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
     /*Focus on the next object*/
     if(*g->obj_focus == obj) {
-        if(g->frozen) g->frozen = 0;
-
         /*If this is the only object in the group then focus to nothing.*/
-        if(_lv_ll_get_head(&g->obj_ll) == g->obj_focus && _lv_ll_get_tail(&g->obj_ll) == g->obj_focus) {
+        if(lv_ll_get_head(&g->obj_ll) == g->obj_focus && lv_ll_get_tail(&g->obj_ll) == g->obj_focus) {
             (*g->obj_focus)->signal_cb(*g->obj_focus, LV_SIGNAL_DEFOCUS, NULL);
         }
         /*If there more objects in the group then focus to the next/prev object*/
@@ -174,9 +181,10 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
     /*Search the object and remove it from its group */
     lv_obj_t ** i;
-    _LV_LL_READ(g->obj_ll, i) {
+    LV_LL_READ(g->obj_ll, i)
+    {
         if(*i == obj) {
-            _lv_ll_remove(&g->obj_ll, i);
+            lv_ll_rem(&g->obj_ll, i);
             lv_mem_free(i);
             obj->group_p = NULL;
             break;
@@ -199,11 +207,12 @@ void lv_group_remove_all_objs(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(group->obj_ll, obj) {
+    LV_LL_READ(group->obj_ll, obj)
+    {
         (*obj)->group_p = NULL;
     }
 
-    _lv_ll_clear(&(group->obj_ll));
+    lv_ll_clear(&(group->obj_ll));
 }
 
 /**
@@ -218,13 +227,12 @@ void lv_group_focus_obj(lv_obj_t * obj)
 
     if(g->frozen != 0) return;
 
-    if(obj == *g->obj_focus) return;
-
     /*On defocus edit mode must be leaved*/
     lv_group_set_editing(g, false);
 
     lv_obj_t ** i;
-    _LV_LL_READ(g->obj_ll, i) {
+    LV_LL_READ(g->obj_ll, i)
+    {
         if(*i == obj) {
             if(g->obj_focus != NULL) {
                 (*g->obj_focus)->signal_cb(*g->obj_focus, LV_SIGNAL_DEFOCUS, NULL);
@@ -256,7 +264,7 @@ void lv_group_focus_obj(lv_obj_t * obj)
  */
 void lv_group_focus_next(lv_group_t * group)
 {
-    focus_next_core(group, _lv_ll_get_head, _lv_ll_get_next);
+    focus_next_core(group, lv_ll_get_head, lv_ll_get_next);
 }
 
 /**
@@ -265,7 +273,7 @@ void lv_group_focus_next(lv_group_t * group)
  */
 void lv_group_focus_prev(lv_group_t * group)
 {
-    focus_next_core(group, _lv_ll_get_tail, _lv_ll_get_prev);
+    focus_next_core(group, lv_ll_get_tail, lv_ll_get_prev);
 }
 
 /**
@@ -304,6 +312,28 @@ lv_res_t lv_group_send_data(lv_group_t * group, uint32_t c)
 }
 
 /**
+ * Set a function for a group which will modify the object's style if it is in focus
+ * @param group pointer to a group
+ * @param style_mod_cb the style modifier function pointer
+ */
+void lv_group_set_style_mod_cb(lv_group_t * group, lv_group_style_mod_cb_t style_mod_cb)
+{
+    group->style_mod_cb = style_mod_cb;
+    if(group->obj_focus != NULL) lv_obj_invalidate(*group->obj_focus);
+}
+
+/**
+ * Set a function for a group which will modify the object's style if it is in focus in edit mode
+ * @param group pointer to a group
+ * @param style_mod_func the style modifier function pointer
+ */
+void lv_group_set_style_mod_edit_cb(lv_group_t * group, lv_group_style_mod_cb_t style_mod_edit_cb)
+{
+    group->style_mod_edit_cb = style_mod_edit_cb;
+    if(group->obj_focus != NULL) lv_obj_invalidate(*group->obj_focus);
+}
+
+/**
  * Set a function for a group which will be called when a new object is focused
  * @param group pointer to a group
  * @param focus_cb the call back function or NULL if unused
@@ -320,7 +350,6 @@ void lv_group_set_focus_cb(lv_group_t * group, lv_group_focus_cb_t focus_cb)
  */
 void lv_group_set_editing(lv_group_t * group, bool edit)
 {
-    if(group == NULL) return;
     uint8_t en_val = edit ? 1 : 0;
 
     if(en_val == group->editing) return; /*Do not set the same mode again*/
@@ -363,6 +392,25 @@ void lv_group_set_wrap(lv_group_t * group, bool en)
 }
 
 /**
+ * Modify a style with the set 'style_mod' function. The input style remains unchanged.
+ * @param group pointer to group
+ * @param style pointer to a style to modify
+ * @return a copy of the input style but modified with the 'style_mod' function
+ */
+lv_style_t * lv_group_mod_style(lv_group_t * group, const lv_style_t * style)
+{
+    /*Load the current style. It will be modified by the callback*/
+    lv_style_copy(&group->style_tmp, style);
+
+    if(group->editing) {
+        if(group->style_mod_edit_cb) group->style_mod_edit_cb(group, &group->style_tmp);
+    } else {
+        if(group->style_mod_cb) group->style_mod_cb(group, &group->style_tmp);
+    }
+    return &group->style_tmp;
+}
+
+/**
  * Get the focused object or NULL if there isn't one
  * @param group pointer to a group
  * @return pointer to the focused object
@@ -388,13 +436,35 @@ lv_group_user_data_t * lv_group_get_user_data(lv_group_t * group)
 #endif
 
 /**
+ * Get a the style modifier function of a group
+ * @param group pointer to a group
+ * @return pointer to the style modifier function
+ */
+lv_group_style_mod_cb_t lv_group_get_style_mod_cb(const lv_group_t * group)
+{
+    if(!group) return false;
+    return group->style_mod_cb;
+}
+
+/**
+ * Get a the style modifier function of a group in edit mode
+ * @param group pointer to a group
+ * @return pointer to the style modifier function
+ */
+lv_group_style_mod_cb_t lv_group_get_style_mod_edit_cb(const lv_group_t * group)
+{
+    if(!group) return false;
+    return group->style_mod_edit_cb;
+}
+
+/**
  * Get the focus callback function of a group
  * @param group pointer to a group
  * @return the call back function or NULL if not set
  */
 lv_group_focus_cb_t lv_group_get_focus_cb(const lv_group_t * group)
 {
-    if(!group) return NULL;
+    if(!group) return false;
     return group->focus_cb;
 }
 
@@ -431,6 +501,27 @@ bool lv_group_get_wrap(lv_group_t * group)
     return group->wrap ? true : false;
 }
 
+/**
+ * Notify the group that current theme changed and style modification callbacks need to be
+ * refreshed.
+ * @param group pointer to group. If NULL then all groups are notified.
+ */
+void lv_group_report_style_mod(lv_group_t * group)
+{
+    lv_theme_t * th = lv_theme_get_current();
+
+    if(group != NULL) {
+        refresh_theme(group, th);
+        return;
+    }
+
+    lv_group_t * i;
+    LV_LL_READ(LV_GC_ROOT(_lv_group_ll), i)
+    {
+        refresh_theme(i, th);
+    }
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -447,6 +538,89 @@ static void lv_group_refocus(lv_group_t * g)
         lv_group_focus_prev(g);
     /*Restore wrap property*/
     g->wrap = temp_wrap;
+}
+
+/**
+ * Default style modifier function
+ * @param group pointer to the caller group
+ * @param style pointer to a style to modify. (Typically group.style_tmp) It will be OVERWRITTEN.
+ */
+static void style_mod_def(lv_group_t * group, lv_style_t * style)
+{
+    (void)group; /*Unused*/
+#if LV_COLOR_DEPTH != 1
+
+    /*Make the style to be a little bit orange*/
+    style->body.border.opa   = LV_OPA_COVER;
+    style->body.border.color = LV_COLOR_ORANGE;
+
+    /*If not transparent or has border then emphasis the border*/
+    if(style->body.opa != LV_OPA_TRANSP || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
+
+    style->body.main_color   = lv_color_mix(style->body.main_color, LV_COLOR_ORANGE, LV_OPA_70);
+    style->body.grad_color   = lv_color_mix(style->body.grad_color, LV_COLOR_ORANGE, LV_OPA_70);
+    style->body.shadow.color = lv_color_mix(style->body.shadow.color, LV_COLOR_ORANGE, LV_OPA_60);
+
+    style->text.color = lv_color_mix(style->text.color, LV_COLOR_ORANGE, LV_OPA_70);
+
+    /*Add some recolor to the images*/
+    if(style->image.intense < LV_OPA_MIN) {
+        style->image.color   = LV_COLOR_ORANGE;
+        style->image.intense = LV_OPA_40;
+    }
+#else
+    style->body.border.opa   = LV_OPA_COVER;
+    style->body.border.color = LV_COLOR_BLACK;
+    style->body.border.width = 2;
+
+#endif
+}
+
+/**
+ * Default style modifier function
+ * @param group pointer to the caller group
+ * @param style pointer to a style to modify. (Typically group.style_tmp) It will be OVERWRITTEN.
+ */
+static void style_mod_edit_def(lv_group_t * group, lv_style_t * style)
+{
+    (void)group; /*Unused*/
+#if LV_COLOR_DEPTH != 1
+
+    /*Make the style to be a little bit orange*/
+    style->body.border.opa   = LV_OPA_COVER;
+    style->body.border.color = LV_COLOR_GREEN;
+
+    /*If not empty or has border then emphasis the border*/
+    if(style->body.opa != LV_OPA_TRANSP || style->body.border.width != 0) style->body.border.width = LV_DPI / 20;
+
+    style->body.main_color   = lv_color_mix(style->body.main_color, LV_COLOR_GREEN, LV_OPA_70);
+    style->body.grad_color   = lv_color_mix(style->body.grad_color, LV_COLOR_GREEN, LV_OPA_70);
+    style->body.shadow.color = lv_color_mix(style->body.shadow.color, LV_COLOR_GREEN, LV_OPA_60);
+
+    style->text.color = lv_color_mix(style->text.color, LV_COLOR_GREEN, LV_OPA_70);
+
+    /*Add some recolor to the images*/
+    if(style->image.intense < LV_OPA_MIN) {
+        style->image.color   = LV_COLOR_GREEN;
+        style->image.intense = LV_OPA_40;
+    }
+
+#else
+    style->body.border.opa   = LV_OPA_COVER;
+    style->body.border.color = LV_COLOR_BLACK;
+    style->body.border.width = 3;
+
+#endif
+}
+
+static void refresh_theme(lv_group_t * g, lv_theme_t * th)
+{
+    g->style_mod_cb      = style_mod_def;
+    g->style_mod_edit_cb = style_mod_edit_def;
+    if(th) {
+        if(th->group.style_mod_xcb) g->style_mod_cb = th->group.style_mod_xcb;
+        if(th->group.style_mod_edit_xcb) g->style_mod_edit_cb = th->group.style_mod_edit_xcb;
+    }
 }
 
 static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *),
@@ -466,8 +640,7 @@ static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
                 obj_next  = begin(&group->obj_ll);
                 can_move  = false;
                 can_begin = false;
-            }
-            else {
+            } else {
                 /*Currently focused object is the last/first in the group, keep it that way*/
                 return;
             }

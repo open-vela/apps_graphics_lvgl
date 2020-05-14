@@ -14,7 +14,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#ifdef LV_CONF_INCLUDE_SIMPLE
+#include "lv_conf.h"
+#else
+#include "../../../lv_conf.h"
+#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -27,8 +31,6 @@ extern "C" {
 #ifndef LV_ATTRIBUTE_TASK_HANDLER
 #define LV_ATTRIBUTE_TASK_HANDLER
 #endif
-
-#define LV_NO_TASK_READY 0xFFFFFFFF
 /**********************
  *      TYPEDEFS
  **********************/
@@ -57,15 +59,16 @@ typedef uint8_t lv_task_prio_t;
 /**
  * Descriptor of a lv_task
  */
-typedef struct _lv_task_t {
+typedef struct _lv_task_t
+{
     uint32_t period; /**< How often the task should run */
     uint32_t last_run; /**< Last time the task ran */
     lv_task_cb_t task_cb; /**< Task function */
 
     void * user_data; /**< Custom user data */
 
-    int32_t repeat_count; /**< 1: Task times;  -1 : infinity;  0 : stop ;  n>0: residual times */
     uint8_t prio : 3; /**< Task priority */
+    uint8_t once : 1; /**< 1: one shot task */
 } lv_task_t;
 
 /**********************
@@ -75,15 +78,14 @@ typedef struct _lv_task_t {
 /**
  * Init the lv_task module
  */
-void _lv_task_core_init(void);
+void lv_task_core_init(void);
 
 //! @cond Doxygen_Suppress
 
 /**
  * Call it  periodically to handle lv_tasks.
- * @return time till it needs to be run next (in ms)
  */
-LV_ATTRIBUTE_TASK_HANDLER uint32_t lv_task_handler(void);
+LV_ATTRIBUTE_TASK_HANDLER void lv_task_handler(void);
 
 //! @endcond
 
@@ -140,11 +142,10 @@ void lv_task_set_period(lv_task_t * task, uint32_t period);
 void lv_task_ready(lv_task_t * task);
 
 /**
- * Set the number of times a task will repeat.
+ * Delete the lv_task after one call
  * @param task pointer to a lv_task.
- * @param repeat_count -1 : infinity;  0 : stop ;  n>0: residual times
  */
-void lv_task_set_repeat_count(lv_task_t * task, int32_t repeat_count);
+void lv_task_once(lv_task_t * task);
 
 /**
  * Reset a lv_task.
