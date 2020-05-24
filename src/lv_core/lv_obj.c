@@ -2966,6 +2966,7 @@ void * lv_obj_get_group(const lv_obj_t * obj)
 #if LV_USE_GROUP
     return obj->group_p;
 #else
+    LV_UNUSED(obj);
     return NULL;
 #endif
 }
@@ -2985,6 +2986,7 @@ bool lv_obj_is_focused(const lv_obj_t * obj)
     }
     return false;
 #else
+    LV_UNUSED(obj);
     return false;
 #endif
 }
