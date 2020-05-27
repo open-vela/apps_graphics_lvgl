@@ -77,8 +77,6 @@ typedef uint32_t lv_uintptr_t;
  *      MACROS
  **********************/
 
-#define LV_UNUSED(x) ((void) x)
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

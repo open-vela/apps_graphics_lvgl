@@ -111,14 +111,12 @@ uint32_t _lv_txt_ap_calc_bytes_cnt(const char * txt)
         if(current_ap_idx != LV_UNDEF_ARABIC_PERSIAN_CHARS)
             ch_enc = ap_chars_map[current_ap_idx].char_end_form;
 
-        if(ch_enc < 0x80)
+        if(ch_enc <= 0x7F)
             chars_cnt++;
-        else if(ch_enc < 0x0800)
+        else if(ch_enc <= 0x7FFF)
             chars_cnt += 2;
-        else  if(ch_enc < 0x010000)
-            chars_cnt += 3;
         else
-            chars_cnt += 4;
+            chars_cnt += 3;
 
         i++;
     }
@@ -178,25 +176,18 @@ void _lv_txt_ap_proc(const char * txt, char * txt_out)
     i = 0;
 
     while(i < txt_length) {
-        if(ch_enc[i] < 0x80) {
-            *(txt_out_temp++) = ch_enc[i] & 0xFF;
+        if((ch_enc[i]) <= 0x7F) {
+            *(txt_out_temp++) = ch_enc[i];
         }
-        else if(ch_enc[i] < 0x0800) {
-            *(txt_out_temp++) = ((ch_enc[i] >> 6) & 0x1F) | 0xC0;
-            *(txt_out_temp++) = ((ch_enc[i] >> 0) & 0x3F) | 0x80;
+        else if(ch_enc[i] <= 0x7FFF) {
+            *(txt_out_temp++) = 0xC0 | ((ch_enc[i] >> 6) & 0x3F);
+            *(txt_out_temp++) = 0x80 | (ch_enc[i] & 0x3F);
         }
-        else if(ch_enc[i] < 0x010000) {
-            *(txt_out_temp++) = ((ch_enc[i] >> 12) & 0x0F) | 0xE0;
-            *(txt_out_temp++) = ((ch_enc[i] >> 6) & 0x3F) | 0x80;
-            *(txt_out_temp++) = ((ch_enc[i] >> 0) & 0x3F) | 0x80;
+        else {
+            *(txt_out_temp++) = 0xE0 | ((ch_enc[i] >> 12) & 0x3F);
+            *(txt_out_temp++) = 0x80 | ((ch_enc[i] >> 6) & 0x3F);
+            *(txt_out_temp++) = 0x80 | (ch_enc[i] & 0x3F);
         }
-        else if(ch_enc[i] < 0x110000) {
-            *(txt_out_temp++) = ((ch_enc[i] >> 18) & 0x07) | 0xF0;
-            *(txt_out_temp++) = ((ch_enc[i] >> 12) & 0x3F) | 0x80;
-            *(txt_out_temp++) = ((ch_enc[i] >> 6) & 0x3F) | 0x80;
-            *(txt_out_temp++) = ((ch_enc[i] >> 0) & 0x3F) | 0x80;
-        }
-
         i++;
     }
     *(txt_out_temp) = '\0';
