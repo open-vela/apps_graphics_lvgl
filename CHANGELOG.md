@@ -1,15 +1,10 @@
 # Changelog
 
-
-## v7.0.2 (under developement)
+## v7.0.1 (under development)
 *Available in the `master` branch*
-
-
-## v7.0.1 (01.06.2020)
 
 ### Bugfixes
 - Make the Microptyhon working by adding the required variables as GC_ROOT
-- Prefix some internal API functions with `_` to reduce the API of LVGL 
 - Fix built-in SimSun CJK font
 - Fix UTF-8 encoding when `LV_USE_ARABIC_PERSIAN_CHARS` is enabled
 - Fix DMA2D usage when 32 bit images directly blended
@@ -19,8 +14,8 @@
 - Improve DMA2D blending
 - Remove memcpy from `lv_ll` (caused issues with some optimization settings)
 - `lv_chart` fix X tick drawing
-- Fix vertical dashed line drawing
-- Some additonal minor fixes and formattings
+- fix vertical dashed line drawing
+- some additonal minor fixes and formattings
 
 ## v7.0.0 (18.05.2020)
 
