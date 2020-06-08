@@ -59,7 +59,6 @@ typedef struct {
     uint16_t btn_id_act;    /*Index of the active button (being pressed/released etc) or LV_BTNMATRIX_BTN_NONE */
     uint8_t recolor : 1;    /*Enable button recoloring*/
     uint8_t one_check : 1;  /*Single button toggled at once*/
-    uint8_t align : 2;      /*Align type from 'lv_label_align_t'*/
 } lv_btnmatrix_ext_t;
 
 enum {
@@ -170,13 +169,6 @@ void lv_btnmatrix_set_btn_width(lv_obj_t * btnm, uint16_t btn_id, uint8_t width)
  * @param one_chk Whether "one check" mode is enabled
  */
 void lv_btnmatrix_set_one_check(lv_obj_t * btnm, bool one_chk);
-    
-/**
- * Set the align of the map text (left, right or center)
- * @param btnm pointer to a btnmatrix object
- * @param align LV_LABEL_ALIGN_LEFT, LV_LABEL_ALIGN_RIGHT or LV_LABEL_ALIGN_CENTER
- */
-void lv_btnmatrix_set_align(lv_obj_t* btnm, lv_label_align_t align);
 
 /*=====================
  * Getter functions
@@ -244,14 +236,6 @@ bool lv_btnmatrix_get_btn_ctrl(lv_obj_t * btnm, uint16_t btn_id, lv_btnmatrix_ct
  * @return whether "one toggle" mode is enabled
  */
 bool lv_btnmatrix_get_one_check(const lv_obj_t * btnm);
-    
-/**
- * Get the align attribute
- * @param  btnm pointer to a btnmatrix object
- * @return LV_LABEL_ALIGN_LEFT, LV_LABEL_ALIGN_RIGHT or LV_LABEL_ALIGN_CENTER
- */
-lv_label_align_t lv_btnmatrix_get_align(const lv_obj_t* btnm);    
-    
 /**********************
  *      MACROS
  **********************/

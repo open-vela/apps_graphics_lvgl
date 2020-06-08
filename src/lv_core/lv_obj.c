@@ -11,7 +11,7 @@
 #include "lv_refr.h"
 #include "lv_group.h"
 #include "lv_disp.h"
-#include "../lv_misc/lv_debug.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_misc/lv_anim.h"
@@ -37,6 +37,10 @@
 #endif /* LV_USE_USER_DATA_FREE */
 
 #include LV_THEME_DEFAULT_INCLUDE
+
+#if LV_USE_GPU_STM32_DMA2D
+#include "../lv_gpu/lv_gpu_stm32_dma2d.h"
+#endif
 
 /*********************
  *      DEFINES
@@ -92,7 +96,6 @@ static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v);
 static void fade_in_anim_ready(lv_anim_t * a);
 #endif
 static void lv_event_mark_deleted(lv_obj_t * obj);
-static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
 static void lv_obj_del_async_cb(void * obj);
 static void obj_del_core(lv_obj_t * obj);
 
@@ -138,6 +141,11 @@ void lv_init(void)
 
 #if LV_USE_GROUP
     _lv_group_init();
+#endif
+
+#if LV_USE_GPU_STM32_DMA2D
+    /*Initialize DMA2D GPU*/
+    lv_gpu_stm32_dma2d_init();
 #endif
 
     _lv_ll_init(&LV_GC_ROOT(_lv_obj_style_trans_ll), sizeof(lv_style_trans_t));
@@ -298,7 +306,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
 
 #if LV_USE_GROUP
     new_obj->group_p = NULL;
-
 #endif
 
     /*Set attributes*/
@@ -313,7 +320,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
     new_obj->protect      = LV_PROTECT_NONE;
     new_obj->parent_event = 0;
     new_obj->gesture_parent = parent ? 1 : 0;
-    new_obj->focus_parent  = 0;
     new_obj->state = LV_STATE_DEFAULT;
 
     new_obj->ext_attr = NULL;
@@ -1546,31 +1552,6 @@ void lv_obj_set_gesture_parent(lv_obj_t * obj, bool en)
 }
 
 /**
-* Enable to use parent for focus state.
-* When object is focused the parent will get the state instead (visual only)
-* @param obj pointer to an object
-* @param en true: enable the 'focus parent' for the object
-*/
-void lv_obj_set_focus_parent(lv_obj_t * obj, bool en)
-{
-	if (lv_obj_is_focused(obj)) {
-    	if (en)	{
-    		obj->focus_parent = 1;
-			lv_obj_clear_state(obj, LV_STATE_FOCUSED | LV_STATE_EDITED);
-			lv_obj_set_state(lv_obj_get_focused_obj(obj), LV_STATE_FOCUSED);
-		}
-    	else {
-			lv_obj_clear_state(lv_obj_get_focused_obj(obj), LV_STATE_FOCUSED | LV_STATE_EDITED);
-			lv_obj_set_state(obj, LV_STATE_FOCUSED);
-			obj->focus_parent = 0;
-    	}
-    }
-	else {
-		obj->focus_parent = (en == true ? 1 : 0);
-	}
-}
-
-/**
  * Propagate the events to the parent too
  * @param obj pointer to an object
  * @param en true: enable the event propagation
@@ -2772,16 +2753,6 @@ bool lv_obj_get_gesture_parent(const lv_obj_t * obj)
 }
 
 /**
-* Get the focus parent attribute of an object
-* @param obj pointer to an object
-* @return true: focus parent is enabled
-*/
-bool lv_obj_get_focus_parent(const lv_obj_t * obj)
-{
-    return obj->focus_parent == 0 ? false : true;
-}
-
-/**
  * Get the drag parent attribute of an object
  * @param obj pointer to an object
  * @return true: drag parent is enabled
@@ -3443,52 +3414,6 @@ void lv_obj_fade_out(lv_obj_t * obj, uint32_t time, uint32_t delay)
 #endif
 }
 
-/**
- * Check if any object has a given type
- * @param obj pointer to an object
- * @param obj_type type of the object. (e.g. "lv_btn")
- * @return true: valid
- */
-bool lv_debug_check_obj_type(const lv_obj_t * obj, const char * obj_type)
-{
-    if(obj_type[0] == '\0') return true;
-
-    lv_obj_type_t types;
-    lv_obj_get_type((lv_obj_t *)obj, &types);
-
-    uint8_t i;
-    for(i = 0; i < LV_MAX_ANCESTOR_NUM; i++) {
-        if(types.type[i] == NULL) break;
-        if(strcmp(types.type[i], obj_type) == 0) return true;
-    }
-
-    return false;
-}
-
-/**
- * Check if any object is still "alive", and part of the hierarchy
- * @param obj pointer to an object
- * @param obj_type type of the object. (e.g. "lv_btn")
- * @return true: valid
- */
-bool lv_debug_check_obj_valid(const lv_obj_t * obj)
-{
-    lv_disp_t * disp = lv_disp_get_next(NULL);
-    while(disp) {
-        lv_obj_t * scr;
-        _LV_LL_READ(disp->scr_ll, scr) {
-
-            if(scr == obj) return true;
-            bool found = obj_valid_child(scr, obj);
-            if(found) return true;
-        }
-
-        disp = lv_disp_get_next(disp);
-    }
-
-    return false;
-}
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -3675,23 +3600,6 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
     return LV_DESIGN_RES_OK;
 }
 
-
-/**
- * Get the really focused object by taking `focus_parent` into account.
- * @param obj the start object
- * @return the object to really focus
- */
-lv_obj_t * lv_obj_get_focused_obj(const lv_obj_t * obj)
-{
-    if(obj == NULL) return NULL;
-    const lv_obj_t * focus_obj = obj;
-    while(lv_obj_get_focus_parent(focus_obj) != false && focus_obj != NULL) {
-    	focus_obj = lv_obj_get_parent(focus_obj);
-    }
-
-    return (lv_obj_t*)focus_obj;
-}
-
 /**
  * Signal function of the basic object
  * @param obj pointer to an object
@@ -3740,26 +3648,14 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         if(lv_group_get_editing(lv_obj_get_group(obj))) {
             uint8_t state = LV_STATE_FOCUSED;
             state |= LV_STATE_EDITED;
-
-            /*if using focus mode, change target to parent*/
-            obj = lv_obj_get_focused_obj(obj);
-
             lv_obj_add_state(obj, state);
         }
         else {
-
-            /*if using focus mode, change target to parent*/
-            obj = lv_obj_get_focused_obj(obj);
-
             lv_obj_add_state(obj, LV_STATE_FOCUSED);
             lv_obj_clear_state(obj, LV_STATE_EDITED);
         }
     }
     else if(sign == LV_SIGNAL_DEFOCUS) {
-
-        /*if using focus mode, change target to parent*/
-        obj = lv_obj_get_focused_obj(obj);
-
         lv_obj_clear_state(obj, LV_STATE_FOCUSED | LV_STATE_EDITED);
     }
 #endif
@@ -4114,18 +4010,4 @@ static void lv_event_mark_deleted(lv_obj_t * obj)
     }
 }
 
-static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find)
-{
-    /*Check all children of `parent`*/
-    lv_obj_t * child;
-    _LV_LL_READ(parent->child_ll, child) {
-        if(child == obj_to_find) return true;
-
-        /*Check the children*/
-        bool found = obj_valid_child(child, obj_to_find);
-        if(found) return true;
-    }
-
-    return false;
-}
 
