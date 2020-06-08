@@ -9,7 +9,7 @@
 #include "../lv_widgets/lv_page.h"
 #if LV_USE_PAGE != 0
 
-#include "../lv_misc/lv_debug.h"
+#include "../lv_core/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_themes/lv_theme.h"
@@ -484,9 +484,6 @@ void lv_page_focus(lv_obj_t * page, const lv_obj_t * obj, lv_anim_enable_t anim_
     lv_anim_del(ext->scrl, (lv_anim_exec_xcb_t)lv_obj_set_x);
     lv_anim_del(ext->scrl, (lv_anim_exec_xcb_t)lv_obj_set_y);
 #endif
-
-    /*if using focus mode, change target to parent*/
-    obj = lv_obj_get_focused_obj(obj);
 
 
     /*If obj is higher then the page focus where the "error" is smaller*/
