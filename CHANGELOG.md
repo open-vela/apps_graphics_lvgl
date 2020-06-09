@@ -1,7 +1,17 @@
 # Changelog
 
+## v7.1.0 (under development)
+*Available in the `dev` branch*
 
-## v7.0.2 (under development, planned: 16.06.2020)
+### New features
+- Add `focus_parent` attribute to `lv_obj`
+- Allow using buttons in encoder input device
+- Add lv_btnmatrix_set/get_align capability
+
+### Bugfixes
+- None
+
+## v7.0.2 (under development)
 *Available in the `master` branch*
 
 - `lv_textarea` fix wrong cursor position when clicked after the last character
