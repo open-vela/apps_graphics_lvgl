@@ -178,9 +178,6 @@ typedef void * lv_group_user_data_t;
 /* 1: Enable GPU interface*/
 #define LV_USE_GPU              1   /*Only enables `gpu_fill_cb` and `gpu_blend_cb` in the disp. drv- */
 #define LV_USE_GPU_STM32_DMA2D  0
-/*If enabling LV_USE_GPU_STM32_DMA2D, LV_GPU_DMA2D_CMSIS_INCLUDE must be defined to include path of CMSIS header of target processor
-e.g. "stm32f769xx.h" or "stm32f429xx.h" */
-#define LV_GPU_DMA2D_CMSIS_INCLUDE
 
 /* 1: Enable file system (might be required for images */
 #define LV_USE_FILESYSTEM       1
@@ -251,10 +248,6 @@ typedef void * lv_img_decoder_user_data_t;
  * The default value just prevents a GCC warning.
  */
 #define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning
-
-/* Prefix variables that are used in GPU accelerated operations, often these need to be
- * placed in RAM sections that are DMA accessible */
-#define LV_ATTRIBUTE_DMA
 
 /*===================
  *  HAL settings
@@ -337,7 +330,7 @@ typedef void * lv_indev_drv_user_data_t;            /*Type of user data in the i
 
 /* The built-in fonts contains the ASCII range and some Symbols with  4 bit-per-pixel.
  * The symbols are available via `LV_SYMBOL_...` defines
- * More info about fonts: https://docs.lvgl.com/#Fonts
+ * More info about fonts: https://docs.lvgl.io/v7/en/html/overview/font.html
  * To create a new font go to: https://lvgl.com/ttf-font-to-c-array
  */
 

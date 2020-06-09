@@ -85,7 +85,7 @@ typedef struct {
 #endif
 
 static uint32_t zero_mem; /*Give the address of this variable if 0 byte should be allocated*/
-static uint32_t mem_max_size; /*Tracks the maximum total size of memory ever used from the internal heap*/ 
+
 
 static uint8_t mem_buf1_32[MEM_BUF_SMALL_SIZE];
 static uint8_t mem_buf2_32[MEM_BUF_SMALL_SIZE];
@@ -118,11 +118,10 @@ void _lv_mem_init(void)
     /*Allocate a large array to store the dynamically allocated data*/
     static LV_MEM_ATTR MEM_UNIT work_mem_int[LV_MEM_SIZE / sizeof(MEM_UNIT)];
     work_mem = (uint8_t *)work_mem_int;
-    mem_max_size = 0;
 #else
     work_mem = (uint8_t *)LV_MEM_ADR;
 #endif
-    
+
     lv_mem_ent_t * full = (lv_mem_ent_t *)work_mem;
     full->header.s.used = 0;
     /*The total mem size id reduced by the first header and the close patterns */
@@ -201,18 +200,7 @@ void * lv_mem_alloc(size_t size)
     if(alloc != NULL) _lv_memset(alloc, 0xaa, size);
 #endif
 
-    if(alloc == NULL) {
-      LV_LOG_WARN("Couldn't allocate memory");
-    }else{
-      #if LV_MEM_CUSTOM == 0
-      /* just a safety check, should always be true */
-      if ((uintptr_t) alloc > (uintptr_t) work_mem) {
-        if ((((uintptr_t) alloc - (uintptr_t) work_mem) + size) > mem_max_size) {
-          mem_max_size = ((uintptr_t) alloc - (uintptr_t) work_mem) + size;
-        }
-      }
-      #endif
-    }
+    if(alloc == NULL) LV_LOG_WARN("Couldn't allocate memory");
 
     return alloc;
 }
@@ -436,7 +424,6 @@ void lv_mem_monitor(lv_mem_monitor_t * mon_p)
         e = ent_get_next(e);
     }
     mon_p->total_size = LV_MEM_SIZE;
-    mon_p->max_used = mem_max_size;
     mon_p->used_pct   = 100 - (100U * mon_p->free_size) / mon_p->total_size;
     if(mon_p->free_size > 0) {
         mon_p->frag_pct   = (uint32_t)mon_p->free_biggest_size * 100U / mon_p->free_size;
@@ -526,14 +513,13 @@ void * _lv_mem_buf_get(uint32_t size)
             /*if this fails you probably need to increase your LV_MEM_SIZE/heap size*/
             LV_GC_ROOT(_lv_mem_buf[i]).p = lv_mem_realloc(LV_GC_ROOT(_lv_mem_buf[i]).p, size);
             if(LV_GC_ROOT(_lv_mem_buf[i]).p == NULL) {
-                LV_LOG_ERROR("lv_mem_buf_get: Out of memory, can't allocate a new  buffer (increase your LV_MEM_SIZE/heap size)")
+                LV_DEBUG_ASSERT(false, "Out of memory, can't allocate a new  buffer (increase your LV_MEM_SIZE/heap size", 0x00);
             }
             return  LV_GC_ROOT(_lv_mem_buf[i]).p;
         }
     }
 
-    LV_LOG_ERROR("lv_mem_buf_get: no free buffer. Increase LV_DRAW_BUF_MAX_NUM.");
-
+    LV_DEBUG_ASSERT(false, "No free buffer. Increase LV_DRAW_BUF_MAX_NUM.", 0x00);
     return NULL;
 }
 
