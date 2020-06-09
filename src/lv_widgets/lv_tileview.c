@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include "lv_cont.h"
 #include "../lv_misc/lv_math.h"
-#include "../lv_core/lv_debug.h"
+#include "../lv_misc/lv_debug.h"
 #include "../lv_themes/lv_theme.h"
 
 /*********************
@@ -116,7 +116,7 @@ lv_obj_t * lv_tileview_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_obj_set_drag_throw(lv_page_get_scrllable(new_tileview), true);
         lv_obj_set_drag_dir(lv_page_get_scrllable(new_tileview), LV_DRAG_DIR_ONE);
 
-        lv_page_set_scrllable_fit(new_tileview, LV_FIT_TIGHT);
+        lv_page_set_scrllable_fit(new_tileview, LV_FIT_MAX);
 
         lv_obj_reset_style_list(new_tileview, LV_PAGE_PART_SCROLLABLE);
         lv_theme_apply(new_tileview, LV_THEME_TILEVIEW);

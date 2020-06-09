@@ -1,7 +1,7 @@
 # Changelog
 
 
-## v7.0.2 (under development)
+## v7.0.2 (under development, planned: 16.06.2020)
 *Available in the `master` branch*
 
 - `lv_textarea` fix wrong cursor position when clicked after the last character
@@ -13,6 +13,10 @@
 - Add version number to `lv_conf_template.h`
 - Add log in true double buffering mode with `set_px_cb`
 - `lv_dropdown`: fix missing `LV_EVENT_VALUE_CHANGED` event when used with encoder
+- `lv_tileview`: fix if not the {0;0} tile is created first
+- `lv_debug`: restructure to allow asserting in from `lv_misc` too
+- add assert if `_lv_mem_buf_get()` fails
+- `lv_textarea`: fix character delete in password mode
 
 ## v7.0.1 (01.06.2020)
 
