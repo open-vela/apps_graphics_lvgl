@@ -1,17 +1,5 @@
 # Changelog
 
-## v7.1.0 (under development)
-*Available in the `dev` branch*
-
-### New features
-- Add `focus_parent` attribute to `lv_obj`
-- Allow using buttons in encoder input device
-- Add lv_btnmatrix_set/get_align capability
-- DMA2D: Remove dependency on ST CubeMX HAL
-- Added `max_used` propriety to `lv_mem_monitor_t` struct
-
-### Bugfixes
-- None
 
 ## v7.0.2 (under development, planned: 16.06.2020)
 *Available in the `master` branch*
