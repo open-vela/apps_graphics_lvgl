@@ -60,7 +60,7 @@ extern lv_mem_buf_arr_t _lv_mem_buf;
  **********************/
 
 /**
- * Initialize the dyn_mem module (work memory and other variables)
+ * Initiaize the dyn_mem module (work memory and other variables)
  */
 void _lv_mem_init(void);
 
