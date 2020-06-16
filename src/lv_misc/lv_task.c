@@ -256,13 +256,13 @@ lv_task_t * lv_task_create_basic(void)
  * @param user_data custom parameter
  * @return pointer to the new task
  */
-lv_task_t * lv_task_create(lv_task_cb_t task_cb, uint32_t period, lv_task_prio_t prio, void * user_data)
+lv_task_t * lv_task_create(lv_task_cb_t task_xcb, uint32_t period, lv_task_prio_t prio, void * user_data)
 {
     lv_task_t * new_task = lv_task_create_basic();
     LV_ASSERT_MEM(new_task);
     if(new_task == NULL) return NULL;
 
-    lv_task_set_cb(new_task, task_cb);
+    lv_task_set_cb(new_task, task_xcb);
     lv_task_set_period(new_task, period);
     lv_task_set_prio(new_task, prio);
     new_task->user_data = user_data;
