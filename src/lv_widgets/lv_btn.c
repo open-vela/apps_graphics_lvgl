@@ -202,8 +202,7 @@ lv_btn_state_t lv_btn_get_state(const lv_obj_t * btn)
     if(obj_state & LV_STATE_CHECKED) {
         if(obj_state & LV_STATE_PRESSED) return LV_BTN_STATE_CHECKED_PRESSED;
         else return LV_BTN_STATE_CHECKED_RELEASED;
-    }
-    else {
+    } else {
         if(obj_state & LV_STATE_PRESSED) return LV_BTN_STATE_PRESSED;
         else return LV_BTN_STATE_RELEASED;
     }
