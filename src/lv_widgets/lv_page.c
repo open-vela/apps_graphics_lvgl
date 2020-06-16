@@ -380,7 +380,7 @@ lv_coord_t lv_page_get_height_fit(lv_obj_t * page)
 
 /**
  * Divide the width of the object and get the width of a given number of columns.
- * Take into account the paddings of the background and scrollbale too.
+ * Take into account the paddings of the background and scrollable too.
  * @param page pointer to an object
  * @param div indicates how many columns are assumed.
  * If 1 the width will be set the the parent's width
@@ -403,7 +403,7 @@ lv_coord_t lv_page_get_width_grid(lv_obj_t * page, uint8_t div, uint8_t span)
 
 /**
  * Divide the height of the object and get the width of a given number of columns.
- * Take into account the paddings of the background and scrollbale too.
+ * Take into account the paddings of the background and scrollable too.
  * @param obj pointer to an object
  * @param div indicates how many rows are assumed.
  * If 1 the height will be set the the parent's height
@@ -478,15 +478,12 @@ void lv_page_focus(lv_obj_t * page, const lv_obj_t * obj, lv_anim_enable_t anim_
 
 #if LV_USE_ANIMATION
     /* Be sure there is no position changing animation in progress
-     * because it can overide the current changes*/
+     * because it can override the current changes*/
     lv_anim_del(page, (lv_anim_exec_xcb_t)lv_obj_set_x);
     lv_anim_del(page, (lv_anim_exec_xcb_t)lv_obj_set_y);
     lv_anim_del(ext->scrl, (lv_anim_exec_xcb_t)lv_obj_set_x);
     lv_anim_del(ext->scrl, (lv_anim_exec_xcb_t)lv_obj_set_y);
 #endif
-
-    /*if using focus mode, change target to parent*/
-    obj = lv_obj_get_focused_obj(obj);
 
 
     /*If obj is higher then the page focus where the "error" is smaller*/
@@ -540,7 +537,7 @@ void lv_page_focus(lv_obj_t * page, const lv_obj_t * obj, lv_anim_enable_t anim_
     }
     /*Out of the page on the rigth*/
     else if((obj_w <= page_w && right_err > 0) || (obj_w > page_w && left_err >= right_err)) {
-        /*Calculate a new position and let some space on teh side*/
+        /*Calculate a new position and let some space on the side*/
         scrlable_x = -(obj_x + scrl_right + bg_right);
         scrlable_x -= scrl_right;
         scrlable_x += page_w - obj_w;
@@ -809,7 +806,7 @@ static lv_res_t lv_page_signal(lv_obj_t * page, lv_signal_t sign, void * param)
                 lv_obj_t * tmp = child;
                 child          = lv_obj_get_child(page, child); /*Get the next child before move this*/
 
-                /* Reposition the child to take padding into account (Only if it's on (0;0) or (widht;height) coordinates now)
+                /* Reposition the child to take padding into account
                  * It's required to keep new the object on the same coordinate if FIT is enabled.*/
                 if((tmp->coords.x1 == page->coords.x1)  &&
                    (fit_left == LV_FIT_TIGHT || fit_left == LV_FIT_MAX) &&
