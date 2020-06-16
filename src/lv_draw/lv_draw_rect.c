@@ -185,13 +185,10 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
     /*Create a mask if there is a radius*/
     lv_opa_t * mask_buf = _lv_mem_buf_get(draw_area_w);
 
-    lv_grad_dir_t grad_dir = dsc->bg_grad_dir;
-    if(dsc->bg_color.full == dsc->bg_grad_color.full) grad_dir = LV_GRAD_DIR_NONE;
-
     uint16_t other_mask_cnt = lv_draw_mask_get_cnt();
     bool simple_mode = true;
     if(other_mask_cnt) simple_mode = false;
-    else if(grad_dir == LV_GRAD_DIR_HOR) simple_mode = false;
+    else if(dsc->bg_grad_dir == LV_GRAD_DIR_HOR) simple_mode = false;
 
     int16_t mask_rout_id = LV_MASK_ID_INV;
 
@@ -204,7 +201,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
     if(rout > short_side >> 1) rout = short_side >> 1;
 
     /*Most simple case: just a plain rectangle*/
-    if(simple_mode && rout == 0 && (grad_dir == LV_GRAD_DIR_NONE)) {
+    if(simple_mode && rout == 0 && (dsc->bg_grad_dir == LV_GRAD_DIR_NONE)) {
         _lv_blend_fill(clip, &coords_bg,
                        dsc->bg_color, NULL, LV_DRAW_MASK_RES_FULL_COVER, opa,
                        dsc->bg_blend_mode);
@@ -225,7 +222,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
 
         lv_color_t * grad_map = NULL;
         /*In case of horizontal gradient pre-compute a line with a gradient*/
-        if(grad_dir == LV_GRAD_DIR_HOR) {
+        if(dsc->bg_grad_dir == LV_GRAD_DIR_HOR && dsc->bg_color.full != dsc->bg_grad_color.full) {
             grad_map = _lv_mem_buf_get(coords_w * sizeof(lv_color_t));
 
             int32_t i;
@@ -270,7 +267,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
             }
 
             /*Get the current line color*/
-            if(grad_dir == LV_GRAD_DIR_VER) {
+            if(dsc->bg_grad_dir == LV_GRAD_DIR_VER && dsc->bg_color.full != dsc->bg_grad_color.full) {
                 grad_color = grad_get(dsc, lv_area_get_height(&coords_bg), y - coords_bg.y1);
             }
 
@@ -291,7 +288,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
                                grad_color, mask_buf, mask_res, opa2, dsc->bg_blend_mode);
 
                 /*Center part*/
-                if(grad_dir == LV_GRAD_DIR_VER) {
+                if(dsc->bg_grad_dir == LV_GRAD_DIR_VER) {
                     fill_area2.x1 = coords_bg.x1 + rout;
                     fill_area2.x2 = coords_bg.x2 - rout;
                     _lv_blend_fill(clip, &fill_area2,
@@ -310,10 +307,10 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
 
             }
             else {
-                if(grad_dir == LV_GRAD_DIR_HOR) {
+                if(dsc->bg_grad_dir == LV_GRAD_DIR_HOR) {
                     _lv_blend_map(clip, &fill_area, grad_map, mask_buf, mask_res, opa2, dsc->bg_blend_mode);
                 }
-                else if(grad_dir == LV_GRAD_DIR_VER) {
+                else if(dsc->bg_grad_dir == LV_GRAD_DIR_VER) {
                     _lv_blend_fill(clip, &fill_area,
                                    grad_color, mask_buf, mask_res, opa2, dsc->bg_blend_mode);
                 }
@@ -326,7 +323,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_bg(const lv_area_t * coords, const lv_are
             fill_area.y2++;
         }
 
-        if(grad_dir == LV_GRAD_DIR_NONE && other_mask_cnt == 0 && split) {
+        if(dsc->bg_grad_dir == LV_GRAD_DIR_NONE && other_mask_cnt == 0 && split) {
             /*Central part*/
             fill_area.x1 = coords_bg.x1 + rout;
             fill_area.x2 = coords_bg.x2 - rout;
