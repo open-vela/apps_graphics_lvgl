@@ -203,9 +203,9 @@ lv_chart_series_t * lv_chart_add_series(lv_obj_t * chart, lv_color_t color)
 }
 
 /**
- * Clear the point of a series
+ * Clear the point of a serie
  * @param chart pointer to a chart object
- * @param serie pointer to the chart's series to clear
+ * @param serie pointer to the chart's serie to clear
  */
 void lv_chart_clear_serie(lv_obj_t * chart, lv_chart_series_t * serie)
 {
@@ -741,8 +741,7 @@ static lv_res_t lv_chart_signal(lv_obj_t * chart, lv_signal_t sign, void * param
     if(sign == LV_SIGNAL_CLEANUP) {
         lv_chart_series_t * ser;
         _LV_LL_READ(ext->series_ll, ser) {
-            lv_mem_free(ser->points);
-            lv_mem_free(ser);
+            if(!ser->ext_buf_assigned) lv_mem_free(ser->points);
         }
         _lv_ll_clear(&ext->series_ll);
 
