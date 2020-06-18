@@ -1,11 +1,5 @@
 # Changelog
 
-## v7.2.0 (planned on 04.08.2020)
-Available in the `dev` branch
-
-### New features
-- Add `LV_CALENDAR_WEEK_STARTS_MONDAY`
-
 ## v7.1.0 (planned on 07.07.2020)
 *Available in the `master` branch*
 
