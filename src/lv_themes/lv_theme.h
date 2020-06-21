@@ -109,6 +109,9 @@ typedef enum {
 #if LV_USE_ROLLER
     LV_THEME_ROLLER,
 #endif
+#if LV_USE_ROTARY
+    LV_THEME_ROTARY,
+#endif
 #if LV_USE_SLIDER
     LV_THEME_SLIDER,
 #endif
@@ -141,14 +144,13 @@ typedef enum {
 #endif
 
     _LV_THEME_BUILTIN_LAST,
-    LV_THEME_CUSTOM_START = _LV_THEME_BUILTIN_LAST,
+    _LV_THEME_CUSTOM_START = _LV_THEME_BUILTIN_LAST,
     _LV_THEME_CUSTOM_LAST = 0xFFFF,
 
 } lv_theme_style_t;
 
-typedef struct _lv_theme_t {
-    void (*apply_xcb)(lv_obj_t *, lv_theme_style_t); /*Deprecated: use `apply_cb` instead*/
-    void (*apply_cb)(struct _lv_theme_t *, lv_obj_t *, lv_theme_style_t);
+typedef struct {
+    void (*apply_xcb)(lv_obj_t *, lv_theme_style_t);
     lv_color_t color_primary;
     lv_color_t color_secondary;
     const lv_font_t * font_small;

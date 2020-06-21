@@ -118,13 +118,7 @@ uint32_t lv_theme_get_flags(void)
 
 void lv_theme_apply(lv_obj_t * obj, lv_theme_style_t name)
 {
-    /*apply_xcb is deprecated, use apply_cb instead*/
-    if (act_theme->apply_xcb) {
-        act_theme->apply_xcb(obj, name);
-    }
-    else if(act_theme->apply_cb) {
-        act_theme->apply_cb(act_theme, obj, name);
-    }
+    act_theme->apply_xcb(obj, name);
 }
 
 
