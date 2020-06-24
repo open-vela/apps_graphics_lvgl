@@ -11,10 +11,11 @@
 - Added `max_used` propriety to `lv_mem_monitor_t` struct
 
 ### Bugfixes
-- None
+- `lv_img` fix invalidation area when angle or zoom changes
 
 ## v7.0.2 (16.06.2020)
 
+### Bugfixes
 - `lv_textarea` fix wrong cursor position when clicked after the last character
 - Change all text related indices from 16-bit to 32-bit integers throughout whole library. #1545
 - Fix gestures
