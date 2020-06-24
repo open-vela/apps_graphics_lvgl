@@ -2,6 +2,7 @@
 
 ## v7.1.0 (planned on 07.07.2020)
 *Available in the `master` branch*
+- Change some lv_style_t methods to support big endian hardware.
 
 ### New features
 - Add `focus_parent` attribute to `lv_obj`
@@ -9,6 +10,7 @@
 - Add lv_btnmatrix_set/get_align capability
 - DMA2D: Remove dependency on ST CubeMX HAL
 - Added `max_used` propriety to `lv_mem_monitor_t` struct
+- In `lv_init` test if the the strings are UTF-8 encoded.
 
 ### Bugfixes
 - `lv_img` fix invalidation area when angle or zoom changes
