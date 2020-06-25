@@ -109,6 +109,9 @@ typedef enum {
 #if LV_USE_ROLLER
     LV_THEME_ROLLER,
 #endif
+#if LV_USE_ROTARY
+    LV_THEME_ROTARY,
+#endif
 #if LV_USE_SLIDER
     LV_THEME_SLIDER,
 #endif
@@ -155,7 +158,6 @@ typedef struct {
     const lv_font_t * font_subtitle;
     const lv_font_t * font_title;
     uint32_t flags;
-    void * user_data;
 } lv_theme_t;
 
 /**********************
