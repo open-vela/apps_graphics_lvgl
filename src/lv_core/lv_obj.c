@@ -501,10 +501,12 @@ void lv_obj_invalidate_area(const lv_obj_t * obj, const lv_area_t * area)
 
     if(lv_obj_get_hidden(obj)) return;
 
-    /*Invalidate the object only if it belongs to the 'LV_GC_ROOT(_lv_act_scr)'*/
+    /*Invalidate the object only if it belongs to the curent or previous'*/
     lv_obj_t * obj_scr = lv_obj_get_screen(obj);
     lv_disp_t * disp   = lv_obj_get_disp(obj_scr);
-    if(obj_scr == lv_disp_get_scr_act(disp) || obj_scr == lv_disp_get_layer_top(disp) ||
+    if(obj_scr == lv_disp_get_scr_act(disp) ||
+       obj_scr == lv_disp_get_scr_prev(disp) ||
+       obj_scr == lv_disp_get_layer_top(disp) ||
        obj_scr == lv_disp_get_layer_sys(disp)) {
 
         /*Truncate the area to the object*/
@@ -684,13 +686,11 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     /*Convert x and y to absolute coordinates*/
     lv_obj_t * par = obj->parent;
 
-    if(par == NULL) {
-        LV_LOG_WARN("lv_obj_set_pos: not changing position of screen object");
-        return;
+    if(par) {
+        x = x + par->coords.x1;
+        y = y + par->coords.y1;
     }
 
-    x = x + par->coords.x1;
-    y = y + par->coords.y1;
 
     /*Calculate and set the movement*/
     lv_point_t diff;
@@ -720,7 +720,7 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
-    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+    if(par) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
@@ -3298,9 +3298,8 @@ void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * 
     draw_dsc->pivot.y = lv_area_get_height(&obj->coords) / 2;
 
     draw_dsc->recolor_opa = lv_obj_get_style_image_recolor_opa(obj, part);
-    if(draw_dsc->recolor_opa > 0) {
-        draw_dsc->recolor = lv_obj_get_style_image_recolor(obj, part);
-    }
+    draw_dsc->recolor = lv_obj_get_style_image_recolor(obj, part);
+
 #if LV_USE_BLEND_MODES
     draw_dsc->blend_mode = lv_obj_get_style_image_blend_mode(obj, part);
 #endif

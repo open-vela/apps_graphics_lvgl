@@ -1,7 +1,23 @@
 # Changelog
 
+## v7.2.0 (planned on 04.08.2020)
+Available in the `dev` branch
+
+### New features
+- Add `LV_CALENDAR_WEEK_STARTS_MONDAY`
+- Add `lv_chart_set_x_start_point()` function - Set the index of the x-axis start point in the data array
+- Add `lv_chart_set_ext_array()` function - Set an external array of data points to use for the chart
+- Add `lv_chart_set_point_id()` function - Set an individual point value in the chart series directly based on index
+- Add `lv_chart_get_x_start_point()` function - Get the current index of the x-axis start point in the data array
+- Add `lv_chart_get_point_id()` function - Get an individual point value in the chart series directly based on index
+- Add `ext_buf_assigned` bit field to `lv_chart_series_t` structure - it's true if external buffer is assigned to series
+- Allow setting different font for the selected text in `lv_roller`
+- Add `theme->apply_cb` to replace `theme->apply_xcb` to make it compatible with the MicroPython binding
+- Add `lv_theme_set_base()` to allow easy extension of built-in (or any) themes.
+
 ## v7.1.0 (planned on 07.07.2020)
 *Available in the `master` branch*
+- Change some lv_style_t methods to support big endian hardware.
 
 ### New features
 - Add `focus_parent` attribute to `lv_obj`
@@ -15,8 +31,6 @@
 ### Bugfixes
 - `lv_img` fix invalidation area when angle or zoom changes
 - Update the style handling to support Big endian MCUs
-- Change some methods to support big endian hardware.
-- Add LV_BIG_ENDIAN_SYSTEM flag to lv_conf.h in order to fix displaying images on big endian systems.
 
 ## v7.0.2 (16.06.2020)
 
