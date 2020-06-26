@@ -2,7 +2,7 @@
  * @file lvgl.h
  * Include all LittleV GL related headers
  */
- 
+
 #ifndef LVGL_H
 #define LVGL_H
 
@@ -53,6 +53,7 @@ extern "C" {
 #include "src/lv_widgets/lv_keyboard.h"
 #include "src/lv_widgets/lv_dropdown.h"
 #include "src/lv_widgets/lv_roller.h"
+#include "src/lv_widgets/lv_rotary.h"
 #include "src/lv_widgets/lv_textarea.h"
 #include "src/lv_widgets/lv_canvas.h"
 #include "src/lv_widgets/lv_win.h"
