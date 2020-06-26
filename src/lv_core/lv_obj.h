@@ -47,9 +47,6 @@ extern "C" {
 #define LV_EXT_CLICK_AREA_TINY  1
 #define LV_EXT_CLICK_AREA_FULL  2
 
-#define _LV_OBJ_PART_VIRTUAL_FIRST 0x01
-#define _LV_OBJ_PART_REAL_FIRST    0x40
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -105,6 +102,7 @@ enum {
     LV_EVENT_APPLY,  /**< "Ok", "Apply" or similar specific button has clicked*/
     LV_EVENT_CANCEL, /**< "Close", "Cancel" or similar specific button has clicked*/
     LV_EVENT_DELETE, /**< Object is being deleted */
+    _LV_EVENT_LAST /** Number of events*/
 };
 typedef uint8_t lv_event_t; /**< Type of event being sent to the object. */
 
@@ -250,8 +248,8 @@ typedef struct _lv_obj_t {
 
 enum {
     LV_OBJ_PART_MAIN,
-    _LV_OBJ_PART_VIRTUAL_LAST = _LV_OBJ_PART_VIRTUAL_FIRST,
-    _LV_OBJ_PART_REAL_LAST =    _LV_OBJ_PART_REAL_FIRST,
+    _LV_OBJ_PART_VIRTUAL_LAST = 0x01,
+    _LV_OBJ_PART_REAL_LAST =    0x40,
     LV_OBJ_PART_ALL = 0xFF,
 };
 
