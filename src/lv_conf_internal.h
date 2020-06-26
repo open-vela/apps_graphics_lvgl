@@ -289,9 +289,6 @@
 #ifndef LV_USE_API_EXTENSION_V6
 #define LV_USE_API_EXTENSION_V6  1
 #endif
-#ifndef LV_USE_API_EXTENSION_V7
-#define LV_USE_API_EXTENSION_V7  1
-#endif
 
 /*========================
  * Image decoder and cache
@@ -802,11 +799,6 @@
 #ifndef LV_USE_CALENDAR
 #define LV_USE_CALENDAR 1
 #endif
-#if LV_USE_CALENDAR
-#ifndef LV_CALENDAR_WEEK_STARTS_MONDAY
-#  define LV_CALENDAR_WEEK_STARTS_MONDAY    0
-#endif
-#endif
 
 /*Canvas (dependencies: lv_img)*/
 #ifndef LV_USE_CANVAS
@@ -999,6 +991,10 @@
 #endif
 #endif
 
+/*Rotary (dependencies: lv_arc, lv_btn)*/
+#ifndef LV_USE_ROTARY
+#define LV_USE_ROTARY    1
+#endif
 /*Slider (dependencies: lv_bar)*/
 #ifndef LV_USE_SLIDER
 #define LV_USE_SLIDER    1
