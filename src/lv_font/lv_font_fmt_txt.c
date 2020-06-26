@@ -44,7 +44,6 @@ static inline void bits_write(uint8_t * out, uint32_t bit_pos, uint8_t val, uint
 static inline void rle_init(const uint8_t * in,  uint8_t bpp);
 static inline uint8_t rle_next(void);
 
-
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -214,7 +213,8 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
             glyph_id = fdsc->cmaps[i].glyph_id_start + gid_ofs_8[rcp];
         }
         else if(fdsc->cmaps[i].type == LV_FONT_FMT_TXT_CMAP_SPARSE_TINY) {
-            uint8_t * p = _lv_utils_bsearch(&rcp, fdsc->cmaps[i].unicode_list, fdsc->cmaps[i].list_length,
+            uint16_t key = rcp;
+            uint8_t * p = _lv_utils_bsearch(&key, fdsc->cmaps[i].unicode_list, fdsc->cmaps[i].list_length,
                                             sizeof(fdsc->cmaps[i].unicode_list[0]), unicode_list_compare);
 
             if(p) {
@@ -224,7 +224,8 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
             }
         }
         else if(fdsc->cmaps[i].type == LV_FONT_FMT_TXT_CMAP_SPARSE_FULL) {
-            uint8_t * p = _lv_utils_bsearch(&rcp, fdsc->cmaps[i].unicode_list, fdsc->cmaps[i].list_length,
+            uint16_t key = rcp;
+            uint8_t * p = _lv_utils_bsearch(&key, fdsc->cmaps[i].unicode_list, fdsc->cmaps[i].list_length,
                                             sizeof(fdsc->cmaps[i].unicode_list[0]), unicode_list_compare);
 
             if(p) {
