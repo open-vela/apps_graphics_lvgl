@@ -44,6 +44,7 @@ static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t
 static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
                              lv_color_t color, lv_opa_t opa);
 
+
 static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
                              lv_color_t color, lv_opa_t opa);
 
@@ -376,6 +377,7 @@ void lv_canvas_transform(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, u
 #endif
 }
 
+
 /**
  * Apply horizontal blur on the canvas
  * @param canvas pointer to a canvas object
@@ -437,6 +439,7 @@ void lv_canvas_blur_hor(lv_obj_t * canvas, const lv_area_t * area, uint16_t r)
         lv_color_t c;
         lv_opa_t opa = LV_OPA_TRANSP;
         _lv_memcpy(line_buf, &ext->dsc.data[y * line_w], line_w);
+
 
         for(x = a.x1 - r_back; x <= a.x1 + r_front; x++) {
             x_safe = x < 0 ? 0 : x;
@@ -509,6 +512,7 @@ void lv_canvas_blur_hor(lv_obj_t * canvas, const lv_area_t * area, uint16_t r)
 
     _lv_mem_buf_release(line_buf);
 }
+
 
 /**
  * Apply vertical blur on the canvas
@@ -653,7 +657,6 @@ void lv_canvas_blur_ver(lv_obj_t * canvas, const lv_area_t * area, uint16_t r)
  * Fill the canvas with color
  * @param canvas pointer to a canvas
  * @param color the background color
- * @param opa the desired opacity
  */
 void lv_canvas_fill_bg(lv_obj_t * canvas, lv_color_t color, lv_opa_t opa)
 {
@@ -691,17 +694,17 @@ void lv_canvas_fill_bg(lv_obj_t * canvas, lv_color_t color, lv_opa_t opa)
  * @param y top coordinate of the rectangle
  * @param w width of the rectangle
  * @param h height of the rectangle
- * @param rect_dsc descriptor of the rectangle
+ * @param style style of the rectangle (`body` properties are used except `padding`)
  */
 void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h,
-                         const lv_draw_rect_dsc_t * rect_dsc)
+                         lv_draw_rect_dsc_t * rect_dsc)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_rect: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_rect: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -760,7 +763,7 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * @param x left coordinate of the text
  * @param y top coordinate of the text
  * @param max_w max width of the text. The text will be wrapped to fit into this size
- * @param label_draw_dsc pointer to a valid label descriptor `lv_draw_label_dsc_t`
+ * @param style style of the text (`text` properties are used)
  * @param txt text to display
  * @param align align of the text (`LV_LABEL_ALIGN_LEFT/RIGHT/CENTER`)
  */
@@ -773,7 +776,7 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_text: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_text: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -838,17 +841,17 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * Draw an image on the canvas
  * @param canvas pointer to a canvas object
  * @param src image source. Can be a pointer an `lv_img_dsc_t` variable or a path an image.
- * @param img_draw_dsc pointer to a valid label descriptor `lv_draw_img_dsc_t`
+ * @param style style of the image (`image` properties are used)
  */
 void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const void * src,
-                        const lv_draw_img_dsc_t * img_draw_dsc)
+                        lv_draw_img_dsc_t * img_draw_dsc)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_img: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_img: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -903,17 +906,17 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
  * @param canvas pointer to a canvas object
  * @param points point of the line
  * @param point_cnt number of points
- * @param line_draw_dsc pointer to an initialized `lv_draw_line_dsc_t` variable
+ * @param style style of the line (`line` properties are used)
  */
 void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t point_cnt,
-                         const lv_draw_line_dsc_t * line_draw_dsc)
+                         lv_draw_line_dsc_t * line_draw_dsc)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_line: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_line: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
     /* Create a dummy display to fool the lv_draw function.
@@ -966,17 +969,17 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t 
  * @param canvas pointer to a canvas object
  * @param points point of the polygon
  * @param point_cnt number of points
- * @param poly_draw_dsc pointer to an initialized `lv_draw_rect_dsc_t` variable
+ * @param style style of the polygon (`body.main_color` and `body.opa` is used)
  */
 void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32_t point_cnt,
-                            const lv_draw_rect_dsc_t * poly_draw_dsc)
+                            lv_draw_rect_dsc_t * poly_draw_dsc)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_polygon: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_polygon: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1030,17 +1033,17 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32
  * @param r radius of the arc
  * @param start_angle start angle in degrees
  * @param end_angle end angle in degrees
- * @param arc_draw_dsc pointer to an initialized `lv_draw_line_dsc_t` variable
+ * @param style style of the polygon (`body.main_color` and `body.opa` is used)
  */
 void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t r, int32_t start_angle,
-                        int32_t end_angle, const lv_draw_line_dsc_t * arc_draw_dsc)
+                        int32_t end_angle, lv_draw_line_dsc_t * arc_draw_dsc)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_arc: can't draw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_arc: can't raw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1206,6 +1209,7 @@ static void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, l
     lv_img_buf_set_px_alpha(d, x, y, br);
 }
 
+
 static void set_px_true_color_alpha(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x,
                                     lv_coord_t y,
                                     lv_color_t color, lv_opa_t opa)
@@ -1227,6 +1231,7 @@ static void set_px_true_color_alpha(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_
     lv_color_t res_color;
 
     lv_color_mix_with_alpha(bg_color, bg_opa, color, opa, &res_color, &res_opa);
+
 
     lv_img_buf_set_px_alpha(&d, x, y, res_opa);
     lv_img_buf_set_px_color(&d, x, y, res_color);

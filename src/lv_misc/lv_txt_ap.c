@@ -12,6 +12,7 @@
 #include "lv_txt_ap.h"
 #include "../lv_draw/lv_draw.h"
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -68,7 +69,7 @@ const ap_chars_map_t ap_chars_map[] = {
     {36, 0xFEE6, 1, 2, -1,  {1, 1}},   // ن
     {38, 0xFEEE, -1, 0, -1,  {1, 0}},   // و
     {37, 0xFEEA, 1, 2, -1,  {1, 1}},   // ه
-    {39, 0xFEF0, 0, 0, -1, {1, 0}},   // ى
+    {39, 0xFBFD, 1, 2, -1,  {1, 1}},   // ي
     {40, 0xFEF2, 1, 2, -1,  {1, 1}},   // ي
     {170, 0xFBFD, 1, 2, -1,  {1, 1}},   // ی
     {7, 0xFE94, 1, 2, -1,  {1, 0}},   // ة
@@ -124,6 +125,7 @@ uint32_t _lv_txt_ap_calc_bytes_cnt(const char * txt)
 
     return chars_cnt + 1;
 }
+
 
 void _lv_txt_ap_proc(const char * txt, char * txt_out)
 {
@@ -209,12 +211,6 @@ static uint32_t lv_ap_get_char_index(uint16_t c)
     for(uint8_t i = 0; ap_chars_map[i].char_end_form; i++) {
         if(c == (ap_chars_map[i].char_offset + LV_AP_ALPHABET_BASE_CODE))
             return i;
-        else if(c == ap_chars_map[i].char_end_form                                                  //is it an End form
-                || c == (ap_chars_map[i].char_end_form + ap_chars_map[i].char_begining_form_offset)     //is it a Begining form
-                || c == (ap_chars_map[i].char_end_form + ap_chars_map[i].char_middle_form_offset)       //is it a middle form
-                || c == (ap_chars_map[i].char_end_form + ap_chars_map[i].char_isolated_form_offset)) {  //is it an isolated form
-            return i;
-        }
     }
     return LV_UNDEF_ARABIC_PERSIAN_CHARS;
 }

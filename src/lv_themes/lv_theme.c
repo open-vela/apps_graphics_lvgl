@@ -98,23 +98,12 @@ void lv_theme_copy(lv_theme_t * theme, const lv_theme_t * copy)
  * Set a base theme for a theme.
  * The styles from the base them will be added before the styles of the current theme.
  * Arbitrary long chain of themes can be created by setting base themes.
- * @param new_theme pointer to theme which base should be set
+ * @param new pointer to theme which base should be set
  * @param base pointer to the base theme
  */
-void lv_theme_set_base(lv_theme_t * new_theme, lv_theme_t * base)
+void lv_theme_set_base(lv_theme_t * new, lv_theme_t * base)
 {
-    new_theme->base = base;
-}
-
-/**
- * Set a callback for a theme.
- * The callback is used to add styles to different objects
- * @param theme pointer to theme which callback should be set
- * @param cb pointer to the callback
- */
-void lv_theme_set_apply_cb(lv_theme_t * theme, lv_theme_apply_cb_t apply_cb)
-{
-    theme->apply_cb = apply_cb;
+    new->base = base;
 }
 
 /**
@@ -191,7 +180,7 @@ static void apply_theme(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
     }
 
     /*apply_xcb is deprecated, use apply_cb instead*/
-    if(th->apply_xcb) {
+    if (th->apply_xcb) {
         th->apply_xcb(obj, name);
     }
     else if(th->apply_cb) {
@@ -337,7 +326,7 @@ static void clear_styles(lv_obj_t * obj, lv_theme_style_t name)
 #if LV_USE_TABVIEW
         case LV_THEME_TABVIEW:
             lv_obj_clean_style_list(obj, LV_TABVIEW_PART_BG);
-            lv_obj_clean_style_list(obj, LV_TABVIEW_PART_BG_SCROLLABLE);
+            lv_obj_clean_style_list(obj, LV_TABVIEW_PART_BG_SCRLLABLE);
             lv_obj_clean_style_list(obj, LV_TABVIEW_PART_TAB_BG);
             lv_obj_clean_style_list(obj, LV_TABVIEW_PART_INDIC);
             lv_obj_clean_style_list(obj, LV_TABVIEW_PART_TAB_BTN);
@@ -357,12 +346,14 @@ static void clear_styles(lv_obj_t * obj, lv_theme_style_t name)
             break;
 #endif
 
+
 #if LV_USE_ROLLER
         case LV_THEME_ROLLER:
             lv_obj_clean_style_list(obj, LV_ROLLER_PART_BG);
             lv_obj_clean_style_list(obj, LV_ROLLER_PART_SELECTED);
             break;
 #endif
+
 
 #if LV_USE_OBJMASK
         case LV_THEME_OBJMASK:
@@ -429,6 +420,7 @@ static void clear_styles(lv_obj_t * obj, lv_theme_style_t name)
             lv_obj_clean_style_list(obj, LV_TEXTAREA_PART_SCROLLBAR);
             break;
 #endif
+
 
 #if LV_USE_SPINBOX
         case LV_THEME_SPINBOX:

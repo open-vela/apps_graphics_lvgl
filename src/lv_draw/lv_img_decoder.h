@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef LV_IMG_DECODER_H
-#define LV_IMG_DECODER_H
+#ifndef LV_IMG_DEOCER_H
+#define LV_IMG_DEOCER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -157,7 +157,7 @@ lv_res_t lv_img_decoder_get_info(const char * src, lv_img_header_t * header);
  *  1) File name: E.g. "S:folder/img1.png" (The drivers needs to registered via `lv_fs_add_drv()`)
  *  2) Variable: Pointer to an `lv_img_dsc_t` variable
  *  3) Symbol: E.g. `LV_SYMBOL_OK`
- * @param color The color of the image with `LV_IMG_CF_ALPHA_...`
+ * @param style the style of the image
  * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
  *         LV_RES_INV: none of the registered image decoders were able to open the image.
  */
@@ -267,4 +267,4 @@ void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_ds
 } /* extern "C" */
 #endif
 
-#endif /*LV_IMG_DECODER_H*/
+#endif /*LV_TEMPL_H*/

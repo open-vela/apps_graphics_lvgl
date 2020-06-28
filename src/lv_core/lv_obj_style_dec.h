@@ -163,7 +163,6 @@ _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_DECOR, text_decor, lv_text_decor_t, _int, sca
 _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_BLEND_MODE, text_blend_mode, lv_blend_mode_t, _int, scalar)
 _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_COLOR, text_color, lv_color_t, _color, nonscalar)
 _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_SEL_COLOR, text_sel_color, lv_color_t, _color, nonscalar)
-_LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_SEL_BG_COLOR, text_sel_bg_color, lv_color_t, _color, nonscalar)
 _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_OPA, text_opa, lv_opa_t, _opa, scalar)
 _LV_OBJ_STYLE_SET_GET_DECLARE(TEXT_FONT, text_font, const lv_font_t *, _ptr, scalar)
 _LV_OBJ_STYLE_SET_GET_DECLARE(LINE_WIDTH, line_width, lv_style_int_t, _int, scalar)
@@ -200,6 +199,7 @@ _LV_OBJ_STYLE_SET_GET_DECLARE(SCALE_END_COLOR, scale_end_color, lv_color_t, _col
 
 #undef _LV_OBJ_STYLE_SET_GET_DECLARE
 
+
 static inline void lv_obj_set_style_local_pad_all(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_pad_top(obj, part, state, value);
@@ -207,6 +207,7 @@ static inline void lv_obj_set_style_local_pad_all(lv_obj_t * obj, uint8_t part, 
     lv_obj_set_style_local_pad_left(obj, part, state, value);
     lv_obj_set_style_local_pad_right(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_pad_all(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
@@ -216,11 +217,13 @@ static inline void lv_style_set_pad_all(lv_style_t * style, lv_state_t state, lv
     lv_style_set_pad_right(style, state, value);
 }
 
+
 static inline void lv_obj_set_style_local_pad_hor(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_pad_left(obj, part, state, value);
     lv_obj_set_style_local_pad_right(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_pad_hor(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
@@ -228,11 +231,13 @@ static inline void lv_style_set_pad_hor(lv_style_t * style, lv_state_t state, lv
     lv_style_set_pad_right(style, state, value);
 }
 
+
 static inline void lv_obj_set_style_local_pad_ver(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_pad_top(obj, part, state, value);
     lv_obj_set_style_local_pad_bottom(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_pad_ver(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
@@ -240,14 +245,15 @@ static inline void lv_style_set_pad_ver(lv_style_t * style, lv_state_t state, lv
     lv_style_set_pad_bottom(style, state, value);
 }
 
-static inline void lv_obj_set_style_local_margin_all(lv_obj_t * obj, uint8_t part, lv_state_t state,
-                                                     lv_style_int_t value)
+
+static inline void lv_obj_set_style_local_margin_all(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_margin_top(obj, part, state, value);
     lv_obj_set_style_local_margin_bottom(obj, part, state, value);
     lv_obj_set_style_local_margin_left(obj, part, state, value);
     lv_obj_set_style_local_margin_right(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_margin_all(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
@@ -257,12 +263,13 @@ static inline void lv_style_set_margin_all(lv_style_t * style, lv_state_t state,
     lv_style_set_margin_right(style, state, value);
 }
 
-static inline void lv_obj_set_style_local_margin_hor(lv_obj_t * obj, uint8_t part, lv_state_t state,
-                                                     lv_style_int_t value)
+
+static inline void lv_obj_set_style_local_margin_hor(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_margin_left(obj, part, state, value);
     lv_obj_set_style_local_margin_right(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_margin_hor(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
@@ -270,18 +277,20 @@ static inline void lv_style_set_margin_hor(lv_style_t * style, lv_state_t state,
     lv_style_set_margin_right(style, state, value);
 }
 
-static inline void lv_obj_set_style_local_margin_ver(lv_obj_t * obj, uint8_t part, lv_state_t state,
-                                                     lv_style_int_t value)
+
+static inline void lv_obj_set_style_local_margin_ver(lv_obj_t * obj, uint8_t part, lv_state_t state, lv_style_int_t value)
 {
     lv_obj_set_style_local_margin_top(obj, part, state, value);
     lv_obj_set_style_local_margin_bottom(obj, part, state, value);
 }
+
 
 static inline void lv_style_set_margin_ver(lv_style_t * style, lv_state_t state, lv_style_int_t value)
 {
     lv_style_set_margin_top(style, state, value);
     lv_style_set_margin_bottom(style, state, value);
 }
+
 
 #ifdef __cplusplus
 } /* extern "C" */

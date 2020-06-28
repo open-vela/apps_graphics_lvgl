@@ -9,21 +9,22 @@ lvgldirname = '"' + lvgldirname + '"'
 base_defines = '"-DLV_CONF_PATH=' + lvgldirname +'/tests/lv_test_conf.h -DLV_BUILD_TEST"'
 optimization = '"-O3 -g0"'
 
+
 def build(name, defines):
   global base_defines, optimization
 
   print("=============================")
   print(name)
   print("=============================")
-
+  
   d_all = base_defines[:-1] + " ";
-
+  
   for d in defines:
     d_all += " -D" + d + "=" + str(defines[d])
-
+  
   d_all += '"'
   cmd = "make -j8 BIN=test.bin LVGL_DIR_NAME=" + lvgldirname + " DEFINES=" + d_all + " OPTIMIZATION=" + optimization
-
+  
   print("---------------------------")
   print("Clean")
   print("---------------------------")
@@ -33,21 +34,22 @@ def build(name, defines):
   print("Build")
   print("---------------------------")
   ret = os.system(cmd)
-  if(ret != 0):
+  if(ret != 0): 
     print("BUILD ERROR! (error code  " + str(ret) + ")")
     exit(1)
-
+  
   print("---------------------------")
   print("Run")
   print("---------------------------")
   ret = os.system("./test.bin")
-  if(ret != 0):
+  if(ret != 0): 
     print("RUN ERROR! (error code  " + str(ret) + ")")
     exit(1)
-
+  
   print("---------------------------")
   print("Finished")
   print("---------------------------")
+
 
 minimal_monochrome = {
   "LV_DPI":40,
@@ -65,10 +67,10 @@ minimal_monochrome = {
   "LV_USE_USER_DATA":0,
   "LV_USE_USER_DATA_FREE":0,
   "LV_USE_LOG":0,
-  "LV_USE_THEME_EMPTY":0,
-  "LV_USE_THEME_MATERIAL":0,
-  "LV_USE_THEME_MONO":1,
-  "LV_USE_THEME_TEMPLATE":0,
+  "LV_USE_THEME_EMPTY":0,   
+  "LV_USE_THEME_MATERIAL":0,   
+  "LV_USE_THEME_MONO":1,   
+  "LV_USE_THEME_TEMPLATE":0,   
   "LV_THEME_DEFAULT_INIT": "\\\"lv_theme_mono_init\\\"",
   "LV_THEME_DEFAULT_COLOR_PRIMARY":      "\\\"LV_COLOR_RED\\\"",
   "LV_THEME_DEFAULT_COLOR_SECONDARY":    "\\\"LV_COLOR_BLUE\\\"",
@@ -125,7 +127,7 @@ minimal_monochrome = {
   "LV_USE_TABLE":0,
   "LV_USE_TABVIEW":0,
   "LV_USE_TILEVIEW":0,
-  "LV_USE_WIN":0
+  "LV_USE_WIN":0 
 }
 
 all_obj_minimal_features = {
@@ -144,7 +146,7 @@ all_obj_minimal_features = {
   "LV_USE_USER_DATA":0,
   "LV_USE_USER_DATA_FREE":0,
   "LV_USE_LOG":0,
-  "LV_USE_THEME_MATERIAL":1,
+  "LV_USE_THEME_MATERIAL":1,   
   "LV_THEME_DEFAULT_INIT": "\\\"lv_theme_material_init\\\"",
   "LV_THEME_DEFAULT_COLOR_PRIMARY":      "\\\"LV_COLOR_RED\\\"",
   "LV_THEME_DEFAULT_COLOR_SECONDARY":    "\\\"LV_COLOR_BLUE\\\"",
@@ -201,7 +203,7 @@ all_obj_minimal_features = {
   "LV_USE_TABLE":1,
   "LV_USE_TABVIEW":1,
   "LV_USE_TILEVIEW":1,
-  "LV_USE_WIN":1
+  "LV_USE_WIN":1 
 }
 
 all_obj_all_features = {
@@ -221,10 +223,10 @@ all_obj_all_features = {
   "LV_USE_USER_DATA":1,
   "LV_USE_USER_DATA_FREE":0,
   "LV_USE_LOG":1,
-  "LV_USE_THEME_MATERIAL":1,
-  "LV_USE_THEME_EMPTY":1,
-  "LV_USE_THEME_MONO":1,
-  "LV_USE_THEME_TEMPLATE":1,
+  "LV_USE_THEME_MATERIAL":1,   
+  "LV_USE_THEME_EMPTY":1,  
+  "LV_USE_THEME_MONO":1, 
+  "LV_USE_THEME_TEMPLATE":1,  
   "LV_THEME_DEFAULT_INIT": "\\\"lv_theme_material_init\\\"",
   "LV_THEME_DEFAULT_COLOR_PRIMARY":      "\\\"LV_COLOR_RED\\\"",
   "LV_THEME_DEFAULT_COLOR_SECONDARY":    "\\\"LV_COLOR_BLUE\\\"",
@@ -232,7 +234,7 @@ all_obj_all_features = {
   "LV_THEME_DEFAULT_FONT_SMALL"    :     "\\\"&lv_font_montserrat_12\\\"",
   "LV_THEME_DEFAULT_FONT_NORMAL"   :     "\\\"&lv_font_montserrat_16\\\"",
   "LV_THEME_DEFAULT_FONT_SUBTITLE" :     "\\\"&lv_font_montserrat_22\\\"",
-  "LV_THEME_DEFAULT_FONT_TITLE"    :     "\\\"&lv_font_montserrat_28\\\"",
+  "LV_THEME_DEFAULT_FONT_TITLE"    :     "\\\"&lv_font_montserrat_28\\\"",  
   "LV_LOG_PRINTF":0,
   "LV_USE_DEBUG":0,
   "LV_USE_ASSERT_NULL":0,
@@ -279,8 +281,9 @@ all_obj_all_features = {
   "LV_USE_TABLE":1,
   "LV_USE_TABVIEW":1,
   "LV_USE_TILEVIEW":1,
-  "LV_USE_WIN":1
+  "LV_USE_WIN":1 
 }
+
 
 advanced_features = {
   "LV_DPI":100,
@@ -288,8 +291,8 @@ advanced_features = {
   "LV_MEM_CUSTOM":1,
   "LV_HOR_RES_MAX":800,
   "LV_VER_RES_MAX":480,
-  "LV_COLOR_DEPTH":32,
-  "LV_COLOR_16_SWAP":0,
+  "LV_COLOR_DEPTH":16,
+  "LV_COLOR_16_SWAP":1,
   "LV_COLOR_SCREEN_TRANSP":1,
   "LV_USE_GROUP":1,
   "LV_USE_ANIMATION":1,
@@ -299,11 +302,14 @@ advanced_features = {
   "LV_USE_IMG_TRANSFORM":1,
   "LV_USE_API_EXTENSION_V6":1,
   "LV_USE_USER_DATA":1,
+  "LV_USE_USER_DATA_FREE":1,
+  "LV_USER_DATA_FREE_INCLUDE":"\\\"<stdio.h>\\\"",
+  "LV_USER_DATA_FREE": "\\\"free\\\"",
   "LV_IMG_CACHE_DEF_SIZE":32,
   "LV_USE_LOG":1,
-  "LV_USE_THEME_MATERIAL":1,
-  "LV_USE_THEME_EMPTY":1,
-  "LV_USE_THEME_TEMPLATE":1,
+  "LV_USE_THEME_MATERIAL":1,  
+  "LV_USE_THEME_EMPTY":1,  
+  "LV_USE_THEME_TEMPLATE":1,  
   "LV_THEME_DEFAULT_INIT": "\\\"lv_theme_material_init\\\"",
   "LV_THEME_DEFAULT_COLOR_PRIMARY":      "\\\"LV_COLOR_RED\\\"",
   "LV_THEME_DEFAULT_COLOR_SECONDARY":    "\\\"LV_COLOR_BLUE\\\"",
@@ -311,7 +317,7 @@ advanced_features = {
   "LV_THEME_DEFAULT_FONT_SMALL"    :     "\\\"&lv_font_montserrat_12\\\"",
   "LV_THEME_DEFAULT_FONT_NORMAL"   :     "\\\"&lv_font_montserrat_16\\\"",
   "LV_THEME_DEFAULT_FONT_SUBTITLE" :     "\\\"&lv_font_montserrat_22\\\"",
-  "LV_THEME_DEFAULT_FONT_TITLE"    :     "\\\"&lv_font_montserrat_28\\\"",
+  "LV_THEME_DEFAULT_FONT_TITLE"    :     "\\\"&lv_font_montserrat_28\\\"", 
   "LV_LOG_PRINTF":1,
   "LV_USE_DEBUG":1,
   "LV_USE_ASSERT_NULL":1,
@@ -366,10 +372,14 @@ advanced_features = {
   "LV_USE_TABLE":1,
   "LV_USE_TABVIEW":1,
   "LV_USE_TILEVIEW":1,
-  "LV_USE_WIN":1
+  "LV_USE_WIN":1 
 }
+
 
 build("Minimal monochrome", minimal_monochrome)
 build("All objects, minimal features", all_obj_minimal_features)
-build("All objects, all common features", all_obj_all_features)
-build("All objects, with advanced features", advanced_features)
+build("All objects, all features", all_obj_all_features)
+  
+
+
+

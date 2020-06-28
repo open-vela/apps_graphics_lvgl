@@ -341,7 +341,7 @@ lv_anim_value_t lv_anim_path_overshoot(const lv_anim_path_t * path, const lv_ani
     else
         t = (uint32_t)((uint32_t)a->act_time * 1024) / a->time;
 
-    int32_t step = _lv_bezier3(t, 0, 1000, 1300, 1024);
+    int32_t step = _lv_bezier3(t, 0, 1000, 2000, 1024);
 
     int32_t new_value;
     new_value = (int32_t)step * (a->end - a->start);
@@ -350,6 +350,7 @@ lv_anim_value_t lv_anim_path_overshoot(const lv_anim_path_t * path, const lv_ani
 
     return (lv_anim_value_t)new_value;
 }
+
 
 /**
  * Calculate the current value of an animation with 3 bounces
@@ -361,7 +362,7 @@ lv_anim_value_t lv_anim_path_bounce(const lv_anim_path_t * path, const lv_anim_t
     LV_UNUSED(path);
 
     /*Calculate the current step*/
-    int32_t t;
+    uint32_t t;
     if(a->time == a->act_time)
         t = 1024;
     else
@@ -380,32 +381,31 @@ lv_anim_value_t lv_anim_path_bounce(const lv_anim_path_t * path, const lv_anim_t
         t -= 408;
         t    = t * 5; /*to [0..1024] range*/
         t    = 1024 - t;
-        diff = diff / 20;
+        diff = diff / 6;
     }
     else if(t >= 614 && t < 819) {
         /*Fall back*/
         t -= 614;
         t    = t * 5; /*to [0..1024] range*/
-        diff = diff / 20;
+        diff = diff / 6;
     }
     else if(t >= 819 && t < 921) {
         /*Second bounce back*/
         t -= 819;
         t    = t * 10; /*to [0..1024] range*/
         t    = 1024 - t;
-        diff = diff / 40;
+        diff = diff / 16;
     }
     else if(t >= 921 && t <= 1024) {
         /*Fall back*/
         t -= 921;
         t    = t * 10; /*to [0..1024] range*/
-        diff = diff / 40;
+        diff = diff / 16;
     }
 
     if(t > 1024) t = 1024;
-    if(t < 0) t = 0;
 
-    int32_t step = _lv_bezier3(t, 1024, 800, 500, 0);
+    int32_t step = _lv_bezier3(t, 1024, 1024, 800, 0);
 
     int32_t new_value;
     new_value = (int32_t)step * diff;
@@ -475,11 +475,8 @@ static void anim_task(lv_task_t * param)
                 if(a->path.cb) new_value = a->path.cb(&a->path, a);
                 else new_value = lv_anim_path_linear(&a->path, a);
 
-                if(new_value != a->current) {
-                    a->current = new_value;
-                    /*Apply the calculated value*/
-                    if(a->exec_cb) a->exec_cb(a->var, new_value);
-                }
+                /*Apply the calculated value*/
+                if(a->exec_cb) a->exec_cb(a->var, new_value);
 
                 /*If the time is elapsed the animation is ready*/
                 if(a->act_time >= a->time) {

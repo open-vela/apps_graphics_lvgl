@@ -11,13 +11,15 @@ WARNINGS = -Werror -Wall -Wextra \
            -Wempty-body -Wshift-negative-value -Wstack-usage=2048 \
            -Wtype-limits -Wsizeof-pointer-memaccess
 
-#-Wno-unused-value -Wno-unused-parameter
+#-Wno-unused-value -Wno-unused-parameter 
 OPTIMIZATION ?= -O3 -g0
+
 
 CFLAGS ?= -I$(LVGL_DIR)/ $(DEFINES) $(WARNINGS) $(OPTIMIZATION) -I$(LVGL_DIR) -I.
 
 LDFLAGS ?=  -lpng
 BIN ?= demo
+
 
 #Collect the files to compile
 MAINSRC = ./lv_test_main.c
@@ -28,11 +30,6 @@ CSRCS += lv_test_assert.c
 CSRCS += lv_test_core/lv_test_core.c
 CSRCS += lv_test_core/lv_test_obj.c
 CSRCS += lv_test_core/lv_test_style.c
-CSRCS += lv_test_core/lv_test_font_loader.c
-CSRCS += lv_test_widgets/lv_test_label.c
-CSRCS += lv_test_fonts/font_1.c
-CSRCS += lv_test_fonts/font_2.c
-CSRCS += lv_test_fonts/font_3.c
 
 OBJEXT ?= .o
 
@@ -51,9 +48,10 @@ all: default
 %.o: %.c
 	@$(CC)  $(CFLAGS) -c $< -o $@
 	@echo "CC $<"
-
+    
 default: $(AOBJS) $(COBJS) $(MAINOBJ)
 	$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
 
-clean:
+clean: 
 	rm -f $(BIN) $(AOBJS) $(COBJS) $(MAINOBJ)
+

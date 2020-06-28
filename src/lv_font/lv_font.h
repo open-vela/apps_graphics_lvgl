@@ -24,6 +24,11 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
+/*Number of fractional digits in the advanced width (`adv_w`) field of `lv_font_glyph_dsc_t`*/
+#define LV_FONT_WIDTH_FRACT_DIGIT       4
+
+#define LV_FONT_KERN_POSITIVE        0
+#define LV_FONT_KERN_NEGATIVE        1
 
 /**********************
  *      TYPEDEFS
@@ -42,6 +47,7 @@ typedef struct {
     int16_t ofs_y;  /**< y offset of the bounding box*/
     uint8_t bpp;   /**< Bit-per-pixel: 1, 2, 4, 8*/
 } lv_font_glyph_dsc_t;
+
 
 /** The bitmaps might be upscaled by 3 to achieve subpixel rendering. */
 enum {
@@ -65,14 +71,11 @@ typedef struct _lv_font_struct {
     lv_coord_t line_height;         /**< The real line height where any text fits*/
     lv_coord_t base_line;           /**< Base line measured from the top of the line_height*/
     uint8_t subpx  : 2;             /**< An element of `lv_font_subpx_t`*/
-
-    int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
-    int8_t  underline_thickness;     /**< Thickness of the underline*/
-
     void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
 #if LV_USE_USER_DATA
     lv_font_user_data_t user_data;  /**< Custom user data for font. */
 #endif
+
 
 } lv_font_t;
 
@@ -124,14 +127,6 @@ static inline lv_coord_t lv_font_get_line_height(const lv_font_t * font_p)
 
 #define LV_FONT_DECLARE(font_name) extern lv_font_t font_name;
 
-#if LV_FONT_MONTSERRAT_8
-LV_FONT_DECLARE(lv_font_montserrat_8)
-#endif
-
-#if LV_FONT_MONTSERRAT_10
-LV_FONT_DECLARE(lv_font_montserrat_10)
-#endif
-
 #if LV_FONT_MONTSERRAT_12
 LV_FONT_DECLARE(lv_font_montserrat_12)
 #endif
@@ -179,7 +174,7 @@ LV_FONT_DECLARE(lv_font_montserrat_32)
 #if LV_FONT_MONTSERRAT_34
 LV_FONT_DECLARE(lv_font_montserrat_34)
 #endif
-
+   
 #if LV_FONT_MONTSERRAT_36
 LV_FONT_DECLARE(lv_font_montserrat_36)
 #endif
@@ -218,10 +213,6 @@ LV_FONT_DECLARE(lv_font_montserrat_12_subpx)
 
 #if LV_FONT_UNSCII_8
 LV_FONT_DECLARE(lv_font_unscii_8)
-#endif
-
-#if LV_FONT_UNSCII_16
-LV_FONT_DECLARE(lv_font_unscii_16)
 #endif
 
 #if LV_FONT_DEJAVU_16_PERSIAN_HEBREW

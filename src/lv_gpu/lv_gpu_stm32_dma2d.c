@@ -7,7 +7,6 @@
  *      INCLUDES
  *********************/
 #include "lv_gpu_stm32_dma2d.h"
-#include "../lv_core/lv_disp.h"
 #include "../lv_core/lv_refr.h"
 
 #if LV_USE_GPU_STM32_DMA2D
@@ -28,9 +27,9 @@
 #endif
 
 #if LV_COLOR_DEPTH == 16
-    #define LV_DMA2D_COLOR_FORMAT LV_DMA2D_RGB565
+    #define DMA2D_COLOR_FORMAT DMA2D_RGB565
 #elif LV_COLOR_DEPTH == 32
-    #define LV_DMA2D_COLOR_FORMAT LV_DMA2D_ARGB8888
+    #define DMA2D_COLOR_FORMAT DMA2D_ARGB8888
 #else
     /*Can't use GPU with other formats*/
 #endif
@@ -43,7 +42,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static void invalidate_cache(void);
-static void wait_finish(void);
+static void dma2d_wait(void);
 
 /**********************
  *  STATIC VARIABLES
@@ -63,22 +62,13 @@ static void wait_finish(void);
 void lv_gpu_stm32_dma2d_init(void)
 {
     /* Enable DMA2D clock */
-#if defined(STM32F4) || defined(STM32F7)
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
-#elif  defined(STM32H7)
-    RCC->AHB3ENR |= RCC_AHB3ENR_DMA2DEN;
-#else
-# warning "LVGL can't enable the clock of DMA2D"
-#endif
-
-    /* Wait for hardware access to complete */
-    __asm volatile("DSB\n");
 
     /* Delay after setting peripheral clock */
     volatile uint32_t temp = RCC->AHB1ENR;
 
     /* set output colour mode */
-    DMA2D->OPFCCR = LV_DMA2D_COLOR_FORMAT;
+    DMA2D->OPFCCR = DMA2D_COLOR_FORMAT;
 }
 
 /**
@@ -104,7 +94,7 @@ void lv_gpu_stm32_dma2d_fill(lv_color_t * buf, lv_coord_t buf_w, lv_color_t colo
     /* start transfer */
     DMA2D->CR |= DMA2D_CR_START_Msk;
 
-    wait_finish();
+    dma2d_wait();
 }
 
 /**
@@ -149,7 +139,7 @@ void lv_gpu_stm32_dma2d_fill_mask(lv_color_t * buf, lv_coord_t buf_w, lv_color_t
     HAL_DMA2D_ConfigLayer(&hdma2d, 0);
     HAL_DMA2D_ConfigLayer(&hdma2d, 1);
     HAL_DMA2D_BlendingStart(&hdma2d, (uint32_t) mask, (uint32_t) buf, (uint32_t)buf, fill_w, fill_h);
-    wait_finish();
+    dma2d_wait();
 #endif
 }
 
@@ -170,7 +160,7 @@ void lv_gpu_stm32_dma2d_copy(lv_color_t * buf, lv_coord_t buf_w, const lv_color_
 
     DMA2D->CR = 0;
     /* copy output colour mode, this register controls both input and output colour format */
-    DMA2D->FGPFCCR = LV_DMA2D_COLOR_FORMAT;
+    DMA2D->FGPFCCR = DMA2D_COLOR_FORMAT;
     DMA2D->FGMAR = (uint32_t)map;
     DMA2D->FGOR = map_w - copy_w;
     DMA2D->OMAR = (uint32_t)buf;
@@ -179,7 +169,7 @@ void lv_gpu_stm32_dma2d_copy(lv_color_t * buf, lv_coord_t buf_w, const lv_color_
 
     /* start transfer */
     DMA2D->CR |= DMA2D_CR_START_Msk;
-    wait_finish();
+    dma2d_wait();
 }
 
 /**
@@ -199,15 +189,15 @@ void lv_gpu_stm32_dma2d_blend(lv_color_t * buf, lv_coord_t buf_w, const lv_color
     invalidate_cache();
     DMA2D->CR = 0x20000;
 
-    DMA2D->BGPFCCR = LV_DMA2D_COLOR_FORMAT;
+    DMA2D->BGPFCCR = DMA2D_COLOR_FORMAT;
     DMA2D->BGMAR = (uint32_t)buf;
     DMA2D->BGOR = buf_w - copy_w;
 
-    DMA2D->FGPFCCR = (uint32_t)LV_DMA2D_COLOR_FORMAT
-                     /* alpha mode 2, replace with foreground * alpha value */
-                     | (2 << DMA2D_FGPFCCR_AM_Pos)
-                     /* alpha value */
-                     | (opa << DMA2D_FGPFCCR_ALPHA_Pos);
+    DMA2D->FGPFCCR = (uint32_t)DMA2D_COLOR_FORMAT
+    /* alpha mode 2, replace with foreground * alpha value */
+    | (2 << DMA2D_FGPFCCR_AM_Pos)
+    /* alpha value */
+    | (opa << DMA2D_FGPFCCR_ALPHA_Pos);
     DMA2D->FGMAR = (uint32_t)map;
     DMA2D->FGOR = map_w - copy_w;
 
@@ -217,19 +207,7 @@ void lv_gpu_stm32_dma2d_blend(lv_color_t * buf, lv_coord_t buf_w, const lv_color
 
     /* start transfer */
     DMA2D->CR |= DMA2D_CR_START_Msk;
-    wait_finish();
-}
-
-void lv_gpu_stm32_dma2d_wait_cb(lv_disp_drv_t * drv)
-{
-    if(drv && drv->wait_cb) {
-        while(DMA2D->CR & DMA2D_CR_START_Msk) {
-            drv->wait_cb(drv);
-        }
-    }
-    else {
-        while(DMA2D->CR & DMA2D_CR_START_Msk);
-    }
+    dma2d_wait();
 }
 
 /**********************
@@ -238,21 +216,16 @@ void lv_gpu_stm32_dma2d_wait_cb(lv_disp_drv_t * drv)
 
 static void invalidate_cache(void)
 {
-    lv_disp_t * disp = _lv_refr_get_disp_refreshing();
-    if(disp->driver.clean_dcache_cb) disp->driver.clean_dcache_cb(&disp->driver);
-    else {
-#if __CORTEX_M >= 0x07
-        if((SCB->CCR) & (uint32_t)SCB_CCR_DC_Msk)
-            SCB_CleanInvalidateDCache();
-#endif
+#if __DCACHE_PRESENT
+    if(SCB->CCR & (uint32_t)SCB_CCR_DC_Msk) {
+        SCB_CleanInvalidateDCache();
     }
+#endif
 }
 
-static void wait_finish(void)
+static void dma2d_wait(void)
 {
     lv_disp_t * disp = _lv_refr_get_disp_refreshing();
-    if(disp->driver.gpu_wait_cb) return;
-
     while(DMA2D->CR & DMA2D_CR_START_Msk) {
         if(disp->driver.wait_cb) disp->driver.wait_cb(&disp->driver);
     }

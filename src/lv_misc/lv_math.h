@@ -42,6 +42,8 @@ extern "C" {
 #define LV_BEZIER_VAL_MAX 1024 /**< Max time in Bezier functions (not [0..1] to use integers) */
 #define LV_BEZIER_VAL_SHIFT 10 /**< log2(LV_BEZIER_VAL_MAX): used to normalize up scaled values*/
 
+
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -50,6 +52,7 @@ typedef struct {
     uint16_t i;
     uint16_t f;
 } lv_sqrt_res_t;
+
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -84,6 +87,7 @@ int32_t _lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
  */
 uint16_t _lv_atan2(int x, int y);
 
+
 //! @cond Doxygen_Suppress
 
 /**
@@ -107,17 +111,6 @@ LV_ATTRIBUTE_FAST_MEM void _lv_sqrt(uint32_t x, lv_sqrt_res_t * q, uint32_t mask
  * @return base raised to the power exponent
  */
 int64_t _lv_pow(int64_t base, int8_t exp);
-
-/**
- * Get the mapped of a number given an input and output range
- * @param x integer which mapped value should be calculated
- * @param min_in min input range
- * @param max_in max input range
- * @param min_out max output range
- * @param max_out max output range
- * @return the mapped number
- */
-int16_t _lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min, int32_t max);
 
 /**********************
  *      MACROS

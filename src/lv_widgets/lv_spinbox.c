@@ -80,6 +80,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->range_min          = -99999;
     ext->rollover           = false;
 
+
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(spinbox, lv_spinbox_signal);
     lv_obj_set_design_cb(spinbox, ancestor_design); /*Leave the Text area's design function*/
@@ -105,7 +106,7 @@ lv_obj_t * lv_spinbox_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_spinbox_set_rollover(spinbox, copy_ext->rollover);
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(spinbox, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(spinbox, LV_STYLE_PROP_ALL);
     }
 
     lv_spinbox_updatevalue(spinbox);
@@ -197,8 +198,6 @@ void lv_spinbox_set_step(lv_obj_t * spinbox, uint32_t step)
     if(ext == NULL) return;
 
     ext->step = step;
-
-    lv_spinbox_updatevalue(spinbox);
 }
 
 /**
@@ -396,6 +395,7 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
     }
     if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
+
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     }
@@ -459,10 +459,11 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
             uint16_t i;
             for(i = 0; i < pos; i++) ext->step *= 10;
 
+
+
         }
     }
     else if(sign == LV_SIGNAL_CONTROL) {
-#if LV_USE_GROUP
         lv_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
 
         uint32_t c = *((uint32_t *)param); /*uint32_t because can be UTF-8*/
@@ -487,7 +488,6 @@ static lv_res_t lv_spinbox_signal(lv_obj_t * spinbox, lv_signal_t sign, void * p
         else {
             lv_textarea_add_char(spinbox, c);
         }
-#endif
     }
 
     return res;

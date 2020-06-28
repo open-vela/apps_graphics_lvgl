@@ -60,7 +60,6 @@ static void pwd_char_hider(lv_obj_t * ta);
 static bool char_is_accepted(lv_obj_t * ta, uint32_t c);
 static void refr_cursor_area(lv_obj_t * ta);
 static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_indev_t * click_source);
-static lv_res_t insert_handler(lv_obj_t * ta, const char * txt);
 
 /**********************
  *  STATIC VARIABLES
@@ -110,7 +109,7 @@ lv_obj_t * lv_textarea_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->pwd_mode          = 0;
     ext->pwd_tmp           = NULL;
     ext->pwd_show_time     = LV_TEXTAREA_DEF_PWD_SHOW_TIME;
-    ext->accepted_chars    = NULL;
+    ext->accapted_chars    = NULL;
     ext->max_length        = 0;
     ext->cursor.state      = 1;
     ext->cursor.hidden     = 0;
@@ -149,7 +148,7 @@ lv_obj_t * lv_textarea_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_label_set_text(ext->label, "Text area");
         lv_obj_set_click(ext->label, false);
         lv_obj_set_size(ta, LV_TEXTAREA_DEF_WIDTH, LV_TEXTAREA_DEF_HEIGHT);
-        lv_textarea_set_scrollbar_mode(ta, LV_SCROLLBAR_MODE_DRAG);
+        lv_textarea_set_sscrollbar_mode(ta, LV_SCROLLBAR_MODE_DRAG);
 
         lv_obj_reset_style_list(ta, LV_PAGE_PART_SCROLLABLE);
         lv_theme_apply(ta, LV_THEME_TEXTAREA);
@@ -161,7 +160,7 @@ lv_obj_t * lv_textarea_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_textarea_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
         ext->label             = lv_label_create(ta, copy_ext->label);
         ext->pwd_mode          = copy_ext->pwd_mode;
-        ext->accepted_chars    = copy_ext->accepted_chars;
+        ext->accapted_chars    = copy_ext->accapted_chars;
         ext->max_length        = copy_ext->max_length;
         ext->cursor.pos        = copy_ext->cursor.pos;
         ext->cursor.valid_x    = copy_ext->cursor.valid_x;
@@ -188,7 +187,7 @@ lv_obj_t * lv_textarea_create(lv_obj_t * par, const lv_obj_t * copy)
         if(copy_ext->one_line) lv_textarea_set_one_line(ta, true);
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(ta, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(ta, LV_STYLE_PROP_ALL);
     }
 
 #if LV_USE_ANIMATION
@@ -222,7 +221,7 @@ lv_obj_t * lv_textarea_create(lv_obj_t * par, const lv_obj_t * copy)
 
 /**
  * Insert a character to the current cursor position.
- * To add a wide char, e.g. 'Á' use `_lv_txt_encoded_conv_wc('Á')`
+ * To add a wide char, e.g. 'Á' use `lv_txt_encoded_conv_wc('Á')`
  * @param ta pointer to a text area object
  * @param c a character (e.g. 'a')
  */
@@ -232,20 +231,21 @@ void lv_textarea_add_char(lv_obj_t * ta, uint32_t c)
 
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
 
-    const char * letter_buf;
+    uint32_t letter_buf[2];
+    letter_buf[0] = c;
+    letter_buf[1] = '\0';
 
-    uint32_t u32_buf[2];
-    u32_buf[0] = c;
-    u32_buf[1] = 0;
+    ta_insert_replace = NULL;
+    lv_event_send(ta, LV_EVENT_INSERT, letter_buf);
+    if(ta_insert_replace) {
+        if(ta_insert_replace[0] == '\0') return; /*Drop this text*/
 
-    letter_buf = (char *)&u32_buf;
-
-#if LV_BIG_ENDIAN_SYSTEM
-    if(c != 0) while(*letter_buf == 0) ++letter_buf;
-#endif
-
-    lv_res_t res = insert_handler(ta, letter_buf);
-    if(res != LV_RES_OK) return;
+        /*Add the replaced text directly it's different from the original*/
+        if(strcmp(ta_insert_replace, (char *)letter_buf)) {
+            lv_textarea_add_text(ta, ta_insert_replace);
+            return;
+        }
+    }
 
     if(ext->one_line && (c == '\n' || c == '\r')) {
         LV_LOG_INFO("Text area: line break ignored in one-line mode");
@@ -272,11 +272,12 @@ void lv_textarea_add_char(lv_obj_t * ta, uint32_t c)
         if(txt[0] == '\0') lv_obj_invalidate(ta);
     }
 
-    lv_label_ins_text(ext->label, ext->cursor.pos, letter_buf); /*Insert the character*/
+    lv_label_ins_text(ext->label, ext->cursor.pos, (const char *)letter_buf); /*Insert the character*/
     lv_textarea_clear_selection(ta);                                                /*Clear selection*/
 
     if(ext->pwd_mode != 0) {
-        ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + strlen(letter_buf) + 1); /*+2: the new char + \0 */
+
+        ext->pwd_tmp = lv_mem_realloc(ext->pwd_tmp, strlen(ext->pwd_tmp) + 2); /*+2: the new char + \0 */
         LV_ASSERT_MEM(ext->pwd_tmp);
         if(ext->pwd_tmp == NULL) return;
 
@@ -284,24 +285,19 @@ void lv_textarea_add_char(lv_obj_t * ta, uint32_t c)
 
 #if LV_USE_ANIMATION
         /*Auto hide characters*/
-        if(ext->pwd_show_time == 0) {
-            pwd_char_hider(ta);
-        }
-        else {
-            lv_anim_path_t path;
-            lv_anim_path_init(&path);
-            lv_anim_path_set_cb(&path, lv_anim_path_step);
+        lv_anim_path_t path;
+        lv_anim_path_init(&path);
+        lv_anim_path_set_cb(&path, lv_anim_path_step);
 
-            lv_anim_t a;
-            lv_anim_init(&a);
-            lv_anim_set_var(&a, ta);
-            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
-            lv_anim_set_time(&a, ext->pwd_show_time);
-            lv_anim_set_values(&a, 0, 1);
-            lv_anim_set_path(&a, &path);
-            lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
-            lv_anim_start(&a);
-        }
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, ta);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
+        lv_anim_set_time(&a, ext->pwd_show_time);
+        lv_anim_set_values(&a, 0, 1);
+        lv_anim_set_path(&a, &path);
+        lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
+        lv_anim_start(&a);
 
 #else
         pwd_char_hider(ta);
@@ -329,6 +325,18 @@ void lv_textarea_add_text(lv_obj_t * ta, const char * txt)
 
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
 
+    ta_insert_replace = NULL;
+    lv_event_send(ta, LV_EVENT_INSERT, txt);
+    if(ta_insert_replace) {
+        if(ta_insert_replace[0] == '\0') return; /*Drop this text*/
+
+        /*Add the replaced text directly it's different from the original*/
+        if(strcmp(ta_insert_replace, txt)) {
+            lv_textarea_add_text(ta, ta_insert_replace);
+            return;
+        }
+    }
+
     if(ext->pwd_mode != 0) pwd_char_hider(ta); /*Make sure all the current text contains only '*'*/
 
     /*Add the character one-by-one if not all characters are accepted or there is character limit.*/
@@ -340,9 +348,6 @@ void lv_textarea_add_text(lv_obj_t * ta, const char * txt)
         }
         return;
     }
-
-    lv_res_t res = insert_handler(ta, txt);
-    if(res != LV_RES_OK) return;
 
     /*If a new line was added it shouldn't show edge flash effect*/
     bool edge_flash_en = lv_textarea_get_edge_flash(ta);
@@ -367,24 +372,18 @@ void lv_textarea_add_text(lv_obj_t * ta, const char * txt)
 
 #if LV_USE_ANIMATION
         /*Auto hide characters*/
-        if(ext->pwd_show_time == 0) {
-            pwd_char_hider(ta);
-        }
-        else {
-            lv_anim_path_t path;
-            lv_anim_path_init(&path);
-            lv_anim_path_set_cb(&path, lv_anim_path_step);
-
-            lv_anim_t a;
-            lv_anim_init(&a);
-            lv_anim_set_var(&a, ta);
-            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
-            lv_anim_set_time(&a, ext->pwd_show_time);
-            lv_anim_set_values(&a, 0, 1);
-            lv_anim_set_path(&a, &path);
-            lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
-            lv_anim_start(&a);
-        }
+        lv_anim_path_t path;
+        lv_anim_path_init(&path);
+        lv_anim_path_set_cb(&path, lv_anim_path_step);
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, ta);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
+        lv_anim_set_time(&a, ext->pwd_show_time);
+        lv_anim_set_values(&a, 0, 1);
+        lv_anim_set_path(&a, &path);
+        lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
+        lv_anim_start(&a);
 #else
         pwd_char_hider(ta);
 #endif
@@ -412,10 +411,18 @@ void lv_textarea_del_char(lv_obj_t * ta)
 
     if(cur_pos == 0) return;
 
+    ta_insert_replace = NULL;
     char del_buf[2]   = {LV_KEY_DEL, '\0'};
+    lv_event_send(ta, LV_EVENT_INSERT, del_buf);
+    if(ta_insert_replace) {
+        if(ta_insert_replace[0] == '\0') return; /*Drop this text*/
 
-    lv_res_t res = insert_handler(ta, del_buf);
-    if(res != LV_RES_OK) return;
+        /*Add the replaced text directly it's different from the original*/
+        if(strcmp(ta_insert_replace, del_buf)) {
+            lv_textarea_add_text(ta, ta_insert_replace);
+            return;
+        }
+    }
 
     char * label_txt = lv_label_get_text(ext->label);
 
@@ -424,6 +431,7 @@ void lv_textarea_del_char(lv_obj_t * ta)
     /*Refresh the label*/
     lv_label_set_text(ext->label, label_txt);
     lv_textarea_clear_selection(ta);
+
 
     /*If the textarea became empty, invalidate it to hide the placeholder*/
     if(ext->placeholder_txt) {
@@ -503,6 +511,7 @@ void lv_textarea_set_text(lv_obj_t * ta, const char * txt)
         lv_textarea_set_cursor_pos(ta, LV_TEXTAREA_CURSOR_LAST);
     }
 
+
     /*If the textarea is empty, invalidate it to hide the placeholder*/
     if(ext->placeholder_txt) {
         const char * txt_act = lv_label_get_text(ext->label);
@@ -523,24 +532,19 @@ void lv_textarea_set_text(lv_obj_t * ta, const char * txt)
 
 #if LV_USE_ANIMATION
         /*Auto hide characters*/
-        if(ext->pwd_show_time == 0) {
-            pwd_char_hider(ta);
-        }
-        else {
-            lv_anim_path_t path;
-            lv_anim_path_init(&path);
-            lv_anim_path_set_cb(&path, lv_anim_path_step);
+        lv_anim_path_t path;
+        lv_anim_path_init(&path);
+        lv_anim_path_set_cb(&path, lv_anim_path_step);
 
-            lv_anim_t a;
-            lv_anim_init(&a);
-            lv_anim_set_var(&a, ta);
-            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
-            lv_anim_set_time(&a, ext->pwd_show_time);
-            lv_anim_set_values(&a, 0, 1);
-            lv_anim_set_path(&a, &path);
-            lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
-            lv_anim_start(&a);
-        }
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, ta);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)pwd_char_hider_anim);
+        lv_anim_set_time(&a, ext->pwd_show_time);
+        lv_anim_set_values(&a, 0, 1);
+        lv_anim_set_path(&a, &path);
+        lv_anim_set_ready_cb(&a, pwd_char_hider_anim_ready);
+        lv_anim_start(&a);
 #else
         pwd_char_hider(ta);
 #endif
@@ -712,9 +716,8 @@ void lv_textarea_set_pwd_mode(lv_obj_t * ta, bool en)
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->pwd_mode == en) return;
 
-    ext->pwd_mode = en == false ? 0 : 1;
     /*Pwd mode is now enabled*/
-    if(en != false) {
+    if(ext->pwd_mode == 0 && en != false) {
         char * txt   = lv_label_get_text(ext->label);
         size_t len = strlen(txt);
         ext->pwd_tmp = lv_mem_alloc(len + 1);
@@ -728,12 +731,14 @@ void lv_textarea_set_pwd_mode(lv_obj_t * ta, bool en)
         lv_textarea_clear_selection(ta);
     }
     /*Pwd mode is now disabled*/
-    else {
+    else if(ext->pwd_mode == 1 && en == false) {
         lv_textarea_clear_selection(ta);
         lv_label_set_text(ext->label, ext->pwd_tmp);
         lv_mem_free(ext->pwd_tmp);
         ext->pwd_tmp = NULL;
     }
+
+    ext->pwd_mode = en == false ? 0 : 1;
 
     refr_cursor_area(ta);
 }
@@ -825,7 +830,7 @@ void lv_textarea_set_accepted_chars(lv_obj_t * ta, const char * list)
 
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
 
-    ext->accepted_chars = list;
+    ext->accapted_chars = list;
 }
 
 /**
@@ -1067,7 +1072,7 @@ const char * lv_textarea_get_accepted_chars(lv_obj_t * ta)
 
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
 
-    return ext->accepted_chars;
+    return ext->accapted_chars;
 }
 
 /**
@@ -1461,7 +1466,6 @@ static lv_res_t lv_textarea_signal(lv_obj_t * ta, lv_signal_t sign, void * param
         }
     }
     else if(sign == LV_SIGNAL_CONTROL) {
-#if LV_USE_GROUP
         uint32_t c = *((uint32_t *)param); /*uint32_t because can be UTF-8*/
         if(c == LV_KEY_RIGHT)
             lv_textarea_cursor_right(ta);
@@ -1479,18 +1483,13 @@ static lv_res_t lv_textarea_signal(lv_obj_t * ta, lv_signal_t sign, void * param
             lv_textarea_set_cursor_pos(ta, 0);
         else if(c == LV_KEY_END)
             lv_textarea_set_cursor_pos(ta, LV_TEXTAREA_CURSOR_LAST);
-        else if(c == LV_KEY_ENTER && lv_textarea_get_one_line(ta))
-            lv_event_send(ta, LV_EVENT_APPLY, NULL);
         else {
             lv_textarea_add_char(ta, c);
         }
-#endif
     }
     else if(sign == LV_SIGNAL_GET_EDITABLE) {
-#if LV_USE_GROUP
         bool * editable = (bool *)param;
         *editable       = true;
-#endif
     }
     else if(sign == LV_SIGNAL_PRESSED || sign == LV_SIGNAL_PRESSING || sign == LV_SIGNAL_PRESS_LOST ||
             sign == LV_SIGNAL_RELEASED) {
@@ -1668,7 +1667,6 @@ static void pwd_char_hider(lv_obj_t * ta)
 
         lv_label_set_text(ext->label, txt_tmp);
         _lv_mem_buf_release(txt_tmp);
-        refr_cursor_area(ta);
     }
 }
 
@@ -1683,7 +1681,7 @@ static bool char_is_accepted(lv_obj_t * ta, uint32_t c)
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
 
     /*If no restriction accept it*/
-    if(ext->accepted_chars == NULL && ext->max_length == 0) return true;
+    if(ext->accapted_chars == NULL && ext->max_length == 0) return true;
 
     /*Too many characters?*/
     if(ext->max_length > 0 && _lv_txt_get_encoded_length(lv_textarea_get_text(ta)) >= ext->max_length) {
@@ -1691,11 +1689,11 @@ static bool char_is_accepted(lv_obj_t * ta, uint32_t c)
     }
 
     /*Accepted character?*/
-    if(ext->accepted_chars) {
+    if(ext->accapted_chars) {
         uint32_t i = 0;
 
-        while(ext->accepted_chars[i] != '\0') {
-            uint32_t a = _lv_txt_encoded_next(ext->accepted_chars, &i);
+        while(ext->accapted_chars[i] != '\0') {
+            uint32_t a = _lv_txt_encoded_next(ext->accapted_chars, &i);
             if(a == c) return true; /*Accepted*/
         }
 
@@ -1705,6 +1703,7 @@ static bool char_is_accepted(lv_obj_t * ta, uint32_t c)
         return true; /*If the accepted char list in not specified the accept the character*/
     }
 }
+
 
 static void refr_cursor_area(lv_obj_t * ta)
 {
@@ -1902,23 +1901,6 @@ static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_
 
     if(sign == LV_SIGNAL_PRESSED) lv_textarea_set_cursor_pos(ta, char_id_at_click);
 #endif
-}
-
-static lv_res_t insert_handler(lv_obj_t * ta, const char * txt)
-{
-    ta_insert_replace = NULL;
-    lv_event_send(ta, LV_EVENT_INSERT, txt);
-    if(ta_insert_replace) {
-        if(ta_insert_replace[0] == '\0') return LV_RES_INV; /*Drop this text*/
-
-        /*Add the replaced text directly it's different from the original*/
-        if(strcmp(ta_insert_replace, txt)) {
-            lv_textarea_add_text(ta, ta_insert_replace);
-            return LV_RES_INV;
-        }
-    }
-
-    return LV_RES_OK;
 }
 
 #endif

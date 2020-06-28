@@ -60,6 +60,7 @@ void lv_debug_log_error(const char * msg, uint64_t value);
 #define LV_DEBUG_IS_NULL(p)    (lv_debug_check_null(p))
 #endif
 
+
 #ifndef LV_DEBUG_CHECK_MEM_INTEGRITY
 #define LV_DEBUG_CHECK_MEM_INTEGRITY()    (lv_debug_check_mem_integrity())
 #endif
@@ -80,7 +81,7 @@ void lv_debug_log_error(const char * msg, uint64_t value);
 #  define LV_ASSERT_NULL(p) LV_DEBUG_ASSERT(LV_DEBUG_IS_NULL(p), "NULL pointer", p);
 # endif
 #else
-# define LV_ASSERT_NULL(p)
+# define LV_ASSERT_NULL(p) true
 #endif
 
 #if LV_USE_ASSERT_MEM
@@ -88,7 +89,7 @@ void lv_debug_log_error(const char * msg, uint64_t value);
 #  define LV_ASSERT_MEM(p) LV_DEBUG_ASSERT(LV_DEBUG_IS_NULL(p), "Out of memory", p);
 # endif
 #else
-# define LV_ASSERT_MEM(p)
+# define LV_ASSERT_MEM(p) true
 #endif
 
 #if LV_USE_ASSERT_MEM_INTEGRITY
@@ -96,7 +97,7 @@ void lv_debug_log_error(const char * msg, uint64_t value);
 #  define LV_ASSERT_MEM_INTEGRITY() LV_DEBUG_ASSERT(LV_DEBUG_CHECK_MEM_INTEGRITY(), "Memory integrity error", 0);
 # endif
 #else
-# define LV_ASSERT_MEM_INTEGRITY()
+# define LV_ASSERT_MEM_INTEGRITY() true
 #endif
 
 #if LV_USE_ASSERT_STR
@@ -107,19 +108,20 @@ void lv_debug_log_error(const char * msg, uint64_t value);
 # if LV_USE_ASSERT_NULL /*Use at least LV_ASSERT_NULL if enabled*/
 #   define LV_ASSERT_STR(str) LV_ASSERT_NULL(str)
 # else
-#   define LV_ASSERT_STR(str)
+#   define LV_ASSERT_STR(str) true
 # endif
 #endif
+
 
 #else /* LV_USE_DEBUG == 0 */
 
 #define LV_DEBUG_ASSERT(expr, msg, value) do{}while(0)
 
-#define LV_ASSERT_NULL(p)
-#define LV_ASSERT_MEM(p)
-#define LV_ASSERT_MEM_INTEGRITY()
-#define LV_ASSERT_STR(p)
-#define LV_ASSERT_OBJ(obj, obj_type)
+#define LV_ASSERT_NULL(p) true
+#define LV_ASSERT_MEM(p) true
+#define LV_ASSERT_MEM_INTEGRITY() true
+#define LV_ASSERT_STR(p) true
+#define LV_ASSERT_OBJ(obj, obj_type) true
 
 #endif /* LV_USE_DEBUG */
 /*clang-format on*/

@@ -56,6 +56,7 @@ extern "C" {
 
 struct _lv_obj_t;
 
+
 /** Design modes */
 enum {
     LV_DESIGN_DRAW_MAIN, /**< Draw the main portion of the object */
@@ -63,6 +64,7 @@ enum {
     LV_DESIGN_COVER_CHK, /**< Check if the object fully covers the 'mask_p' area */
 };
 typedef uint8_t lv_design_mode_t;
+
 
 /** Design results */
 enum {
@@ -103,7 +105,6 @@ enum {
     LV_EVENT_APPLY,  /**< "Ok", "Apply" or similar specific button has clicked*/
     LV_EVENT_CANCEL, /**< "Close", "Cancel" or similar specific button has clicked*/
     LV_EVENT_DELETE, /**< Object is being deleted */
-    _LV_EVENT_LAST /** Number of events*/
 };
 typedef uint8_t lv_event_t; /**< Type of event being sent to the object. */
 
@@ -161,7 +162,7 @@ typedef struct {
     lv_coord_t yofs;
     lv_align_t align;
     uint8_t auto_realign : 1;
-    uint8_t mid_align : 1; /**< 1: the origo (center of the object) was aligned with
+    uint8_t origo_align : 1; /**< 1: the origo (center of the object) was aligned with
                                 `lv_obj_align_origo`*/
 } lv_realign_t;
 #endif
@@ -197,6 +198,7 @@ typedef struct _lv_obj_t {
     lv_ll_t child_ll;       /**< Linked list to store the children objects*/
 
     lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
+    lv_point_t scroll; /**< The current X/Y scroll offset*/
 
     lv_event_cb_t event_cb; /**< Event callback function */
     lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
@@ -286,6 +288,7 @@ typedef struct {
  */
 void lv_init(void);
 
+
 /**
  * Deinit the 'lv' library
  * Currently only implemented when not using custom allocators, or GC is enabled.
@@ -336,6 +339,7 @@ void lv_obj_del_async(struct _lv_obj_t * obj);
  */
 void lv_obj_clean(lv_obj_t * obj);
 
+
 /**
  * Mark an area of an object as invalid.
  * This area will be redrawn by 'lv_refr_task'
@@ -349,21 +353,6 @@ void lv_obj_invalidate_area(const lv_obj_t * obj, const lv_area_t * area);
  * @param obj pointer to an object
  */
 void lv_obj_invalidate(const lv_obj_t * obj);
-
-/**
- * Tell whether an area of an object is visible (even partially) now or not
- * @param obj pointer to an object
- * @param area the are to check. The visible part of the area will be written back here.
- * @return true: visible; false: not visible (hidden, out of parent, on other screen, etc)
- */
-bool lv_obj_area_is_visible(const lv_obj_t * obj, lv_area_t * area);
-
-/**
- * Tell whether an object is visible (even partially) now or not
- * @param obj pointer to an object
- * @return true: visible; false: not visible (hidden, out of parent, on other screen, etc)
- */
-bool lv_obj_is_visible(const lv_obj_t * obj);
 
 /*=====================
  * Setter functions
@@ -506,7 +495,8 @@ void lv_obj_align_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_
  * @param x_ofs x coordinate offset after alignment
  * @param y_ofs y coordinate offset after alignment
  */
-void lv_obj_align_mid(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
+void lv_obj_align_origo(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
+
 
 /**
  * Align an object's middle point to an other object horizontally.
@@ -515,7 +505,7 @@ void lv_obj_align_mid(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, l
  * @param align type of alignment (see 'lv_align_t' enum)
  * @param x_ofs x coordinate offset after alignment
  */
-void lv_obj_align_mid_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
+void lv_obj_align_origo_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
 
 /**
  * Align an object's middle point to an other object vertically.
@@ -524,7 +514,7 @@ void lv_obj_align_mid_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,
  * @param align type of alignment (see 'lv_align_t' enum)
  * @param y_ofs y coordinate offset after alignment
  */
-void lv_obj_align_mid_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
+void lv_obj_align_origo_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
 
 /**
  * Realign the object based on the last `lv_obj_align` parameters.
@@ -597,7 +587,7 @@ void lv_obj_reset_style_list(lv_obj_t * obj, uint8_t part);
  * @param obj pointer to an object
  * @param prop `LV_STYLE_PROP_ALL` or an `LV_STYLE_...` property. It is used to optimize what needs to be refreshed.
  */
-void lv_obj_refresh_style(lv_obj_t * obj, uint8_t part, lv_style_property_t prop);
+void lv_obj_refresh_style(lv_obj_t * obj, lv_style_property_t prop);
 
 /**
  * Notify all object if a style is modified
@@ -674,13 +664,6 @@ void _lv_obj_set_style_local_ptr(lv_obj_t * obj, uint8_t type, lv_style_property
  * @return true: the property was found and removed; false: the property was not found
  */
 bool lv_obj_remove_style_local_prop(lv_obj_t * obj, uint8_t part, lv_style_property_t prop);
-
-/**
- * Enable/disable the use of style cahche for an object
- * @param obj pointer to an object
- * @param dis true: disable; false: enable (re-enable)
- */
-void _lv_obj_disable_style_caching(lv_obj_t * obj, bool dis);
 
 /*-----------------
  * Attribute set
@@ -769,7 +752,6 @@ void lv_obj_set_parent_event(lv_obj_t * obj, bool en);
 
 /**
  * Set the base direction of the object
- * @note This only works if LV_USE_BIDI is enabled.
  * @param obj pointer to an object
  * @param dir the new base direction. `LV_BIDI_DIR_LTR/RTL/AUTO/INHERIT`
  */
@@ -843,19 +825,6 @@ void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb);
 lv_res_t lv_event_send(lv_obj_t * obj, lv_event_t event, const void * data);
 
 /**
- * Send LV_EVENT_REFRESH event to an object
- * @param obj point to an object. (Can NOT be NULL)
- * @return LV_RES_OK: success, LV_RES_INV: to object become invalid (e.g. deleted) due to this event.
- */
-lv_res_t lv_event_send_refresh(lv_obj_t * obj);
-
-/**
- * Send LV_EVENT_REFRESH event to an object and all of its children
- * @param obj pointer to an object or NULL to refresh all objects of all displays
- */
-void lv_event_send_refresh_recursive(lv_obj_t * obj);
-
-/**
  * Call an event function with an object, event, and data.
  * @param event_xcb an event callback function. If `NULL` `LV_RES_OK` will return without any actions.
  *        (the 'x' in the argument name indicates that its not a fully generic function because it not follows
@@ -880,6 +849,7 @@ const void * lv_event_get_data(void);
  * @param signal_cb the new signal function
  */
 void lv_obj_set_signal_cb(lv_obj_t * obj, lv_signal_cb_t signal_cb);
+
 
 /**
  * Send an event to the object
@@ -1204,6 +1174,7 @@ const void * _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_
  */
 lv_style_t * lv_obj_get_local_style(lv_obj_t * obj, uint8_t part);
 
+
 #include "lv_obj_style_dec.h"
 
 /*-----------------
@@ -1266,12 +1237,14 @@ bool lv_obj_get_drag_throw(const lv_obj_t * obj);
  */
 bool lv_obj_get_drag_parent(const lv_obj_t * obj);
 
+
 /**
 * Get the focus parent attribute of an object
 * @param obj pointer to an object
 * @return true: focus parent is enabled
 */
 bool lv_obj_get_focus_parent(const lv_obj_t * obj);
+
 
 /**
  * Get the drag parent attribute of an object
@@ -1303,6 +1276,7 @@ uint8_t lv_obj_get_protect(const lv_obj_t * obj);
  * @return false: none of the given bits are set, true: at least one bit is set
  */
 bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
+
 
 lv_state_t lv_obj_get_state(const lv_obj_t * obj, uint8_t part);
 
@@ -1477,6 +1451,7 @@ bool lv_debug_check_obj_type(const lv_obj_t * obj, const char * obj_type);
  */
 bool lv_debug_check_obj_valid(const lv_obj_t * obj);
 
+
 /**********************
  *      MACROS
  **********************/
@@ -1497,6 +1472,7 @@ bool lv_debug_check_obj_valid(const lv_obj_t * obj);
  */
 #define LV_EVENT_CB_DECLARE(name) static void name(lv_obj_t * obj, lv_event_t e)
 
+
 #if LV_USE_DEBUG
 
 # ifndef LV_DEBUG_IS_OBJ
@@ -1504,6 +1480,7 @@ bool lv_debug_check_obj_valid(const lv_obj_t * obj);
                                             lv_debug_check_obj_valid(obj_p) && \
                                             lv_debug_check_obj_type(obj_p, obj_type))
 # endif
+
 
 # if LV_USE_ASSERT_OBJ
 #  ifndef LV_ASSERT_OBJ
@@ -1513,12 +1490,13 @@ bool lv_debug_check_obj_valid(const lv_obj_t * obj);
 #  if LV_USE_ASSERT_NULL /*Use at least LV_ASSERT_NULL if enabled*/
 #    define LV_ASSERT_OBJ(obj_p, obj_type) LV_ASSERT_NULL(obj_p)
 #  else
-#    define LV_ASSERT_OBJ(obj_p, obj_type)
+#    define LV_ASSERT_OBJ(obj_p, obj_type) true
 #  endif
 # endif
 #else
-# define LV_ASSERT_OBJ(obj, obj_type)
+# define LV_ASSERT_OBJ(obj, obj_type) true
 #endif
+
 
 #ifdef __cplusplus
 } /* extern "C" */

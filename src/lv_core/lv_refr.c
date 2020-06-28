@@ -54,10 +54,6 @@ static void lv_refr_vdb_flush(void);
  **********************/
 static uint32_t px_num;
 static lv_disp_t * disp_refr; /*Display being refreshed*/
-#if LV_USE_PERF_MONITOR
-    static uint32_t fps_sum_cnt;
-    static uint32_t fps_sum_all;
-#endif
 
 /**********************
  *      MACROS
@@ -294,28 +290,17 @@ void _lv_disp_refr_task(lv_task_t * task)
     }
 
     static uint32_t perf_last_time = 0;
-    static uint32_t elaps_sum = 0;
-    static uint32_t frame_cnt = 0;
+    static uint32_t elaps_max = 1;
     if(lv_tick_elaps(perf_last_time) < 300) {
-        if(px_num > 5000) {
-            elaps_sum += elaps;
-            frame_cnt ++;
-        }
+        elaps_max = LV_MATH_MAX(elaps, elaps_max);
     }
     else {
         perf_last_time = lv_tick_get();
+        uint32_t fps = 1000 / (elaps_max == 0 ? 1 : elaps_max);
+        elaps_max = 1;
         uint32_t fps_limit = 1000 / disp_refr->refr_task->period;
-        uint32_t fps;
-
-        if(elaps_sum == 0) elaps_sum = 1;
-        if(frame_cnt == 0) fps = fps_limit;
-        else fps = (1000 * frame_cnt) / elaps_sum;
-        elaps_sum = 0;
-        frame_cnt = 0;
         if(fps > fps_limit) fps = fps_limit;
 
-        fps_sum_all += fps;
-        fps_sum_cnt ++;
         uint32_t cpu = 100 - lv_task_get_idle();
         lv_label_set_text_fmt(perf_label, "%d FPS\n%d%% CPU", fps, cpu);
         lv_obj_align(perf_label, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 0, 0);
@@ -324,13 +309,6 @@ void _lv_disp_refr_task(lv_task_t * task)
 
     LV_LOG_TRACE("lv_refr_task: ready");
 }
-
-#if LV_USE_PERF_MONITOR
-uint32_t lv_refr_get_fps_avg(void)
-{
-    return fps_sum_all / fps_sum_cnt;
-}
-#endif
 
 /**********************
  *   STATIC FUNCTIONS
@@ -403,7 +381,7 @@ static void lv_refr_areas(void)
             disp_refr->driver.buffer->last_part = 0;
             lv_refr_area(&disp_refr->inv_areas[i]);
 
-            px_num += lv_area_get_size(&disp_refr->inv_areas[i]);
+            if(disp_refr->driver.monitor_cb) px_num += lv_area_get_size(&disp_refr->inv_areas[i]);
         }
     }
 }
@@ -539,12 +517,10 @@ static void lv_refr_area_part(const lv_area_t * area_p)
                 lv_area_t a;
                 lv_area_set(&a, 0, 0, header.w - 1, header.h - 1);
                 lv_draw_img(&a, &start_mask, disp_refr->bg_img, &dsc);
-            }
-            else {
+            } else {
                 LV_LOG_WARN("Can't draw the background image")
             }
-        }
-        else {
+        } else {
             lv_draw_rect_dsc_t dsc;
             lv_draw_rect_dsc_init(&dsc);
             dsc.bg_color = disp_refr->bg_color;
@@ -564,9 +540,10 @@ static void lv_refr_area_part(const lv_area_t * area_p)
 
     }
 
+
     if(top_act_scr == NULL) {
-        top_act_scr = disp_refr->act_scr;
-    }
+         top_act_scr = disp_refr->act_scr;
+     }
     /*Do the refreshing from the top object*/
     lv_refr_obj_and_children(top_act_scr, &start_mask);
 
@@ -593,14 +570,9 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
     /*If this object is fully cover the draw area check the children too */
     if(_lv_area_is_in(area_p, &obj->coords, 0) && obj->hidden == 0) {
-        lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
+        lv_design_res_t design_res = obj->design_cb ? obj->design_cb(obj, area_p,
+                                                                     LV_DESIGN_COVER_CHK) : LV_DESIGN_RES_NOT_COVER;
         if(design_res == LV_DESIGN_RES_MASKED) return NULL;
-
-#if LV_USE_OPA_SCALE
-        if(design_res == LV_DESIGN_RES_COVER && lv_obj_get_style_opa_scale(obj, LV_OBJ_PART_MAIN) != LV_OPA_COVER) {
-            design_res = LV_DESIGN_RES_NOT_COVER;
-        }
-#endif
 
         lv_obj_t * i;
         _LV_LL_READ(obj->child_ll, i) {
@@ -767,8 +739,6 @@ static void lv_refr_vdb_flush(void)
 
     /*Flush the rendered content to the display*/
     lv_disp_t * disp = _lv_refr_get_disp_refreshing();
-    if(disp->driver.gpu_wait_cb) disp->driver.gpu_wait_cb(&disp->driver);
-
     if(disp->driver.flush_cb) disp->driver.flush_cb(&disp->driver, &vdb->area, vdb->buf_act);
 
     if(vdb->buf1 && vdb->buf2) {

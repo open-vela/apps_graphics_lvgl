@@ -69,7 +69,7 @@ enum {
     LV_TABVIEW_PART_BG = LV_OBJ_PART_MAIN,
     _LV_TABVIEW_PART_VIRTUAL_LAST = _LV_OBJ_PART_VIRTUAL_LAST,
 
-    LV_TABVIEW_PART_BG_SCROLLABLE = _LV_OBJ_PART_REAL_LAST,
+    LV_TABVIEW_PART_BG_SCRLLABLE = _LV_OBJ_PART_REAL_LAST,
     LV_TABVIEW_PART_TAB_BG,
     LV_TABVIEW_PART_TAB_BTN,
     LV_TABVIEW_PART_INDIC,
@@ -118,14 +118,6 @@ void lv_tabview_clean_tab(lv_obj_t * tab);
  * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
  */
 void lv_tabview_set_tab_act(lv_obj_t * tabview, uint16_t id, lv_anim_enable_t anim);
-
-/**
- * Set the name of a tab.
- * @param tabview pointer to Tab view object
- * @param id index of the tab the name should be set
- * @param name new tab name
- */
-void lv_tabview_set_tab_name(lv_obj_t * tabview, uint16_t id, char * name);
 
 /**
  * Set the animation time of tab view when a new tab is loaded

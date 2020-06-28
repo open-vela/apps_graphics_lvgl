@@ -33,7 +33,7 @@ enum {
     LV_LAYOUT_CENTER, /**< Center objects */
 
     /**
-     * COLUMN:
+     * COULMN:
      * - Place the object below each other
      * - Keep `pad_top` space on the top
      * - Keep `pad_inner` space between the objects
@@ -53,6 +53,7 @@ enum {
     LV_LAYOUT_ROW_TOP,          /**< Row top align*/
     LV_LAYOUT_ROW_MID,          /**< Row middle align*/
     LV_LAYOUT_ROW_BOTTOM,       /**< Row bottom align*/
+
 
     /**
      * PRETTY:

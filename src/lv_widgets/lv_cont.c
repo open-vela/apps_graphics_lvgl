@@ -27,10 +27,6 @@
  *********************/
 #define LV_OBJX_NAME "lv_cont"
 
-#ifndef LV_LAYOUT_MAX_RECURSION
-    #define LV_LAYOUT_MAX_RECURSION 10
-#endif
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -104,6 +100,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
             lv_theme_apply(cont, LV_THEME_CONT);
         }
 
+
     }
     /*Copy an existing object*/
     else {
@@ -115,7 +112,7 @@ lv_obj_t * lv_cont_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->layout              = copy_ext->layout;
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(cont, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(cont, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("container created");
@@ -290,6 +287,7 @@ static lv_res_t lv_cont_signal(lv_obj_t * cont, lv_signal_t sign, void * param)
 
     return res;
 }
+
 
 static lv_style_list_t * lv_cont_get_style(lv_obj_t * cont, uint8_t type)
 {
@@ -568,35 +566,25 @@ static void lv_cont_layout_pretty(lv_obj_t * cont)
             lv_coord_t new_pinner = (w_obj - w_row) / (obj_num - 1);
             lv_coord_t act_x    = pleft; /*x init*/
             child_tmp           = child_rs;
-            lv_align_t align;
-            int32_t inv;
-            if(lv_obj_get_base_dir(cont) == LV_BIDI_DIR_RTL) {
-                align = LV_ALIGN_IN_TOP_RIGHT;
-                inv = -1;
-            }
-            else {
-                align = LV_ALIGN_IN_TOP_LEFT;
-                inv = 1;
-            }
             while(child_tmp != NULL) {
                 if(lv_obj_get_hidden(child_tmp) == false && lv_obj_is_protected(child_tmp, LV_PROTECT_POS) == false) {
                     lv_coord_t mleft = lv_obj_get_style_margin_left(child_tmp, LV_OBJ_PART_MAIN);
                     lv_coord_t mright = lv_obj_get_style_margin_right(child_tmp, LV_OBJ_PART_MAIN);
                     switch(type) {
                         case LV_LAYOUT_PRETTY_TOP:
-                            lv_obj_align(child_tmp, cont, align,
-                                         inv * (act_x + mleft),
+                            lv_obj_align(child_tmp, cont, LV_ALIGN_IN_TOP_LEFT,
+                                         act_x + mleft,
                                          act_y + lv_obj_get_style_margin_top(child_tmp, LV_OBJ_PART_MAIN));
                             break;
                         case LV_LAYOUT_PRETTY_MID:
-                            lv_obj_align(child_tmp, cont, align,
-                                         inv * (act_x + mleft),
+                            lv_obj_align(child_tmp, cont, LV_ALIGN_IN_TOP_LEFT,
+                                         act_x + mleft,
                                          act_y + (h_row - lv_obj_get_height(child_tmp)) / 2);
 
                             break;
                         case LV_LAYOUT_PRETTY_BOTTOM:
-                            lv_obj_align(child_tmp, cont, align,
-                                         inv * (act_x + mleft),
+                            lv_obj_align(child_tmp, cont, LV_ALIGN_IN_TOP_LEFT,
+                                         act_x + mleft,
                                          act_y + h_row - lv_obj_get_height(child_tmp) - lv_obj_get_style_margin_bottom(child_tmp, LV_OBJ_PART_MAIN));
                             break;
                         default:
@@ -640,7 +628,7 @@ static void lv_cont_layout_grid(lv_obj_t * cont)
     _LV_LL_READ_BACK(cont->child_ll, child) {
         if(lv_obj_get_hidden(child) != false || lv_obj_is_protected(child, LV_PROTECT_POS) != false) continue;
         lv_coord_t obj_w = lv_obj_get_width(child);
-        if(act_x + obj_w > w_fit + left) {
+        if(act_x + inner + obj_w > w_fit) {
             act_x = left;
             act_y += y_ofs;
         }
@@ -666,152 +654,142 @@ static void lv_cont_refr_autofit(lv_obj_t * cont)
         return;
     }
 
-    static int recursion_level = 0;
-    recursion_level++;
-    /*Ensure it won't keep recursing forever*/
-    if(recursion_level <= LV_LAYOUT_MAX_RECURSION) {
-        lv_area_t tight_area;
-        lv_area_t ori;
-        lv_obj_t * child_i;
+    lv_area_t tight_area;
+    lv_area_t ori;
+    lv_obj_t * child_i;
 
-        lv_obj_t * par               = lv_obj_get_parent(cont);
-        lv_area_t parent_area;
-        lv_area_copy(&parent_area, &par->coords);
-        parent_area.x1 += lv_obj_get_style_pad_left(par, LV_OBJ_PART_MAIN);
-        parent_area.x2 -= lv_obj_get_style_pad_right(par, LV_OBJ_PART_MAIN);
-        parent_area.y1 += lv_obj_get_style_pad_top(par, LV_OBJ_PART_MAIN);
-        parent_area.y2 -= lv_obj_get_style_pad_bottom(par, LV_OBJ_PART_MAIN);
+    lv_obj_t * par               = lv_obj_get_parent(cont);
+    lv_area_t parent_area;
+    lv_area_copy(&parent_area, &par->coords);
+    parent_area.x1 += lv_obj_get_style_pad_left(par, LV_OBJ_PART_MAIN);
+    parent_area.x2 -= lv_obj_get_style_pad_right(par, LV_OBJ_PART_MAIN);
+    parent_area.y1 += lv_obj_get_style_pad_top(par, LV_OBJ_PART_MAIN);
+    parent_area.y2 -= lv_obj_get_style_pad_bottom(par, LV_OBJ_PART_MAIN);
 
-        /*Search the side coordinates of the children*/
-        lv_obj_get_coords(cont, &ori);
-        lv_obj_get_coords(cont, &tight_area);
+    /*Search the side coordinates of the children*/
+    lv_obj_get_coords(cont, &ori);
+    lv_obj_get_coords(cont, &tight_area);
 
-        bool has_children = _lv_ll_is_empty(&cont->child_ll) ? false : true;
+    bool has_children = _lv_ll_is_empty(&cont->child_ll) ? false : true;
 
-        if(has_children) {
-            tight_area.x1 = LV_COORD_MAX;
-            tight_area.y1 = LV_COORD_MAX;
-            tight_area.x2 = LV_COORD_MIN;
-            tight_area.y2 = LV_COORD_MIN;
+    if(has_children) {
+        tight_area.x1 = LV_COORD_MAX;
+        tight_area.y1 = LV_COORD_MAX;
+        tight_area.x2 = LV_COORD_MIN;
+        tight_area.y2 = LV_COORD_MIN;
 
-            _LV_LL_READ(cont->child_ll, child_i) {
-                if(lv_obj_get_hidden(child_i) != false) continue;
+        _LV_LL_READ(cont->child_ll, child_i) {
+            if(lv_obj_get_hidden(child_i) != false) continue;
 
-                if(ext->fit_left != LV_FIT_PARENT) {
-                    lv_style_int_t mleft = lv_obj_get_style_margin_left(child_i, LV_OBJ_PART_MAIN);
-                    tight_area.x1 = LV_MATH_MIN(tight_area.x1, child_i->coords.x1 - mleft);
-                }
-
-                if(ext->fit_right != LV_FIT_PARENT) {
-                    lv_style_int_t mright = lv_obj_get_style_margin_right(child_i, LV_OBJ_PART_MAIN);
-                    tight_area.x2 = LV_MATH_MAX(tight_area.x2, child_i->coords.x2 + mright);
-                }
-
-                if(ext->fit_top != LV_FIT_PARENT) {
-                    lv_style_int_t mtop = lv_obj_get_style_margin_top(child_i, LV_OBJ_PART_MAIN);
-                    tight_area.y1 = LV_MATH_MIN(tight_area.y1, child_i->coords.y1 - mtop);
-                }
-
-                if(ext->fit_bottom != LV_FIT_PARENT) {
-                    lv_style_int_t mbottom = lv_obj_get_style_margin_bottom(child_i, LV_OBJ_PART_MAIN);
-                    tight_area.y2 = LV_MATH_MAX(tight_area.y2, child_i->coords.y2 + mbottom);
-                }
+            if(ext->fit_left != LV_FIT_PARENT) {
+                lv_style_int_t mleft = lv_obj_get_style_margin_left(child_i, LV_OBJ_PART_MAIN);
+                tight_area.x1 = LV_MATH_MIN(tight_area.x1, child_i->coords.x1 - mleft);
             }
 
-            tight_area.x1 -= lv_obj_get_style_pad_left(cont, LV_CONT_PART_MAIN);
-            tight_area.x2 += lv_obj_get_style_pad_right(cont, LV_CONT_PART_MAIN);
-            tight_area.y1 -= lv_obj_get_style_pad_top(cont, LV_CONT_PART_MAIN);
-            tight_area.y2 += lv_obj_get_style_pad_bottom(cont, LV_CONT_PART_MAIN);
-        }
-
-        lv_area_t new_area;
-        lv_area_copy(&new_area, &ori);
-
-        switch(ext->fit_left) {
-            case LV_FIT_TIGHT:
-                new_area.x1 = tight_area.x1;
-                break;
-            case LV_FIT_PARENT:
-                new_area.x1 = parent_area.x1;
-                break;
-            case LV_FIT_MAX:
-                new_area.x1 = has_children ? LV_MATH_MIN(tight_area.x1, parent_area.x1) : parent_area.x1;
-                break;
-            default:
-                break;
-        }
-
-        switch(ext->fit_right) {
-            case LV_FIT_TIGHT:
-                new_area.x2 = tight_area.x2;
-                break;
-            case LV_FIT_PARENT:
-                new_area.x2 = parent_area.x2;
-                break;
-            case LV_FIT_MAX:
-                new_area.x2 = has_children ? LV_MATH_MAX(tight_area.x2, parent_area.x2) : parent_area.x2;
-                break;
-            default:
-                break;
-        }
-
-        switch(ext->fit_top) {
-            case LV_FIT_TIGHT:
-                new_area.y1 = tight_area.y1;
-                break;
-            case LV_FIT_PARENT:
-                new_area.y1 = parent_area.y1;
-                break;
-            case LV_FIT_MAX:
-                new_area.y1 = has_children ? LV_MATH_MIN(tight_area.y1, parent_area.y1) : parent_area.y1;
-                break;
-            default:
-                break;
-        }
-
-        switch(ext->fit_bottom) {
-            case LV_FIT_TIGHT:
-                new_area.y2 = tight_area.y2;
-                break;
-            case LV_FIT_PARENT:
-                new_area.y2 = parent_area.y2;
-                break;
-            case LV_FIT_MAX:
-                new_area.y2 = has_children ? LV_MATH_MAX(tight_area.y2, parent_area.y2) : parent_area.y2;
-                break;
-            default:
-                break;
-        }
-
-        /*Do nothing if the coordinates are not changed*/
-        if(cont->coords.x1 != new_area.x1 || cont->coords.y1 != new_area.y1 || cont->coords.x2 != new_area.x2 ||
-           cont->coords.y2 != new_area.y2) {
-
-            lv_obj_invalidate(cont);
-            lv_area_copy(&cont->coords, &new_area);
-            lv_obj_invalidate(cont);
-
-            /*Notify the object about its new coordinates*/
-            cont->signal_cb(cont, LV_SIGNAL_COORD_CHG, &ori);
-
-            /*Inform the parent about the new coordinates*/
-            par->signal_cb(par, LV_SIGNAL_CHILD_CHG, cont);
-
-            if(lv_obj_get_auto_realign(cont)) {
-                lv_obj_realign(cont);
+            if(ext->fit_right != LV_FIT_PARENT) {
+                lv_style_int_t mright = lv_obj_get_style_margin_right(child_i, LV_OBJ_PART_MAIN);
+                tight_area.x2 = LV_MATH_MAX(tight_area.x2, child_i->coords.x2 + mright);
             }
 
-            /*Tell the children the parent's size has changed*/
-            _LV_LL_READ(cont->child_ll, child_i) {
-                child_i->signal_cb(child_i, LV_SIGNAL_PARENT_SIZE_CHG, &ori);
+            if(ext->fit_top != LV_FIT_PARENT) {
+                lv_style_int_t mtop = lv_obj_get_style_margin_top(child_i, LV_OBJ_PART_MAIN);
+                tight_area.y1 = LV_MATH_MIN(tight_area.y1, child_i->coords.y1 - mtop);
+            }
+
+            if(ext->fit_bottom != LV_FIT_PARENT) {
+                lv_style_int_t mbottom = lv_obj_get_style_margin_bottom(child_i, LV_OBJ_PART_MAIN);
+                tight_area.y2 = LV_MATH_MAX(tight_area.y2, child_i->coords.y2 + mbottom);
             }
         }
-    }
-    else {
-        LV_LOG_ERROR("LV_LAYOUT_MAX_RECURSION reached! You may have encountered issue #1539.");
+
+        tight_area.x1 -= lv_obj_get_style_pad_left(cont, LV_CONT_PART_MAIN);
+        tight_area.x2 += lv_obj_get_style_pad_right(cont, LV_CONT_PART_MAIN);
+        tight_area.y1 -= lv_obj_get_style_pad_top(cont, LV_CONT_PART_MAIN);
+        tight_area.y2 += lv_obj_get_style_pad_bottom(cont, LV_CONT_PART_MAIN);
     }
 
-    recursion_level--;
+    lv_area_t new_area;
+    lv_area_copy(&new_area, &ori);
+
+    switch(ext->fit_left) {
+        case LV_FIT_TIGHT:
+            new_area.x1 = tight_area.x1;
+            break;
+        case LV_FIT_PARENT:
+            new_area.x1 = parent_area.x1;
+            break;
+        case LV_FIT_MAX:
+            new_area.x1 = has_children ? LV_MATH_MIN(tight_area.x1, parent_area.x1) : parent_area.x1;
+            break;
+        default:
+            break;
+    }
+
+    switch(ext->fit_right) {
+        case LV_FIT_TIGHT:
+            new_area.x2 = tight_area.x2;
+            break;
+        case LV_FIT_PARENT:
+            new_area.x2 = parent_area.x2;
+            break;
+        case LV_FIT_MAX:
+            new_area.x2 = has_children ? LV_MATH_MAX(tight_area.x2, parent_area.x2) : parent_area.x2;
+            break;
+        default:
+            break;
+    }
+
+    switch(ext->fit_top) {
+        case LV_FIT_TIGHT:
+            new_area.y1 = tight_area.y1;
+            break;
+        case LV_FIT_PARENT:
+            new_area.y1 = parent_area.y1;
+            break;
+        case LV_FIT_MAX:
+            new_area.y1 = has_children ? LV_MATH_MIN(tight_area.y1, parent_area.y1) : parent_area.y1;
+            break;
+        default:
+            break;
+    }
+
+    switch(ext->fit_bottom) {
+        case LV_FIT_TIGHT:
+            new_area.y2 = tight_area.y2;
+            break;
+        case LV_FIT_PARENT:
+            new_area.y2 = parent_area.y2;
+            break;
+        case LV_FIT_MAX:
+            new_area.y2 = has_children ? LV_MATH_MAX(tight_area.y2, parent_area.y2) : parent_area.y2;
+            break;
+        default:
+            break;
+    }
+
+    /*Do nothing if the coordinates are not changed*/
+    if(cont->coords.x1 != new_area.x1 || cont->coords.y1 != new_area.y1 || cont->coords.x2 != new_area.x2 ||
+       cont->coords.y2 != new_area.y2) {
+
+        lv_obj_invalidate(cont);
+        lv_area_copy(&cont->coords, &new_area);
+        lv_obj_invalidate(cont);
+
+        /*Notify the object about its new coordinates*/
+        cont->signal_cb(cont, LV_SIGNAL_COORD_CHG, &ori);
+
+        /*Inform the parent about the new coordinates*/
+        par->signal_cb(par, LV_SIGNAL_CHILD_CHG, cont);
+
+        if(lv_obj_get_auto_realign(cont)) {
+            lv_obj_realign(cont);
+        }
+
+        /*Tell the children the parent's size has changed*/
+        _LV_LL_READ(cont->child_ll, child_i) {
+            child_i->signal_cb(child_i, LV_SIGNAL_PARENT_SIZE_CHG, &ori);
+        }
+    }
 }
 
 #endif

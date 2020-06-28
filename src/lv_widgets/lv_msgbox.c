@@ -127,7 +127,7 @@ lv_obj_t * lv_msgbox_create(lv_obj_t * par, const lv_obj_t * copy)
         if(copy_ext->btnm) ext->btnm = lv_btnmatrix_create(mbox, copy_ext->btnm);
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(mbox, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(mbox, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("message box created");
@@ -199,38 +199,6 @@ void lv_msgbox_set_text(lv_obj_t * mbox, const char * txt)
 }
 
 /**
- * Set a formatted text for the message box
- * @param mbox pointer to a message box
- * @param fmt `printf`-like format
- */
-void lv_msgbox_set_text_fmt(lv_obj_t * mbox, const char * fmt, ...)
-{
-    LV_ASSERT_OBJ(mbox, LV_OBJX_NAME);
-    LV_ASSERT_STR(fmt);
-
-    lv_msgbox_ext_t * msgbox_ext = lv_obj_get_ext_attr(mbox);
-    lv_label_ext_t * label_ext = lv_obj_get_ext_attr(msgbox_ext->text);
-
-    /*If text is NULL then refresh */
-    if(fmt == NULL) {
-        lv_label_refr_text(msgbox_ext->text);
-        return;
-    }
-
-    if(label_ext->text != NULL) {
-        lv_mem_free(label_ext->text);
-        label_ext->text = NULL;
-    }
-
-    va_list args;
-    va_start(args, fmt);
-    label_ext->text = _lv_txt_set_text_vfmt(fmt, args);
-    va_end(args);
-    lv_label_refr_text(msgbox_ext->text);
-    mbox_realign(mbox);
-}
-
-/**
  * Set animation duration
  * @param mbox pointer to a message box object
  * @param anim_time animation length in  milliseconds (0: no animation)
@@ -241,6 +209,7 @@ void lv_msgbox_set_anim_time(lv_obj_t * mbox, uint16_t anim_time)
 
 #if LV_USE_ANIMATION
     lv_msgbox_ext_t * ext = lv_obj_get_ext_attr(mbox);
+    anim_time           = 0;
     ext->anim_time      = anim_time;
 #else
     (void)mbox;
@@ -443,7 +412,6 @@ static lv_res_t lv_msgbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param
 {
     lv_res_t res;
 
-#if LV_USE_GROUP
     /*Translate LV_KEY_UP/DOWN to LV_KEY_LEFT/RIGHT */
     char c_trans = 0;
     if(sign == LV_SIGNAL_CONTROL) {
@@ -453,7 +421,6 @@ static lv_res_t lv_msgbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param
 
         param = &c_trans;
     }
-#endif
 
     if(sign == LV_SIGNAL_GET_STYLE) {
         lv_get_style_info_t * info = param;
@@ -493,11 +460,8 @@ static lv_res_t lv_msgbox_signal(lv_obj_t * mbox, lv_signal_t sign, void * param
             if(btn_id != LV_BTNMATRIX_BTN_NONE) lv_event_send(mbox, LV_EVENT_VALUE_CHANGED, &btn_id);
         }
     }
-    else if(
-#if LV_USE_GROUP
-        sign == LV_SIGNAL_CONTROL || sign == LV_SIGNAL_GET_EDITABLE ||
-#endif
-        sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS) {
+    else if(sign == LV_SIGNAL_FOCUS || sign == LV_SIGNAL_DEFOCUS || sign == LV_SIGNAL_CONTROL ||
+            sign == LV_SIGNAL_GET_EDITABLE) {
         if(ext->btnm) {
             ext->btnm->signal_cb(ext->btnm, sign, param);
         }

@@ -1,3 +1,4 @@
+
 /**
  * @file lv_roller.c
  *
@@ -122,19 +123,11 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy)
     }
     /*Copy an existing roller*/
     else {
-        lv_label_create(roller, get_label(copy));
-
         lv_roller_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
-        ext->mode = copy_ext->mode;
-        ext->option_cnt = copy_ext->option_cnt;
-        ext->sel_opt_id = copy_ext->sel_opt_id;
-        ext->sel_opt_id_ori = copy_ext->sel_opt_id;
+        lv_roller_set_options(roller, lv_roller_get_options(copy), copy_ext->mode);
         ext->auto_fit = copy_ext->auto_fit;
         lv_obj_t * scrl = lv_page_get_scrollable(roller);
         lv_obj_set_signal_cb(scrl, lv_roller_scrl_signal);
-
-        lv_style_list_copy(&ext->style_sel, &copy_ext->style_sel);
-        lv_obj_refresh_style(roller, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("roller created");
@@ -157,6 +150,7 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
     LV_ASSERT_OBJ(roller, LV_OBJX_NAME);
     LV_ASSERT_STR(options);
 
+
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
     lv_obj_t * label = get_label(roller);
 
@@ -176,7 +170,7 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
         lv_label_set_text(label, options);
     }
     else {
-        ext->mode = LV_ROLLER_MODE_INFINITE;
+        ext->mode = LV_ROLLER_MODE_INIFINITE;
 
         size_t opt_len = strlen(options) + 1; /*+1 to add '\n' after option lists*/
         char * opt_extra = _lv_mem_buf_get(opt_len * LV_ROLLER_INF_PAGES);
@@ -189,7 +183,7 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
         lv_label_set_text(label, opt_extra);
         _lv_mem_buf_release(opt_extra);
 
-        ext->sel_opt_id     = ((LV_ROLLER_INF_PAGES / 2) + 0) * ext->option_cnt;
+        ext->sel_opt_id     = ((LV_ROLLER_INF_PAGES / 2) + 1) * ext->option_cnt;
 
         ext->option_cnt = ext->option_cnt * LV_ROLLER_INF_PAGES;
     }
@@ -237,7 +231,7 @@ void lv_roller_set_selected(lv_obj_t * roller, uint16_t sel_opt, lv_anim_enable_
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
 
     /*In infinite mode interpret the new ID relative to the currently visible "page"*/
-    if(ext->mode == LV_ROLLER_MODE_INFINITE) {
+    if(ext->mode == LV_ROLLER_MODE_INIFINITE) {
         int32_t sel_opt_signed = sel_opt;
         uint16_t page = ext->sel_opt_id / LV_ROLLER_INF_PAGES;
 
@@ -301,7 +295,7 @@ uint16_t lv_roller_get_selected(const lv_obj_t * roller)
     LV_ASSERT_OBJ(roller, LV_OBJX_NAME);
 
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
-    if(ext->mode == LV_ROLLER_MODE_INFINITE) {
+    if(ext->mode == LV_ROLLER_MODE_INIFINITE) {
         uint16_t real_id_cnt = ext->option_cnt / LV_ROLLER_INF_PAGES;
         return ext->sel_opt_id % real_id_cnt;
     }
@@ -309,6 +303,7 @@ uint16_t lv_roller_get_selected(const lv_obj_t * roller)
         return ext->sel_opt_id;
     }
 }
+
 
 /**
  * Get the current selected option as a string
@@ -353,7 +348,7 @@ uint16_t lv_roller_get_option_cnt(const lv_obj_t * roller)
     LV_ASSERT_OBJ(roller, LV_OBJX_NAME);
 
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
-    if(ext->mode == LV_ROLLER_MODE_INFINITE) {
+    if(ext->mode == LV_ROLLER_MODE_INIFINITE) {
         return ext->option_cnt / LV_ROLLER_INF_PAGES;
     }
     else {
@@ -396,6 +391,7 @@ const char * lv_roller_get_options(const lv_obj_t * roller)
 
     return lv_label_get_text(get_label(roller));
 }
+
 
 /**********************
  *   STATIC FUNCTIONS
@@ -470,15 +466,12 @@ static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * cli
 
             /*Get the size of the "selected text"*/
             lv_point_t res_p;
-            _lv_txt_get_size(&res_p, lv_label_get_text(label), label_dsc.font, label_dsc.letter_space, label_dsc.line_space,
-                             lv_obj_get_width(roller), LV_TXT_FLAG_EXPAND);
+            _lv_txt_get_size(&res_p, lv_label_get_text(label), label_dsc.font, label_dsc.letter_space, label_dsc.line_space, lv_obj_get_width(roller), LV_TXT_FLAG_EXPAND);
 
             /*Move the selected label proportionally with the background label*/
             lv_coord_t roller_h = lv_obj_get_height(roller);
-            int32_t label_y_prop = label->coords.y1 - (roller_h / 2 +
-                                                       roller->coords.y1); /*label offset from the middle line of the roller*/
-            label_y_prop = (label_y_prop << 14) / lv_obj_get_height(
-                               label); /*Proportional position from the middle line (upscaled)*/
+            int32_t label_y_prop = label->coords.y1 - (roller_h / 2 + roller->coords.y1); /*label offset from the middle line of the roller*/
+            label_y_prop = (label_y_prop << 14) / lv_obj_get_height(label); /*Proportional position from the middle line (upscaled)*/
 
             /*Apply a correction with different line heights*/
             const lv_font_t * normal_label_font = lv_obj_get_style_text_font(roller, LV_ROLLER_PART_BG);
@@ -504,6 +497,7 @@ static lv_design_res_t lv_roller_design(lv_obj_t * roller, const lv_area_t * cli
 
     return LV_DESIGN_RES_OK;
 }
+
 
 /**
  * Handle the drawing related tasks of the roller's label
@@ -587,7 +581,6 @@ static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * par
     if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
-    LV_UNUSED(ext);
 
     if(sign == LV_SIGNAL_STYLE_CHG) {
         lv_obj_t * label = get_label(roller);
@@ -647,7 +640,6 @@ static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * par
 #endif
     }
     else if(sign == LV_SIGNAL_CONTROL) {
-#if LV_USE_GROUP
         char c = *((char *)param);
         if(c == LV_KEY_RIGHT || c == LV_KEY_DOWN) {
             if(ext->sel_opt_id + 1 < ext->option_cnt) {
@@ -664,7 +656,6 @@ static lv_res_t lv_roller_signal(lv_obj_t * roller, lv_signal_t sign, void * par
                 ext->sel_opt_id_ori = ori_id;
             }
         }
-#endif
     }
     else if(sign == LV_SIGNAL_CLEANUP) {
         lv_obj_clean_style_list(roller, LV_ROLLER_PART_SELECTED);
@@ -824,6 +815,7 @@ static void draw_bg(lv_obj_t * roller, const lv_area_t * clip_area)
     }
 }
 
+
 /**
  * Refresh the position of the roller. It uses the id stored in: ext->ddlist.selected_option_id
  * @param roller pointer to a roller object
@@ -874,6 +866,7 @@ static void refr_position(lv_obj_t * roller, lv_anim_enable_t anim_en)
 #endif
     }
 }
+
 
 static lv_res_t release_handler(lv_obj_t * roller)
 {
@@ -949,24 +942,13 @@ static void refr_width(lv_obj_t * roller)
             break;
     }
 
+
     if(lv_roller_get_auto_fit(roller) == false) return;
 
     lv_coord_t label_w = lv_obj_get_width(label);
 
     lv_style_int_t left = lv_obj_get_style_pad_left(roller, LV_ROLLER_PART_BG);
     lv_style_int_t right = lv_obj_get_style_pad_right(roller, LV_ROLLER_PART_BG);
-
-    const lv_font_t * base_font = lv_obj_get_style_text_font(roller, LV_ROLLER_PART_BG);
-    const lv_font_t * sel_font = lv_obj_get_style_text_font(roller, LV_ROLLER_PART_SELECTED);
-
-    /*The selected text might be larger to get its size*/
-    if(base_font != sel_font) {
-        lv_coord_t letter_sp = lv_obj_get_style_text_letter_space(roller, LV_ROLLER_PART_SELECTED);
-        lv_coord_t line_sp = lv_obj_get_style_text_line_space(roller, LV_ROLLER_PART_SELECTED);
-        lv_point_t p;
-        _lv_txt_get_size(&p, lv_label_get_text(label), sel_font, letter_sp, line_sp, LV_COORD_MAX, LV_TXT_FLAG_NONE);
-        if(label_w < p.x)label_w = p.x;
-    }
 
     lv_obj_set_width(roller, label_w + left + right);
 }
@@ -998,13 +980,12 @@ static void inf_normalize(void * scrl)
     lv_obj_t * roller      = lv_obj_get_parent(roller_scrl);
     lv_roller_ext_t * ext  = lv_obj_get_ext_attr(roller);
 
-    if(ext->mode == LV_ROLLER_MODE_INFINITE) {
+    if(ext->mode == LV_ROLLER_MODE_INIFINITE) {
         uint16_t real_id_cnt = ext->option_cnt / LV_ROLLER_INF_PAGES;
-        ext->sel_opt_id = ext->sel_opt_id % real_id_cnt;
-        ext->sel_opt_id += (LV_ROLLER_INF_PAGES / 2) * real_id_cnt; /*Select the middle page*/
 
-        ext->sel_opt_id_ori = ext->sel_opt_id % real_id_cnt;
-        ext->sel_opt_id_ori += (LV_ROLLER_INF_PAGES / 2) * real_id_cnt; /*Select the middle page*/
+        ext->sel_opt_id = ext->sel_opt_id % real_id_cnt;
+
+        ext->sel_opt_id += (LV_ROLLER_INF_PAGES / 2) * real_id_cnt; /*Select the middle page*/
 
         /*Move to the new id*/
         const lv_font_t * font = lv_obj_get_style_text_font(roller, LV_ROLLER_PART_BG);

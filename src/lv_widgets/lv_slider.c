@@ -81,7 +81,6 @@ lv_obj_t * lv_slider_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Initialize the allocated 'ext' */
     ext->value_to_set = NULL;
     ext->dragging = 0;
-    ext->left_knob_focus = 0;
     lv_style_list_init(&ext->style_knob);
 
     /*The signal and design functions are not copied so set them here*/
@@ -104,7 +103,7 @@ lv_obj_t * lv_slider_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_area_copy(&ext->left_knob_area, &copy_ext->left_knob_area);
         lv_area_copy(&ext->right_knob_area, &copy_ext->right_knob_area);
 
-        lv_obj_refresh_style(slider, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(slider, LV_OBJ_PART_ALL);
     }
 
     LV_LOG_INFO("slider created");
@@ -166,7 +165,8 @@ static lv_design_res_t lv_slider_design(lv_obj_t * slider, const lv_area_t * cli
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        /* The ancestor design function will draw the background and the indicator.
+
+        /*The ancestor design function will draw the background and the indicator.
          * It also sets ext->bar.indic_area*/
         ancestor_design_f(slider, clip_area, mode);
 
@@ -260,30 +260,15 @@ static lv_res_t lv_slider_signal(lv_obj_t * slider, lv_signal_t sign, void * par
     if(res != LV_RES_OK) return res;
     if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
-    lv_slider_type_t type = lv_slider_get_type(slider);
     lv_slider_ext_t * ext = lv_obj_get_ext_attr(slider);
-
-    /* Advanced hit testing: react only on dragging the knob(s) */
-    if(sign == LV_SIGNAL_HIT_TEST) {
-        lv_hit_test_info_t * info = param;
-
-        /* Ordinary slider: was the knob area hit? */
-        info->result = _lv_area_is_point_on(&ext->right_knob_area, info->point, 0);
-
-        /* There's still a change we have a hit, if we have another knob */
-        if((info->result == false) && (type == LV_SLIDER_TYPE_RANGE)) {
-            info->result = _lv_area_is_point_on(&ext->left_knob_area, info->point, 0);
-        }
-    }
-
     lv_point_t p;
 
     if(sign == LV_SIGNAL_PRESSED) {
         ext->dragging = true;
-        if(type == LV_SLIDER_TYPE_NORMAL || type == LV_SLIDER_TYPE_SYMMETRICAL) {
+        if(lv_slider_get_type(slider) == LV_SLIDER_TYPE_NORMAL) {
             ext->value_to_set = &ext->bar.cur_value;
         }
-        else if(type == LV_SLIDER_TYPE_RANGE) {
+        else if(lv_slider_get_type(slider) == LV_SLIDER_TYPE_RANGE) {
             lv_indev_get_point(param, &p);
             bool hor = lv_obj_get_width(slider) >= lv_obj_get_height(slider);
             lv_bidi_dir_t base_dir = lv_obj_get_base_dir(slider);
@@ -328,8 +313,6 @@ static lv_res_t lv_slider_signal(lv_obj_t * slider, lv_signal_t sign, void * par
         }
     }
     else if(sign == LV_SIGNAL_PRESSING && ext->value_to_set != NULL) {
-        if(lv_indev_get_type(param) != LV_INDEV_TYPE_POINTER) return res;
-
         lv_indev_get_point(param, &p);
         lv_bidi_dir_t base_dir = lv_obj_get_base_dir(slider);
 
@@ -393,24 +376,10 @@ static lv_res_t lv_slider_signal(lv_obj_t * slider, lv_signal_t sign, void * par
         bool editing               = lv_group_get_editing(g);
         lv_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
         if(indev_type == LV_INDEV_TYPE_ENCODER) {
-            if(editing) {
-                if(lv_slider_get_type(slider) == LV_SLIDER_TYPE_RANGE) {
-                    if(ext->left_knob_focus == 0) ext->left_knob_focus = 1;
-                    else {
-                        ext->left_knob_focus = 0;
-                        lv_group_set_editing(g, false);
-                    }
-                }
-                else {
-                    lv_group_set_editing(g, false);
-                }
-            }
+            if(editing) lv_group_set_editing(g, false);
         }
 #endif
 
-    }
-    else if(sign == LV_SIGNAL_FOCUS) {
-        ext->left_knob_focus = 0;
     }
     else if(sign == LV_SIGNAL_COORD_CHG) {
         /* The knob size depends on slider size.
@@ -438,37 +407,30 @@ static lv_res_t lv_slider_signal(lv_obj_t * slider, lv_signal_t sign, void * par
 
     }
     else if(sign == LV_SIGNAL_CONTROL) {
-#if LV_USE_GROUP
         char c = *((char *)param);
 
         if(c == LV_KEY_RIGHT || c == LV_KEY_UP) {
-            if(!ext->left_knob_focus) lv_slider_set_value(slider, lv_slider_get_value(slider) + 1, LV_ANIM_ON);
-            else lv_slider_set_left_value(slider, lv_slider_get_left_value(slider) + 1, LV_ANIM_ON);
-
+            lv_slider_set_value(slider, lv_slider_get_value(slider) + 1, LV_ANIM_ON);
             res = lv_event_send(slider, LV_EVENT_VALUE_CHANGED, NULL);
             if(res != LV_RES_OK) return res;
         }
         else if(c == LV_KEY_LEFT || c == LV_KEY_DOWN) {
-            if(!ext->left_knob_focus) lv_slider_set_value(slider, lv_slider_get_value(slider) - 1, LV_ANIM_ON);
-            else lv_slider_set_left_value(slider, lv_slider_get_left_value(slider) - 1, LV_ANIM_ON);
-
+            lv_slider_set_value(slider, lv_slider_get_value(slider) - 1, LV_ANIM_ON);
             res = lv_event_send(slider, LV_EVENT_VALUE_CHANGED, NULL);
             if(res != LV_RES_OK) return res;
         }
-#endif
     }
     else if(sign == LV_SIGNAL_CLEANUP) {
         lv_obj_clean_style_list(slider, LV_SLIDER_PART_KNOB);
     }
     else if(sign == LV_SIGNAL_GET_EDITABLE) {
-#if LV_USE_GROUP
         bool * editable = (bool *)param;
         *editable       = true;
-#endif
     }
 
     return res;
 }
+
 
 static lv_style_list_t * lv_slider_get_style(lv_obj_t * slider, uint8_t part)
 {

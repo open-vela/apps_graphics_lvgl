@@ -86,7 +86,7 @@ lv_obj_t * lv_objmask_create(lv_obj_t * par, const lv_obj_t * copy)
         /* lv_objmask_ext_t * copy_ext = lv_obj_get_ext_attr(copy); */
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(objmask, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(objmask, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("object mask created");
@@ -171,19 +171,22 @@ void lv_objmask_remove_mask(lv_obj_t * objmask, lv_objmask_mask_t * mask)
     else {
         lv_mem_free(mask->param);
         _lv_ll_remove(&ext->mask_ll, mask);
-        lv_mem_free(mask);
     }
 
     lv_obj_invalidate(objmask);
 }
 
+
+
 /*=====================
  * Setter functions
  *====================*/
 
+
 /*=====================
  * Getter functions
  *====================*/
+
 
 /*=====================
  * Other functions
@@ -283,11 +286,13 @@ static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * c
                 lv_draw_mask_add(p_new, m->param);
             }
 
+
         }
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
         lv_objmask_ext_t * ext = lv_obj_get_ext_attr(objmask);
+
 
         lv_objmask_mask_t * m;
 

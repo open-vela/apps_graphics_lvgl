@@ -17,6 +17,7 @@ extern "C" {
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_area.h"
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -46,9 +47,6 @@ extern "C" {
 #define LV_IMG_BUF_SIZE_INDEXED_8BIT(w, h) (LV_IMG_BUF_SIZE_ALPHA_8BIT(w, h) + 4 * 256)
 
 #define LV_IMG_ZOOM_NONE   256
-
-#define _LV_TRANSFORM_TRIGO_SHIFT 10
-#define _LV_ZOOM_INV_UPSCALE 5
 
 /**********************
  *      TYPEDEFS
@@ -100,11 +98,12 @@ enum {
 };
 typedef uint8_t lv_img_cf_t;
 
+
 /**
  * LVGL image header
  */
 /* The first 8 bit is very important to distinguish the different source types.
- * For more info see `lv_img_get_src_type()` in lv_img.c
+ * For more info see `lv_img_get_src_type()` in lv_img.c 
  * On big endian systems the order is reversed so cf and always_zero must be at
  * the end of the struct.
  * */
@@ -117,6 +116,7 @@ typedef struct {
     uint32_t always_zero : 3; /*It the upper bits of the first byte. Always zero to look like a
                                  non-printable character*/
     uint32_t cf : 5;          /* Color format: See `lv_img_color_format_t`*/
+
 
 } lv_img_header_t;
 #else
@@ -160,6 +160,7 @@ typedef struct {
         lv_opa_t opa;
     } res;
 
+
     struct {
         lv_img_dsc_t img_dsc;
         int32_t pivot_x_256;
@@ -171,7 +172,7 @@ typedef struct {
         uint8_t has_alpha : 1;
         uint8_t native_color : 1;
 
-        uint32_t zoom_inv;
+        uint16_t zoom_inv;
 
         /*Runtime data*/
         lv_coord_t xs;
@@ -265,6 +266,7 @@ void lv_img_buf_free(lv_img_dsc_t * dsc);
  */
 uint32_t lv_img_buf_get_img_size(lv_coord_t w, lv_coord_t h, lv_img_cf_t cf);
 
+
 #if LV_USE_IMG_TRANSFORM
 /**
  * Initialize a descriptor to rotate an image
@@ -277,6 +279,7 @@ void _lv_img_buf_transform_init(lv_img_transform_dsc_t * dsc);
  * @param dsc pointer to the transformation descriptor
  */
 bool _lv_img_buf_transform_anti_alias(lv_img_transform_dsc_t * dsc);
+
 
 /**
  * Get which color and opa would come to a pixel if it were rotated
@@ -298,20 +301,20 @@ static inline bool _lv_img_buf_transform(lv_img_transform_dsc_t * dsc, lv_coord_
     int32_t ys;
     if(dsc->cfg.zoom == LV_IMG_ZOOM_NONE) {
         /*Get the source pixel from the upscaled image*/
-        xs = ((dsc->tmp.cosma * xt - dsc->tmp.sinma * yt) >> (_LV_TRANSFORM_TRIGO_SHIFT - 8)) + dsc->tmp.pivot_x_256;
-        ys = ((dsc->tmp.sinma * xt + dsc->tmp.cosma * yt) >> (_LV_TRANSFORM_TRIGO_SHIFT - 8)) + dsc->tmp.pivot_y_256;
+        xs = ((dsc->tmp.cosma * xt - dsc->tmp.sinma * yt) >> (LV_TRIGO_SHIFT - 8)) + dsc->tmp.pivot_x_256;
+        ys = ((dsc->tmp.sinma * xt + dsc->tmp.cosma * yt) >> (LV_TRIGO_SHIFT - 8)) + dsc->tmp.pivot_y_256;
     }
     else if(dsc->cfg.angle == 0) {
-        xt = (int32_t)((int32_t)xt * dsc->tmp.zoom_inv) >> _LV_ZOOM_INV_UPSCALE;
-        yt = (int32_t)((int32_t)yt * dsc->tmp.zoom_inv) >> _LV_ZOOM_INV_UPSCALE;
+        xt *= dsc->tmp.zoom_inv;
+        yt *= dsc->tmp.zoom_inv;
         xs = xt + dsc->tmp.pivot_x_256;
         ys = yt + dsc->tmp.pivot_y_256;
     }
     else {
-        xt = (int32_t)((int32_t)xt * dsc->tmp.zoom_inv) >> _LV_ZOOM_INV_UPSCALE;
-        yt = (int32_t)((int32_t)yt * dsc->tmp.zoom_inv) >> _LV_ZOOM_INV_UPSCALE;
-        xs = ((dsc->tmp.cosma * xt - dsc->tmp.sinma * yt) >> (_LV_TRANSFORM_TRIGO_SHIFT)) + dsc->tmp.pivot_x_256;
-        ys = ((dsc->tmp.sinma * xt + dsc->tmp.cosma * yt) >> (_LV_TRANSFORM_TRIGO_SHIFT)) + dsc->tmp.pivot_y_256;
+        xt *= dsc->tmp.zoom_inv;
+        yt *= dsc->tmp.zoom_inv;
+        xs = ((dsc->tmp.cosma * xt - dsc->tmp.sinma * yt) >> (LV_TRIGO_SHIFT)) + dsc->tmp.pivot_x_256;
+        ys = ((dsc->tmp.sinma * xt + dsc->tmp.cosma * yt) >> (LV_TRIGO_SHIFT)) + dsc->tmp.pivot_y_256;
     }
 
     /*Get the integer part of the source pixel*/
@@ -377,7 +380,7 @@ static inline bool _lv_img_buf_transform(lv_img_transform_dsc_t * dsc, lv_coord_
  * @param pivot x,y pivot coordinates of rotation
  */
 void _lv_img_buf_get_transformed_area(lv_area_t * res, lv_coord_t w, lv_coord_t h, int16_t angle, uint16_t zoom,
-                                      const lv_point_t * pivot);
+                                      lv_point_t * pivot);
 
 /**********************
  *      MACROS

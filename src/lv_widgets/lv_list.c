@@ -51,6 +51,7 @@ static lv_signal_cb_t label_signal;
 static lv_signal_cb_t ancestor_page_signal;
 static lv_signal_cb_t ancestor_btn_signal;
 
+
 /**********************
  *      MACROS
  **********************/
@@ -114,7 +115,7 @@ lv_obj_t * lv_list_create(lv_obj_t * par, const lv_obj_t * copy)
         }
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(list, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(list, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("list created");
@@ -188,8 +189,10 @@ lv_obj_t * lv_list_add_btn(lv_obj_t * list, const void * img_src, const char * t
         lv_obj_set_width(btn, w);
     }
 
+
     lv_obj_add_protect(btn, LV_PROTECT_PRESS_LOST);
     lv_obj_set_signal_cb(btn, lv_list_btn_signal);
+
 
 #if LV_USE_IMG != 0
     lv_obj_t * img = NULL;
@@ -247,16 +250,10 @@ bool lv_list_remove(const lv_obj_t * list, uint16_t index)
 {
     LV_ASSERT_OBJ(list, LV_OBJX_NAME);
 
-    lv_list_ext_t * ext = lv_obj_get_ext_attr(list);
     uint16_t count = 0;
     lv_obj_t * e   = lv_list_get_next_btn(list, NULL);
     while(e != NULL) {
         if(count == index) {
-#if LV_USE_GROUP
-            if(e == ext->last_sel_btn) ext->last_sel_btn = NULL;
-#endif
-            if(e == ext->act_sel_btn) ext->act_sel_btn = NULL;
-
             lv_obj_del(e);
             return true;
         }
@@ -279,9 +276,7 @@ bool lv_list_remove(const lv_obj_t * list, uint16_t index)
 void lv_list_focus_btn(lv_obj_t * list, lv_obj_t * btn)
 {
     LV_ASSERT_OBJ(list, LV_OBJX_NAME);
-    if(btn) {
-        LV_ASSERT_OBJ(btn, "lv_btn");
-    }
+    if(btn) LV_ASSERT_OBJ(btn, "lv_btn");
 
     lv_list_ext_t * ext = lv_obj_get_ext_attr(list);
 
@@ -370,11 +365,11 @@ lv_obj_t * lv_list_get_btn_label(const lv_obj_t * btn)
 {
     LV_ASSERT_OBJ(btn, "lv_btn");
 
-    lv_obj_t * label = lv_obj_get_child_back(btn, NULL);
+    lv_obj_t * label = lv_obj_get_child(btn, NULL);
     if(label == NULL) return NULL;
 
     while(lv_list_is_list_label(label) == false) {
-        label = lv_obj_get_child_back(btn, label);
+        label = lv_obj_get_child(btn, label);
         if(label == NULL) break;
     }
 
@@ -391,11 +386,11 @@ lv_obj_t * lv_list_get_btn_img(const lv_obj_t * btn)
     LV_ASSERT_OBJ(btn, "lv_btn");
 
 #if LV_USE_IMG != 0
-    lv_obj_t * img = lv_obj_get_child_back(btn, NULL);
+    lv_obj_t * img = lv_obj_get_child(btn, NULL);
     if(img == NULL) return NULL;
 
     while(lv_list_is_list_img(img) == false) {
-        img = lv_obj_get_child_back(btn, img);
+        img = lv_obj_get_child(btn, img);
         if(img == NULL) break;
     }
 
@@ -475,7 +470,7 @@ int32_t lv_list_get_btn_index(const lv_obj_t * list, const lv_obj_t * btn)
         list = lv_obj_get_parent(lv_obj_get_parent(btn));
     }
     LV_ASSERT_OBJ(list, LV_OBJX_NAME);
-
+    
     lv_obj_t * e = lv_list_get_next_btn(list, NULL);
     while(e != NULL) {
         if(e == btn) {
@@ -500,7 +495,7 @@ uint16_t lv_list_get_size(const lv_obj_t * list)
     lv_obj_t * btn = lv_list_get_next_btn(list, NULL);
     while(btn) {
         size++;
-        btn = lv_list_get_next_btn(list, btn);
+        btn = lv_list_get_next_btn(list, NULL);
     }
     return size;
 }
@@ -735,10 +730,8 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
 #endif
     }
     else if(sign == LV_SIGNAL_GET_EDITABLE) {
-#if LV_USE_GROUP
         bool * editable = (bool *)param;
         *editable       = true;
-#endif
     }
     else if(sign == LV_SIGNAL_CONTROL) {
 
@@ -771,11 +764,6 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
                 lv_obj_t * btn = lv_list_get_next_btn(list, NULL);
                 if(btn) lv_list_focus_btn(list, btn);
             }
-        }
-        else if(c == LV_KEY_ESC) {
-            lv_list_ext_t * ext = lv_obj_get_ext_attr(list);
-            /* Handle ESC/Cancel event */
-            res = lv_event_send(ext->act_sel_btn, LV_EVENT_CANCEL, NULL);
         }
 #endif
     }

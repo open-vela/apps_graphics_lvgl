@@ -114,7 +114,7 @@ lv_res_t lv_img_decoder_get_info(const char * src, lv_img_header_t * header)
  *  1) File name: E.g. "S:folder/img1.png" (The drivers needs to registered via `lv_fs_add_drv()`)
  *  2) Variable: Pointer to an `lv_img_dsc_t` variable
  *  3) Symbol: E.g. `LV_SYMBOL_OK`
- * @param color The color of the image with `LV_IMG_CF_ALPHA_...`
+ * @param style the style of the image
  * @return LV_RES_OK: opened the image. `dsc->img_data` and `dsc->header` are set.
  *         LV_RES_INV: none of the registered image decoders were able to open the image.
  */
@@ -151,6 +151,10 @@ lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_co
 
         /*Opened successfully. It is a good decoder to for this image source*/
         if(res == LV_RES_OK) break;
+    }
+
+    if(res == LV_RES_INV) {
+        _lv_memset_00(dsc, sizeof(lv_img_decoder_dsc_t));
     }
 
     return res;
@@ -432,6 +436,7 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
             /*The palette begins in the beginning of the image data. Just point to it.*/
             lv_color32_t * palette_p = (lv_color32_t *)((lv_img_dsc_t *)dsc->src)->data;
 
+
             uint32_t i;
             for(i = 0; i < palette_size; i++) {
                 user_data->palette[i] = lv_color_make(palette_p[i].ch.red, palette_p[i].ch.green, palette_p[i].ch.blue);
@@ -536,6 +541,7 @@ void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_ds
     }
 }
 
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -557,7 +563,7 @@ static lv_res_t lv_img_decoder_built_in_line_true_color(lv_img_decoder_dsc_t * d
     }
     uint32_t btr = len * (px_size >> 3);
     uint32_t br  = 0;
-    res = lv_fs_read(user_data->f, buf, btr, &br);
+    lv_fs_read(user_data->f, buf, btr, &br);
     if(res != LV_FS_RES_OK || btr != br) {
         LV_LOG_WARN("Built-in image decoder read failed");
         return LV_RES_INV;

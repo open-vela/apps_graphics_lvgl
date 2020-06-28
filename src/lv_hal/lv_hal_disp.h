@@ -111,14 +111,7 @@ typedef struct _disp_drv_t {
      * User can execute very simple tasks here or yield the task */
     void (*wait_cb)(struct _disp_drv_t * disp_drv);
 
-    /** OPTIONAL: Called when lvgl needs any CPU cache that affects rendering to be cleaned */
-    void (*clean_dcache_cb)(struct _disp_drv_t * disp_drv);
-
-    /** OPTIONAL: called to wait while the gpu is working */
-    void (*gpu_wait_cb)(struct _disp_drv_t * disp_drv);
-
 #if LV_USE_GPU
-
     /** OPTIONAL: Blend two memories using opacity (GPU only)*/
     void (*gpu_blend_cb)(struct _disp_drv_t * disp_drv, lv_color_t * dest, const lv_color_t * src, uint32_t length,
                          lv_opa_t opa);
@@ -153,16 +146,12 @@ typedef struct _disp_t {
 
     /** Screens of the display*/
     lv_ll_t scr_ll;
-    struct _lv_obj_t * act_scr;         /**< Currently active screen on this display */
-    struct _lv_obj_t * prev_scr;        /**< Previous screen. Used during screen animations */
-#if LV_USE_ANIMATION
-    struct _lv_obj_t * scr_to_load;     /**< The screen prepared to load in lv_scr_load_anim*/
-#endif
+    struct _lv_obj_t * act_scr;   /**< Currently active screen on this display */
+    struct _lv_obj_t * prev_scr;  /**< Previous screen. Used during screen animations */
     struct _lv_obj_t * top_layer; /**< @see lv_disp_get_layer_top */
     struct _lv_obj_t * sys_layer; /**< @see lv_disp_get_layer_sys */
 
-uint8_t del_prev  :
-    1;        /**< 1: Automatically delete the previous screen when the screen load animation is ready */
+    uint8_t del_prev  :1;         /**< 1: Automatically delete the previous screen when the screen load animation is ready */
 
     lv_color_t bg_color;          /**< Default display color when screens are transparent*/
     const void * bg_img;       /**< An image source to display as wallpaper*/
@@ -176,6 +165,7 @@ uint8_t del_prev  :
     /*Miscellaneous data*/
     uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
+
 
 typedef enum {
     LV_DISP_SIZE_SMALL,
