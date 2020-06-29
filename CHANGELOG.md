@@ -9,12 +9,18 @@
 - Add lv_btnmatrix_set/get_align capability
 - DMA2D: Remove dependency on ST CubeMX HAL
 - Added `max_used` propriety to `lv_mem_monitor_t` struct
+- In `lv_init` test if the the strings are UTF-8 encoded.
+- Add `user_data` to themes
 
 ### Bugfixes
-- None
+- `lv_img` fix invalidation area when angle or zoom changes
+- Update the style handling to support Big endian MCUs
+- Change some methods to support big endian hardware.
+- Add LV_BIG_ENDIAN_SYSTEM flag to lv_conf.h in order to fix displaying images on big endian systems.
 
 ## v7.0.2 (16.06.2020)
 
+### Bugfixes
 - `lv_textarea` fix wrong cursor position when clicked after the last character
 - Change all text related indices from 16-bit to 32-bit integers throughout whole library. #1545
 - Fix gestures
