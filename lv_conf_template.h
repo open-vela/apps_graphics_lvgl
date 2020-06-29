@@ -222,6 +222,10 @@ typedef void * lv_img_decoder_user_data_t;
 /*=====================
  *  Compiler settings
  *====================*/
+
+/* For big endian systems set to 1 */
+#define LV_BIG_ENDIAN_SYSTEM    0
+
 /* Define a custom attribute to `lv_tick_inc` function */
 #define LV_ATTRIBUTE_TICK_INC
 
@@ -264,8 +268,8 @@ typedef void * lv_img_decoder_user_data_t;
  * It removes the need to manually update the tick with `lv_tick_inc`) */
 #define LV_TICK_CUSTOM     0
 #if LV_TICK_CUSTOM == 1
-#define LV_TICK_CUSTOM_INCLUDE  "something.h"       /*Header for the sys time function*/
-#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())     /*Expression evaluating to current systime in ms*/
+#define LV_TICK_CUSTOM_INCLUDE  "Arduino.h"         /*Header for the system time function*/
+#define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())     /*Expression evaluating to current system time in ms*/
 #endif   /*LV_TICK_CUSTOM*/
 
 typedef void * lv_disp_drv_user_data_t;             /*Type of user data in the display driver*/
@@ -653,9 +657,6 @@ typedef void * lv_obj_user_data_t;
 /*Number of extra "pages" when the roller is infinite*/
 #  define LV_ROLLER_INF_PAGES         7
 #endif
-
-/*Rotary (dependencies: lv_arc, lv_btn)*/
-#define LV_USE_ROTARY     1
 
 /*Slider (dependencies: lv_bar)*/
 #define LV_USE_SLIDER    1
