@@ -122,7 +122,6 @@ enum {
     /*General signals*/
     LV_SIGNAL_CLEANUP, /**< Object is being deleted */
     LV_SIGNAL_CHILD_CHG, /**< Child was removed/added */
-    LV_SIGNAL_SCROLLED, /**< Object coordinates/size have changed */
     LV_SIGNAL_COORD_CHG, /**< Object coordinates/size have changed */
     LV_SIGNAL_PARENT_SIZE_CHG, /**< Parent's size has changed */
     LV_SIGNAL_STYLE_CHG,    /**< Object's style has changed */
@@ -199,7 +198,6 @@ typedef struct _lv_obj_t {
     lv_ll_t child_ll;       /**< Linked list to store the children objects*/
 
     lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
-    lv_point_t scroll; /**< The current X/Y scroll offset*/
 
     lv_event_cb_t event_cb; /**< Event callback function */
     lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
@@ -229,8 +227,7 @@ typedef struct _lv_obj_t {
     uint8_t gesture_parent  : 1; /**< 1: Parent will be gesture instead*/
     uint8_t focus_parent    : 1; /**< 1: Parent will be focused instead*/
 
-    lv_drag_dir_t drag_dir    : 3; /**< In which directions the object can be dragged */
-    lv_drag_dir_t scroll_dir  : 3; /**< In which directions the object can be scrolled */
+    lv_drag_dir_t drag_dir  : 3; /**<  Which directions the object can be dragged in */
     lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object */
 
 #if LV_USE_GROUP != 0
@@ -1224,13 +1221,6 @@ bool lv_obj_get_drag(const lv_obj_t * obj);
  * @return bitwise OR of allowed directions an object can be dragged in
  */
 lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj);
-
-/**
- * Get the directions an object can be scrolled
- * @param obj pointer to an object
- * @return bitwise OR of allowed directions an object can be dragged in
- */
-lv_drag_dir_t lv_obj_get_scroll_dir(const lv_obj_t * obj);
 
 /**
  * Get the drag throw enable attribute of an object
