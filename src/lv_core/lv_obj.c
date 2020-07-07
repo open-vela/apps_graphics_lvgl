@@ -85,6 +85,8 @@ static void refresh_children_position(lv_obj_t * obj, lv_coord_t x_diff, lv_coor
 static void report_style_mod_core(void * style_p, lv_obj_t * obj);
 static void refresh_children_style(lv_obj_t * obj);
 static void base_dir_refr_children(lv_obj_t * obj);
+static void obj_align_core(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, bool x_set, bool y_set, lv_coord_t x_ofs, lv_coord_t y_ofs);
+static void obj_align_origo_core(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,  bool x_set, bool y_set, lv_coord_t x_ofs, lv_coord_t y_ofs);
 #if LV_USE_ANIMATION
 static lv_style_trans_t * trans_create(lv_obj_t * obj, lv_style_property_t prop, uint8_t part, lv_state_t prev_state,
                                        lv_state_t new_state);
@@ -94,11 +96,14 @@ static void trans_anim_start_cb(lv_anim_t * a);
 static void trans_anim_ready_cb(lv_anim_t * a);
 static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v);
 static void fade_in_anim_ready(lv_anim_t * a);
+static void scroll_anim_x_cb(lv_obj_t * obj, lv_anim_value_t v);
+static void scroll_anim_y_cb(lv_obj_t * obj, lv_anim_value_t v);
 #endif
 static void lv_event_mark_deleted(lv_obj_t * obj);
 static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
 static void lv_obj_del_async_cb(void * obj);
 static void obj_del_core(lv_obj_t * obj);
+static lv_res_t get_scrollbar_area(lv_obj_t * obj, lv_area_t * sbv);
 
 /**********************
  *  STATIC VARIABLES
@@ -167,6 +172,14 @@ void lv_init(void)
 
     _lv_img_decoder_init();
     lv_img_cache_set_size(LV_IMG_CACHE_DEF_SIZE);
+
+    /*Test if the IDE has UTF-8 encoding*/
+    char * txt = "Á";
+
+    uint8_t * txt_u8 = (uint8_t *) txt;
+    if(txt_u8[0] != 0xc3 || txt_u8[1] != 0x81 || txt_u8[2] != 0x00) {
+        LV_LOG_WARN("The strings has no UTF-8 encoding. Some characters won't be displayed.")
+    }
 
     lv_initialized = true;
     LV_LOG_INFO("lv_init ready");
@@ -493,10 +506,12 @@ void lv_obj_invalidate_area(const lv_obj_t * obj, const lv_area_t * area)
 
     if(lv_obj_get_hidden(obj)) return;
 
-    /*Invalidate the object only if it belongs to the 'LV_GC_ROOT(_lv_act_scr)'*/
+    /*Invalidate the object only if it belongs to the curent or previous'*/
     lv_obj_t * obj_scr = lv_obj_get_screen(obj);
     lv_disp_t * disp   = lv_obj_get_disp(obj_scr);
-    if(obj_scr == lv_disp_get_scr_act(disp) || obj_scr == lv_disp_get_layer_top(disp) ||
+    if(obj_scr == lv_disp_get_scr_act(disp) ||
+       obj_scr == lv_disp_get_scr_prev(disp) ||
+       obj_scr == lv_disp_get_layer_top(disp) ||
        obj_scr == lv_disp_get_layer_sys(disp)) {
 
         /*Truncate the area to the object*/
@@ -676,13 +691,11 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     /*Convert x and y to absolute coordinates*/
     lv_obj_t * par = obj->parent;
 
-    if(par == NULL) {
-        LV_LOG_WARN("lv_obj_set_pos: not changing position of screen object");
-        return;
+    if(par) {
+        x = x + par->coords.x1;
+        y = y + par->coords.y1;
     }
 
-    x = x + par->coords.x1;
-    y = y + par->coords.y1;
 
     /*Calculate and set the movement*/
     lv_point_t diff;
@@ -712,7 +725,7 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
     obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
 
     /*Send a signal to the parent too*/
-    par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+    if(par) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
@@ -875,7 +888,6 @@ void lv_obj_set_height_margin(lv_obj_t * obj, lv_coord_t h)
     lv_obj_set_height(obj, h - mtop - mbottom);
 }
 
-
 /**
  * Align an object to an other object.
  * @param obj pointer to an object to align
@@ -892,19 +904,7 @@ void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_co
 
     LV_ASSERT_OBJ(base, LV_OBJX_NAME);
 
-    lv_point_t new_pos;
-    _lv_area_align(&base->coords, &obj->coords, align, &new_pos);
-
-    /*Bring together the coordination system of base and obj*/
-    lv_obj_t * par        = lv_obj_get_parent(obj);
-    lv_coord_t par_abs_x  = par->coords.x1;
-    lv_coord_t par_abs_y  = par->coords.y1;
-    new_pos.x += x_ofs;
-    new_pos.y += y_ofs;
-    new_pos.x -= par_abs_x;
-    new_pos.y -= par_abs_y;
-
-    lv_obj_set_pos(obj, new_pos.x, new_pos.y);
+    obj_align_core(obj, base, align, true, true, x_ofs, y_ofs);
 
 #if LV_USE_OBJ_REALIGN
     /*Save the last align parameters to use them in `lv_obj_realign`*/
@@ -914,6 +914,42 @@ void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_co
     obj->realign.base        = base;
     obj->realign.origo_align = 0;
 #endif
+}
+
+/**
+ * Align an object to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
+ */
+void lv_obj_align_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    if(base == NULL) base = lv_obj_get_parent(obj);
+
+    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
+
+    obj_align_core(obj, base, align, true, false, x_ofs, 0);
+}
+
+/**
+ * Align an object to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
+ */
+void lv_obj_align_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    if(base == NULL) base = lv_obj_get_parent(obj);
+
+    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
+
+    obj_align_core(obj, base, align, true, false, 0, y_ofs);
 }
 
 /**
@@ -928,12 +964,6 @@ void lv_obj_align_origo(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    lv_coord_t new_x = lv_obj_get_x(obj);
-    lv_coord_t new_y = lv_obj_get_y(obj);
-
-    lv_coord_t obj_w_half = lv_obj_get_width(obj) / 2;
-    lv_coord_t obj_h_half = lv_obj_get_height(obj) / 2;
-
     if(base == NULL) {
         base = lv_obj_get_parent(obj);
     }
@@ -941,123 +971,7 @@ void lv_obj_align_origo(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,
     LV_ASSERT_OBJ(base, LV_OBJX_NAME);
 
 
-    switch(align) {
-        case LV_ALIGN_CENTER:
-            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
-            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_TOP_LEFT:
-            new_x = -obj_w_half;
-            new_y = -obj_h_half;
-            break;
-        case LV_ALIGN_IN_TOP_MID:
-            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_TOP_RIGHT:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_BOTTOM_LEFT:
-            new_x = -obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-        case LV_ALIGN_IN_BOTTOM_MID:
-            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_BOTTOM_RIGHT:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_LEFT_MID:
-            new_x = -obj_w_half;
-            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
-            break;
-
-        case LV_ALIGN_IN_RIGHT_MID:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_TOP_LEFT:
-            new_x = -obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_TOP_MID:
-            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_TOP_RIGHT:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_BOTTOM_LEFT:
-            new_x = -obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_BOTTOM_MID:
-            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_BOTTOM_RIGHT:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_LEFT_TOP:
-            new_x = -obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_LEFT_MID:
-            new_x = -obj_w_half;
-            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_LEFT_BOTTOM:
-            new_x = -obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_RIGHT_TOP:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = -obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_RIGHT_MID:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
-            break;
-
-        case LV_ALIGN_OUT_RIGHT_BOTTOM:
-            new_x = lv_obj_get_width(base) - obj_w_half;
-            new_y = lv_obj_get_height(base) - obj_h_half;
-            break;
-    }
-
-    /*Bring together the coordination system of base and obj*/
-    lv_obj_t * par        = lv_obj_get_parent(obj);
-    lv_coord_t base_abs_x = base->coords.x1;
-    lv_coord_t base_abs_y = base->coords.y1;
-    lv_coord_t par_abs_x  = par->coords.x1;
-    lv_coord_t par_abs_y  = par->coords.y1;
-    new_x += x_ofs + base_abs_x;
-    new_y += y_ofs + base_abs_y;
-    new_x -= par_abs_x;
-    new_y -= par_abs_y;
-
-    lv_obj_set_pos(obj, new_x, new_y);
+    obj_align_origo_core(obj, base, align, true, true, x_ofs, y_ofs);
 
 #if LV_USE_OBJ_REALIGN
     /*Save the last align parameters to use them in `lv_obj_realign`*/
@@ -1067,6 +981,49 @@ void lv_obj_align_origo(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,
     obj->realign.base        = base;
     obj->realign.origo_align = 1;
 #endif
+}
+
+/**
+ * Align an object's middle point to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
+ */
+void lv_obj_align_origo_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    if(base == NULL) {
+        base = lv_obj_get_parent(obj);
+    }
+
+    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
+
+
+    obj_align_origo_core(obj, base, align, true, false, x_ofs, 0);
+}
+
+
+/**
+ * Align an object's middle point to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
+ */
+void lv_obj_align_origo_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    if(base == NULL) {
+        base = lv_obj_get_parent(obj);
+    }
+
+    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
+
+
+    obj_align_origo_core(obj, base, align, true, false, 0, y_ofs);
 }
 
 /**
@@ -1107,6 +1064,97 @@ void lv_obj_set_auto_realign(lv_obj_t * obj, bool en)
 #endif
 }
 
+/**
+ * Moves all children with horizontally or vertically.
+ * It doesn't take into account any limits so any values are possible
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
+ */
+void lv_obj_scroll_by_raw(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
+{
+    obj->scroll.x += x;
+    obj->scroll.y += y;
+
+    refresh_children_position(obj, x, y);
+    lv_signal_send(obj, LV_SIGNAL_SCROLLED, NULL);
+    lv_obj_invalidate(obj);
+}
+/**
+ * Moves all children with horizontally or vertically.
+ * Limits the scroll to the bounding box of the children.
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
+ */
+void lv_obj_scroll_by(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en)
+{
+
+    if(x == 0 && y == 0) return;
+
+    if(anim_en == LV_ANIM_ON) {
+        lv_disp_t * d = lv_obj_get_disp(obj);
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, obj);
+
+        if(x) {
+            lv_anim_set_time(&a, lv_anim_speed_to_time(lv_disp_get_hor_res(d), 0, y));
+            lv_anim_set_values(&a, obj->scroll.x, obj->scroll.x + x);
+            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t) scroll_anim_x_cb);
+            lv_anim_start(&a);
+        }
+
+        if(y) {
+            lv_anim_path_t path;
+            lv_anim_path_init(&path);
+            lv_anim_path_set_cb(&path, lv_anim_path_ease_out);
+            lv_anim_set_time(&a, lv_anim_speed_to_time((lv_disp_get_ver_res(d) * 3) >> 2, 0, y));
+            lv_anim_set_values(&a, obj->scroll.y, obj->scroll.y + y);
+            lv_anim_set_exec_cb(&a,  (lv_anim_exec_xcb_t) scroll_anim_y_cb);
+            lv_anim_set_path(&a, &path);
+            lv_anim_start(&a);
+        }
+
+    } else {
+        lv_obj_scroll_by_raw(obj, x, y);
+    }
+
+
+
+
+}
+
+/**
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
+ * @param y the y coordinate to scroll to
+ */
+void lv_obj_scroll_to(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en)
+{
+
+}
+
+/**
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
+ */
+void lv_obj_scroll_to_x(lv_obj_t * obj, lv_coord_t x, lv_anim_enable_t anim_en)
+{
+//    refresh_children_position(obj, x, y);
+}
+
+/**
+ * Scroll the a given y coordinate to the top side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param y the y coordinate to scroll to
+ */
+void lv_obj_scroll_to_y(lv_obj_t * obj, lv_coord_t y, lv_anim_enable_t anim_en)
+{
+    lv_obj_scroll_by(obj, 0, y - obj->scroll.y, anim_en);
+}
 
 /**
  * Set the size of an extended clickable area
@@ -2113,6 +2161,37 @@ void lv_obj_get_coords(const lv_obj_t * obj, lv_area_t * cords_p)
 }
 
 /**
+ * Get a bounding which includes all the the children.
+ * `margin` of the children also taken into account and makes the box larger (if positive)
+ * @param obj pointer to an object
+ * @param coords pointer to an area to store the coordinates
+ * @return LV_RES_INV: `obj` has no children and `coords` can't be set; `LV_RES_OK`: success
+ */
+lv_res_t lv_obj_get_children_box(const lv_obj_t * obj, lv_area_t * coords)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    coords->x1 = LV_COORD_MAX;
+    coords->y1 = LV_COORD_MAX;
+    coords->x2 = LV_COORD_MIN;
+    coords->y2 = LV_COORD_MIN;
+
+    lv_obj_t * child = lv_obj_get_child(obj, NULL);
+    if(child == NULL) return LV_RES_INV;
+
+    while(child) {
+        coords->x1 = LV_MATH_MIN(coords->x1, child->coords.x1 - lv_obj_get_style_margin_left(child, LV_OBJ_PART_MAIN));
+        coords->y1 = LV_MATH_MIN(coords->y1, child->coords.y1 - lv_obj_get_style_margin_top(child, LV_OBJ_PART_MAIN));
+        coords->x2 = LV_MATH_MAX(coords->x2, child->coords.x2 + lv_obj_get_style_margin_right(child, LV_OBJ_PART_MAIN));
+        coords->y2 = LV_MATH_MAX(coords->y2, child->coords.y2 + lv_obj_get_style_margin_bottom(child, LV_OBJ_PART_MAIN));
+
+        child = lv_obj_get_child(obj, child);
+    }
+
+    return LV_RES_OK;
+}
+
+/**
  * Reduce area retried by `lv_obj_get_coords()` the get graphically usable area of an object.
  * (Without the size of the border or other extra graphical elements)
  * @param coords_p store the result area here
@@ -2441,7 +2520,7 @@ lv_style_int_t _lv_obj_get_style_int(const lv_obj_t * obj, uint8_t part, lv_styl
     lv_style_property_t prop_ori = prop;
 
     lv_style_attr_t attr;
-    attr.full = prop_ori >> 8;
+    attr = prop_ori >> 8;
 
     lv_style_int_t value_act;
     lv_res_t res = LV_RES_INV;
@@ -2455,7 +2534,7 @@ lv_style_int_t _lv_obj_get_style_int(const lv_obj_t * obj, uint8_t part, lv_styl
         res = _lv_style_list_get_int(dsc, prop, &value_act);
         if(res == LV_RES_OK) return value_act;
 
-        if(attr.bits.inherit == 0) break;
+        if(LV_STYLE_ATTR_GET_INHERIT(attr) == 0) break;
 
         /*If not found, check the `MAIN` style first*/
         if(part != LV_OBJ_PART_MAIN) {
@@ -2504,7 +2583,7 @@ lv_color_t _lv_obj_get_style_color(const lv_obj_t * obj, uint8_t part, lv_style_
     lv_style_property_t prop_ori = prop;
 
     lv_style_attr_t attr;
-    attr.full = prop_ori >> 8;
+    attr = prop_ori >> 8;
 
     lv_color_t value_act;
     lv_res_t res = LV_RES_INV;
@@ -2518,7 +2597,7 @@ lv_color_t _lv_obj_get_style_color(const lv_obj_t * obj, uint8_t part, lv_style_
         res = _lv_style_list_get_color(dsc, prop, &value_act);
         if(res == LV_RES_OK) return value_act;
 
-        if(attr.bits.inherit == 0) break;
+        if(LV_STYLE_ATTR_GET_INHERIT(attr) == 0) break;
 
         /*If not found, check the `MAIN` style first*/
         if(part != LV_OBJ_PART_MAIN) {
@@ -2560,7 +2639,7 @@ lv_opa_t _lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t part, lv_style_prop
     lv_style_property_t prop_ori = prop;
 
     lv_style_attr_t attr;
-    attr.full = prop_ori >> 8;
+    attr = prop_ori >> 8;
 
     lv_opa_t value_act;
     lv_res_t res = LV_RES_INV;
@@ -2574,7 +2653,7 @@ lv_opa_t _lv_obj_get_style_opa(const lv_obj_t * obj, uint8_t part, lv_style_prop
         res = _lv_style_list_get_opa(dsc, prop, &value_act);
         if(res == LV_RES_OK) return value_act;
 
-        if(attr.bits.inherit == 0) break;
+        if(LV_STYLE_ATTR_GET_INHERIT(attr) == 0) break;
 
         /*If not found, check the `MAIN` style first*/
         if(part != LV_OBJ_PART_MAIN) {
@@ -2617,7 +2696,7 @@ const void * _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_
     lv_style_property_t prop_ori = prop;
 
     lv_style_attr_t attr;
-    attr.full = prop_ori >> 8;
+    attr = prop_ori >> 8;
 
     const void * value_act;
     lv_res_t res = LV_RES_INV;
@@ -2631,7 +2710,7 @@ const void * _lv_obj_get_style_ptr(const lv_obj_t * obj, uint8_t part, lv_style_
         res = _lv_style_list_get_ptr(dsc, prop, &value_act);
         if(res == LV_RES_OK)  return value_act;
 
-        if(attr.bits.inherit == 0) break;
+        if(LV_STYLE_ATTR_GET_INHERIT(attr) == 0) break;
 
         /*If not found, check the `MAIN` style first*/
         if(part != LV_OBJ_PART_MAIN) {
@@ -2746,6 +2825,18 @@ lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj)
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
     return obj->drag_dir;
+}
+
+/**
+ * Get the directions an object can be scrolled
+ * @param obj pointer to an object
+ * @return bitwise OR of allowed directions an object can be dragged in
+ */
+lv_drag_dir_t lv_obj_get_scroll_dir(const lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    return obj->scroll_dir;
 }
 
 /**
@@ -3290,8 +3381,9 @@ void lv_obj_init_draw_img_dsc(lv_obj_t * obj, uint8_t part, lv_draw_img_dsc_t * 
     draw_dsc->pivot.y = lv_area_get_height(&obj->coords) / 2;
 
     draw_dsc->recolor_opa = lv_obj_get_style_image_recolor_opa(obj, part);
-    draw_dsc->recolor = lv_obj_get_style_image_recolor(obj, part);
-
+    if(draw_dsc->recolor_opa > 0) {
+        draw_dsc->recolor = lv_obj_get_style_image_recolor(obj, part);
+    }
 #if LV_USE_BLEND_MODES
     draw_dsc->blend_mode = lv_obj_get_style_image_blend_mode(obj, part);
 #endif
@@ -3653,6 +3745,14 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
             /*Add the mask and use `obj+8` as custom id. Don't use `obj` directly because it might be used by the user*/
             lv_draw_mask_add(mp, obj + 8);
         }
+
+            lv_area_t sb;
+            if(get_scrollbar_area(obj, &sb)) {
+                lv_draw_rect_dsc_t sb_rect_dsc;
+                lv_draw_rect_dsc_init(&sb_rect_dsc);
+                sb_rect_dsc.bg_color = LV_COLOR_RED;
+                lv_draw_rect(&sb, clip_area, &sb_rect_dsc);
+            }
     }
     else if(mode == LV_DESIGN_DRAW_POST) {
         if(lv_obj_get_style_clip_corner(obj, LV_OBJ_PART_MAIN)) {
@@ -3724,6 +3824,20 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         /*Return 'invalid' if the child change signal is not enabled*/
         if(lv_obj_is_protected(obj, LV_PROTECT_CHILD_CHG) != false) res = LV_RES_INV;
     }
+    else if(sign == LV_SIGNAL_SCROLLED) {
+
+    }
+    else if(sign == LV_SIGNAL_PRESS_LOST || sign == LV_SIGNAL_RELEASED) {
+
+        lv_area_t child_box;
+        lv_obj_get_children_box(obj, &child_box);
+        if(obj->scroll.y > 0) {
+            lv_obj_scroll_to_y(obj, 0, LV_ANIM_ON);
+        }
+        else if(child_box.y2 < obj->coords.y2) {
+            lv_obj_scroll_by(obj, 0, -(child_box.y2 - obj->coords.y2), LV_ANIM_ON);
+        }
+    }
     else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         lv_coord_t d = lv_obj_get_draw_rect_ext_pad_size(obj, LV_OBJ_PART_MAIN);
         obj->ext_draw_pad = LV_MATH_MAX(obj->ext_draw_pad, d);
@@ -3744,9 +3858,12 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
     else if(sign == LV_SIGNAL_RELEASED || sign == LV_SIGNAL_PRESS_LOST) {
         lv_obj_clear_state(obj, LV_STATE_PRESSED);
     }
-#if LV_USE_GROUP
     else if(sign == LV_SIGNAL_FOCUS) {
-        if(lv_group_get_editing(lv_obj_get_group(obj))) {
+        bool editing = false;
+#if LV_USE_GROUP
+        editing = lv_group_get_editing(lv_obj_get_group(obj));
+#endif
+        if(editing) {
             uint8_t state = LV_STATE_FOCUSED;
             state |= LV_STATE_EDITED;
 
@@ -3771,7 +3888,6 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
 
         lv_obj_clear_state(obj, LV_STATE_FOCUSED | LV_STATE_EDITED);
     }
-#endif
     else if(sign == LV_SIGNAL_CLEANUP) {
         lv_obj_clean_style_list(obj, LV_OBJ_PART_MAIN);
     }
@@ -3860,6 +3976,157 @@ static void base_dir_refr_children(lv_obj_t * obj)
         child = lv_obj_get_child(obj, child);
     }
 }
+
+static void obj_align_core(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, bool x_set, bool y_set, lv_coord_t x_ofs, lv_coord_t y_ofs)
+{
+    lv_point_t new_pos;
+    _lv_area_align(&base->coords, &obj->coords, align, &new_pos);
+
+    /*Bring together the coordination system of base and obj*/
+    lv_obj_t * par        = lv_obj_get_parent(obj);
+    lv_coord_t par_abs_x  = par->coords.x1;
+    lv_coord_t par_abs_y  = par->coords.y1;
+    new_pos.x += x_ofs;
+    new_pos.y += y_ofs;
+    new_pos.x -= par_abs_x;
+    new_pos.y -= par_abs_y;
+
+    if(x_set && y_set) lv_obj_set_pos(obj, new_pos.x, new_pos.y);
+    else if(x_set) lv_obj_set_x(obj, new_pos.x);
+    else if(y_set) lv_obj_set_y(obj, new_pos.y);
+}
+
+static void obj_align_origo_core(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align,  bool x_set, bool y_set, lv_coord_t x_ofs, lv_coord_t y_ofs)
+{
+    lv_coord_t new_x = lv_obj_get_x(obj);
+    lv_coord_t new_y = lv_obj_get_y(obj);
+
+    lv_coord_t obj_w_half = lv_obj_get_width(obj) / 2;
+    lv_coord_t obj_h_half = lv_obj_get_height(obj) / 2;
+
+
+    switch(align) {
+        case LV_ALIGN_CENTER:
+            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
+            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_TOP_LEFT:
+            new_x = -obj_w_half;
+            new_y = -obj_h_half;
+            break;
+        case LV_ALIGN_IN_TOP_MID:
+            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_TOP_RIGHT:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_BOTTOM_LEFT:
+            new_x = -obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+        case LV_ALIGN_IN_BOTTOM_MID:
+            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_BOTTOM_RIGHT:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_LEFT_MID:
+            new_x = -obj_w_half;
+            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
+            break;
+
+        case LV_ALIGN_IN_RIGHT_MID:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_TOP_LEFT:
+            new_x = -obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_TOP_MID:
+            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_TOP_RIGHT:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_BOTTOM_LEFT:
+            new_x = -obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_BOTTOM_MID:
+            new_x = lv_obj_get_width(base) / 2 - obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_BOTTOM_RIGHT:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_LEFT_TOP:
+            new_x = -obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_LEFT_MID:
+            new_x = -obj_w_half;
+            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_LEFT_BOTTOM:
+            new_x = -obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_RIGHT_TOP:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = -obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_RIGHT_MID:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = lv_obj_get_height(base) / 2 - obj_h_half;
+            break;
+
+        case LV_ALIGN_OUT_RIGHT_BOTTOM:
+            new_x = lv_obj_get_width(base) - obj_w_half;
+            new_y = lv_obj_get_height(base) - obj_h_half;
+            break;
+    }
+
+    /*Bring together the coordination system of base and obj*/
+    lv_obj_t * par        = lv_obj_get_parent(obj);
+    lv_coord_t base_abs_x = base->coords.x1;
+    lv_coord_t base_abs_y = base->coords.y1;
+    lv_coord_t par_abs_x  = par->coords.x1;
+    lv_coord_t par_abs_y  = par->coords.y1;
+    new_x += x_ofs + base_abs_x;
+    new_y += y_ofs + base_abs_y;
+    new_x -= par_abs_x;
+    new_y -= par_abs_y;
+    if(x_set && y_set) lv_obj_set_pos(obj, new_x, new_y);
+    else if(x_set) lv_obj_set_x(obj, new_x);
+    else if(y_set) lv_obj_set_y(obj, new_y);
+
+}
+
+
 
 #if LV_USE_ANIMATION
 
@@ -4111,6 +4378,15 @@ static void fade_in_anim_ready(lv_anim_t * a)
     lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 }
 
+
+static void scroll_anim_x_cb(lv_obj_t * obj, lv_anim_value_t v)
+{
+}
+
+static void scroll_anim_y_cb(lv_obj_t * obj, lv_anim_value_t v)
+{
+    lv_obj_scroll_by_raw(obj, 0, v - obj->scroll.y);
+}
 #endif
 
 static void lv_event_mark_deleted(lv_obj_t * obj)
@@ -4137,4 +4413,41 @@ static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_fin
 
     return false;
 }
+
+static lv_res_t get_scrollbar_area(lv_obj_t * obj, lv_area_t * sbv)
+{
+    lv_coord_t obj_h = lv_obj_get_height(obj);
+
+    lv_area_t child_box;
+    lv_res_t res = lv_obj_get_children_box(obj, &child_box);
+    if(res != LV_RES_OK) return res;
+
+    lv_coord_t content_h = (child_box.y2 - obj->scroll.y) - obj->coords.y1 ;
+    if(content_h < obj_h) {
+        return LV_RES_INV;
+    }
+    lv_coord_t sb_h = (obj_h * obj_h) / content_h;
+    if(sb_h != 150) {
+        volatile int x = 0;
+    }
+    lv_coord_t rem = obj_h - sb_h;  /*Remaining size from the scrollbar track that is not the scrollbar itself*/
+    lv_coord_t scroll_h = content_h - obj_h; /*The size of the content which can be really scrolled*/
+    if(scroll_h <= 0) {
+        sbv->y1 = obj->coords.y1;
+        sbv->y2 = obj->coords.y2;
+        sbv->x2 = obj->coords.x2;
+        sbv->x1 = sbv->x2 - 10;
+        return LV_RES_OK;
+    }
+    lv_coord_t sb_y = (rem * (child_box.y2 - obj->coords.y2)) / scroll_h;
+    printf("overflow: sb_h: %d, y: %d\n", sb_h, sb_y);
+
+    sbv->y1 = obj->coords.y1 + sb_y;
+    sbv->y2 = sbv->y1 + sb_h;
+    sbv->x2 = obj->coords.x2;
+    sbv->x1 = sbv->x2 - 10;
+
+    return LV_RES_OK;
+}
+
 
