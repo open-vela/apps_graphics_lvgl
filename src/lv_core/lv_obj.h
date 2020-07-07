@@ -47,6 +47,9 @@ extern "C" {
 #define LV_EXT_CLICK_AREA_TINY  1
 #define LV_EXT_CLICK_AREA_FULL  2
 
+#define _LV_OBJ_PART_VIRTUAL_FIRST 0x01
+#define _LV_OBJ_PART_REAL_FIRST    0x40
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -247,8 +250,8 @@ typedef struct _lv_obj_t {
 
 enum {
     LV_OBJ_PART_MAIN,
-    _LV_OBJ_PART_VIRTUAL_LAST = 0x01,
-    _LV_OBJ_PART_REAL_LAST =    0x40,
+    _LV_OBJ_PART_VIRTUAL_LAST = _LV_OBJ_PART_VIRTUAL_FIRST,
+    _LV_OBJ_PART_REAL_LAST =    _LV_OBJ_PART_REAL_FIRST,
     LV_OBJ_PART_ALL = 0xFF,
 };
 
@@ -466,6 +469,24 @@ void lv_obj_set_height_margin(lv_obj_t * obj, lv_coord_t h);
 void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
 
 /**
+ * Align an object to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
+ */
+void lv_obj_align_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
+
+/**
+ * Align an object to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
+ */
+void lv_obj_align_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
+
+/**
  * Align an object to an other object.
  * @param obj pointer to an object to align
  * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
@@ -474,6 +495,25 @@ void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_co
  * @param y_ofs y coordinate offset after alignment
  */
 void lv_obj_align_origo(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
+
+
+/**
+ * Align an object's middle point to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
+ */
+void lv_obj_align_origo_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
+
+/**
+ * Align an object's middle point to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
+ */
+void lv_obj_align_origo_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
 
 /**
  * Realign the object based on the last `lv_obj_align` parameters.
