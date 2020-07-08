@@ -139,6 +139,9 @@ enum {
     LV_SIGNAL_RELEASED,          /**< User pressed object for a short period of time, then released it. Not called if dragged. */
     LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
+    LV_SIGNAL_SCROLL_BEGIN,      /**< The scrolling has just begun  */
+    LV_SIGNAL_SCROLL,            /**< The object has been scrolled */
+    LV_SIGNAL_SCROLL_END,        /**< The scrolling has ended */
     LV_SIGNAL_DRAG_BEGIN,
     LV_SIGNAL_DRAG_THROW_BEGIN,
     LV_SIGNAL_DRAG_END,
@@ -198,6 +201,7 @@ typedef struct _lv_obj_t {
     lv_ll_t child_ll;       /**< Linked list to store the children objects*/
 
     lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
+    lv_point_t scroll; /**< The current X/Y scroll offset*/
 
     lv_event_cb_t event_cb; /**< Event callback function */
     lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
@@ -227,7 +231,8 @@ typedef struct _lv_obj_t {
     uint8_t gesture_parent  : 1; /**< 1: Parent will be gesture instead*/
     uint8_t focus_parent    : 1; /**< 1: Parent will be focused instead*/
 
-    lv_drag_dir_t drag_dir  : 3; /**<  Which directions the object can be dragged in */
+    lv_drag_dir_t drag_dir    : 3; /**< In which directions the object can be dragged */
+    lv_drag_dir_t scroll_dir  : 3; /**< In which directions the object can be scrolled */
     lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object */
 
 #if LV_USE_GROUP != 0
@@ -528,6 +533,66 @@ void lv_obj_realign(lv_obj_t * obj);
  * @param en true: enable auto realign; false: disable auto realign
  */
 void lv_obj_set_auto_realign(lv_obj_t * obj, bool en);
+
+/**
+ * Moves all children with horizontally or vertically.
+ * It doesn't take into account any limits so any values are possible
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
+ */
+void lv_obj_scroll_by_raw(lv_obj_t * obj, lv_coord_t x, lv_coord_t y);
+
+/**
+ * Moves all children with horizontally or vertically.
+ * Limits the scroll to the bounding box of the children.
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
+ */
+void lv_obj_scroll_by(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en);
+
+/**
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
+ * @param y the y coordinate to scroll to
+ */
+void lv_obj_scroll_to(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en);
+
+/**
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
+ */
+void lv_obj_scroll_to_x(lv_obj_t * obj, lv_coord_t x, lv_anim_enable_t anim_en);
+
+/**
+ * Scroll the a given y coordinate to the top side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param y the y coordinate to scroll to
+ */
+void lv_obj_scroll_to_y(lv_obj_t * obj, lv_coord_t y, lv_anim_enable_t anim_en);
+
+
+/**
+ * Return the height of the area above the parent.
+ * That is the number of pixels the object can be scrolled down.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
+ */
+lv_coord_t lv_obj_get_scroll_top(lv_obj_t * obj);
+
+/**
+ * Return the height of the area below the parent.
+ * That is the number of pixels the object can be scrolled up.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
+ */
+lv_coord_t lv_obj_get_scroll_bottom(lv_obj_t * obj);
+
 
 /**
  * Set the size of an extended clickable area
@@ -1243,6 +1308,13 @@ bool lv_obj_get_drag(const lv_obj_t * obj);
  * @return bitwise OR of allowed directions an object can be dragged in
  */
 lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj);
+
+/**
+ * Get the directions an object can be scrolled
+ * @param obj pointer to an object
+ * @return bitwise OR of allowed directions an object can be dragged in
+ */
+lv_drag_dir_t lv_obj_get_scroll_dir(const lv_obj_t * obj);
 
 /**
  * Get the drag throw enable attribute of an object
