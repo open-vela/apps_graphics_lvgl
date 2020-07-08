@@ -139,9 +139,6 @@ enum {
     LV_SIGNAL_RELEASED,          /**< User pressed object for a short period of time, then released it. Not called if dragged. */
     LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
-    LV_SIGNAL_SCROLL_BEGIN,      /**< The scrolling has just begun  */
-    LV_SIGNAL_SCROLL,            /**< The object has been scrolled */
-    LV_SIGNAL_SCROLL_END,        /**< The scrolling has ended */
     LV_SIGNAL_DRAG_BEGIN,
     LV_SIGNAL_DRAG_THROW_BEGIN,
     LV_SIGNAL_DRAG_END,
@@ -201,7 +198,6 @@ typedef struct _lv_obj_t {
     lv_ll_t child_ll;       /**< Linked list to store the children objects*/
 
     lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
-    lv_point_t scroll; /**< The current X/Y scroll offset*/
 
     lv_event_cb_t event_cb; /**< Event callback function */
     lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
@@ -231,8 +227,7 @@ typedef struct _lv_obj_t {
     uint8_t gesture_parent  : 1; /**< 1: Parent will be gesture instead*/
     uint8_t focus_parent    : 1; /**< 1: Parent will be focused instead*/
 
-    lv_drag_dir_t drag_dir    : 3; /**< In which directions the object can be dragged */
-    lv_drag_dir_t scroll_dir  : 3; /**< In which directions the object can be scrolled */
+    lv_drag_dir_t drag_dir  : 3; /**<  Which directions the object can be dragged in */
     lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object */
 
 #if LV_USE_GROUP != 0
@@ -828,28 +823,6 @@ void lv_obj_set_event_cb(lv_obj_t * obj, lv_event_cb_t event_cb);
  */
 lv_res_t lv_event_send(lv_obj_t * obj, lv_event_t event, const void * data);
 
-
-/**
- * Send LV_EVENT_REFRESH event to an object
- * @param obj point to an obejct. (Can NOT be NULL)
- * @return LV_RES_OK: success, LV_RES_INV: to object become invalid (e.g. deleted) due to this event.
- */
-lv_res_t lv_event_send_refresh(lv_obj_t * obj);
-
-/**
- * Send LV_EVENT_REFRESH event to an object and all of its children
- * @param obj pointer to an object or NULL to refresh all objects of all displays
- */
-void lv_event_send_refresh_recursive(lv_obj_t * obj);
-
-/**
- * Queue the sending of LV_EVENT_REFRESH event to an object and all of its children.
- * The events won't be sent immediately but after `LV_DISP_DEF_REFR_PERIOD` delay.
- * It is useful to refresh object only on a reasonable rate if this function is called very often.
- * @param obj pointer to an object or NULL to refresh all objects of all displays
- */
-void lv_event_queue_refresh_recursive(lv_obj_t * obj);
-
 /**
  * Call an event function with an object, event, and data.
  * @param event_xcb an event callback function. If `NULL` `LV_RES_OK` will return without any actions.
@@ -1248,13 +1221,6 @@ bool lv_obj_get_drag(const lv_obj_t * obj);
  * @return bitwise OR of allowed directions an object can be dragged in
  */
 lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj);
-
-/**
- * Get the directions an object can be scrolled
- * @param obj pointer to an object
- * @return bitwise OR of allowed directions an object can be dragged in
- */
-lv_drag_dir_t lv_obj_get_scroll_dir(const lv_obj_t * obj);
 
 /**
  * Get the drag throw enable attribute of an object
