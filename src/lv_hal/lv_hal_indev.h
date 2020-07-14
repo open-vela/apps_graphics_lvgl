@@ -52,6 +52,7 @@ typedef uint8_t lv_indev_state_t;
 
 
 enum {
+    LV_DRAG_DIR_NONE = 0x0, /**< Object can't be dragged to any directions. */
     LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
     LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
     LV_DRAG_DIR_BOTH = 0x3, /**< Object can be dragged in all directions. */
@@ -139,6 +140,7 @@ typedef struct _lv_indev_proc_t {
             struct _lv_obj_t * act_obj;      /*The object being pressed*/
             struct _lv_obj_t * last_obj;     /*The last object which was pressed (used by drag_throw and
                                                 other post-release event)*/
+            struct _lv_obj_t * drag_obj;      /*The object being pressed*/
             struct _lv_obj_t * last_pressed; /*The lastly pressed object*/
 
             lv_gesture_dir_t gesture_dir;
