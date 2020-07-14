@@ -6,7 +6,6 @@ Available in the `dev` branch
 ### New features
 - Add `lv_task_get_next`
 - Add `lv_event_send_refresh`, `lv_event_send_refresh_recursive`, `lv_event_queue_refresh_recursive` to easily send `LV_EVENT_REFRESH` to object
-- Add `lv_tabview_set_tab_name()` function - used to change a tab's name
 
 ## v7.2.0 (planned on 21.07.2020)
 *Available in the `master` branch*
@@ -30,8 +29,6 @@ Available in the `dev` branch
 ### Bugfixes
 - `tileview` fix navigation when not screen sized
 - Use 14px font by default to for better compatibility with smaller displays 
-- `linemeter` fix conversation of current value to "level"
-- fix drawing on right border
 
 ## v7.1.0 (07.07.2020)
 
