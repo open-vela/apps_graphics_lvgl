@@ -1,20 +1,14 @@
 # Changelog
 
-## v7.4.0 (planned on 18.08.2020)
-*Available in the `dev` branch*
-
 ## v7.3.0 (planned on 04.08.2020)
-*Available in the `master` branch*
+Available in the `dev` branch
 
 ### New features
 - Add `lv_task_get_next`
-- Add `lv_event_send_refresh`, `lv_event_send_refresh_recursive` to easily send `LV_EVENT_REFRESH` to object
-- Add `lv_tabview_set_tab_name()` function - used to change a tab's name
+- Add `lv_event_send_refresh`, `lv_event_send_refresh_recursive`, `lv_event_queue_refresh_recursive` to easily send `LV_EVENT_REFRESH` to object
 
-### Bugfixes
-- Do not print for missing glyph if its height OR width is zero.
-
-## v7.2.0 (21.07.2020)
+## v7.2.0 (planned on 21.07.2020)
+*Available in the `master` branch*
 
 ### New features
 - Add `LV_CALENDAR_WEEK_STARTS_MONDAY`
@@ -35,10 +29,6 @@
 ### Bugfixes
 - `tileview` fix navigation when not screen sized
 - Use 14px font by default to for better compatibility with smaller displays 
-- `linemeter` fix conversation of current value to "level"
-- Fix drawing on right border
-- Set the cursor image non clickable by default
-- Improve mono theme when used with keyboard or encoder
 
 ## v7.1.0 (07.07.2020)
 
