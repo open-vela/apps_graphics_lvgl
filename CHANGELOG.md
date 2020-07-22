@@ -12,11 +12,13 @@
 - Add `lv_tabview_set_tab_name()` function - used to change a tab's name
 
 ### Bugfixes
-- Do not print for missing glyph if its height OR width is zero.
+- Do not print warning for missing glyph if its height OR width is zero.
 
 ## v7.2.0 (21.07.2020)
 
 ### New features
+- Add screen transitions with `lv_scr_load_anim()`
+- Add display background color, wallpaper and opacity. Shown when the screen is transparent. Can be used with `lv_disp_set_bg_opa/color/image()`.
 - Add `LV_CALENDAR_WEEK_STARTS_MONDAY`
 - Add `lv_chart_set_x_start_point()` function - Set the index of the x-axis start point in the data array
 - Add `lv_chart_set_ext_array()` function - Set an external array of data points to use for the chart
