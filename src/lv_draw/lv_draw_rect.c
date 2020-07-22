@@ -545,8 +545,12 @@ LV_ATTRIBUTE_FAST_MEM static void draw_border(const lv_area_t * coords, const lv
         fill_area.y1 = disp_area->y1 + draw_area.y1;
         fill_area.y2 = fill_area.y1;
 
+        uint32_t buf_ofs = 0;
         if(dsc->border_side == LV_BORDER_SIDE_LEFT) fill_area.x2 = coords->x1 + corner_size;
-        else if(dsc->border_side == LV_BORDER_SIDE_RIGHT) fill_area.x1 = coords->x2 - corner_size;
+        else if(dsc->border_side == LV_BORDER_SIDE_RIGHT) {
+            fill_area.x1 = coords->x2 - corner_size;
+            buf_ofs = fill_area.x1 - coords->x1;
+        }
 
         volatile bool top_only = false;
         volatile bool bottom_only = false;
@@ -565,7 +569,7 @@ LV_ATTRIBUTE_FAST_MEM static void draw_border(const lv_area_t * coords, const lv
                (bottom_only && fill_area.y1 >= coords->y2 - corner_size)) {
                 _lv_memset_ff(mask_buf, draw_area_w);
                 mask_res = lv_draw_mask_apply(mask_buf, vdb->area.x1 + draw_area.x1, vdb->area.y1 + h, draw_area_w);
-                _lv_blend_fill(clip, &fill_area, color, mask_buf, mask_res, opa, blend_mode);
+                _lv_blend_fill(clip, &fill_area, color, mask_buf + buf_ofs, mask_res, opa, blend_mode);
             }
             fill_area.y1++;
             fill_area.y2++;
@@ -1555,4 +1559,3 @@ static void draw_value(const lv_area_t * coords, const lv_area_t * clip, lv_draw
 
     lv_draw_label(&value_area, clip, &label_dsc, dsc->value_str, NULL);
 }
-

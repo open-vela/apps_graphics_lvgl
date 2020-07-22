@@ -80,13 +80,13 @@ def lvgl_update_library_json(v):
   title("lvgl: Update version number in library.json")
 
   f = open("./library.json", "r")
-      
+  vn = v[1:]    
   outbuf = ""
       
   for i in f.read().splitlines():
     r = re.search(r'"version": ', i)
     if r: 
-      i = '    "version": "' + v + '",'
+      i = '    "version": "' + vn + '",'
        
     outbuf += i + '\n'
    
@@ -171,7 +171,7 @@ def drivers_merge_to_release_branch(v):
 
 def docs_clone():
   title("docs: Clone")
-  #cmd("git clone --recursive https://github.com/lvgl/docs.git")
+  cmd("git clone --recursive https://github.com/lvgl/docs.git")
   os.chdir("./docs")
 
 def docs_get_api():
