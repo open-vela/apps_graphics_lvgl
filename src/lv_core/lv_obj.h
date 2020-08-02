@@ -586,7 +586,7 @@ void lv_obj_reset_style_list(lv_obj_t * obj, uint8_t part);
  * @param obj pointer to an object
  * @param prop `LV_STYLE_PROP_ALL` or an `LV_STYLE_...` property. It is used to optimize what needs to be refreshed.
  */
-void lv_obj_refresh_style(lv_obj_t * obj, uint8_t part, lv_style_property_t prop);
+void lv_obj_refresh_style(lv_obj_t * obj, lv_style_property_t prop);
 
 /**
  * Notify all object if a style is modified
