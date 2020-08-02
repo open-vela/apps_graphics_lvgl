@@ -257,7 +257,7 @@ void _lv_style_list_remove_style(lv_style_list_t * list, lv_style_t * style)
         return;
     }
 
-    lv_style_t ** new_classes = lv_mem_alloc(sizeof(lv_style_t *) * (list->style_cnt - 1));
+    lv_style_t ** new_classes = lv_mem_realloc(list->style_list, sizeof(lv_style_t *) * (list->style_cnt - 1));
     LV_ASSERT_MEM(new_classes);
     if(new_classes == NULL) {
         LV_LOG_WARN("lv_style_list_remove_style: couldn't reallocate class list");
@@ -270,8 +270,6 @@ void _lv_style_list_remove_style(lv_style_list_t * list, lv_style_t * style)
         j++;
 
     }
-
-    lv_mem_free(list->style_list);
 
     list->style_cnt--;
     list->style_list = new_classes;
@@ -1054,6 +1052,9 @@ bool lv_debug_check_style_list(const lv_style_list_t * list)
  */
 LV_ATTRIBUTE_FAST_MEM static inline int32_t get_property_index(const lv_style_t * style, lv_style_property_t prop)
 {
+    static uint32_t c = 0;
+    c++;
+    if(c % 100 == 0) printf("%d\n", c);
     LV_ASSERT_STYLE(style);
 
     if(style->map == NULL) return -1;
