@@ -1037,6 +1037,7 @@ bool lv_debug_check_style_list(const lv_style_list_t * list)
     return true;
 }
 
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
