@@ -658,9 +658,7 @@ static lv_design_res_t lv_btnmatrix_design(lv_obj_t * btnm, const lv_area_t * cl
         lv_draw_rect_dsc_t draw_rect_tmp_dsc;
         lv_draw_label_dsc_t draw_label_tmp_dsc;
 
-        /*The state changes without re-caching the styles, disable the use of cache*/
         lv_state_t state_ori = btnm->state;
-        _lv_obj_disable_style_cahcing(btnm, true);
         btnm->state = LV_STATE_DEFAULT;
         lv_draw_rect_dsc_init(&draw_rect_rel_dsc);
         lv_draw_label_dsc_init(&draw_label_rel_dsc);
@@ -668,7 +666,6 @@ static lv_design_res_t lv_btnmatrix_design(lv_obj_t * btnm, const lv_area_t * cl
         lv_obj_init_draw_label_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_label_rel_dsc);
         draw_label_rel_dsc.flag = txt_flag;
         btnm->state = state_ori;
-        _lv_obj_disable_style_cahcing(btnm, false);
 
         bool chk_inited = false;
         bool disabled_inited = false;
@@ -697,54 +694,48 @@ static lv_design_res_t lv_btnmatrix_design(lv_obj_t * btnm, const lv_area_t * cl
             /*Choose the style*/
             lv_draw_rect_dsc_t * draw_rect_dsc_act;
             lv_draw_label_dsc_t * draw_label_dsc_act;
-            bool tgl_state = button_get_tgl_state(ext->ctrl_bits[btn_i]);
+            lv_state_t btn_state = LV_STATE_DEFAULT;
+            if(button_get_tgl_state(ext->ctrl_bits[btn_i])) btn_state |= LV_STATE_CHECKED;
+            if(button_is_inactive(ext->ctrl_bits[btn_i])) btn_state |= LV_STATE_DISABLED;
+            if(btn_i == ext->btn_id_pr) btn_state |= LV_STATE_PRESSED;
+            if(btn_i == ext->btn_id_focused) {
+                btn_state |= LV_STATE_FOCUSED;
+                if(state_ori & LV_STATE_EDITED) btn_state |= LV_STATE_EDITED;
+            }
 
-            if(tgl_state) {
+            if(btn_state == LV_STATE_DEFAULT) {
+                draw_rect_dsc_act = &draw_rect_rel_dsc;
+                draw_label_dsc_act = &draw_label_rel_dsc;
+            } else if(btn_state == LV_STATE_CHECKED) {
                 if(!chk_inited) {
                     btnm->state = LV_STATE_CHECKED;
-                    _lv_obj_disable_style_cahcing(btnm, true);
                     lv_draw_rect_dsc_init(&draw_rect_chk_dsc);
                     lv_draw_label_dsc_init(&draw_label_chk_dsc);
                     lv_obj_init_draw_rect_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_rect_chk_dsc);
                     lv_obj_init_draw_label_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_label_chk_dsc);
                     draw_label_chk_dsc.flag = txt_flag;
                     btnm->state = state_ori;
-                    _lv_obj_disable_style_cahcing(btnm, false);
                     chk_inited = true;
                 }
-            }
-
-            if(button_is_inactive(ext->ctrl_bits[btn_i])) {
+                draw_rect_dsc_act = &draw_rect_chk_dsc;
+                draw_label_dsc_act = &draw_label_chk_dsc;
+            } else if(btn_state == LV_STATE_CHECKED) {
                 if(!disabled_inited) {
                     btnm->state = LV_STATE_DISABLED;
-                    _lv_obj_disable_style_cahcing(btnm, true);
                     lv_draw_rect_dsc_init(&draw_rect_ina_dsc);
                     lv_draw_label_dsc_init(&draw_label_ina_dsc);
                     lv_obj_init_draw_rect_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_rect_ina_dsc);
                     lv_obj_init_draw_label_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_label_ina_dsc);
                     draw_label_ina_dsc.flag = txt_flag;
                     btnm->state = state_ori;
-                    _lv_obj_disable_style_cahcing(btnm, false);
                     disabled_inited = true;
                 }
                 draw_rect_dsc_act = &draw_rect_ina_dsc;
                 draw_label_dsc_act = &draw_label_ina_dsc;
             }
-            /*Simple released or checked buttons button*/
-            else if(btn_i != ext->btn_id_pr && btn_i != ext->btn_id_focused) {
-                draw_rect_dsc_act = tgl_state ? &draw_rect_chk_dsc : &draw_rect_rel_dsc;
-                draw_label_dsc_act = tgl_state ? &draw_label_chk_dsc : &draw_label_rel_dsc;
-            }
-            /*Focused and/or pressed + checked or released button*/
+            /*In other cases get the styles directly without caching them*/
             else {
-                btnm->state = LV_STATE_DEFAULT;
-                if(tgl_state) btnm->state = LV_STATE_CHECKED;
-                if(ext->btn_id_pr == btn_i) btnm->state |= LV_STATE_PRESSED;
-                if(ext->btn_id_focused == btn_i) {
-                    btnm->state |= LV_STATE_FOCUSED;
-                    if(state_ori & LV_STATE_EDITED) btnm->state |= LV_STATE_EDITED;
-                }
-
+                btnm->state = btn_state;
                 lv_draw_rect_dsc_init(&draw_rect_tmp_dsc);
                 lv_draw_label_dsc_init(&draw_label_tmp_dsc);
                 lv_obj_init_draw_rect_dsc(btnm, LV_BTNMATRIX_PART_BTN, &draw_rect_tmp_dsc);

@@ -180,11 +180,11 @@ lv_obj_t * lv_tabview_create(lv_obj_t * par, const lv_obj_t * copy)
                                                                                                               LV_PAGE_PART_SCROLLABLE));
             lv_style_list_copy(lv_obj_get_style_list(new_tab, LV_PAGE_PART_SCROLLBAR), lv_obj_get_style_list(copy_tab,
                                                                                                              LV_PAGE_PART_SCROLLBAR));
-            lv_obj_refresh_style(new_tab, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+            lv_obj_refresh_style(new_tab, LV_STYLE_PROP_ALL);
         }
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(tabview, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(tabview, LV_STYLE_PROP_ALL);
     }
 
     tabview_realign(tabview);
@@ -229,20 +229,6 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * tabview, const char * name)
     strcpy(name_dm, name);
 
     ext->tab_cnt++;
-
-    switch(ext->btns_pos) {
-        case LV_TABVIEW_TAB_POS_TOP:
-        case LV_TABVIEW_TAB_POS_BOTTOM:
-            ext->tab_name_ptr = lv_mem_realloc((void *)ext->tab_name_ptr, sizeof(char *) * (ext->tab_cnt + 1));
-            break;
-        case LV_TABVIEW_TAB_POS_LEFT:
-        case LV_TABVIEW_TAB_POS_RIGHT:
-            ext->tab_name_ptr = lv_mem_realloc((void *)ext->tab_name_ptr, sizeof(char *) * (ext->tab_cnt * 2));
-            break;
-    }
-
-    LV_ASSERT_MEM(ext->tab_name_ptr);
-    if(ext->tab_name_ptr == NULL) return NULL;
 
     /* FIXME: It is not possible yet to switch tab button position from/to top/bottom from/to left/right at runtime.
      * Method: clean extra \n when switch from LV_TABVIEW_BTNS_POS_LEFT or LV_TABVIEW_BTNS_POS_RIGHT
