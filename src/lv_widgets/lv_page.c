@@ -402,7 +402,7 @@ lv_coord_t lv_page_get_width_grid(lv_obj_t * page, uint8_t div, uint8_t span)
 }
 
 /**
- * Divide the height of the object and get the width of a given number of columns.
+ * Divide the height of the object and get the height of a given number of rows.
  * Take into account the paddings of the background and scrollable too.
  * @param obj pointer to an object
  * @param div indicates how many rows are assumed.
@@ -932,7 +932,7 @@ static lv_res_t lv_page_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, voi
             if(parent_ext->scroll_prop_obj == NULL) {
                 /*If the dragging just started or scroll is already propagated to this object
                  *  enable the scroll propagation if the conditions are met*/
-                if((lv_indev_is_scrolling(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
+                if((lv_indev_is_dragging(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
                     /*Propagate vertically?*/
                     if((drag_sum->y > 0 && lv_page_on_edge(page, LV_PAGE_EDGE_TOP)) ||
                        (drag_sum->y < 0 && lv_page_on_edge(page, LV_PAGE_EDGE_BOTTOM))) {
