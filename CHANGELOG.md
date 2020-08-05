@@ -1,10 +1,16 @@
 # Changelog
 
-## v7.4.0 (planned on 18.08.2020)
+## v7.4.0 (planned on 01.09.2020)
 *Available in the `dev` branch*
 
-## v7.3.0 (planned on 04.08.2020)
-*Available in the `master` branch*
+## v7.3.1 (planned on 18.08.2020)
+
+### Bugfixes
+- Fix drawing value string twice
+- Rename  `lv_chart_clear_serie` to `lv_chart_clear_series` and `lv_obj_align_origo` to `lv_obj_align_mid`
+- Add linemeter's mirror feature again
+
+## v7.3.0 (04.08.2020)
 
 ### New features
 - Add `lv_task_get_next`
