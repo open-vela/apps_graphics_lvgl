@@ -31,5 +31,4 @@ Planned to September/October 2020
 - Optmize font decompression
 - Switch to RGBA colors in styles
 - Need coverage report for tests
-- Need static analize (via coverity.io or somehing else)
-- Support dot_begin and dot_middle long modes for labels
+- Need static analize (via coverity.io or somehing else). 
