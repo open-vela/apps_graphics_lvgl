@@ -1,4 +1,8 @@
 <h1 align="center"> LVGL - Light and Versatile Graphics Library</h1>
+<p align="center">
+<a href="https://github.com/lvgl/lvgl/blob/master/LICENCE.txt"><img src="https://img.shields.io/badge/licence-MIT-blue.svg"></a>
+<a href="https://github.com/lvgl/lvgl/releases/tag/v7.0.0"><img src="https://img.shields.io/badge/version-7.1.0-blue.svg"></a>
+</p>
 
 <p align="center">
 <img src="https://lvgl.io/assets/images/img_1.png">
@@ -74,7 +78,7 @@ Basically, every modern controller (which is able to drive a display) is suitabl
   <tr>
     <td> <strong>Heap</strong></td>
     <td> &gt; 2 kB </td>
-    <td> &gt; 8 kB</td>
+    <td> &gt; 16 kB</td>
   </tr>
   
   <tr>
@@ -141,7 +145,7 @@ void btn_event_cb(lv_obj_t * btn, lv_event_t event)
 ![LVGL button with label example](https://raw.githubusercontent.com/lvgl/docs/latest/misc/simple_button_example.gif)
 
 ### LVGL from Micropython
-Learn more about [Micropython](https://docs.lvgl.io/latest/en/html/get-started/micropython.html).
+Learn more about [Micropython](https://docs.lvgl.io/en/html/get-started/micropython).
 ```python
 # Create a Button and a Label
 scr = lv.obj()
