@@ -110,7 +110,7 @@ lv_obj_t * lv_table_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_table_set_col_cnt(table, copy_ext->col_cnt);
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(table, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(table, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("table created");
@@ -196,7 +196,8 @@ void lv_table_set_row_cnt(lv_obj_t * table, uint16_t row_cnt)
         ext->row_h = lv_mem_realloc(ext->row_h, ext->row_cnt * sizeof(ext->row_h[0]));
         LV_ASSERT_MEM(ext->row_h);
         if(ext->row_h == NULL) return;
-    } else {
+    }
+    else {
         lv_mem_free(ext->row_h);
         ext->row_h = NULL;
     }
