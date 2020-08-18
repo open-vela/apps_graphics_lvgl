@@ -14,9 +14,10 @@ extern "C" {
 /***************************
  * CURRENT VERSION OF LVGL
  ***************************/
+/*Current version of LVGL*/
 #define LVGL_VERSION_MAJOR   7
-#define LVGL_VERSION_MINOR   3
-#define LVGL_VERSION_PATCH   1
+#define LVGL_VERSION_MINOR   4
+#define LVGL_VERSION_PATCH   0
 #define LVGL_VERSION_INFO "dev"
 
 /*********************
@@ -40,6 +41,7 @@ extern "C" {
 #include "src/lv_themes/lv_theme.h"
 
 #include "src/lv_font/lv_font.h"
+#include "src/lv_font/lv_font_loader.h"
 #include "src/lv_font/lv_font_fmt_txt.h"
 #include "src/lv_misc/lv_printf.h"
 
@@ -80,6 +82,18 @@ extern "C" {
 #include "src/lv_draw/lv_img_cache.h"
 
 #include "src/lv_api_map.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+/**********************
+ * GLOBAL PROTOTYPES
+ **********************/
 
 /**********************
  *      MACROS
