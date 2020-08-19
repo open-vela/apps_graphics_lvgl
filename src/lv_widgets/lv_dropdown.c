@@ -609,7 +609,7 @@ void lv_dropdown_open(lv_obj_t * ddlist)
     lv_style_list_copy(lv_obj_get_style_list(ext->page, LV_PAGE_PART_BG), &ext->style_page);
     lv_style_list_copy(lv_obj_get_style_list(ext->page, LV_PAGE_PART_SCROLLBAR), &ext->style_scrlbar);
     lv_obj_clean_style_list(ext->page, LV_PAGE_PART_SCROLLABLE);
-    lv_obj_refresh_style(ext->page, LV_STYLE_PROP_ALL);
+    lv_obj_refresh_style(ext->page, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
 
     lv_obj_t * label = lv_label_create(ext->page, NULL);
     lv_label_set_text_static(label, ext->options);
@@ -930,7 +930,7 @@ static lv_res_t lv_dropdown_signal(lv_obj_t * ddlist, lv_signal_t sign, void * p
     }
     else if(sign == LV_SIGNAL_RELEASED) {
         lv_indev_t * indev = lv_indev_get_act();
-        if(lv_indev_is_scrolling(indev) == false) {
+        if(lv_indev_is_dragging(indev) == false) {
             if(ext->page) {
                 lv_dropdown_close(ddlist);
                 if(ext->sel_opt_id_orig != ext->sel_opt_id) {
@@ -965,7 +965,7 @@ static lv_res_t lv_dropdown_signal(lv_obj_t * ddlist, lv_signal_t sign, void * p
         const lv_font_t * font = lv_obj_get_style_text_font(ddlist, LV_DROPDOWN_PART_MAIN);
         lv_obj_set_height(ddlist, top + bottom + lv_font_get_line_height(font));
 
-        if(ext->page) lv_obj_refresh_style(ext->page, LV_STYLE_PROP_ALL);
+        if(ext->page) lv_obj_refresh_style(ext->page, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
     else if(sign == LV_SIGNAL_CONTROL) {
 #if LV_USE_GROUP
@@ -1034,7 +1034,7 @@ static lv_res_t lv_dropdown_page_signal(lv_obj_t * page, lv_signal_t sign, void 
         scrl->ext_draw_pad = LV_MATH_MAX3(scrl->ext_draw_pad, left, right);
     }
     else if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
+        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
             page_release_handler(page);
         }
     }
@@ -1071,7 +1071,7 @@ static lv_res_t lv_dropdown_page_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, 
     lv_dropdown_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
+        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
             page_release_handler(page);
         }
     }
@@ -1134,8 +1134,10 @@ static void draw_box(lv_obj_t * ddlist, const lv_area_t * clip_area, uint16_t id
     lv_obj_t * page = ext->page;
     lv_state_t state_orig = page->state;
 
-    page->state = LV_STATE_DEFAULT;
-    page->state |= state;
+    if(state != page->state) {
+        _lv_obj_disable_style_caching(ddlist, true);
+        page->state = state;
+    }
 
     /*Draw a rectangle under the selected item*/
     const lv_font_t * font    = lv_obj_get_style_text_font(ddlist, LV_DROPDOWN_PART_LIST);
@@ -1159,6 +1161,7 @@ static void draw_box(lv_obj_t * ddlist, const lv_area_t * clip_area, uint16_t id
     lv_draw_rect(&rect_area, clip_area, &sel_rect);
 
     page->state = state_orig;
+    _lv_obj_disable_style_caching(ddlist, false);
 }
 
 
@@ -1169,8 +1172,10 @@ static void draw_box_label(lv_obj_t * ddlist, const lv_area_t * clip_area, uint1
     lv_obj_t * page = ext->page;
     lv_state_t state_orig = page->state;
 
-    page->state = LV_STATE_DEFAULT;
-    page->state |= state;
+    if(state != page->state) {
+        page->state =  state;
+        _lv_obj_disable_style_caching(ddlist, true);
+    }
 
     lv_draw_label_dsc_t label_dsc;
     lv_draw_label_dsc_init(&label_dsc);
@@ -1204,6 +1209,7 @@ static void draw_box_label(lv_obj_t * ddlist, const lv_area_t * clip_area, uint1
         lv_draw_label(&label->coords, &mask_sel, &label_dsc, lv_label_get_text(label), NULL);
     }
     page->state = state_orig;
+    _lv_obj_disable_style_caching(ddlist, false);
 }
 
 /**

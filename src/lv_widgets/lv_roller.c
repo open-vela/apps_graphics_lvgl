@@ -135,7 +135,7 @@ lv_obj_t * lv_roller_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_obj_set_signal_cb(scrl, lv_roller_scrl_signal);
 
         lv_style_list_copy(&ext->style_sel, &copy_ext->style_sel);
-        lv_obj_refresh_style(roller, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(roller, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("roller created");
@@ -888,7 +888,7 @@ static lv_res_t release_handler(lv_obj_t * roller)
 {
 
     /*If there was dragging `DRAG_END` signal will refresh the position and update the selected option*/
-    if(lv_indev_is_scrolling(lv_indev_get_act())) return LV_RES_OK;
+    if(lv_indev_is_dragging(lv_indev_get_act())) return LV_RES_OK;
 
     lv_roller_ext_t * ext = lv_obj_get_ext_attr(roller);
 

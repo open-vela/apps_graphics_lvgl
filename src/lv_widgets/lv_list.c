@@ -115,7 +115,7 @@ lv_obj_t * lv_list_create(lv_obj_t * par, const lv_obj_t * copy)
         }
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(list, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(list, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("list created");
@@ -365,11 +365,11 @@ lv_obj_t * lv_list_get_btn_label(const lv_obj_t * btn)
 {
     LV_ASSERT_OBJ(btn, "lv_btn");
 
-    lv_obj_t * label = lv_obj_get_child(btn, NULL);
+    lv_obj_t * label = lv_obj_get_child_back(btn, NULL);
     if(label == NULL) return NULL;
 
     while(lv_list_is_list_label(label) == false) {
-        label = lv_obj_get_child(btn, label);
+        label = lv_obj_get_child_back(btn, label);
         if(label == NULL) break;
     }
 
@@ -386,11 +386,11 @@ lv_obj_t * lv_list_get_btn_img(const lv_obj_t * btn)
     LV_ASSERT_OBJ(btn, "lv_btn");
 
 #if LV_USE_IMG != 0
-    lv_obj_t * img = lv_obj_get_child(btn, NULL);
+    lv_obj_t * img = lv_obj_get_child_back(btn, NULL);
     if(img == NULL) return NULL;
 
     while(lv_list_is_list_img(img) == false) {
-        img = lv_obj_get_child(btn, img);
+        img = lv_obj_get_child_back(btn, img);
         if(img == NULL) break;
     }
 
@@ -688,7 +688,7 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
                         res = lv_event_send(ext->act_sel_btn, LV_EVENT_SHORT_CLICKED, NULL);
                         if(res != LV_RES_OK) return res;
                     }
-                    if(lv_indev_is_scrolling(indev) == false) {
+                    if(lv_indev_is_dragging(indev) == false) {
                         res = lv_event_send(ext->act_sel_btn, LV_EVENT_CLICKED, NULL);
                         if(res != LV_RES_OK) return res;
                     }
@@ -811,7 +811,7 @@ static lv_res_t lv_list_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * para
         }
     }
     else if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
+        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
             lv_obj_t * list = lv_obj_get_parent(lv_obj_get_parent(btn));
             lv_list_focus_btn(list, btn);
 #if LV_USE_GROUP
