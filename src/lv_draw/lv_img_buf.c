@@ -455,9 +455,7 @@ void _lv_img_buf_transform_init(lv_img_transform_dsc_t * dsc)
     dsc->tmp.img_dsc.header.w = dsc->cfg.src_w;
     dsc->tmp.img_dsc.header.h = dsc->cfg.src_h;
 
-    /* The inverse of the zoom will be sued during the transformation
-     *  + dsc->cfg.zoom / 2 for rounding*/
-    dsc->tmp.zoom_inv = (((256 * 256) << _LV_ZOOM_INV_UPSCALE) + dsc->cfg.zoom / 2) / dsc->cfg.zoom;
+    dsc->tmp.zoom_inv = (256 * 256) / dsc->cfg.zoom;
 
     dsc->res.opa = LV_OPA_COVER;
     dsc->res.color = dsc->cfg.color;
@@ -483,20 +481,7 @@ void _lv_img_buf_get_transformed_area(lv_area_t * res, lv_coord_t w, lv_coord_t 
         res->x2 = w - 1;
         res->y2 = h - 1;
         return;
-    }
 
-
-    res->x1 = (((-pivot->x) * zoom) >> 8) - 1;
-    res->y1 = (((-pivot->y) * zoom) >> 8) - 1;
-    res->x2 = (((w - pivot->x) * zoom) >> 8) + 2;
-    res->y2 = (((h - pivot->y) * zoom) >> 8) + 2;
-
-    if(angle == 0) {
-        res->x1 += pivot->x;
-        res->y1 += pivot->y;
-        res->x2 += pivot->x;
-        res->y2 += pivot->y;
-        return;
     }
 
     int32_t angle_low = angle / 10;
@@ -524,23 +509,29 @@ void _lv_img_buf_get_transformed_area(lv_area_t * res, lv_coord_t w, lv_coord_t 
     lv_coord_t xt;
     lv_coord_t yt;
 
-    xt = res->x1;
-    yt = res->y1;
+    lv_area_t a;
+    a.x1 = ((-pivot->x) * zoom) >> 8;
+    a.y1 = ((-pivot->y) * zoom) >> 8;
+    a.x2 = ((w - pivot->x) * zoom) >> 8;
+    a.y2 = ((h - pivot->y) * zoom) >> 8;
+
+    xt = a.x1;
+    yt = a.y1;
     lt.x = ((cosma * xt - sinma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
     lt.y = ((sinma * xt + cosma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
 
-    xt = res->x2;
-    yt = res->y1;
+    xt = a.x2;
+    yt = a.y1;
     rt.x = ((cosma * xt - sinma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
     rt.y = ((sinma * xt + cosma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
 
-    xt = res->x1;
-    yt = res->y2;
+    xt = a.x1;
+    yt = a.y2;
     lb.x = ((cosma * xt - sinma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
     lb.y = ((sinma * xt + cosma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
 
-    xt = res->x2;
-    yt = res->y2;
+    xt = a.x2;
+    yt = a.y2;
     rb.x = ((cosma * xt - sinma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
     rb.y = ((sinma * xt + cosma * yt) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
 
