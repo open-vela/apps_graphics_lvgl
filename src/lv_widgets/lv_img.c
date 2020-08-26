@@ -672,7 +672,9 @@ static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area
             img_dsc.antialias = ext->antialias;
 
             lv_coord_t zoomed_src_w = (int32_t)((int32_t)ext->w * zoom_final) >> 8;
+            if(zoomed_src_w <= 0) return LV_DESIGN_RES_OK;
             lv_coord_t zoomed_src_h = (int32_t)((int32_t)ext->h * zoom_final) >> 8;
+            if(zoomed_src_h <= 0) return LV_DESIGN_RES_OK;
             lv_area_t zommed_coords;
             lv_obj_get_coords(img, &zommed_coords);
 
@@ -685,7 +687,8 @@ static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area
             if(zommed_coords.y1 > img->coords.y1) zommed_coords.y1 -= ext->h;
 
             lv_area_t clip_real;
-            _lv_img_buf_get_transformed_area(&clip_real, lv_obj_get_width(img), lv_obj_get_height(img), angle_final, zoom_final, &ext->pivot);
+            _lv_img_buf_get_transformed_area(&clip_real, lv_obj_get_width(img), lv_obj_get_height(img), angle_final, zoom_final,
+                                             &ext->pivot);
             clip_real.x1 += img->coords.x1;
             clip_real.x2 += img->coords.x1;
             clip_real.y1 += img->coords.y1;
@@ -697,10 +700,10 @@ static lv_design_res_t lv_img_design(lv_obj_t * img, const lv_area_t * clip_area
             coords_tmp.y1 = zommed_coords.y1;
             coords_tmp.y2 = zommed_coords.y1 + ext->h - 1;
 
-            for(; coords_tmp.y1 <= zommed_coords.y2; coords_tmp.y1 += zoomed_src_h, coords_tmp.y2 += zoomed_src_h) {
+            for(; coords_tmp.y1 < zommed_coords.y2; coords_tmp.y1 += zoomed_src_h, coords_tmp.y2 += zoomed_src_h) {
                 coords_tmp.x1 = zommed_coords.x1;
                 coords_tmp.x2 = zommed_coords.x1 + ext->w - 1;
-                for(; coords_tmp.x1 <= zommed_coords.x2; coords_tmp.x1 += zoomed_src_w, coords_tmp.x2 += zoomed_src_w) {
+                for(; coords_tmp.x1 < zommed_coords.x2; coords_tmp.x1 += zoomed_src_w, coords_tmp.x2 += zoomed_src_w) {
                     lv_draw_img(&coords_tmp, &clip_real, ext->src, &img_dsc);
                 }
             }
