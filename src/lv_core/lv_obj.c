@@ -48,6 +48,7 @@
 #define LV_OBJX_NAME "lv_obj"
 #define LV_OBJ_DEF_WIDTH    (LV_DPX(100))
 #define LV_OBJ_DEF_HEIGHT   (LV_DPX(50))
+#define SCROLLBAR_MIN_SIZE (LV_DPX(10))
 
 /**********************
  *      TYPEDEFS
@@ -98,14 +99,19 @@ static void trans_anim_start_cb(lv_anim_t * a);
 static void trans_anim_ready_cb(lv_anim_t * a);
 static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v);
 static void fade_in_anim_ready(lv_anim_t * a);
+static void scroll_anim_x_cb(lv_obj_t * obj, lv_anim_value_t v);
+static void scroll_anim_y_cb(lv_obj_t * obj, lv_anim_value_t v);
 #endif
 static void lv_event_mark_deleted(lv_obj_t * obj);
 static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_find);
 static void lv_obj_del_async_cb(void * obj);
 static void obj_del_core(lv_obj_t * obj);
+static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc);
+static void scrollbar_draw(lv_obj_t * obj, const lv_area_t * clip_area);
 static void update_style_cache(lv_obj_t * obj, uint8_t part, uint16_t prop);
 static void update_style_cache_children(lv_obj_t * obj);
 static void invalidate_style_cache(lv_obj_t * obj, uint8_t part, lv_style_property_t prop);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -304,15 +310,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
     new_obj->ext_click_pad_ver = 0;
 #endif
 
-    /*Init realign*/
-#if LV_USE_OBJ_REALIGN
-    new_obj->realign.align        = LV_ALIGN_CENTER;
-    new_obj->realign.xofs         = 0;
-    new_obj->realign.yofs         = 0;
-    new_obj->realign.base         = NULL;
-    new_obj->realign.auto_realign = 0;
-#endif
-
     /*Init. user date*/
 #if LV_USE_USER_DATA
     _lv_memset_00(&new_obj->user_data, sizeof(lv_obj_user_data_t));
@@ -327,10 +324,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
     /*Set attributes*/
     new_obj->adv_hittest  = 0;
     new_obj->click        = 1;
-    new_obj->drag         = 0;
-    new_obj->drag_throw   = 0;
-    new_obj->drag_parent  = 0;
-    new_obj->drag_dir     = LV_DRAG_DIR_BOTH;
+    new_obj->scroll_mode  = LV_SCROLL_MODE_AUTO;
     new_obj->hidden       = 0;
     new_obj->top          = 0;
     new_obj->protect      = LV_PROTECT_NONE;
@@ -338,6 +332,8 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
     new_obj->gesture_parent = parent ? 1 : 0;
     new_obj->focus_parent  = 0;
     new_obj->state = LV_STATE_DEFAULT;
+    new_obj->scroll.x = 0;
+    new_obj->scroll.y = 0;
 
     new_obj->ext_attr = NULL;
 
@@ -366,15 +362,6 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         _lv_memcpy(&new_obj->user_data, &copy->user_data, sizeof(lv_obj_user_data_t));
 #endif
 
-        /*Copy realign*/
-#if LV_USE_OBJ_REALIGN
-        new_obj->realign.align        = copy->realign.align;
-        new_obj->realign.xofs         = copy->realign.xofs;
-        new_obj->realign.yofs         = copy->realign.yofs;
-        new_obj->realign.base         = copy->realign.base;
-        new_obj->realign.auto_realign = copy->realign.auto_realign;
-#endif
-
         /*Only copy the `event_cb`. `signal_cb` and `design_cb` will be copied in the derived
          * object type (e.g. `lv_btn`)*/
         new_obj->event_cb = copy->event_cb;
@@ -382,10 +369,7 @@ lv_obj_t * lv_obj_create(lv_obj_t * parent, const lv_obj_t * copy)
         /*Copy attributes*/
         new_obj->adv_hittest  = copy->adv_hittest;
         new_obj->click        = copy->click;
-        new_obj->drag         = copy->drag;
-        new_obj->drag_dir     = copy->drag_dir;
-        new_obj->drag_throw   = copy->drag_throw;
-        new_obj->drag_parent  = copy->drag_parent;
+        new_obj->scroll_mode  = copy->scroll_mode;
         new_obj->hidden       = copy->hidden;
         new_obj->top          = copy->top;
         new_obj->parent_event = copy->parent_event;
@@ -715,24 +699,26 @@ void lv_obj_move_background(lv_obj_t * obj)
  * Coordinate set
  * ------------------*/
 
-/**
- * Set relative the position of an object (relative to the parent)
- * @param obj pointer to an object
- * @param x new distance from the left side of the parent
- * @param y new distance from the top of the parent
- */
-void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
+static void refr_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
 {
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
     /*Convert x and y to absolute coordinates*/
     lv_obj_t * par = obj->parent;
 
     if(par) {
-        x = x + par->coords.x1;
-        y = y + par->coords.y1;
-    }
+        lv_coord_t pad_left = lv_obj_get_style_pad_left(par, LV_OBJ_PART_MAIN);
+        lv_coord_t pad_top = lv_obj_get_style_pad_top(par, LV_OBJ_PART_MAIN);
 
+        x += pad_left + par->coords.x1 - lv_obj_get_scroll_left(par);
+        y += pad_top + par->coords.y1 - lv_obj_get_scroll_top(par);
+    } else {
+        /*If no parent then it's screen but screen can't be on a grid*/
+        if(_GRID_IS_CELL(obj->x_set) || _GRID_IS_CELL(obj->x_set)) {
+            obj->x_set = 0;
+            obj->y_set = 0;
+            x = 0;
+            y = 0;
+        }
+    }
 
     /*Calculate and set the movement*/
     lv_point_t diff;
@@ -766,6 +752,142 @@ void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
 
     /*Invalidate the new area*/
     lv_obj_invalidate(obj);
+}
+
+
+static bool refr_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
+{
+
+    /* Do nothing if the size is not changed */
+    /* It is very important else recursive resizing can
+     * occur without size change*/
+    if(lv_obj_get_width(obj) == w && lv_obj_get_height(obj) == h) {
+        return false;
+    }
+
+
+    /*Invalidate the original area*/
+    lv_obj_invalidate(obj);
+
+    /*Save the original coordinates*/
+    lv_area_t ori;
+    lv_obj_get_coords(obj, &ori);
+
+    /*Set the length and height*/
+    obj->coords.y2 = obj->coords.y1 + h - 1;
+    if(lv_obj_get_base_dir(obj) == LV_BIDI_DIR_RTL) {
+        obj->coords.x1 = obj->coords.x2 - w + 1;
+    }
+    else {
+        obj->coords.x2 = obj->coords.x1 + w - 1;
+    }
+
+    /*Send a signal to the object with its new coordinates*/
+    obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
+
+    /*Send a signal to the parent too*/
+    lv_obj_t * par = lv_obj_get_parent(obj);
+    if(par != NULL) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
+
+    /*Tell the children the parent's size has changed*/
+    lv_obj_t * i;
+    _LV_LL_READ(obj->child_ll, i) {
+        i->signal_cb(i, LV_SIGNAL_PARENT_SIZE_CHG,  &ori);
+    }
+
+    /*Invalidate the new area*/
+    lv_obj_invalidate(obj);
+
+    return true;
+}
+
+
+
+static void lv_grid_refresh_item_pos(lv_obj_t * obj)
+{
+    /*Calculate the grid*/
+    lv_obj_t * parent = lv_obj_get_parent(obj);
+    lv_coord_t * col_dsc;
+    lv_coord_t * row_dsc;
+    uint8_t col_num;
+    uint8_t row_num;
+    _lv_grid_calc_t calc;
+    grid_calc(parent->grid, &calc);
+
+    uint8_t col_pos = _GRID_GET_CELL_POS(obj->x_set);
+    uint8_t col_span = _GRID_GET_CELL_SPAN(obj->x_set);
+    uint8_t row_pos = _GRID_GET_CELL_POS(obj->y_set);
+    uint8_t row_span = _GRID_GET_CELL_SPAN(obj->y_set);
+
+    lv_coord_t col_w = calc.col_dsc[col_pos + col_span] - calc.col_dsc[col_pos];
+    lv_coord_t row_h = calc.row_dsc[row_pos + row_span] - calc.row_dsc[row_pos];
+
+    uint8_t x_flag = _GRID_GET_CELL_FLAG(obj->x_set);
+    uint8_t y_flag = _GRID_GET_CELL_FLAG(obj->y_set);
+
+    lv_coord_t x;
+    lv_coord_t y;
+    lv_coord_t w = lv_obj_get_width(obj);
+    lv_coord_t h = lv_obj_get_height(obj);
+
+    switch(x_flag) {
+        case LV_GRID_START:
+            x = calc.col_dsc[col_pos];
+            break;
+        case LV_GRID_STRETCH:
+            x = calc.col_dsc[col_pos];
+            w = col_w;
+            break;
+        case LV_GRID_CENTER:
+            x = calc.col_dsc[col_pos] + (col_w - w) / 2;
+            break;
+        case LV_GRID_END:
+            x = calc.col_dsc[col_pos + 1] - lv_obj_get_width(obj);
+            break;
+    }
+
+    switch(y_flag) {
+        case LV_GRID_START:
+            y = calc.row_dsc[row_pos];
+            break;
+        case LV_GRID_STRETCH:
+            y = calc.row_dsc[row_pos];
+            h = row_h;
+            break;
+        case LV_GRID_CENTER:
+            y = calc.row_dsc[row_pos] + (row_h - h) / 2;
+            break;
+        case LV_GRID_END:
+            y = calc.row_dsc[row_pos + 1] - lv_obj_get_height(obj);
+            break;
+    }
+
+    refr_pos(obj, x, y);
+    refr_size(obj, w, h);
+
+    grid_calc_free(&calc);
+}
+
+
+/**
+ * Set relative the position of an object (relative to the parent)
+ * @param obj pointer to an object
+ * @param x new distance from the left side of the parent
+ * @param y new distance from the top of the parent
+ */
+void lv_obj_set_pos(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    obj->x_set = x;
+    obj->y_set = y;
+
+    /*If the object is on a grid item let grid to position it. */
+    if(_GRID_IS_CELL(obj->x_set) && _GRID_IS_CELL(obj->x_set)) {
+        lv_grid_refresh_item_pos(obj);
+    } else {
+        refr_pos(obj, x, y);
+    }
 }
 
 /**
@@ -802,49 +924,55 @@ void lv_obj_set_size(lv_obj_t * obj, lv_coord_t w, lv_coord_t h)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    /* Do nothing if the size is not changed */
-    /* It is very important else recursive resizing can
-     * occur without size change*/
-    if(lv_obj_get_width(obj) == w && lv_obj_get_height(obj) == h) {
-        return;
+    obj->w_set = w;
+    obj->h_set = h;
+
+    /*If the object is a grid element and stretched, prevent settings its size */
+    bool x_stretch = false;
+    bool y_stretch = false;
+    x_stretch = _GRID_GET_CELL_FLAG(obj->x_set) == LV_GRID_STRETCH ? true : false;
+    y_stretch = _GRID_GET_CELL_FLAG(obj->y_set) == LV_GRID_STRETCH ? true : false;
+
+    if(x_stretch && y_stretch) return;
+
+    lv_coord_t grid_w = 0;
+    lv_coord_t grid_h = 0;
+    if(((LV_COORD_IS_AUTO(obj->w_set) && !x_stretch) ||
+        (LV_COORD_IS_AUTO(obj->h_set) && !y_stretch))) {
+        _lv_grid_calc_t calc;
+        grid_calc(obj->grid, &calc);
+        grid_w = calc.col_dsc[calc.col_dsc_len - 1];
+        grid_h = calc.row_dsc[calc.row_dsc_len - 1];
+        grid_calc_free(&calc);
     }
 
-    /*Invalidate the original area*/
-    lv_obj_invalidate(obj);
 
-    /*Save the original coordinates*/
-    lv_area_t ori;
-    lv_obj_get_coords(obj, &ori);
-
-    /*Set the length and height*/
-    obj->coords.y2 = obj->coords.y1 + h - 1;
-    if(lv_obj_get_base_dir(obj) == LV_BIDI_DIR_RTL) {
-        obj->coords.x1 = obj->coords.x2 - w + 1;
-    }
+    if(x_stretch) w = lv_obj_get_width(obj);
     else {
-        obj->coords.x2 = obj->coords.x1 + w - 1;
+        if(LV_COORD_IS_AUTO(obj->w_set)) {
+            lv_obj_scroll_to_x(obj, 0, LV_ANIM_OFF);
+            lv_coord_t scroll_right = lv_obj_get_scroll_right(obj);
+            w = lv_obj_get_width(obj) + scroll_right;
+            w = LV_MATH_MAX(w, grid_w);
+        }
     }
 
-    /*Send a signal to the object with its new coordinates*/
-    obj->signal_cb(obj, LV_SIGNAL_COORD_CHG, &ori);
-
-    /*Send a signal to the parent too*/
-    lv_obj_t * par = lv_obj_get_parent(obj);
-    if(par != NULL) par->signal_cb(par, LV_SIGNAL_CHILD_CHG, obj);
-
-    /*Tell the children the parent's size has changed*/
-    lv_obj_t * i;
-    _LV_LL_READ(obj->child_ll, i) {
-        i->signal_cb(i, LV_SIGNAL_PARENT_SIZE_CHG,  &ori);
+    if(y_stretch) h = lv_obj_get_height(obj);
+    else {
+        if(LV_COORD_IS_AUTO(obj->h_set) && !x_stretch) {
+            lv_obj_scroll_to_y(obj, 0, LV_ANIM_OFF);
+            lv_coord_t scroll_bottom = lv_obj_get_scroll_bottom(obj);
+            h = lv_obj_get_height(obj) + scroll_bottom;
+            h = LV_MATH_MAX(h, grid_h);
+        }
     }
 
-    /*Invalidate the new area*/
-    lv_obj_invalidate(obj);
+    bool chg = refr_size(obj, w, h);
 
-    /*Automatically realign the object if required*/
-#if LV_USE_OBJ_REALIGN
-    if(obj->realign.auto_realign) lv_obj_realign(obj);
-#endif
+    /*Refresh the position in the grid item if required*/
+    if(chg && (_GRID_IS_CELL(obj->x_set) || _GRID_IS_CELL(obj->y_set))) {
+        lv_grid_refresh_item_pos(obj);
+    }
 }
 
 /**
@@ -942,165 +1070,169 @@ void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_co
     LV_ASSERT_OBJ(base, LV_OBJX_NAME);
 
     obj_align_core(obj, base, align, true, true, x_ofs, y_ofs);
-
-#if LV_USE_OBJ_REALIGN
-    /*Save the last align parameters to use them in `lv_obj_realign`*/
-    obj->realign.align       = align;
-    obj->realign.xofs        = x_ofs;
-    obj->realign.yofs        = y_ofs;
-    obj->realign.base        = base;
-    obj->realign.mid_align = 0;
-#endif
 }
 
 /**
- * Align an object to an other object horizontally.
- * @param obj pointer to an object to align
- * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
- * @param align type of alignment (see 'lv_align_t' enum)
- * @param x_ofs x coordinate offset after alignment
+ * Moves all children with horizontally or vertically.
+ * It doesn't take into account any limits so any values are possible
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
  */
-void lv_obj_align_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs)
+void lv_obj_scroll_by_raw(lv_obj_t * obj, lv_coord_t x, lv_coord_t y)
 {
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+    obj->scroll.x += x;
+    obj->scroll.y += y;
 
-    if(base == NULL) base = lv_obj_get_parent(obj);
+    refresh_children_position(obj, x, y);
+    lv_signal_send(obj, LV_SIGNAL_SCROLL, NULL);
+    lv_obj_invalidate(obj);
+}
+/**
+ * Moves all children with horizontally or vertically.
+ * Limits the scroll to the bounding box of the children.
+ * @param obj pointer to an object whose children should be moved
+ * @param x pixel to move horizontally
+ * @param y pixels to move vertically
+ */
+void lv_obj_scroll_by(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en)
+{
 
-    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
+    if(x == 0 && y == 0) return;
 
-    obj_align_core(obj, base, align, true, false, x_ofs, 0);
+    if(anim_en == LV_ANIM_ON) {
+        lv_disp_t * d = lv_obj_get_disp(obj);
+        lv_anim_t a;
+        lv_anim_init(&a);
+        lv_anim_set_var(&a, obj);
+
+        lv_anim_path_t path;
+        lv_anim_path_init(&path);
+        lv_anim_path_set_cb(&path, lv_anim_path_ease_out);
+
+        if(x) {
+            lv_anim_set_time(&a, lv_anim_speed_to_time((lv_disp_get_hor_res(d) * 3) >> 2, 0, x));
+            lv_anim_set_values(&a, obj->scroll.x, obj->scroll.x + x);
+            lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t) scroll_anim_x_cb);
+            lv_anim_set_path(&a, &path);
+            lv_anim_start(&a);
+        }
+
+        if(y) {
+            lv_anim_set_time(&a, lv_anim_speed_to_time((lv_disp_get_ver_res(d) * 3) >> 2, 0, y));
+            lv_anim_set_values(&a, obj->scroll.y, obj->scroll.y + y);
+            lv_anim_set_exec_cb(&a,  (lv_anim_exec_xcb_t) scroll_anim_y_cb);
+            lv_anim_set_path(&a, &path);
+            lv_anim_start(&a);
+        }
+    } else {
+        lv_obj_scroll_by_raw(obj, x, y);
+    }
 }
 
 /**
- * Align an object to an other object vertically.
- * @param obj pointer to an object to align
- * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
- * @param align type of alignment (see 'lv_align_t' enum)
- * @param y_ofs y coordinate offset after alignment
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
+ * @param y the y coordinate to scroll to
  */
-void lv_obj_align_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs)
+void lv_obj_scroll_to(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en)
 {
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    if(base == NULL) base = lv_obj_get_parent(obj);
-
-    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
-
-    obj_align_core(obj, base, align, true, false, 0, y_ofs);
 }
 
 /**
- * Align an object's middle point to an other object.
- * @param obj pointer to an object to align
- * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
- * @param align type of alignment (see 'lv_align_t' enum)
- * @param x_ofs x coordinate offset after alignment
- * @param y_ofs y coordinate offset after alignment
+ * Scroll the a given x coordinate to the left side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param x the x coordinate to scroll to
  */
-void lv_obj_align_mid(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs)
+void lv_obj_scroll_to_x(lv_obj_t * obj, lv_coord_t x, lv_anim_enable_t anim_en)
+{
+    lv_obj_scroll_by(obj, -x - obj->scroll.x, 0, anim_en);
+}
+
+/**
+ * Scroll the a given y coordinate to the top side of obj.
+ * @param obj pointer to an object which should be scrolled
+ * @param y the y coordinate to scroll to
+ */
+void lv_obj_scroll_to_y(lv_obj_t * obj, lv_coord_t y, lv_anim_enable_t anim_en)
+{
+    lv_obj_scroll_by(obj, 0,  -y - obj->scroll.y, anim_en);
+}
+
+
+/**
+ * Return the height of the area above the parent.
+ * That is the number of pixels the object can be scrolled down.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
+ */
+lv_coord_t lv_obj_get_scroll_top(lv_obj_t * obj)
+{
+    return -obj->scroll.y;
+}
+
+/**
+ * Return the height of the area below the parent.
+ * That is the number of pixels the object can be scrolled up.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
+ */
+lv_coord_t lv_obj_get_scroll_bottom(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    if(base == NULL) {
-        base = lv_obj_get_parent(obj);
+    lv_coord_t y2 = LV_COORD_MIN;
+
+    lv_obj_t * child = lv_obj_get_child(obj, NULL);
+    if(child == NULL) return 0;
+
+    while(child) {
+        y2 = LV_MATH_MAX(y2, child->coords.y2 + lv_obj_get_style_margin_bottom(child, LV_OBJ_PART_MAIN));
+        child = lv_obj_get_child(obj, child);
     }
 
-    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
-
-
-    obj_align_mid_core(obj, base, align, true, true, x_ofs, y_ofs);
-
-#if LV_USE_OBJ_REALIGN
-    /*Save the last align parameters to use them in `lv_obj_realign`*/
-    obj->realign.align       = align;
-    obj->realign.xofs        = x_ofs;
-    obj->realign.yofs        = y_ofs;
-    obj->realign.base        = base;
-    obj->realign.mid_align = 1;
-#endif
+    return y2 - obj->coords.y2 + lv_obj_get_style_pad_bottom(obj, LV_OBJ_PART_MAIN);
 }
 
 /**
- * Align an object's middle point to an other object horizontally.
- * @param obj pointer to an object to align
- * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
- * @param align type of alignment (see 'lv_align_t' enum)
- * @param x_ofs x coordinate offset after alignment
+ * Return the weight of the area on the left the parent.
+ * That is the number of pixels the object can be scrolled down.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
  */
-void lv_obj_align_mid_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs)
+lv_coord_t lv_obj_get_scroll_left(lv_obj_t * obj)
+{
+    return -obj->scroll.x;
+}
+
+/**
+ * Return the width of the area below the object.
+ * That is the number of pixels the object can be scrolled left.
+ * Normally positive but can be negative when scrolled inside.
+ * @param obj
+ * @return
+ */
+lv_coord_t lv_obj_get_scroll_right(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    if(base == NULL) {
-        base = lv_obj_get_parent(obj);
+    lv_coord_t x2 = LV_COORD_MIN;
+
+    lv_obj_t * child = lv_obj_get_child(obj, NULL);
+    if(child == NULL) return 0;
+
+    while(child) {
+        x2 = LV_MATH_MAX(x2, child->coords.x2 + lv_obj_get_style_margin_right(child, LV_OBJ_PART_MAIN));
+        child = lv_obj_get_child(obj, child);
     }
 
-    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
-
-
-    obj_align_mid_core(obj, base, align, true, false, x_ofs, 0);
+    return x2 - obj->coords.x2  + lv_obj_get_style_pad_right(obj, LV_OBJ_PART_MAIN);
 }
-
-
-/**
- * Align an object's middle point to an other object vertically.
- * @param obj pointer to an object to align
- * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
- * @param align type of alignment (see 'lv_align_t' enum)
- * @param y_ofs y coordinate offset after alignment
- */
-void lv_obj_align_mid_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    if(base == NULL) {
-        base = lv_obj_get_parent(obj);
-    }
-
-    LV_ASSERT_OBJ(base, LV_OBJX_NAME);
-
-
-    obj_align_mid_core(obj, base, align, true, false, 0, y_ofs);
-}
-
-/**
- * Realign the object based on the last `lv_obj_align` parameters.
- * @param obj pointer to an object
- */
-void lv_obj_realign(lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-#if LV_USE_OBJ_REALIGN
-    if(obj->realign.mid_align)
-        lv_obj_align_mid(obj, obj->realign.base, obj->realign.align, obj->realign.xofs, obj->realign.yofs);
-    else
-        lv_obj_align(obj, obj->realign.base, obj->realign.align, obj->realign.xofs, obj->realign.yofs);
-#else
-    (void)obj;
-    LV_LOG_WARN("lv_obj_realign: no effect because LV_USE_OBJ_REALIGN = 0");
-#endif
-}
-
-/**
- * Enable the automatic realign of the object when its size has changed based on the last
- * `lv_obj_align` parameters.
- * @param obj pointer to an object
- * @param en true: enable auto realign; false: disable auto realign
- */
-void lv_obj_set_auto_realign(lv_obj_t * obj, bool en)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-#if LV_USE_OBJ_REALIGN
-    obj->realign.auto_realign = en ? 1 : 0;
-#else
-    (void)obj;
-    (void)en;
-    LV_LOG_WARN("lv_obj_set_auto_realign: no effect because LV_USE_OBJ_REALIGN = 0");
-#endif
-}
-
 
 /**
  * Set the size of an extended clickable area
@@ -1509,55 +1641,17 @@ void lv_obj_set_top(lv_obj_t * obj, bool en)
 }
 
 /**
- * Enable the dragging of an object
+ * Set how the scrollbars should behave.
  * @param obj pointer to an object
- * @param en true: make the object draggable
+ * @param mode: LV_SCROLL_MODE_ON/OFF/AUTO/ACTIVE
  */
-void lv_obj_set_drag(lv_obj_t * obj, bool en)
+void lv_obj_set_scroll_mode(lv_obj_t * obj, lv_scroll_mode_t mode)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    if(en == true) lv_obj_set_click(obj, true); /*Drag is useless without enabled clicking*/
-    obj->drag = (en == true ? 1 : 0);
-}
-
-/**
- * Set the directions an object can be dragged in
- * @param obj pointer to an object
- * @param drag_dir bitwise OR of allowed directions an object can be dragged in
- */
-void lv_obj_set_drag_dir(lv_obj_t * obj, lv_drag_dir_t drag_dir)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    obj->drag_dir = drag_dir;
-
-    if(obj->drag_dir != 0) lv_obj_set_drag(obj, true); /*Drag direction requires drag*/
-}
-
-/**
- * Enable the throwing of an object after is is dragged
- * @param obj pointer to an object
- * @param en true: enable the drag throw
- */
-void lv_obj_set_drag_throw(lv_obj_t * obj, bool en)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    obj->drag_throw = (en == true ? 1 : 0);
-}
-
-/**
- * Enable to use parent for drag related operations.
- * If trying to drag the object the parent will be moved instead
- * @param obj pointer to an object
- * @param en true: enable the 'drag parent' for the object
- */
-void lv_obj_set_drag_parent(lv_obj_t * obj, bool en)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    obj->drag_parent = (en == true ? 1 : 0);
+    if(obj->scroll_mode == mode) return;
+    obj->scroll_mode = mode;
+    lv_obj_invalidate(obj);
 }
 
 /**
@@ -2176,6 +2270,37 @@ void lv_obj_get_coords(const lv_obj_t * obj, lv_area_t * cords_p)
 }
 
 /**
+ * Get a bounding which includes all the the children.
+ * `margin` of the children also taken into account and makes the box larger (if positive)
+ * @param obj pointer to an object
+ * @param coords pointer to an area to store the coordinates
+ * @return LV_RES_INV: `obj` has no children and `coords` can't be set; `LV_RES_OK`: success
+ */
+lv_res_t lv_obj_get_children_box(const lv_obj_t * obj, lv_area_t * coords)
+{
+    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+
+    coords->x1 = LV_COORD_MAX;
+    coords->y1 = LV_COORD_MAX;
+    coords->x2 = LV_COORD_MIN;
+    coords->y2 = LV_COORD_MIN;
+
+    lv_obj_t * child = lv_obj_get_child(obj, NULL);
+    if(child == NULL) return LV_RES_INV;
+
+    while(child) {
+        coords->x1 = LV_MATH_MIN(coords->x1, child->coords.x1 - lv_obj_get_style_margin_left(child, LV_OBJ_PART_MAIN));
+        coords->y1 = LV_MATH_MIN(coords->y1, child->coords.y1 - lv_obj_get_style_margin_top(child, LV_OBJ_PART_MAIN));
+        coords->x2 = LV_MATH_MAX(coords->x2, child->coords.x2 + lv_obj_get_style_margin_right(child, LV_OBJ_PART_MAIN));
+        coords->y2 = LV_MATH_MAX(coords->y2, child->coords.y2 + lv_obj_get_style_margin_bottom(child, LV_OBJ_PART_MAIN));
+
+        child = lv_obj_get_child(obj, child);
+    }
+
+    return LV_RES_OK;
+}
+
+/**
  * Reduce area retried by `lv_obj_get_coords()` the get graphically usable area of an object.
  * (Without the size of the border or other extra graphical elements)
  * @param coords_p store the result area here
@@ -2208,7 +2333,9 @@ lv_coord_t lv_obj_get_x(const lv_obj_t * obj)
     lv_coord_t rel_x;
     lv_obj_t * parent = lv_obj_get_parent(obj);
     if(parent) {
-        rel_x             = obj->coords.x1 - parent->coords.x1;
+        rel_x   = obj->coords.x1 - parent->coords.x1;
+        rel_x += lv_obj_get_scroll_left(parent);
+        rel_x -= lv_obj_get_style_pad_left(parent, LV_OBJ_PART_MAIN);
     }
     else {
         rel_x = obj->coords.x1;
@@ -2228,7 +2355,9 @@ lv_coord_t lv_obj_get_y(const lv_obj_t * obj)
     lv_coord_t rel_y;
     lv_obj_t * parent = lv_obj_get_parent(obj);
     if(parent) {
-        rel_y             = obj->coords.y1 - parent->coords.y1;
+        rel_y = obj->coords.y1 - parent->coords.y1;
+        rel_y += lv_obj_get_scroll_top(parent);
+        rel_y -= lv_obj_get_style_pad_top(parent, LV_OBJ_PART_MAIN);
     }
     else {
         rel_y = obj->coords.y1;
@@ -2358,23 +2487,6 @@ lv_coord_t lv_obj_get_height_grid(lv_obj_t * obj, uint8_t div, uint8_t span)
 
     r = r * span + (span - 1) * pinner;
     return r;
-}
-
-/**
- * Get the automatic realign property of the object.
- * @param obj pointer to an object
- * @return  true: auto realign is enabled; false: auto realign is disabled
- */
-bool lv_obj_get_auto_realign(const lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-#if LV_USE_OBJ_REALIGN
-    return obj->realign.auto_realign ? true : false;
-#else
-    (void)obj;
-    return false;
-#endif
 }
 
 /**
@@ -2605,6 +2717,8 @@ lv_style_int_t _lv_obj_get_style_int(const lv_obj_t * obj, uint8_t part, lv_styl
             return 255;
         case LV_STYLE_TRANSFORM_ZOOM:
             return LV_IMG_ZOOM_NONE;
+        case LV_STYLE_SCROLLBAR_TICKNESS:
+            return LV_DPX(10);
     }
 
     return 0;
@@ -2892,49 +3006,15 @@ bool lv_obj_get_top(const lv_obj_t * obj)
 }
 
 /**
- * Get the drag enable attribute of an object
+ * Get how the scrollbars should behave.
  * @param obj pointer to an object
- * @return true: the object is draggable
+ * @return mode: LV_SCROLL_MODE_ON/OFF/AUTO/ACTIVE
  */
-bool lv_obj_get_drag(const lv_obj_t * obj)
+lv_scroll_mode_t lv_obj_get_scroll_mode(lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
 
-    return obj->drag == 0 ? false : true;
-}
-
-/**
- * Get the directions an object can be dragged
- * @param obj pointer to an object
- * @return bitwise OR of allowed directions an object can be dragged in
- */
-lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    return obj->drag_dir;
-}
-
-/**
- * Get the drag throw enable attribute of an object
- * @param obj pointer to an object
- * @return true: drag throw is enabled
- */
-bool lv_obj_get_drag_throw(const lv_obj_t * obj)
-{
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
-
-    return obj->drag_throw == 0 ? false : true;
-}
-
-/**
- * Get the drag parent attribute of an object
- * @param obj pointer to an object
- * @return true: drag parent is enabled
- */
-bool lv_obj_get_drag_parent(const lv_obj_t * obj)
-{
-    return obj->drag_parent == 0 ? false : true;
+    return obj->scroll_mode;
 }
 
 /**
@@ -2958,9 +3038,9 @@ bool lv_obj_get_focus_parent(const lv_obj_t * obj)
 }
 
 /**
- * Get the drag parent attribute of an object
+ * Get the parent event attribute of an object
  * @param obj pointer to an object
- * @return true: drag parent is enabled
+ * @return true: parent event is enabled
  */
 bool lv_obj_get_parent_event(const lv_obj_t * obj)
 {
@@ -3829,6 +3909,10 @@ static lv_design_res_t lv_obj_design(lv_obj_t * obj, const lv_area_t * clip_area
         }
     }
     else if(mode == LV_DESIGN_DRAW_POST) {
+
+
+        scrollbar_draw(obj, clip_area);
+
         if(lv_obj_get_style_clip_corner(obj, LV_OBJ_PART_MAIN)) {
             lv_draw_mask_radius_param_t * param = lv_draw_mask_remove_custom(obj + 8);
             _lv_mem_buf_release(param);
@@ -3899,17 +3983,43 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         /*Return 'invalid' if the child change signal is not enabled*/
         if(lv_obj_is_protected(obj, LV_PROTECT_CHILD_CHG) != false) res = LV_RES_INV;
     }
+    else if(sign == LV_SIGNAL_SCROLL) {
+
+    }
+    else if(sign == LV_SIGNAL_SCROLL_END) {
+
+        lv_coord_t st = lv_obj_get_scroll_top(obj);
+        lv_coord_t sb = lv_obj_get_scroll_bottom(obj);
+        lv_coord_t sl = lv_obj_get_scroll_left(obj);
+        lv_coord_t sr = lv_obj_get_scroll_right(obj);
+
+        /*Revert if scrolled in*/
+        if(st > 0 || sb > 0) { /*Is vertically scrollable*/
+            if(st < 0) {
+                lv_obj_scroll_by(obj, 0, st, LV_ANIM_ON);
+            }
+            else if(sb < 0) {
+                lv_obj_scroll_by(obj, 0, -sb, LV_ANIM_ON);
+            }
+        }
+        if(sl > 0 || sr > 0) { /*Is horizontally scrollable*/
+            if(sl < 0) {
+                lv_obj_scroll_by(obj, sl, 0, LV_ANIM_ON);
+            }
+            else if(sr < 0) {
+                lv_obj_scroll_by(obj, -sr, 0, LV_ANIM_ON);
+            }
+        }
+
+        if(lv_obj_get_scroll_mode(obj) == LV_SCROLL_MODE_ACTIVE) {
+            lv_obj_invalidate(obj);
+        }
+
+    }
     else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
         lv_coord_t d = lv_obj_get_draw_rect_ext_pad_size(obj, LV_OBJ_PART_MAIN);
         obj->ext_draw_pad = LV_MATH_MAX(obj->ext_draw_pad, d);
     }
-#if LV_USE_OBJ_REALIGN
-    else if(sign == LV_SIGNAL_PARENT_SIZE_CHG) {
-        if(obj->realign.auto_realign) {
-            lv_obj_realign(obj);
-        }
-    }
-#endif
     else if(sign == LV_SIGNAL_STYLE_CHG) {
         lv_obj_refresh_ext_draw_pad(obj);
     }
@@ -4004,6 +4114,7 @@ static void report_style_mod_core(void * style, lv_obj_t * obj)
     }
 
 }
+
 
 /**
  * Recursively refresh the style of the children. Go deeper until a not NULL style is found
@@ -4441,6 +4552,16 @@ static void fade_in_anim_ready(lv_anim_t * a)
     lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 }
 
+
+static void scroll_anim_x_cb(lv_obj_t * obj, lv_anim_value_t v)
+{
+    lv_obj_scroll_by_raw(obj, v - obj->scroll.x, 0);
+}
+
+static void scroll_anim_y_cb(lv_obj_t * obj, lv_anim_value_t v)
+{
+    lv_obj_scroll_by_raw(obj, 0, v - obj->scroll.y);
+}
 #endif
 
 static void lv_event_mark_deleted(lv_obj_t * obj)
@@ -4467,6 +4588,171 @@ static bool obj_valid_child(const lv_obj_t * parent, const lv_obj_t * obj_to_fin
 
     return false;
 }
+
+
+static lv_res_t scrollbar_init_draw_dsc(lv_obj_t * obj, lv_draw_rect_dsc_t * dsc)
+{
+    lv_draw_rect_dsc_init(dsc);
+    dsc->bg_opa = lv_obj_get_style_scrollbar_bg_opa(obj, LV_OBJ_PART_MAIN);
+    if(dsc->bg_opa > LV_OPA_MIN) {
+        dsc->bg_color = lv_obj_get_style_scrollbar_bg_color(obj, LV_OBJ_PART_MAIN);
+    }
+
+    dsc->border_opa = lv_obj_get_style_scrollbar_border_opa(obj, LV_OBJ_PART_MAIN);
+    if(dsc->border_opa > LV_OPA_MIN) {
+        dsc->border_width = lv_obj_get_style_scrollbar_border_width(obj, LV_OBJ_PART_MAIN);
+        if(dsc->border_width > 0) {
+            dsc->border_color = lv_obj_get_style_scrollbar_border_color(obj, LV_OBJ_PART_MAIN);
+        } else {
+            dsc->border_opa = LV_OPA_TRANSP;
+        }
+    }
+
+    if(dsc->bg_opa != LV_OPA_TRANSP || dsc->border_opa != LV_OPA_TRANSP) {
+        dsc->radius = lv_obj_get_style_scrollbar_radius(obj, LV_OBJ_PART_MAIN);
+        return LV_RES_OK;
+    } else {
+        return LV_RES_INV;
+    }
+}
+
+static void scrollbar_draw(lv_obj_t * obj, const lv_area_t * clip_area)
+{
+    lv_scroll_dir_t sm = lv_obj_get_scroll_mode(obj);
+    if(sm == LV_SCROLL_MODE_OFF) {
+        return;
+    }
+
+    lv_coord_t st = lv_obj_get_scroll_top(obj);
+    lv_coord_t sb = lv_obj_get_scroll_bottom(obj);
+    lv_coord_t sl = lv_obj_get_scroll_left(obj);
+    lv_coord_t sr = lv_obj_get_scroll_right(obj);
+
+    /*Return if too small content to scroll*/
+    if(sm == LV_SCROLL_MODE_AUTO && st <= 0  && sb <= 0 && sl <= 0  && sr <= 0) {
+        return;
+    }
+
+    /*If there is no indev scrolling this object but the moe is active return*/
+    lv_indev_t * indev = lv_indev_get_next(NULL);
+    if(sm == LV_SCROLL_MODE_ACTIVE) {
+        bool found = false;
+        while(indev) {
+            if(lv_indev_get_scroll_obj(indev) == obj) {
+                found = true;
+                break;
+            }
+            indev = lv_indev_get_next(indev);
+        }
+        if(!found) {
+            return;
+        }
+    }
+
+    lv_coord_t end_space = lv_obj_get_style_scrollbar_space_end(obj, LV_OBJ_PART_MAIN);
+    lv_coord_t side_space = lv_obj_get_style_scrollbar_space_side(obj, LV_OBJ_PART_MAIN);
+    lv_coord_t tickness = lv_obj_get_style_scrollbar_tickness(obj, LV_OBJ_PART_MAIN);
+
+    lv_coord_t obj_h = lv_obj_get_height(obj);
+    lv_coord_t obj_w = lv_obj_get_width(obj);
+
+    bool ver_draw = false;
+    if((sm == LV_SCROLL_MODE_ON) ||
+       (sm == LV_SCROLL_MODE_AUTO && (st > 0 || sb > 0)) ||
+       (sm == LV_SCROLL_MODE_ACTIVE && lv_indev_get_scroll_dir(indev) == LV_SCROLL_DIR_VER)) {
+        ver_draw = true;
+    }
+
+    bool hor_draw = false;
+    if((sm == LV_SCROLL_MODE_ON) ||
+       (sm == LV_SCROLL_MODE_AUTO && (sl > 0 || sr > 0)) ||
+       (sm == LV_SCROLL_MODE_ACTIVE && lv_indev_get_scroll_dir(indev) == LV_SCROLL_DIR_HOR)) {
+        hor_draw = true;
+    }
+
+    lv_coord_t ver_reg_space = ver_draw ? tickness + side_space : 0;
+    lv_coord_t hor_req_space = hor_draw ? tickness + side_space : 0;
+    lv_coord_t rem;
+
+    lv_draw_rect_dsc_t draw_dsc;
+    lv_res_t sb_res = scrollbar_init_draw_dsc(obj, &draw_dsc);
+    if(sb_res != LV_RES_OK) return;
+
+    lv_area_t area;
+    area.y1 = obj->coords.y1;
+    area.y2 = obj->coords.y2;
+    area.x2 = obj->coords.x2 - side_space;
+    area.x1 = area.x2 - tickness;
+
+    /*Draw horizontal scrollbar if the mode is ON or can be scrolled in this direction*/
+    if(ver_draw && _lv_area_is_on(&area, clip_area)) {
+        lv_coord_t content_h = obj_h + st + sb;
+        lv_coord_t sb_h = ((obj_h - end_space * 2 - hor_req_space) * obj_h) / content_h;
+        sb_h = LV_MATH_MAX(sb_h, SCROLLBAR_MIN_SIZE);
+        rem = (obj_h - end_space * 2 - hor_req_space) - sb_h;  /*Remaining size from the scrollbar track that is not the scrollbar itself*/
+        lv_coord_t scroll_h = content_h - obj_h; /*The size of the content which can be really scrolled*/
+        if(scroll_h <= 0) {
+            area.y1 = obj->coords.y1 + end_space;
+            area.y2 = obj->coords.y2 - end_space - hor_req_space - 1;
+            area.x2 = obj->coords.x2 - side_space;
+            area.x1 = area.x2 - tickness + 1;
+        } else {
+            lv_coord_t sb_y = (rem * sb) / scroll_h;
+            sb_y = rem - sb_y;
+
+            area.y1 = obj->coords.y1 + sb_y + end_space;
+            area.y2 = area.y1 + sb_h - 1;
+            area.x2 = obj->coords.x2 - side_space;
+            area.x1 = area.x2 - tickness;
+            if(area.y1 < obj->coords.y1 + end_space) {
+                area.y1 = obj->coords.y1 + end_space;
+                if(area.y1 + SCROLLBAR_MIN_SIZE > area.y2) area.y2 = area.y1 + SCROLLBAR_MIN_SIZE;
+            }
+            if(area.y2 > obj->coords.y2 - hor_req_space - end_space) {
+                area.y2 = obj->coords.y2 - hor_req_space - end_space;
+                if(area.y2 - SCROLLBAR_MIN_SIZE < area.y1) area.y1 = area.y2 - SCROLLBAR_MIN_SIZE;
+            }
+        }
+        lv_draw_rect(&area, clip_area, &draw_dsc);
+    }
+
+    area.y2 = obj->coords.y2 - side_space;
+    area.y1 =area.y2 - tickness;
+    area.x1 = obj->coords.x1;
+    area.x2 = obj->coords.x2;
+    /*Draw horizontal scrollbar if the mode is ON or can be scrolled in this direction*/
+    if(hor_draw && _lv_area_is_on(&area, clip_area)) {
+        lv_coord_t content_w = obj_w + sl + sr;
+        lv_coord_t sb_w = ((obj_w - end_space * 2 - ver_reg_space) * obj_w) / content_w;
+        sb_w = LV_MATH_MAX(sb_w, SCROLLBAR_MIN_SIZE);
+        rem = (obj_w - end_space * 2 - ver_reg_space) - sb_w;  /*Remaining size from the scrollbar track that is not the scrollbar itself*/
+        lv_coord_t scroll_w = content_w - obj_w; /*The size of the content which can be really scrolled*/
+        if(scroll_w <= 0) {
+            area.y2 = obj->coords.y2 - side_space;
+            area.y1 = area.y2 - tickness + 1;
+            area.x1 = obj->coords.x1 + end_space;
+            area.x2 = obj->coords.x2 - end_space - ver_reg_space - 1;
+        } else {
+            lv_coord_t sb_x = (rem * sr) / scroll_w;
+            sb_x = rem - sb_x;
+
+            area.x1 = obj->coords.x1 + sb_x + end_space;
+            area.x2 = area.x1 + sb_w - 1;
+            area.y2 = obj->coords.y2 - side_space;
+            area.y1 = area.y2 - tickness;
+            if(area.x1 < obj->coords.x1 + end_space) {
+                area.x1 = obj->coords.x1 + end_space;
+                if(area.x1 + SCROLLBAR_MIN_SIZE > area.x2) area.x2 = area.x1 + SCROLLBAR_MIN_SIZE;
+            }
+            if(area.x2 > obj->coords.x2 - ver_reg_space - end_space) {
+                area.x2 = obj->coords.x2 - ver_reg_space - end_space;
+                if(area.x2 - SCROLLBAR_MIN_SIZE < area.x1) area.x1 = area.x2 - SCROLLBAR_MIN_SIZE;
+            }
+        }
+        lv_draw_rect(&area, clip_area, &draw_dsc);
+    }
+}
+
 
 static bool style_prop_is_cacheble(lv_style_property_t prop)
 {
@@ -4665,4 +4951,3 @@ static void invalidate_style_cache(lv_obj_t * obj, uint8_t part, lv_style_proper
         child = lv_obj_get_child(obj, child);
     }
 }
-
