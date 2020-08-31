@@ -457,11 +457,10 @@ bool lv_page_on_edge(lv_obj_t * page, lv_page_edge_t edge)
 
 /**
  * Glue the object to the page. After it the page can be moved (dragged) with this object too.
- * @param page pointer to a page object
  * @param obj pointer to an object on a page
  * @param glue true: enable glue, false: disable glue
  */
-void lv_page_glue_obj(lv_obj_t * page, lv_obj_t * obj, bool glue)
+void lv_page_glue_obj(lv_obj_t * obj, bool glue)
 {
     lv_obj_set_drag_parent(obj, glue);
     lv_obj_set_drag(obj, glue);
@@ -933,7 +932,7 @@ static lv_res_t lv_page_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, voi
             if(parent_ext->scroll_prop_obj == NULL) {
                 /*If the dragging just started or scroll is already propagated to this object
                  *  enable the scroll propagation if the conditions are met*/
-                if((lv_indev_is_scrolling(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
+                if((lv_indev_is_dragging(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
                     /*Propagate vertically?*/
                     if((drag_sum->y > 0 && lv_page_on_edge(page, LV_PAGE_EDGE_TOP)) ||
                        (drag_sum->y < 0 && lv_page_on_edge(page, LV_PAGE_EDGE_BOTTOM))) {
