@@ -572,9 +572,14 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
 
     /*If this object is fully cover the draw area check the children too */
     if(_lv_area_is_in(area_p, &obj->coords, 0) && obj->hidden == 0) {
-        lv_design_res_t design_res = obj->design_cb ? obj->design_cb(obj, area_p,
-                                                                     LV_DESIGN_COVER_CHK) : LV_DESIGN_RES_NOT_COVER;
+        lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
         if(design_res == LV_DESIGN_RES_MASKED) return NULL;
+
+#if LV_USE_OPA_SCALE
+        if(design_res == LV_DESIGN_RES_COVER && lv_obj_get_style_opa_scale(obj, LV_OBJ_PART_MAIN) != LV_OPA_COVER) {
+            design_res = LV_DESIGN_RES_NOT_COVER;
+        }
+#endif
 
         lv_obj_t * i;
         _LV_LL_READ(obj->child_ll, i) {
@@ -678,7 +683,7 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
         draw_dsc.bg_color.full = debug_color.full;
         draw_dsc.bg_opa = LV_OPA_20;
         draw_dsc.border_width = 2;
-        draw_dsc.border_opa = LV_OPA_70;
+        draw_dsc.border_opa = LV_OPA_50;
         draw_dsc.border_color.full = (debug_color.full + 0x13) * 9;
 
         lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &draw_dsc);
@@ -741,6 +746,8 @@ static void lv_refr_vdb_flush(void)
 
     /*Flush the rendered content to the display*/
     lv_disp_t * disp = _lv_refr_get_disp_refreshing();
+    if (disp->driver.gpu_wait_cb) disp->driver.gpu_wait_cb(&disp->driver);
+
     if(disp->driver.flush_cb) disp->driver.flush_cb(&disp->driver, &vdb->area, vdb->buf_act);
 
     if(vdb->buf1 && vdb->buf2) {

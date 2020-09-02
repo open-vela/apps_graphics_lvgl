@@ -170,7 +170,7 @@ lv_obj_t * lv_list_add_btn(lv_obj_t * list, const void * img_src, const char * t
     /*Set the default styles*/
     lv_theme_apply(btn, LV_THEME_LIST_BTN);
 
-    lv_page_glue_obj(list, btn, true);
+    lv_page_glue_obj(btn, true);
     lv_btn_set_layout(btn, LV_LAYOUT_ROW_MID);
 
     lv_layout_t list_layout = lv_list_get_layout(list);
@@ -688,7 +688,7 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
                         res = lv_event_send(ext->act_sel_btn, LV_EVENT_SHORT_CLICKED, NULL);
                         if(res != LV_RES_OK) return res;
                     }
-                    if(lv_indev_is_scrolling(indev) == false) {
+                    if(lv_indev_is_dragging(indev) == false) {
                         res = lv_event_send(ext->act_sel_btn, LV_EVENT_CLICKED, NULL);
                         if(res != LV_RES_OK) return res;
                     }
@@ -811,7 +811,7 @@ static lv_res_t lv_list_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * para
         }
     }
     else if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
+        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
             lv_obj_t * list = lv_obj_get_parent(lv_obj_get_parent(btn));
             lv_list_focus_btn(list, btn);
 #if LV_USE_GROUP
