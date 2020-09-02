@@ -1,25 +1,14 @@
 # Changelog
 
-## v7.5.0 (planned at 15.09.2020)
+## v7.4.0 (planned on 01.09.2020)
 
 ### New features
-- Add `clean_dcache_cb` and `lv_disp_clean_dcache` to enable users to use their own cache management function
-- Add `gpu_wait_cb` to wait until the GPU is working. It allows to run CPU a wait only when the rendered data is needed.
-
-### Bugfixes
-
-
-## v7.4.0 (01.09.2020)
-
-The main new features of v7.4 are run-time font loading, style caching and arc knob with value setting by click.
-
-### New features
-- Add `lv_font_load()` function - Loads a `lv_font_t` object from a binary font file
-- Add `lv_font_free()` function - Frees the memory allocated by the `lv_font_load()` function
-- Add style caching to reduce acces time of properties with default value
 - arc: add set value by click feature
 - arc: add `LV_ARC_PART_KNOB` similarly to slider
 - send gestures even is the the obejct was dragged. User can check dragging with `lv_indev_is_dragging(lv_indev_act())` in the event function. 
+- Add `lv_font_load()` function - Loads a `lv_font_t` object from a binary font file
+- Add `lv_font_free()` function - Frees the memory allocated by the `lv_font_load()` function
+- Add style caching to reduce acces time of properties with default value
 
 ### Bugfixes
 - Fix color bleeding on border drawing
@@ -28,7 +17,6 @@ The main new features of v7.4 are run-time font loading, style caching and arc k
 - Fix zooming and rotateing mosaic images
 - Fix deleting tabview with LEFT/RIGHT tab position
 - Fix btnmatrix to not send event when CLICK_TRIG = true and the cursor slid from a pressed button
-- Fix roller width if selected text is larger than the normal
 
 ## v7.3.1 (18.08.2020)
 
