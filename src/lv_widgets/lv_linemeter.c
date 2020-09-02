@@ -520,11 +520,14 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
         p1.y = y_out_extra;
 
         /* Set the color of the lines */
+<<<<<<< HEAD
+        uint16_t index = ext->mirrored ? ext->line_cnt - i : i;
+=======
+>>>>>>> master
         if((!ext->mirrored && i >= level) || (ext->mirrored && i <= level)) {
             line_dsc.color = end_color;
             line_dsc.width = end_line_width;
-        }
-        else {
+        } else {
             line_dsc.color = lv_color_mix(grad_color, main_color, (255 * i) / ext->line_cnt);
         }
 
