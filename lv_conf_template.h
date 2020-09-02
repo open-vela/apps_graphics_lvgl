@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v7.6.0-dev
+ * Configuration file for v7.5.0-dev
  */
 
 /*
@@ -653,7 +653,7 @@ typedef void * lv_obj_user_data_t;
  * 1: Some extra precision
  * 2: Best precision
  */
-#  define LV_LINEMETER_PRECISE    1
+#  define LV_LINEMETER_PRECISE    0
 #endif
 
 /*Mask (dependencies: -)*/
