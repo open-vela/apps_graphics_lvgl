@@ -1,10 +1,10 @@
 /**
- * @file lv_test_label.h
+ * @file lv_test_obj.h
  *
  */
 
-#ifndef LV_TEST_LABEL_H
-#define LV_TEST_LABEL_H
+#ifndef LV_TEST_CONT_H
+#define LV_TEST_CONT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +25,7 @@ extern "C" {
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-void lv_test_label(void);
+void lv_test_cont(void);
 
 /**********************
  *      MACROS

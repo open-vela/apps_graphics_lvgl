@@ -7,7 +7,6 @@
  *      INCLUDES
  *********************/
 #include "lv_gpu_stm32_dma2d.h"
-#include "../lv_core/lv_disp.h"
 #include "../lv_core/lv_refr.h"
 
 #if LV_USE_GPU_STM32_DMA2D
@@ -217,10 +216,11 @@ void lv_gpu_stm32_dma2d_blend(lv_color_t * buf, lv_coord_t buf_w, const lv_color
 
 static void invalidate_cache(void)
 {
-    lv_disp_t * disp = _lv_refr_get_disp_refreshing();
-    if(disp->driver.clean_dcache_cb) disp->driver.clean_dcache_cb(&disp->driver);
-    else
+#if __DCACHE_PRESENT
+    if(SCB->CCR & (uint32_t)SCB_CCR_DC_Msk) {
         SCB_CleanInvalidateDCache();
+    }
+#endif
 }
 
 static void dma2d_wait(void)

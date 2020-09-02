@@ -28,8 +28,7 @@
 /*********************
  *      DEFINES
  *********************/
-//#define REF_IMGS_PATH "lvgl/tests/lv_test_ref_imgs/"
-#define REF_IMGS_PATH "lv_test_ref_imgs/"
+#define REF_IMGS_PATH "lvgl/tests/lv_test_ref_imgs/"
 
 /**********************
  *      TYPEDEFS
@@ -178,16 +177,6 @@ void lv_test_assert_color_eq(lv_color_t c_ref, lv_color_t c_act, const char * s)
 
 void lv_test_assert_img_eq(const char * fn_ref, const char * s)
 {
-#if LV_COLOR_DEPTH != 32
-    lv_test_print("   SKIP: Can't compare '%s' because LV_COLOR_DEPTH != 32", fn_ref);
-    return;
-#endif
-
-#if LV_HOR_RES_MAX != 800 || LV_VER_RES_MAX != 480
-    lv_test_print("   SKIP: Can't compare '%s' because the resolution needs to be 800x480 (LV_HOR_RES_MAX, LV_VER_RES_MAX)", fn_ref);
-    return;
-#endif
-
     char fn_ref_full[512];
     sprintf(fn_ref_full, "%s%s", REF_IMGS_PATH, fn_ref);
 
@@ -196,23 +185,16 @@ void lv_test_assert_img_eq(const char * fn_ref, const char * s)
     uint8_t * screen_buf;
 
     lv_disp_t * disp = lv_disp_get_default();
-    lv_obj_invalidate(lv_disp_get_scr_act(disp));
     lv_refr_now(disp);
-
-    extern lv_color_t test_fb[];
-
-    screen_buf = (uint8_t *)test_fb;
-
-    uint8_t * ptr_act = NULL;
-    const png_byte* ptr_ref = NULL;
+    screen_buf = disp->driver.buffer->buf1;
 
     bool err = false;
     int x, y, i_buf = 0;
     for (y=0; y<p.height; y++) {
         png_byte* row = p.row_pointers[y];
         for (x=0; x<p.width; x++) {
-            ptr_ref = &(row[x*3]);
-            ptr_act = &(screen_buf[i_buf*4]);
+            const png_byte* ptr_ref = &(row[x*3]);
+            uint8_t * ptr_act = &(screen_buf[i_buf*4]);
             uint8_t tmp = ptr_act[0];
             ptr_act[0] = ptr_act[2];
             ptr_act[2] = tmp;
@@ -229,11 +211,7 @@ void lv_test_assert_img_eq(const char * fn_ref, const char * s)
     png_release(&p);
 
     if(err) {
-        uint32_t ref_px = 0;
-        uint32_t act_px = 0;
-        memcpy(&ref_px, ptr_ref, 3);
-        memcpy(&act_px, ptr_act, 3);
-        lv_test_error("   FAIL: %s. (Expected:  %s, diff. at (%d;%d), %08x instead of %08x)", s, fn_ref, x, y, act_px, ref_px);
+        lv_test_error("   FAIL: %s. (Expected:  %s)", s, fn_ref);
     } else {
         lv_test_print("   PASS: %s. (Expected: %s)", s, fn_ref);
     }
@@ -356,7 +334,7 @@ static void png_release(png_img_t * p)
           free(p->row_pointers[y]);
       free(p->row_pointers);
 }
-
+//
 //static void process_file(png_img_t * p)
 //{
 //    if (png_get_color_type(p->png_ptr, p->info_ptr) == PNG_COLOR_TYPE_RGB)
