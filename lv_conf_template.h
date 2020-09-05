@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v7.6.0-dev
+ * Configuration file for v7.6.0-dev-dev
  */
 
 /*
@@ -653,7 +653,7 @@ typedef void * lv_obj_user_data_t;
  * 1: Some extra precision
  * 2: Best precision
  */
-#  define LV_LINEMETER_PRECISE    1
+#  define LV_LINEMETER_PRECISE    0
 #endif
 
 /*Mask (dependencies: -)*/
@@ -686,6 +686,9 @@ typedef void * lv_obj_user_data_t;
 /*Number of extra "pages" when the roller is infinite*/
 #  define LV_ROLLER_INF_PAGES         7
 #endif
+
+/*Rotary (dependencies: lv_arc, lv_btn)*/
+#define LV_USE_ROTARY     1
 
 /*Slider (dependencies: lv_bar)*/
 #define LV_USE_SLIDER    1
