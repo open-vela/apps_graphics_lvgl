@@ -197,16 +197,6 @@ enum {
     LV_STYLE_PROP_INIT(LV_STYLE_SCALE_END_LINE_WIDTH,   0xC, LV_STYLE_ID_VALUE + 3, LV_STYLE_ATTR_NONE),
     LV_STYLE_PROP_INIT(LV_STYLE_SCALE_GRAD_COLOR,       0xC, LV_STYLE_ID_COLOR + 0, LV_STYLE_ATTR_NONE),
     LV_STYLE_PROP_INIT(LV_STYLE_SCALE_END_COLOR,        0xC, LV_STYLE_ID_COLOR + 1, LV_STYLE_ATTR_NONE),
-
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_TICKNESS,            0xD, LV_STYLE_ID_VALUE + 0, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_SPACE_SIDE,       0xD, LV_STYLE_ID_VALUE + 1, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_SPACE_END,        0xD, LV_STYLE_ID_VALUE + 2, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_RADIUS,           0xD, LV_STYLE_ID_VALUE + 3, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_BORDER_WIDTH,     0xD, LV_STYLE_ID_VALUE + 4, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_BG_COLOR,         0xD, LV_STYLE_ID_COLOR + 0, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_BORDER_COLOR,     0xD, LV_STYLE_ID_COLOR + 1, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_BG_OPA,           0xD, LV_STYLE_ID_OPA + 0, LV_STYLE_ATTR_NONE),
-    LV_STYLE_PROP_INIT(LV_STYLE_SCROLLBAR_BORDER_OPA,       0xD, LV_STYLE_ID_OPA + 1, LV_STYLE_ATTR_NONE),
 };
 
 typedef uint16_t lv_style_property_t;
@@ -231,7 +221,7 @@ typedef struct {
 #if LV_USE_ASSERT_STYLE
     uint32_t sentinel;
 #endif
-    uint32_t style_cnt     : 5;
+    uint32_t style_cnt     : 6;
     uint32_t has_local     : 1;
     uint32_t has_trans     : 1;
     uint32_t skip_trans    : 1;      /*1: Temporally skip the transition style if any*/
@@ -244,7 +234,6 @@ typedef struct {
     uint32_t clip_corner_off       : 1;
     uint32_t transform_all_zero  : 1;
     uint32_t pad_all_zero : 1;
-    uint32_t margin_all_zero : 1;
     uint32_t blend_mode_all_normal : 1;
     uint32_t bg_opa_transp : 1;
     uint32_t bg_opa_cover : 1;

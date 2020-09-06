@@ -18,7 +18,6 @@ extern "C" {
 #include <stddef.h>
 #include <stdbool.h>
 #include "lv_style.h"
-#include "lv_grid.h"
 #include "../lv_misc/lv_types.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_color.h"
@@ -86,16 +85,15 @@ enum {
     LV_EVENT_PRESSED,             /**< The object has been pressed*/
     LV_EVENT_PRESSING,            /**< The object is being pressed (called continuously while pressing)*/
     LV_EVENT_PRESS_LOST,          /**< User is still pressing but slid cursor/finger off of the object */
-    LV_EVENT_SHORT_CLICKED,       /**< User pressed object for a short period of time, then released it. Not called if scrolled. */
-    LV_EVENT_LONG_PRESSED,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if scrolled.*/
+    LV_EVENT_SHORT_CLICKED,       /**< User pressed object for a short period of time, then released it. Not called if dragged. */
+    LV_EVENT_LONG_PRESSED,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
     LV_EVENT_LONG_PRESSED_REPEAT, /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every
-                                       `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if scrolled.*/
-    LV_EVENT_CLICKED,             /**< Called on release if not scrolled (regardless to long press)*/
+                                       `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
+    LV_EVENT_CLICKED,             /**< Called on release if not dragged (regardless to long press)*/
     LV_EVENT_RELEASED,            /**< Called in every cases when the object has been released*/
-    LV_EVENT_SCROLL_BEGIN,
-    LV_EVENT_SCROLL_THROW_BEGIN,
-    LV_EVENT_SCROLL_END,
-    LV_EVENT_SCROLLED,
+    LV_EVENT_DRAG_BEGIN,
+    LV_EVENT_DRAG_END,
+    LV_EVENT_DRAG_THROW_BEGIN,
     LV_EVENT_GESTURE,           /**< The object has been gesture*/
     LV_EVENT_KEY,
     LV_EVENT_FOCUSED,
@@ -123,28 +121,28 @@ typedef void (*lv_event_cb_t)(struct _lv_obj_t * obj, lv_event_t event);
   * on the object. */
 enum {
     /*General signals*/
-    LV_SIGNAL_CLEANUP,           /**< Object is being deleted */
-    LV_SIGNAL_CHILD_CHG,         /**< Child was removed/added */
-    LV_SIGNAL_COORD_CHG,         /**< Object coordinates/size have changed */
-    LV_SIGNAL_STYLE_CHG,         /**< Object's style has changed */
-    LV_SIGNAL_BASE_DIR_CHG,      /**<The base dir has changed*/
+    LV_SIGNAL_CLEANUP, /**< Object is being deleted */
+    LV_SIGNAL_CHILD_CHG, /**< Child was removed/added */
+    LV_SIGNAL_COORD_CHG, /**< Object coordinates/size have changed */
+    LV_SIGNAL_PARENT_SIZE_CHG, /**< Parent's size has changed */
+    LV_SIGNAL_STYLE_CHG,    /**< Object's style has changed */
+    LV_SIGNAL_BASE_DIR_CHG, /**<The base dir has changed*/
     LV_SIGNAL_REFR_EXT_DRAW_PAD, /**< Object's extra padding has changed */
-    LV_SIGNAL_GET_TYPE,          /**< LVGL needs to retrieve the object's type */
-    LV_SIGNAL_GET_STYLE,         /**<Get the style of an object*/
-    LV_SIGNAL_GET_STATE_DSC,     /**<Get the state of the object*/
+    LV_SIGNAL_GET_TYPE, /**< LVGL needs to retrieve the object's type */
+    LV_SIGNAL_GET_STYLE, /**<Get the style of an object*/
+    LV_SIGNAL_GET_STATE_DSC, /**<Get the state of the object*/
 
     /*Input device related*/
     LV_SIGNAL_HIT_TEST,          /**< Advanced hit-testing */
     LV_SIGNAL_PRESSED,           /**< The object has been pressed*/
     LV_SIGNAL_PRESSING,          /**< The object is being pressed (called continuously while pressing)*/
     LV_SIGNAL_PRESS_LOST,        /**< User is still pressing but slid cursor/finger off of the object */
-    LV_SIGNAL_RELEASED,          /**< User pressed object for a short period of time, then released it. Not called if scrolled. */
-    LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if scrolled.*/
-    LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if scrolled.*/
-    LV_SIGNAL_SCROLL_BEGIN,      /**< The scrolling has just begun  */
-    LV_SIGNAL_SCROLL,            /**< The object has been scrolled */
-    LV_SIGNAL_SCROLL_END,        /**< The scrolling has ended */
-    LV_SIGNAL_SCROLL_THROW_BEGIN,/**< Scroll throw started*/
+    LV_SIGNAL_RELEASED,          /**< User pressed object for a short period of time, then released it. Not called if dragged. */
+    LV_SIGNAL_LONG_PRESS,        /**< Object has been pressed for at least `LV_INDEV_LONG_PRESS_TIME`.  Not called if dragged.*/
+    LV_SIGNAL_LONG_PRESS_REP,    /**< Called after `LV_INDEV_LONG_PRESS_TIME` in every `LV_INDEV_LONG_PRESS_REP_TIME` ms.  Not called if dragged.*/
+    LV_SIGNAL_DRAG_BEGIN,
+    LV_SIGNAL_DRAG_THROW_BEGIN,
+    LV_SIGNAL_DRAG_END,
     LV_SIGNAL_GESTURE,          /**< The object has been gesture*/
     LV_SIGNAL_LEAVE,            /**< Another object is clicked or chosen via an input device */
 
@@ -158,6 +156,31 @@ typedef uint8_t lv_signal_t;
 
 typedef lv_res_t (*lv_signal_cb_t)(struct _lv_obj_t * obj, lv_signal_t sign, void * param);
 
+#if LV_USE_OBJ_REALIGN
+typedef struct {
+    const struct _lv_obj_t * base;
+    lv_coord_t xofs;
+    lv_coord_t yofs;
+    lv_align_t align;
+    uint8_t auto_realign : 1;
+    uint8_t mid_align : 1; /**< 1: the origo (center of the object) was aligned with
+                                `lv_obj_align_origo`*/
+} lv_realign_t;
+#endif
+
+/*Protect some attributes (max. 8 bit)*/
+enum {
+    LV_PROTECT_NONE      = 0x00,
+    LV_PROTECT_CHILD_CHG = 0x01,   /**< Disable the child change signal. Used by the library*/
+    LV_PROTECT_PARENT    = 0x02,   /**< Prevent automatic parent change (e.g. in lv_page)*/
+    LV_PROTECT_POS       = 0x04,   /**< Prevent automatic positioning (e.g. in lv_cont layout)*/
+    LV_PROTECT_FOLLOW    = 0x08,   /**< Prevent the object be followed in automatic ordering (e.g. in
+                                      lv_cont PRETTY layout)*/
+    LV_PROTECT_PRESS_LOST = 0x10,  /**< If the `indev` was pressing this object but swiped out while
+                                      pressing do not search other object.*/
+    LV_PROTECT_CLICK_FOCUS = 0x20, /**< Prevent focusing the object by clicking on it*/
+};
+typedef uint8_t lv_protect_t;
 
 enum {
     LV_STATE_DEFAULT   =  0x00,
@@ -171,57 +194,11 @@ enum {
 
 typedef uint8_t lv_state_t;
 
-enum {
-    LV_DIR_NONE     = 0x00,
-    LV_DIR_LEFT     = (1 << 0),
-    LV_DIR_RIGHT    = (1 << 1),
-    LV_DIR_TOP      = (1 << 2),
-    LV_DIR_BOTTOM   = (1 << 3),
-    LV_DIR_HOR      = LV_DIR_LEFT | LV_DIR_RIGHT,
-    LV_DIR_VER      = LV_DIR_TOP | LV_DIR_BOTTOM,
-    LV_DIR_ALL      = LV_DIR_HOR | LV_DIR_VER,
-};
-
-typedef uint8_t lv_dir_t;
-
-enum {
-    LV_SCROLL_SNAP_ALIGN_NONE,
-    LV_SCROLL_SNAP_ALIGN_START,
-    LV_SCROLL_SNAP_ALIGN_END,
-    LV_SCROLL_SNAP_ALIGN_CENTER
-};
-typedef uint8_t lv_scroll_snap_align_t;
-
-
-enum {
-    LV_OBJ_FLAG_HIDDEN          = (1 << 0),
-    LV_OBJ_FLAG_CLICKABLE       = (1 << 1),
-    LV_OBJ_FLAG_SCROLLABLE      = (1 << 2),
-    LV_OBJ_FLAG_SCROLL_ELASTIC  = (1 << 3),
-    LV_OBJ_FLAG_SCROLL_MOMENTUM = (1 << 4),
-    LV_OBJ_FLAG_SCROLL_STOP     = (1 << 5),
-    LV_OBJ_FLAG_PRESS_LOCK      = (1 << 6),
-    LV_OBJ_FLAG_EVENT_BUBBLE    = (1 << 7),
-    LV_OBJ_FLAG_GESTURE_BUBBLE  = (1 << 8),
-    LV_OBJ_FLAG_FOCUS_BUBBLE    = (1 << 9),
-};
-typedef uint16_t lv_obj_flag_t;
-
-/** Scrollbar modes: shows when should the scrollbars be visible*/
-enum {
-    LV_SCROLL_MODE_OFF    = 0x0, /**< Never show scroll bars*/
-    LV_SCROLL_MODE_ON     = 0x1, /**< Always show scroll bars*/
-    LV_SCROLL_MODE_ACTIVE = 0x2, /**< Show scroll bars when object is being scrolled*/
-    LV_SCROLL_MODE_AUTO   = 0x3, /**< Show scroll bars when the content is large enough to be scrolled*/
-};
-typedef uint8_t lv_scroll_mode_t;
-
 typedef struct _lv_obj_t {
     struct _lv_obj_t * parent; /**< Pointer to the parent object*/
     lv_ll_t child_ll;       /**< Linked list to store the children objects*/
 
     lv_area_t coords; /**< Coordinates of the object (x1, y1, x2, y2)*/
-    lv_point_t scroll; /**< The current X/Y scroll offset*/
 
     lv_event_cb_t event_cb; /**< Event callback function */
     lv_signal_cb_t signal_cb; /**< Object type specific signal function*/
@@ -240,31 +217,35 @@ typedef struct _lv_obj_t {
     lv_coord_t ext_draw_pad; /**< EXTend the size in every direction for drawing. */
 
     /*Attributes and states*/
-    lv_obj_flag_t flags     : 9;
-    lv_scroll_mode_t scroll_mode :2; /**< How to display scrollbars*/
-    lv_scroll_snap_align_t snap_align_x : 2;
-    lv_scroll_snap_align_t snap_align_y : 2;
-    lv_scroll_dir_t scroll_dir :4;
-    lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object */
+    uint8_t click           : 1; /**< 1: Can be pressed by an input device*/
+    uint8_t drag            : 1; /**< 1: Enable the dragging*/
+    uint8_t drag_throw      : 1; /**< 1: Enable throwing with drag*/
+    uint8_t drag_parent     : 1; /**< 1: Parent will be dragged instead*/
+    uint8_t hidden          : 1; /**< 1: Object is hidden*/
+    uint8_t top             : 1; /**< 1: If the object or its children is clicked it goes to the foreground*/
+    uint8_t parent_event    : 1; /**< 1: Send the object's events to the parent too. */
     uint8_t adv_hittest     : 1; /**< 1: Use advanced hit-testing (slower) */
+    uint8_t gesture_parent  : 1; /**< 1: Parent will be gesture instead*/
+    uint8_t focus_parent    : 1; /**< 1: Parent will be focused instead*/
 
-    lv_state_t state;
-
-    lv_coord_t x_set;
-    lv_coord_t y_set;
-    lv_coord_t w_set;
-    lv_coord_t h_set;
+    lv_drag_dir_t drag_dir  : 3; /**<  Which directions the object can be dragged in */
+    lv_bidi_dir_t base_dir  : 2; /**< Base direction of texts related to this object */
 
 #if LV_USE_GROUP != 0
     void * group_p;
 #endif
 
+    uint8_t protect;            /**< Automatically happening actions can be prevented.
+                                     'OR'ed values from `lv_protect_t`*/
+    lv_state_t state;
+
+#if LV_USE_OBJ_REALIGN
+    lv_realign_t realign;       /**< Information about the last call to ::lv_obj_align. */
+#endif
 
 #if LV_USE_USER_DATA
     lv_obj_user_data_t user_data; /**< Custom user data for object. */
 #endif
-
-    lv_grid_t * grid;
 
 } lv_obj_t;
 
@@ -442,9 +423,6 @@ void lv_obj_set_x(lv_obj_t * obj, lv_coord_t x);
  */
 void lv_obj_set_y(lv_obj_t * obj, lv_coord_t y);
 
-
-void _lv_obj_calc_auto_size(lv_obj_t * obj, lv_coord_t * w, lv_coord_t * h);
-
 /**
  * Set the size of an object
  * @param obj pointer to an object
@@ -508,82 +486,65 @@ void lv_obj_set_height_margin(lv_obj_t * obj, lv_coord_t h);
 void lv_obj_align(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
 
 /**
- * Moves all children with horizontally or vertically.
- * It doesn't take into account any limits so any values are possible
- * @param obj pointer to an object whose children should be moved
- * @param x pixel to move horizontally
- * @param y pixels to move vertically
+ * Align an object to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
  */
-void lv_obj_scroll_by_raw(lv_obj_t * obj, lv_coord_t x, lv_coord_t y);
+void lv_obj_align_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
 
 /**
- * Moves all children with horizontally or vertically.
- * Limits the scroll to the bounding box of the children.
- * @param obj pointer to an object whose children should be moved
- * @param x pixel to move horizontally
- * @param y pixels to move vertically
+ * Align an object to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
  */
-void lv_obj_scroll_by(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en);
+void lv_obj_align_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
 
 /**
- * Scroll the a given x coordinate to the left side of obj.
- * @param obj pointer to an object which should be scrolled
- * @param x the x coordinate to scroll to
- * @param y the y coordinate to scroll to
+ * Align an object to an other object.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
+ * @param y_ofs y coordinate offset after alignment
  */
-void lv_obj_scroll_to(lv_obj_t * obj, lv_coord_t x, lv_coord_t y, lv_anim_enable_t anim_en);
-
-/**
- * Scroll the a given x coordinate to the left side of obj.
- * @param obj pointer to an object which should be scrolled
- * @param x the x coordinate to scroll to
- */
-void lv_obj_scroll_to_x(lv_obj_t * obj, lv_coord_t x, lv_anim_enable_t anim_en);
-
-/**
- * Scroll the a given y coordinate to the top side of obj.
- * @param obj pointer to an object which should be scrolled
- * @param y the y coordinate to scroll to
- */
-void lv_obj_scroll_to_y(lv_obj_t * obj, lv_coord_t y, lv_anim_enable_t anim_en);
+void lv_obj_align_mid(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs, lv_coord_t y_ofs);
 
 
 /**
- * Return the height of the area above the parent.
- * That is the number of pixels the object can be scrolled down.
- * Normally positive but can be negative when scrolled inside.
- * @param obj
- * @return
+ * Align an object's middle point to an other object horizontally.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param x_ofs x coordinate offset after alignment
  */
-lv_coord_t lv_obj_get_scroll_top(const lv_obj_t * obj);
+void lv_obj_align_mid_x(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t x_ofs);
 
 /**
- * Return the height of the area below the parent.
- * That is the number of pixels the object can be scrolled up.
- * Normally positive but can be negative when scrolled inside.
- * @param obj
- * @return
+ * Align an object's middle point to an other object vertically.
+ * @param obj pointer to an object to align
+ * @param base pointer to an object (if NULL the parent is used). 'obj' will be aligned to it.
+ * @param align type of alignment (see 'lv_align_t' enum)
+ * @param y_ofs y coordinate offset after alignment
  */
-lv_coord_t lv_obj_get_scroll_bottom(const lv_obj_t * obj);
-
-
-/**
- * Return the weight of the area on the left the parent.
- * That is the number of pixels the object can be scrolled down.
- * Normally positive but can be negative when scrolled inside.
- * @param obj
- * @return
- */
-lv_coord_t lv_obj_get_scroll_left(const lv_obj_t * obj);
+void lv_obj_align_mid_y(lv_obj_t * obj, const lv_obj_t * base, lv_align_t align, lv_coord_t y_ofs);
 
 /**
- * Return the width of the area below the object.
- * That is the number of pixels the object can be scrolled left.
- * Normally positive but can be negative when scrolled inside.
- * @param obj
- * @return
+ * Realign the object based on the last `lv_obj_align` parameters.
+ * @param obj pointer to an object
  */
-lv_coord_t lv_obj_get_scroll_right(const lv_obj_t * obj);
+void lv_obj_realign(lv_obj_t * obj);
+
+/**
+ * Enable the automatic realign of the object when its size has changed based on the last
+ * `lv_obj_align` parameters.
+ * @param obj pointer to an object
+ * @param en true: enable auto realign; false: disable auto realign
+ */
+void lv_obj_set_auto_realign(lv_obj_t * obj, bool en);
 
 /**
  * Set the size of an extended clickable area
@@ -732,19 +693,85 @@ void _lv_obj_disable_style_caching(lv_obj_t * obj, bool dis);
  *----------------*/
 
 /**
+ * Hide an object. It won't be visible and clickable.
+ * @param obj pointer to an object
+ * @param en true: hide the object
+ */
+void lv_obj_set_hidden(lv_obj_t * obj, bool en);
+
+/**
  * Set whether advanced hit-testing is enabled on an object
  * @param obj pointer to an object
  * @param en true: advanced hit-testing is enabled
  */
 void lv_obj_set_adv_hittest(lv_obj_t * obj, bool en);
 
+/**
+ * Enable or disable the clicking of an object
+ * @param obj pointer to an object
+ * @param en true: make the object clickable
+ */
+void lv_obj_set_click(lv_obj_t * obj, bool en);
 
 /**
- * Set how the scrollbars should behave.
+ * Enable to bring this object to the foreground if it
+ * or any of its children is clicked
  * @param obj pointer to an object
- * @param mode: LV_SCROLL_MODE_ON/OFF/AUTO/ACTIVE
+ * @param en true: enable the auto top feature
  */
-void lv_obj_set_scroll_mode(lv_obj_t * obj, lv_scroll_mode_t mode);
+void lv_obj_set_top(lv_obj_t * obj, bool en);
+
+/**
+ * Enable the dragging of an object
+ * @param obj pointer to an object
+ * @param en true: make the object draggable
+ */
+void lv_obj_set_drag(lv_obj_t * obj, bool en);
+
+/**
+ * Set the directions an object can be dragged in
+ * @param obj pointer to an object
+ * @param drag_dir bitwise OR of allowed drag directions
+ */
+void lv_obj_set_drag_dir(lv_obj_t * obj, lv_drag_dir_t drag_dir);
+
+/**
+ * Enable the throwing of an object after is is dragged
+ * @param obj pointer to an object
+ * @param en true: enable the drag throw
+ */
+void lv_obj_set_drag_throw(lv_obj_t * obj, bool en);
+
+/**
+ * Enable to use parent for drag related operations.
+ * If trying to drag the object the parent will be moved instead
+ * @param obj pointer to an object
+ * @param en true: enable the 'drag parent' for the object
+ */
+void lv_obj_set_drag_parent(lv_obj_t * obj, bool en);
+
+/**
+* Enable to use parent for focus state.
+* When object is focused the parent will get the state instead (visual only)
+* @param obj pointer to an object
+* @param en true: enable the 'focus parent' for the object
+*/
+void lv_obj_set_focus_parent(lv_obj_t * obj, bool en);
+
+/**
+* Enable to use parent for gesture related operations.
+* If trying to gesture the object the parent will be moved instead
+* @param obj pointer to an object
+* @param en true: enable the 'gesture parent' for the object
+*/
+void lv_obj_set_gesture_parent(lv_obj_t * obj, bool en);
+
+/**
+ * Propagate the events to the parent too
+ * @param obj pointer to an object
+ * @param en true: enable the event propagation
+ */
+void lv_obj_set_parent_event(lv_obj_t * obj, bool en);
 
 /**
  * Set the base direction of the object
@@ -753,8 +780,19 @@ void lv_obj_set_scroll_mode(lv_obj_t * obj, lv_scroll_mode_t mode);
  */
 void lv_obj_set_base_dir(lv_obj_t * obj, lv_bidi_dir_t dir);
 
-void lv_obj_add_flag(lv_obj_t * obj, lv_obj_flag_t f);
-void lv_obj_clear_flag(lv_obj_t * obj, lv_obj_flag_t f);
+/**
+ * Set a bit or bits in the protect filed
+ * @param obj pointer to an object
+ * @param prot 'OR'-ed values from `lv_protect_t`
+ */
+void lv_obj_add_protect(lv_obj_t * obj, uint8_t prot);
+
+/**
+ * Clear a bit or bits in the protect filed
+ * @param obj pointer to an object
+ * @param prot 'OR'-ed values from `lv_protect_t`
+ */
+void lv_obj_clear_protect(lv_obj_t * obj, uint8_t prot);
 
 /**
  * Set the state (fully overwrite) of an object.
@@ -1046,6 +1084,13 @@ lv_coord_t lv_obj_get_width_grid(lv_obj_t * obj, uint8_t div, uint8_t span);
 lv_coord_t lv_obj_get_height_grid(lv_obj_t * obj, uint8_t div, uint8_t span);
 
 /**
+ * Get the automatic realign property of the object.
+ * @param obj pointer to an object
+ * @return  true: auto realign is enabled; false: auto realign is disabled
+ */
+bool lv_obj_get_auto_realign(const lv_obj_t * obj);
+
+/**
  * Get the left padding of extended clickable area
  * @param obj pointer to an object
  * @return the extended left padding
@@ -1173,8 +1218,12 @@ lv_style_t * lv_obj_get_local_style(lv_obj_t * obj, uint8_t part);
  * Attribute get
  *----------------*/
 
-
-bool lv_obj_has_flag(lv_obj_t * obj, lv_obj_flag_t f);
+/**
+ * Get the hidden attribute of an object
+ * @param obj pointer to an object
+ * @return true: the object is hidden
+ */
+bool lv_obj_get_hidden(const lv_obj_t * obj);
 
 /**
  * Get whether advanced hit-testing is enabled on an object
@@ -1183,7 +1232,88 @@ bool lv_obj_has_flag(lv_obj_t * obj, lv_obj_flag_t f);
  */
 bool lv_obj_get_adv_hittest(const lv_obj_t * obj);
 
+/**
+ * Get the click enable attribute of an object
+ * @param obj pointer to an object
+ * @return true: the object is clickable
+ */
+bool lv_obj_get_click(const lv_obj_t * obj);
+
+/**
+ * Get the top enable attribute of an object
+ * @param obj pointer to an object
+ * @return true: the auto top feature is enabled
+ */
+bool lv_obj_get_top(const lv_obj_t * obj);
+
+/**
+ * Get the drag enable attribute of an object
+ * @param obj pointer to an object
+ * @return true: the object is draggable
+ */
+bool lv_obj_get_drag(const lv_obj_t * obj);
+
+/**
+ * Get the directions an object can be dragged
+ * @param obj pointer to an object
+ * @return bitwise OR of allowed directions an object can be dragged in
+ */
+lv_drag_dir_t lv_obj_get_drag_dir(const lv_obj_t * obj);
+
+/**
+ * Get the drag throw enable attribute of an object
+ * @param obj pointer to an object
+ * @return true: drag throw is enabled
+ */
+bool lv_obj_get_drag_throw(const lv_obj_t * obj);
+
+/**
+ * Get the drag parent attribute of an object
+ * @param obj pointer to an object
+ * @return true: drag parent is enabled
+ */
+bool lv_obj_get_drag_parent(const lv_obj_t * obj);
+
+
+/**
+* Get the focus parent attribute of an object
+* @param obj pointer to an object
+* @return true: focus parent is enabled
+*/
+bool lv_obj_get_focus_parent(const lv_obj_t * obj);
+
+
+/**
+ * Get the drag parent attribute of an object
+ * @param obj pointer to an object
+ * @return true: drag parent is enabled
+ */
+bool lv_obj_get_parent_event(const lv_obj_t * obj);
+
+/**
+* Get the gesture parent attribute of an object
+* @param obj pointer to an object
+* @return true: gesture parent is enabled
+*/
+bool lv_obj_get_gesture_parent(const lv_obj_t * obj);
+
 lv_bidi_dir_t lv_obj_get_base_dir(const lv_obj_t * obj);
+
+/**
+ * Get the protect field of an object
+ * @param obj pointer to an object
+ * @return protect field ('OR'ed values of `lv_protect_t`)
+ */
+uint8_t lv_obj_get_protect(const lv_obj_t * obj);
+
+/**
+ * Check at least one bit of a given protect bitfield is set
+ * @param obj pointer to an object
+ * @param prot protect bits to test ('OR'ed values of `lv_protect_t`)
+ * @return false: none of the given bits are set, true: at least one bit is set
+ */
+bool lv_obj_is_protected(const lv_obj_t * obj, uint8_t prot);
+
 
 lv_state_t lv_obj_get_state(const lv_obj_t * obj, uint8_t part);
 
