@@ -127,7 +127,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Init the new label*/
     if(copy == NULL) {
         lv_theme_apply(new_label, LV_THEME_LABEL);
-        lv_obj_clear_flag(new_label, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_click(new_label, false);
         lv_label_set_long_mode(new_label, LV_LABEL_LONG_EXPAND);
         lv_label_set_text(new_label, "Text");
     }
@@ -161,7 +161,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->dot_end       = copy_ext->dot_end;
 
         /*Refresh the style with new signal function*/
-        _lv_obj_refresh_style(new_label, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(new_label, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("label created");
