@@ -127,7 +127,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Init the new label*/
     if(copy == NULL) {
         lv_theme_apply(new_label, LV_THEME_LABEL);
-        lv_obj_set_click(new_label, false);
+        lv_obj_clear_flag(new_label, LV_OBJ_FLAG_CLICKABLE);
         lv_label_set_long_mode(new_label, LV_LABEL_LONG_EXPAND);
         lv_label_set_text(new_label, "Text");
     }
@@ -161,7 +161,7 @@ lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->dot_end       = copy_ext->dot_end;
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(new_label, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        _lv_obj_refresh_style(new_label, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("label created");
@@ -1163,7 +1163,7 @@ static lv_res_t lv_label_signal(lv_obj_t * label, lv_signal_t sign, void * param
     /* Include the ancient signal function */
     res = ancestor_signal(label, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+    if(sign == LV_SIGNAL_GET_TYPE) return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_label_ext_t * ext = lv_obj_get_ext_attr(label);
     if(sign == LV_SIGNAL_CLEANUP) {
