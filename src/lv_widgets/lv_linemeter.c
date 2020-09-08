@@ -76,7 +76,6 @@ lv_obj_t * lv_linemeter_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->line_cnt    = 18;
     ext->scale_angle = 240;
     ext->angle_ofs = 0;
-    ext->mirrored = 0;
 
     /*The signal and design functions are not copied so set them here*/
     lv_obj_set_signal_cb(linemeter, lv_linemeter_signal);
@@ -521,11 +520,14 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
         p1.y = y_out_extra;
 
         /* Set the color of the lines */
+<<<<<<< HEAD
+        uint16_t index = ext->mirrored ? ext->line_cnt - i : i;
+=======
+>>>>>>> master
         if((!ext->mirrored && i >= level) || (ext->mirrored && i <= level)) {
             line_dsc.color = end_color;
             line_dsc.width = end_line_width;
-        }
-        else {
+        } else {
             line_dsc.color = lv_color_mix(grad_color, main_color, (255 * i) / ext->line_cnt);
         }
 
