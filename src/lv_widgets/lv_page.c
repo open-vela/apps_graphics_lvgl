@@ -118,7 +118,6 @@ lv_obj_t * lv_page_create(lv_obj_t * par, const lv_obj_t * copy)
     /*Init the new page object*/
     if(copy == NULL) {
         ext->scrl = lv_cont_create(page, NULL);
-        lv_obj_set_focus_parent(ext->scrl, true);
         lv_obj_set_drag(ext->scrl, true);
         lv_obj_set_drag_throw(ext->scrl, true);
         lv_obj_add_protect(ext->scrl, LV_PROTECT_PARENT | LV_PROTECT_PRESS_LOST);
@@ -131,7 +130,6 @@ lv_obj_t * lv_page_create(lv_obj_t * par, const lv_obj_t * copy)
         +         * because everything has to be ready before any signal is received*/
         lv_obj_set_signal_cb(page, lv_page_signal);
         lv_obj_set_design_cb(page, lv_page_design);
-
 
         lv_page_set_scrollbar_mode(page, ext->scrlbar.mode);
 
@@ -459,10 +457,11 @@ bool lv_page_on_edge(lv_obj_t * page, lv_page_edge_t edge)
 
 /**
  * Glue the object to the page. After it the page can be moved (dragged) with this object too.
+ * @param page pointer to a page object
  * @param obj pointer to an object on a page
  * @param glue true: enable glue, false: disable glue
  */
-void lv_page_glue_obj(lv_obj_t * obj, bool glue)
+void lv_page_glue_obj(lv_obj_t * page, lv_obj_t * obj, bool glue)
 {
     lv_obj_set_drag_parent(obj, glue);
     lv_obj_set_drag(obj, glue);
@@ -934,7 +933,7 @@ static lv_res_t lv_page_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, voi
             if(parent_ext->scroll_prop_obj == NULL) {
                 /*If the dragging just started or scroll is already propagated to this object
                  *  enable the scroll propagation if the conditions are met*/
-                if((lv_indev_is_dragging(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
+                if((lv_indev_is_scrolling(indev) == false || page_ext->scroll_prop_obj) && (drag_sum->y || drag_sum->x)) {
                     /*Propagate vertically?*/
                     if((drag_sum->y > 0 && lv_page_on_edge(page, LV_PAGE_EDGE_TOP)) ||
                        (drag_sum->y < 0 && lv_page_on_edge(page, LV_PAGE_EDGE_BOTTOM))) {
@@ -1043,6 +1042,32 @@ static lv_res_t lv_page_scrollable_signal(lv_obj_t * scrl, lv_signal_t sign, voi
                 lv_obj_invalidate_area(page, &sb_area_tmp);
                 page_ext->scrlbar.ver_draw = 0;
             }
+        }
+    }
+    else if(sign == LV_SIGNAL_FOCUS) {
+#if LV_USE_GROUP
+        if(lv_obj_get_group(page)) {
+            lv_group_focus_obj(page);
+        }
+        else
+#endif
+        {
+            res = lv_signal_send(page, LV_SIGNAL_FOCUS, NULL);
+            if(res != LV_RES_OK) return res;
+            res = lv_event_send(page, LV_EVENT_FOCUSED, NULL);
+            if(res != LV_RES_OK) return res;
+        }
+    }
+    else if(sign == LV_SIGNAL_DEFOCUS) {
+        bool in_group = false;
+#if LV_USE_GROUP
+        in_group =  lv_obj_get_group(page) ? true : false;
+#endif
+        if(in_group == false) {
+            res = lv_signal_send(page, LV_SIGNAL_DEFOCUS, NULL);
+            if(res != LV_RES_OK) return res;
+            res = lv_event_send(page, LV_EVENT_DEFOCUSED, NULL);
+            if(res != LV_RES_OK) return res;
         }
     }
     else if(sign == LV_SIGNAL_CLEANUP) {
