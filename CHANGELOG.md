@@ -1,10 +1,5 @@
 # Changelog
 
-## v7.6.0 (TBD)
-
-### New features
-- Check wheter the any style property has changed on a state change to decide if any redraw is required
-
 ## v7.5.0 (planned at 15.09.2020)
 
 ### New features
