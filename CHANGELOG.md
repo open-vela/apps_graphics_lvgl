@@ -1,10 +1,5 @@
 # Changelog
 
-## v7.6.0 (TBD)
-
-### New features
-- Check wheter the any style property has changed on a state change to decide if any redraw is required
-
 ## v7.5.0 (planned at 15.09.2020)
 
 ### New features
@@ -15,6 +10,9 @@
 - Fix unexpeted DEFOCUS on lv_page when clicking to bg after the scrollable
 - Fix `lv_obj_del` and `lv_obj_clean` if the children list changed during deletion.
 - Adjust button matrix button width to include padding when spanning multiple units.
+- Add rounding to btnmatrix line height calculation
+- Add `decmopr_buf` to GC roots
+- Fix divisioin by zero in draw_pattern (lv_draw_rect.c) if the image or letter is not found
 
 ## v7.4.0 (01.09.2020)
 
