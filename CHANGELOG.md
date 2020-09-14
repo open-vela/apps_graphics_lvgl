@@ -1,10 +1,16 @@
 # Changelog
 
+## v7.6.0 (TBD)
+
+### New features
+- Check wheter the any style property has changed on a state change to decide if any redraw is required
+
 ## v7.5.0 (planned at 15.09.2020)
 
 ### New features
 - Add `clean_dcache_cb` and `lv_disp_clean_dcache` to enable users to use their own cache management function
 - Add `gpu_wait_cb` to wait until the GPU is working. It allows to run CPU a wait only when the rendered data is needed.
+- Add 10px and 8ox built in fonts
 
 ### Bugfixes
 - Fix unexpeted DEFOCUS on lv_page when clicking to bg after the scrollable
