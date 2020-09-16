@@ -930,7 +930,7 @@ static lv_res_t lv_dropdown_signal(lv_obj_t * ddlist, lv_signal_t sign, void * p
     }
     else if(sign == LV_SIGNAL_RELEASED) {
         lv_indev_t * indev = lv_indev_get_act();
-        if(lv_indev_is_dragging(indev) == false) {
+        if(lv_indev_is_scrolling(indev) == false) {
             if(ext->page) {
                 lv_dropdown_close(ddlist);
                 if(ext->sel_opt_id_orig != ext->sel_opt_id) {
@@ -1034,7 +1034,7 @@ static lv_res_t lv_dropdown_page_signal(lv_obj_t * page, lv_signal_t sign, void 
         scrl->ext_draw_pad = LV_MATH_MAX3(scrl->ext_draw_pad, left, right);
     }
     else if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
+        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
             page_release_handler(page);
         }
     }
@@ -1071,7 +1071,7 @@ static lv_res_t lv_dropdown_page_scrl_signal(lv_obj_t * scrl, lv_signal_t sign, 
     lv_dropdown_ext_t * ext = lv_obj_get_ext_attr(ddlist);
 
     if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_indev_is_dragging(lv_indev_get_act()) == false) {
+        if(lv_indev_is_scrolling(lv_indev_get_act()) == false) {
             page_release_handler(page);
         }
     }
@@ -1281,12 +1281,10 @@ static uint16_t get_id_on_point(lv_obj_t * ddlist, lv_coord_t x, lv_coord_t y)
     y -= label->coords.y1;
     uint32_t letter_i;
 
-    const char * txt = lv_label_get_text(label);
-
     lv_point_t p = {x, y};
     letter_i = lv_label_get_letter_on(label, &p);
-    uint32_t letter_i_byte_pos = _lv_txt_encoded_get_byte_id(txt, letter_i);
     uint16_t opt  = 0;
+    const char * txt  = lv_label_get_text(label);
     uint32_t i        = 0;
     uint32_t i_prev   = 0;
 
@@ -1295,7 +1293,7 @@ static uint16_t get_id_on_point(lv_obj_t * ddlist, lv_coord_t x, lv_coord_t y)
         uint32_t letter = _lv_txt_encoded_next(txt, &i);
         /*Count the lines to reach the clicked letter. But ignore the last '\n' because it
          * still belongs to the clicked line*/
-        if(letter == '\n' && i_prev != letter_i_byte_pos) opt++;
+        if(letter == '\n' && i_prev != letter_i) opt++;
         i_prev = i;
     }
 
