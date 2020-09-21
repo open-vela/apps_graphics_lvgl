@@ -120,7 +120,6 @@ lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
     return disp->sys_layer;
 }
 
-
 /**
  * Assign a screen to a display.
  * @param disp pointer to a display where to assign the screen
@@ -230,8 +229,8 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     /*Be sure both screens are in a normal position*/
     lv_obj_set_pos(new_scr, 0, 0);
     lv_obj_set_pos(lv_scr_act(), 0, 0);
-    lv_style_remove_prop(_lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
-    lv_style_remove_prop(_lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 
     lv_anim_t a_new;
     lv_anim_init(&a_new);
@@ -410,6 +409,6 @@ static void scr_anim_ready(lv_anim_t * a)
 
     if(d->prev_scr && d->del_prev) lv_obj_del(d->prev_scr);
     d->prev_scr = NULL;
-    lv_style_remove_prop(_lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 }
 #endif

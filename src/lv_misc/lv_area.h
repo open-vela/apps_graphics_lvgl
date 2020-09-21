@@ -22,9 +22,8 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define _LV_COORD_MAX_REDUCE    8192
-/*To allow some special values in the end reduce the max value */
-#define LV_COORD_MAX ((lv_coord_t)((uint32_t)((uint32_t)1 << (8 * sizeof(lv_coord_t) - 1)) - _LV_COORD_MAX_REDUCE))
+/*To avoid overflow don't let the max ranges (reduce with 1000) */
+#define LV_COORD_MAX ((lv_coord_t)((uint32_t)((uint32_t)1 << (8 * sizeof(lv_coord_t) - 1)) - 1000))
 #define LV_COORD_MIN (-LV_COORD_MAX)
 
 LV_EXPORT_CONST_INT(LV_COORD_MAX);
@@ -208,14 +207,6 @@ void _lv_area_align(const lv_area_t * base, const lv_area_t * to_align, lv_align
 /**********************
  *      MACROS
  **********************/
-
-#define LV_COORD_PX(x)  (x)
-#define LV_SIZE_AUTO (LV_COORD_MAX - 1)
-#define LV_SIZE_STRETCH (LV_COORD_MAX - 2)
-
-#define LV_COORD_IS_PX(x)  (((x) < LV_COORD_MAX - 2) ? true : false)
-#define LV_COORD_IS_AUTO(x) (((x) == LV_SIZE_AUTO) ? true : false)
-
 
 #ifdef __cplusplus
 } /* extern "C" */
