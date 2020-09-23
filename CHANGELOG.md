@@ -1,8 +1,12 @@
 # Changelog
 
-## v7.7.0 (22.09.2020)
+## v7.7.0 (06.10.2020)
 
 ### New features
+- Add PXP GPU support (for NXP MCUs)
+- Allow max. 16 cell types for table
+- Add `lv_table_set_text_fmt()`
+
 
 ### Bugfixes
 
