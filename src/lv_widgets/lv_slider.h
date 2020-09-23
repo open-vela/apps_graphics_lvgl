@@ -53,10 +53,9 @@ typedef struct {
 
 /** Built-in styles of slider*/
 enum {
-    LV_SLIDER_PART_MAIN = LV_BAR_PART_MAIN, /** Slider background style. */
-    LV_SLIDER_PART_INDIC = LV_BAR_PART_INDIC, /** Slider indicator (filled area) style. */
-    LV_SLIDER_PART_KNOB = _LV_BAR_PART_VIRTUAL_LAST, /** Slider knob style. */
-    _LV_SLIDER_PART_VIRTUAL_LAST
+    LV_SLIDER_PART_BG, /** Slider background style. */
+    LV_SLIDER_PART_INDIC, /** Slider indicator (filled area) style. */
+    LV_SLIDER_PART_KNOB, /** Slider knob style. */
 };
 
 /**********************
@@ -65,12 +64,11 @@ enum {
 
 /**
  * Create a slider objects
- * @param parent pointer to an object, it will be the parent of the new slider
- * @param copy DEPRECATED, will be removed in v9.
- *             Pointer to an other slider to copy.
+ * @param par pointer to an object, it will be the parent of the new slider
+ * @param copy pointer to a slider object, if not NULL then the new object will be copied from it
  * @return pointer to the created slider
  */
-lv_obj_t * lv_slider_create(lv_obj_t * parent, lv_obj_t * copy);
+lv_obj_t * lv_slider_create(lv_obj_t * par, const lv_obj_t * copy);
 
 /*=====================
  * Setter functions
@@ -144,10 +142,7 @@ static inline void lv_slider_set_type(lv_obj_t * slider, lv_slider_type_t type)
  * @param slider pointer to a slider object
  * @return the value of the main knob of the slider
  */
-static inline int16_t lv_slider_get_value(const lv_obj_t * slider)
-{
-    return lv_bar_get_value(slider);
-}
+int16_t lv_slider_get_value(const lv_obj_t * slider);
 
 /**
  * Get the value of the left knob of a slider
