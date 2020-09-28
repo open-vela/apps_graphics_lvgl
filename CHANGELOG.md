@@ -1,11 +1,5 @@
 # Changelog
 
-## v7.7.0 (22.09.2020)
-
-### New features
-
-### Bugfixes
-
 ## v7.6.0 (22.09.2020)
 
 ### New features
@@ -14,6 +8,7 @@
 ### Bugfixes
 - Fix selection of options with non-ASCII letters in dropdown list 
 - Fix font loader to support LV_FONT_FMT_TXT_LARGE
+- Fix BIDI support in dropdown list
 
 ## v7.5.0 (15.09.2020)
 
