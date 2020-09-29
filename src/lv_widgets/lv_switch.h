@@ -19,9 +19,10 @@ extern "C" {
 
 /*Testing of dependencies*/
 #if LV_USE_SLIDER == 0
-#error "lv_switch: lv_slider is required. Enable it in lv_conf.h (LV_USE_SLIDER  1)"
+#error "lv_sw: lv_slider is required. Enable it in lv_conf.h (LV_USE_SLIDER  1)"
 #endif
 
+#include "../lv_core/lv_obj.h"
 #include "lv_bar.h"
 
 /*********************
@@ -36,14 +37,13 @@ typedef struct {
     lv_bar_ext_t bar; /*Ext. of ancestor*/
     /*New data for this type */
     lv_style_list_t style_knob; /*Style of the knob*/
-    uint8_t state   : 1; /*The current state*/
 } lv_switch_ext_t;
 
 /**
  * Switch parts.
  */
 enum {
-    LV_SWITCH_PART_MAIN = LV_BAR_PART_MAIN,                 /**< Switch background. */
+    LV_SWITCH_PART_BG = LV_BAR_PART_BG,                 /**< Switch background. */
     LV_SWITCH_PART_INDIC = LV_BAR_PART_INDIC,           /**< Switch fill area. */
     LV_SWITCH_PART_KNOB = _LV_BAR_PART_VIRTUAL_LAST,    /**< Switch knob. */
     _LV_SWITCH_PART_VIRTUAL_LAST
@@ -57,12 +57,11 @@ typedef uint8_t lv_switch_part_t;
 
 /**
  * Create a switch objects
- * @param parent pointer to an object, it will be the parent of the new switch
- * @param copy DEPRECATED, will be removed in v9.
- *             Pointer to an other switch to copy.
+ * @param par pointer to an object, it will be the parent of the new switch
+ * @param copy pointer to a switch object, if not NULL then the new object will be copied from it
  * @return pointer to the created switch
  */
-lv_obj_t * lv_switch_create(lv_obj_t * parent, const lv_obj_t * copy);
+lv_obj_t * lv_switch_create(lv_obj_t * par, const lv_obj_t * copy);
 
 /*=====================
  * Setter functions
@@ -112,8 +111,7 @@ static inline void lv_switch_set_anim_time(lv_obj_t * sw, uint16_t anim_time)
  */
 static inline bool lv_switch_get_state(const lv_obj_t * sw)
 {
-    lv_switch_ext_t * ext = (lv_switch_ext_t *)lv_obj_get_ext_attr(sw);
-    return ext->state ? true : false;
+    return lv_bar_get_value(sw) == 1 ? true : false;
 }
 
 /**
