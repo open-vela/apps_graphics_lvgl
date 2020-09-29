@@ -827,9 +827,8 @@ lv_res_t _lv_style_list_get_int(lv_style_list_t * list, lv_style_property_t prop
 
     int16_t ci;
     for(ci = 0; ci < list->style_cnt; ci++) {
-        /* changed class to _class to allow compilation as c++ */
-        lv_style_t * _class = lv_style_list_get_style(list, ci);
-        int16_t weight_act = _lv_style_get_int(_class, prop, &value_act);
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        int16_t weight_act = _lv_style_get_int(class, prop, &value_act);
 
         /*On perfect match return the value immediately*/
         if(weight_act == weight_goal) {
@@ -881,8 +880,8 @@ lv_res_t _lv_style_list_get_color(lv_style_list_t * list, lv_style_property_t pr
 
     int16_t ci;
     for(ci = 0; ci < list->style_cnt; ci++) {
-        lv_style_t * _class = lv_style_list_get_style(list, ci);
-        int16_t weight_act = _lv_style_get_color(_class, prop, &value_act);
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        int16_t weight_act = _lv_style_get_color(class, prop, &value_act);
         /*On perfect match return the value immediately*/
         if(weight_act == weight_goal) {
             *res = value_act;
@@ -931,8 +930,8 @@ lv_res_t _lv_style_list_get_opa(lv_style_list_t * list, lv_style_property_t prop
 
     int16_t ci;
     for(ci = 0; ci < list->style_cnt; ci++) {
-        lv_style_t * _class = lv_style_list_get_style(list, ci);
-        int16_t weight_act = _lv_style_get_opa(_class, prop, &value_act);
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        int16_t weight_act = _lv_style_get_opa(class, prop, &value_act);
         /*On perfect match return the value immediately*/
         if(weight_act == weight_goal) {
             *res = value_act;
@@ -981,8 +980,8 @@ lv_res_t _lv_style_list_get_ptr(lv_style_list_t * list, lv_style_property_t prop
 
     int16_t ci;
     for(ci = 0; ci < list->style_cnt; ci++) {
-        lv_style_t * _class = lv_style_list_get_style(list, ci);
-        int16_t weight_act = _lv_style_get_ptr(_class, prop, &value_act);
+        lv_style_t * class = lv_style_list_get_style(list, ci);
+        int16_t weight_act = _lv_style_get_ptr(class, prop, &value_act);
         /*On perfect match return the value immediately*/
         if(weight_act == weight_goal) {
             *res = value_act;
@@ -1045,7 +1044,6 @@ bool lv_debug_check_style_list(const lv_style_list_t * list)
  *   STATIC FUNCTIONS
  **********************/
 
-static uint32_t stat[256];
 /**
  * Get a property's index (byte index in `style->map`) from a style.
  * Return best matching property's index considering the state of `prop`
@@ -1068,12 +1066,6 @@ LV_ATTRIBUTE_FAST_MEM static inline int32_t get_property_index(const lv_style_t 
     int16_t id_guess = -1;
 
     size_t i = 0;
-
-    stat[prop & 0xFF]++;
-//
-    if((prop & 0xFF) == LV_STYLE_PAD_TOP) {
-//        printf("pad top\n");
-    }
 
     uint8_t prop_id;
     while((prop_id = get_style_prop_id(style, i)) != _LV_STYLE_CLOSEING_PROP) {
