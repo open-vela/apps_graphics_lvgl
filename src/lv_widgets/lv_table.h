@@ -41,8 +41,9 @@ extern "C" {
 #  define LV_TABLE_CELL_STYLE_CNT 4
 #endif
 #if (LV_TABLE_CELL_STYLE_CNT > 16)
-#  error LV_TABLE_CELL_STYLE_CNT cannot exceed 16
+#  error "LV_TABLE_CELL_STYLE_CNT cannot exceed 16"
 #endif
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -70,7 +71,7 @@ typedef struct {
     char ** cell_data;
     lv_coord_t * row_h;
     lv_style_list_t cell_style[LV_TABLE_CELL_STYLE_CNT];
-    lv_coord_t col_w[LV_TABLE_COL_MAX];
+    lv_coord_t * col_w;
     uint16_t cell_types : LV_TABLE_CELL_STYLE_CNT; /*Keep track which cell types exists to avoid dealing with unused ones*/
 } lv_table_ext_t;
 
@@ -109,15 +110,6 @@ lv_obj_t * lv_table_create(lv_obj_t * par, const lv_obj_t * copy);
  * required after this function call.
  */
 void lv_table_set_cell_value(lv_obj_t * table, uint16_t row, uint16_t col, const char * txt);
-
-/**
- * Set the value of a cell.  Memory will be allocated to store the text by the table.
- * @param table pointer to a Table object
- * @param row id of the row [0 .. row_cnt -1]
- * @param col id of the column [0 .. col_cnt -1]
- * @param fmt `printf`-like format
- */
-void lv_table_set_cell_value_fmt(lv_obj_t * table, uint16_t row, uint16_t col, const char * fmt, ...);
 
 /**
  * Set the number of rows
