@@ -1,14 +1,11 @@
 # Changelog
 
-## v7.7.0 (06.10.2020)
-
-### New features
-- Add PXP GPU support (for NXP MCUs)
-- Allow max. 16 cell types for table
-- Add `lv_table_set_text_fmt()`
-- Use margin on calendar header to set distances and padding to the size of the header.
+## v7.6.1 (06.10.2020)
 
 ### Bugfixes
+- 
+- Fix BIDI support in dropdown list
+- Fix copying base dir in `lv_obj_create`
 
 ## v7.6.0 (22.09.2020)
 
@@ -18,8 +15,6 @@
 ### Bugfixes
 - Fix selection of options with non-ASCII letters in dropdown list 
 - Fix font loader to support LV_FONT_FMT_TXT_LARGE
-- Fix BIDI support in dropdown list
-- Fix copying base dir in lv_obj_craete
 
 ## v7.5.0 (15.09.2020)
 
