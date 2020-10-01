@@ -1,5 +1,16 @@
 # Changelog
 
+
+## v7.7.0 (06.10.2020)
+
+### New features
+- Add PXP GPU support (for NXP MCUs)
+- Allow max. 16 cell types for table
+- Add `lv_table_set_text_fmt()`
+- Use margin on calendar header to set distances and padding to the size of the header.
+
+### Bugfixes
+
 ## v7.6.1 (06.10.2020)
 
 ### Bugfixes
@@ -7,6 +18,7 @@
 - Fix copying base dir in `lv_obj_create`
 - Handle sub pixel rendering in font loader
 - Fix transitions with style caching
+
 
 ## v7.6.0 (22.09.2020)
 
