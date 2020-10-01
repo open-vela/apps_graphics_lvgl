@@ -549,10 +549,12 @@ static void calendar_init(void)
 #if LV_USE_CALENDAR
 
     style_init_reset(&styles->calendar_header);
-    lv_style_set_pad_top(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
+    lv_style_set_pad_top(&styles->calendar_header, LV_STATE_DEFAULT, 0);
     lv_style_set_pad_left(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
     lv_style_set_pad_right(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
-    lv_style_set_pad_bottom(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
+    lv_style_set_pad_bottom(&styles->calendar_header, LV_STATE_DEFAULT, 0);
+    lv_style_set_margin_top(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
+    lv_style_set_margin_bottom(&styles->calendar_header, LV_STATE_DEFAULT, PAD_DEF);
     lv_style_set_text_color(&styles->calendar_header, LV_STATE_PRESSED, IS_LIGHT ? lv_color_hex(0x888888) : LV_COLOR_WHITE);
 
     style_init_reset(&styles->calendar_daynames);
@@ -1261,21 +1263,20 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
 #endif
 #if LV_USE_TABLE
         case LV_THEME_TABLE:
+        {
             list = lv_obj_get_style_list(obj, LV_TABLE_PART_BG);
             _lv_style_list_add_style(list, &styles->bg);
 
-            list = lv_obj_get_style_list(obj, LV_TABLE_PART_CELL1);
-            _lv_style_list_add_style(list, &styles->table_cell);
-
-            list = lv_obj_get_style_list(obj, LV_TABLE_PART_CELL2);
-            _lv_style_list_add_style(list, &styles->table_cell);
-
-            list = lv_obj_get_style_list(obj, LV_TABLE_PART_CELL3);
-            _lv_style_list_add_style(list, &styles->table_cell);
-
-            list = lv_obj_get_style_list(obj, LV_TABLE_PART_CELL4);
-            _lv_style_list_add_style(list, &styles->table_cell);
+            int idx = 1; /* start value should be 1, not zero, since cell styles 
+                            start at 1 due to presence of LV_TABLE_PART_BG=0
+                            in the enum (lv_table.h) */ 
+                         /* declaring idx outside loop to work with older compilers */
+	    for (;idx <= LV_TABLE_CELL_STYLE_CNT; idx ++ ) {
+              list = lv_obj_get_style_list(obj, idx);
+             _lv_style_list_add_style(list, &styles->table_cell);
+            }
             break;
+        }
 #endif
 
 #if LV_USE_WIN
