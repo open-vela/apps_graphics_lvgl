@@ -10,14 +10,6 @@
 
 #include <stdint.h>
 
-#if defined __has_include
-#  if __has_include("lv_conf.h")
-#   ifndef LV_CONF_INCLUDE_SIMPLE
-#    define LV_CONF_INCLUDE_SIMPLE
-#   endif
-#  endif
-#endif
-
 /*If lv_conf.h is not skipped include it*/
 #if !defined(LV_CONF_SKIP) && !defined(CONFIG_LV_CONF_SKIP)
 #  if defined(LV_CONF_PATH)											/*If there is a path defined for lv_conf.h use it*/
@@ -484,25 +476,6 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h" */
 #  endif
 #endif
 
-/*1: Use PXP for CPU off-load on NXP RTxxx platforms */
-#ifndef LV_USE_GPU_NXP_PXP
-#define LV_USE_GPU_NXP_PXP      0
-#endif
-
-/*1: Add default bare metal and FreeRTOS interrupt handling routines for PXP (lv_gpu_nxp_pxp_osa.c)
- *   and call lv_gpu_nxp_pxp_init() automatically during lv_init(). Note that symbol FSL_RTOS_FREE_RTOS
- *   has to be defined in order to use FreeRTOS OSA, otherwise bare-metal implementation is selected.
- *0: lv_gpu_nxp_pxp_init() has to be called manually before lv_init()
- * */
-#ifndef LV_USE_GPU_NXP_PXP_AUTO_INIT
-#define LV_USE_GPU_NXP_PXP_AUTO_INIT 0
-#endif
-
-/*1: Use VG-Lite for CPU offload on NXP RTxxx platforms */
-#ifndef LV_USE_GPU_NXP_VG_LITE
-#define LV_USE_GPU_NXP_VG_LITE   0
-#endif
-
 /* 1: Enable file system (might be required for images */
 #ifndef LV_USE_FILESYSTEM
 #  ifdef CONFIG_LV_USE_FILESYSTEM
@@ -627,16 +600,9 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h" */
 #  endif
 #endif
 
-/* Required alignment size for buffers */
-#ifndef LV_ATTRIBUTE_MEM_ALIGN_SIZE
-#define LV_ATTRIBUTE_MEM_ALIGN_SIZE
-#endif
-
 /* With size optimization (-Os) the compiler might not align data to
- * 4 or 8 byte boundary. Some HW may need even 32 or 64 bytes.
- * This alignment will be explicitly applied where needed.
- * LV_ATTRIBUTE_MEM_ALIGN_SIZE should be used to specify required align size.
- * E.g. __attribute__((aligned(LV_ATTRIBUTE_MEM_ALIGN_SIZE))) */
+ * 4 or 8 byte boundary. This alignment will be explicitly applied where needed.
+ * E.g. __attribute__((aligned(4))) */
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #  ifdef CONFIG_LV_ATTRIBUTE_MEM_ALIGN
 #    define LV_ATTRIBUTE_MEM_ALIGN CONFIG_LV_ATTRIBUTE_MEM_ALIGN
@@ -1285,7 +1251,7 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h" */
 
 /* Support bidirectional texts.
  * Allows mixing Left-to-Right and Right-to-Left texts.
- * The direction will be processed according to the Unicode Bidirectional Algorithm:
+ * The direction will be processed according to the Unicode Bidirectioanl Algorithm:
  * https://www.w3.org/International/articles/inline-bidi-markup/uba-basics*/
 #ifndef LV_USE_BIDI
 #  ifdef CONFIG_LV_USE_BIDI
