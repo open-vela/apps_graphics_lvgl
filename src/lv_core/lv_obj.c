@@ -27,6 +27,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#if LV_USE_GPU_NXP_PXP && LV_USE_GPU_NXP_PXP_AUTO_INIT
+    #include "../lv_gpu/lv_gpu_nxp_pxp.h"
+    #include "../lv_gpu/lv_gpu_nxp_pxp_osa.h"
+#endif
+
 #if defined(LV_GC_INCLUDE)
     #include LV_GC_INCLUDE
 #endif /* LV_ENABLE_GC */
@@ -192,6 +197,13 @@ void lv_init(void)
 #if LV_USE_GPU_STM32_DMA2D
     /*Initialize DMA2D GPU*/
     lv_gpu_stm32_dma2d_init();
+#endif
+
+#if LV_USE_GPU_NXP_PXP && LV_USE_GPU_NXP_PXP_AUTO_INIT
+    if(lv_gpu_nxp_pxp_init(&pxp_default_cfg) != LV_RES_OK) {
+        LV_LOG_ERROR("PXP init error. STOP.\n");
+        for(; ;) ;
+    }
 #endif
 
     _lv_ll_init(&LV_GC_ROOT(_lv_obj_style_trans_ll), sizeof(lv_style_trans_t));
@@ -3514,7 +3526,8 @@ void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint8_t part, lv_draw_label_dsc_
     draw_dsc->font = lv_obj_get_style_text_font(obj, part);
 
     if(draw_dsc->sel_start != LV_DRAW_LABEL_NO_TXT_SEL && draw_dsc->sel_end != LV_DRAW_LABEL_NO_TXT_SEL) {
-        draw_dsc->color = lv_obj_get_style_text_sel_color(obj, part);
+       draw_dsc->sel_color = lv_obj_get_style_text_sel_color(obj, part);
+       draw_dsc->sel_bg_color = lv_obj_get_style_text_sel_bg_color(obj, part);
     }
 
 #if LV_USE_BIDI
@@ -4076,8 +4089,9 @@ static void report_style_mod_core(void * style, lv_obj_t * obj)
 
         uint8_t ci;
         for(ci = 0; ci < list->style_cnt; ci++) {
-            lv_style_t * class = lv_style_list_get_style(list, ci);
-            if(class == style || style == NULL) {
+            /* changed class to _class to allow compilation as c++ */
+            lv_style_t * _class = lv_style_list_get_style(list, ci);
+            if(_class == style || style == NULL) { 
                 lv_obj_refresh_style(obj, part, LV_STYLE_PROP_ALL);
                 break;
             }
