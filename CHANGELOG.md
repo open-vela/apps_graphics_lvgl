@@ -1,5 +1,18 @@
 # Changelog
 
+
+## v7.7.0 (06.10.2020)
+
+### New features
+- Add PXP GPU support (for NXP MCUs)
+- Add VG-Lite GPU support (for NXP MCUs)
+- Allow max. 16 cell types for table
+- Add `lv_table_set_text_fmt()`
+- Use margin on calendar header to set distances and padding to the size of the header
+- Add `text_sel_bg` style proeprty
+
+### Bugfixes
+
 ## v7.6.1 (06.10.2020)
 
 ### Bugfixes
@@ -10,6 +23,7 @@
 - Fix click focus
 - Fix imgbtn image switching with empty style
 - Material theme: do not set the text font to allow easy global font change
+
 
 ## v7.6.0 (22.09.2020)
 
