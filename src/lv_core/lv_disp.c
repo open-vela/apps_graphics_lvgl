@@ -229,8 +229,8 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     /*Be sure both screens are in a normal position*/
     lv_obj_set_pos(new_scr, 0, 0);
     lv_obj_set_pos(lv_scr_act(), 0, 0);
-    lv_style_remove_prop(_lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
-    lv_style_remove_prop(_lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 
     lv_anim_t a_new;
     lv_anim_init(&a_new);
@@ -316,12 +316,6 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
  */
 uint32_t lv_disp_get_inactive_time(const lv_disp_t * disp)
 {
-    if(!disp) disp = lv_disp_get_default();
-    if(!disp) {
-        LV_LOG_WARN("lv_disp_get_inactive_time: no display registered");
-        return 0;
-    }
-
     if(disp) return lv_tick_elaps(disp->last_activity_time);
 
     lv_disp_t * d;
@@ -409,6 +403,6 @@ static void scr_anim_ready(lv_anim_t * a)
 
     if(d->prev_scr && d->del_prev) lv_obj_del(d->prev_scr);
     d->prev_scr = NULL;
-    lv_style_remove_prop(_lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 }
 #endif
