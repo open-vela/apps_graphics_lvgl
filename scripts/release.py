@@ -87,7 +87,7 @@ def define_set(fn, name, value):
     print("In " + fn + " set " + name + " to " + value)
     
     new_content = ""      
-    s = r'^ *# *define +' + str(name).rstrip() + ' +'
+    s = r'^ *# *define +' + str(name).rstrip()
     
     f = open(fn, "r")
     for i in f.read().splitlines():
@@ -108,6 +108,10 @@ def clone_repos():
     cmd("mkdir " + workdir)
     os.chdir(workdir)
     
+    #For debuging just copy the repos
+    #cmd("cp -a ../repos/. .")
+    #return
+
     cmd("git clone " + upstream("lvgl") + "; cd lvgl; git checkout master; git remote update origin --prune; ")
     cmd("git clone " + upstream("lv_examples") + "; cd lv_examples; git checkout master; git remote update origin --prune; ")
     cmd("git clone " + upstream("lv_drivers") + "; cd lv_drivers; git checkout master; git remote update origin --prune; ")
@@ -448,7 +452,7 @@ def cleanup():
     cmd("rm -fr " + workdir)
 
 if __name__ == '__main__':
-    dev_prepare = 'minor'
+    dev_prepare = 'bugfix'
     if(len(sys.argv) != 2):
         print("Missing argument. Usage ./release.py bugfix | minor | major")
         print("Use minor by deafult")
@@ -478,10 +482,6 @@ if __name__ == '__main__':
     publish_master()
      
     projs_update()    
-    dev_ver_major = "7"
-    dev_ver_minor = "7"
-    dev_ver_patch = "0"
-    dev_ver_str = "v7.7.0"
     
     if dev_prepare == 'bugfix': 
         ver_patch = str(int(ver_patch) + 1)
@@ -493,14 +493,15 @@ if __name__ == '__main__':
         docs_update_latest_version()
 
     else:
-        merge_from_dev()
+        #merge_from_dev()
+        
+        get_lvgl_version("master")
         
         if dev_prepare == 'minor': 
-            ver_major = dev_ver_major
-            ver_minor = str(int(dev_ver_minor) + 1)
+            ver_minor = str(int(ver_minor) + 1)
             ver_patch = "0"
         else:
-            ver_major = str(int(dev_ver_major) + 1)
+            ver_major = str(int(ver_major) + 1)
             ver_minor = "0"
             ver_patch = "0"
                 
