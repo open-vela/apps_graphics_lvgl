@@ -27,9 +27,6 @@ fout.write(
 #define LV_CONF_INTERNAL_H
 /* clang-format off */
 
-/*Handle special Kconfig options*/
-#include "lv_conf_kconfig.h"
-
 #include <stdint.h>
 
 /*If lv_conf.h is not skipped include it*/
