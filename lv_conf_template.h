@@ -1,6 +1,6 @@
 /**
  * @file lv_conf.h
- * Configuration file for v7.7.1-dev
+ * Configuration file for v7.7.0-dev
  */
 
 /*
@@ -205,8 +205,6 @@ e.g. "stm32f769xx.h" or "stm32f429xx.h" */
  * */
 #define LV_USE_GPU_NXP_PXP_AUTO_INIT 0
 
-/*1: Use VG-Lite for CPU offload on NXP RTxxx platforms */
-#define LV_USE_GPU_NXP_VG_LITE   0
 
 /* 1: Enable file system (might be required for images */
 #define LV_USE_FILESYSTEM       1
@@ -262,14 +260,9 @@ typedef void * lv_img_decoder_user_data_t;
 /* Define a custom attribute to `lv_disp_flush_ready` function */
 #define LV_ATTRIBUTE_FLUSH_READY
 
-/* Required alignment size for buffers */
-#define LV_ATTRIBUTE_MEM_ALIGN_SIZE
-
 /* With size optimization (-Os) the compiler might not align data to
- * 4 or 8 byte boundary. Some HW may need even 32 or 64 bytes.
- * This alignment will be explicitly applied where needed.
- * LV_ATTRIBUTE_MEM_ALIGN_SIZE should be used to specify required align size.
- * E.g. __attribute__((aligned(LV_ATTRIBUTE_MEM_ALIGN_SIZE))) */
+ * 4 or 8 byte boundary. This alignment will be explicitly applied where needed.
+ * E.g. __attribute__((aligned(4))) */
 #define LV_ATTRIBUTE_MEM_ALIGN
 
 /* Attribute to mark large constant arrays for example
@@ -584,12 +577,6 @@ typedef void * lv_obj_user_data_t;
 /*Button matrix (dependencies: -)*/
 #define LV_USE_BTNMATRIX     1
 
-/*Calendar (dependencies: -)*/
-#define LV_USE_CALENDAR 1
-#if LV_USE_CALENDAR
-#  define LV_CALENDAR_WEEK_STARTS_MONDAY    0
-#endif
-
 /*Canvas (dependencies: lv_img)*/
 #define LV_USE_CANVAS   1
 
@@ -601,12 +588,6 @@ typedef void * lv_obj_user_data_t;
 #if LV_USE_CHART
 #  define LV_CHART_AXIS_TICK_LABEL_MAX_LEN    256
 #endif
-
-/*Container (dependencies: -*/
-#define LV_USE_CONT     1
-
-/*Color picker (dependencies: -*/
-#define LV_USE_CPICKER   1
 
 /*Drop down list (dependencies: lv_page, lv_label, lv_symbol_def.h)*/
 #define LV_USE_DROPDOWN    1
@@ -628,9 +609,6 @@ typedef void * lv_obj_user_data_t;
 #  define LV_IMGBTN_TILED 0
 #endif
 
-/*Keyboard (dependencies: lv_btnm)*/
-#define LV_USE_KEYBOARD       1
-
 /*Label (dependencies: -*/
 #define LV_USE_LABEL    1
 #if LV_USE_LABEL != 0
@@ -647,55 +625,11 @@ typedef void * lv_obj_user_data_t;
 #  define LV_LABEL_LONG_TXT_HINT          0
 #endif
 
-/*LED (dependencies: -)*/
-#define LV_USE_LED      1
-#if LV_USE_LED
-#  define LV_LED_BRIGHT_MIN  120      /*Minimal brightness*/
-#  define LV_LED_BRIGHT_MAX  255     /*Maximal brightness*/
-#endif
-
 /*Line (dependencies: -*/
 #define LV_USE_LINE     1
 
-/*List (dependencies: lv_page, lv_btn, lv_label, (lv_img optionally for icons ))*/
-#define LV_USE_LIST     1
-#if LV_USE_LIST != 0
-/*Default animation time of focusing to a list element [ms] (0: no animation)  */
-#  define LV_LIST_DEF_ANIM_TIME  100
-#endif
-
-/*Line meter (dependencies: *;)*/
-#define LV_USE_LINEMETER   1
-#if LV_USE_LINEMETER
-/* Draw line more precisely at cost of performance.
- * Useful if there are lot of lines any minor are visible
- * 0: No extra precision
- * 1: Some extra precision
- * 2: Best precision
- */
-#  define LV_LINEMETER_PRECISE    1
-#endif
-
 /*Mask (dependencies: -)*/
 #define LV_USE_OBJMASK  1
-
-/*Message box (dependencies: lv_rect, lv_btnm, lv_label)*/
-#define LV_USE_MSGBOX     1
-
-/*Page (dependencies: lv_cont)*/
-#define LV_USE_PAGE     1
-#if LV_USE_PAGE != 0
-/*Focus default animation time [ms] (0: no animation)*/
-#  define LV_PAGE_DEF_ANIM_TIME     400
-#endif
-
-/*Preload (dependencies: lv_arc, lv_anim)*/
-#define LV_USE_SPINNER      1
-#if LV_USE_SPINNER != 0
-#  define LV_SPINNER_DEF_ARC_LENGTH   60      /*[deg]*/
-#  define LV_SPINNER_DEF_SPIN_TIME    1000    /*[ms]*/
-#  define LV_SPINNER_DEF_ANIM         LV_SPINNER_TYPE_SPINNING_ARC
-#endif
 
 /*Roller (dependencies: lv_ddlist)*/
 #define LV_USE_ROLLER    1
@@ -709,9 +643,6 @@ typedef void * lv_obj_user_data_t;
 
 /*Slider (dependencies: lv_bar)*/
 #define LV_USE_SLIDER    1
-
-/*Spinbox (dependencies: lv_ta)*/
-#define LV_USE_SPINBOX       1
 
 /*Switch (dependencies: lv_slider)*/
 #define LV_USE_SWITCH       1
@@ -729,24 +660,6 @@ typedef void * lv_obj_user_data_t;
 #  define LV_TABLE_COL_MAX    12
 #  define LV_TABLE_CELL_STYLE_CNT 4
 #endif
-
-
-/*Tab (dependencies: lv_page, lv_btnm)*/
-#define LV_USE_TABVIEW      1
-#  if LV_USE_TABVIEW != 0
-/*Time of slide animation [ms] (0: no animation)*/
-#  define LV_TABVIEW_DEF_ANIM_TIME    300
-#endif
-
-/*Tileview (dependencies: lv_page) */
-#define LV_USE_TILEVIEW     1
-#if LV_USE_TILEVIEW
-/*Time of slide animation [ms] (0: no animation)*/
-#  define LV_TILEVIEW_DEF_ANIM_TIME   300
-#endif
-
-/*Window (dependencies: lv_cont, lv_btn, lv_label, lv_img, lv_page)*/
-#define LV_USE_WIN      1
 
 /*==================
  * Non-user section
