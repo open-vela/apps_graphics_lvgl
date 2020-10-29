@@ -1,5 +1,10 @@
 # Changelog
 
+## v7.8.0 (20.10.2020)
+
+### New features
+-  make DMA2D non blocking 
+
 ## v7.7.1 (04.11.2020)
 ### Bugfixes
 - Respect btnmatrix's `one_check` in `lv_btnmatrix_set_btn_ctrl`
