@@ -267,11 +267,7 @@ typedef lv_color8_t lv_color_t;
 #elif LV_COLOR_DEPTH == 16
 typedef uint16_t lv_color_int_t;
 typedef lv_color16_t lv_color_t;
-# if LV_COLOR_16_SWAP == 0
-#  define _LV_COLOR_ZERO_INITIALIZER {{0x00, 0x00, 0x00}}
-# else
-#  define _LV_COLOR_ZERO_INITIALIZER {{0x00, 0x00, 0x00, 0x00}}
-# endif
+#define _LV_COLOR_ZERO_INITIALIZER {{0x00, 0x00, 0x00}}
 #elif LV_COLOR_DEPTH == 32
 typedef uint32_t lv_color_int_t;
 typedef lv_color32_t lv_color_t;
