@@ -151,7 +151,6 @@ void lv_group_remove_obj(lv_obj_t * obj)
 {
     lv_group_t * g = lv_obj_get_group(obj);
     if(g == NULL) return;
-    if(g->obj_focus == NULL) return; /*Just to be sure (Not possible if there is at least one object in the group)*/
 
     /*Focus on the next object*/
     if(*g->obj_focus == obj) {
