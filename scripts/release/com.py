@@ -13,7 +13,7 @@ def cmd(c, ask_on_err = True):
   r = os.system(c)       
   if r:
     print("### Error: " + str(r))
-    if ask_on_err: 
+    if exit_on_err: 
         input("Press Enter to continue exectution...")
     
 def define_set(fn, name, value):    
@@ -77,7 +77,8 @@ def get_lvgl_version(br):
     return ver
         
 def push(c):
-    cmd("git push " + c)
+    return
+    cmd(c)
         
 def update_version(ver):
     ver_str = ver_format(ver)
