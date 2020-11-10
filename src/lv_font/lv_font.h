@@ -24,11 +24,6 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-/*Number of fractional digits in the advanced width (`adv_w`) field of `lv_font_glyph_dsc_t`*/
-#define LV_FONT_WIDTH_FRACT_DIGIT       4
-
-#define LV_FONT_KERN_POSITIVE        0
-#define LV_FONT_KERN_NEGATIVE        1
 
 /**********************
  *      TYPEDEFS
@@ -73,7 +68,7 @@ typedef struct _lv_font_struct {
     uint8_t subpx  : 2;             /**< An element of `lv_font_subpx_t`*/
 
     int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
-    int8_t underline_thickness;     /**< Thickness of the underline*/
+    int8_t  underline_thickness;     /**< Thickness of the underline*/
 
     void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
 #if LV_USE_USER_DATA
@@ -225,6 +220,10 @@ LV_FONT_DECLARE(lv_font_montserrat_12_subpx)
 
 #if LV_FONT_UNSCII_8
 LV_FONT_DECLARE(lv_font_unscii_8)
+#endif
+
+#if LV_FONT_UNSCII_16
+LV_FONT_DECLARE(lv_font_unscii_16)
 #endif
 
 #if LV_FONT_DEJAVU_16_PERSIAN_HEBREW
