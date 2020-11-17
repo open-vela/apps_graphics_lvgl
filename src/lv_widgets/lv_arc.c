@@ -85,6 +85,7 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
     ext->arc_angle_end   = 270;
     ext->type = LV_ARC_TYPE_NORMAL;
     ext->cur_value = -1;
+    ext->min_close = 1;
     ext->min_value = 0;
     ext->max_value = 100;
     ext->dragging = false;
@@ -103,7 +104,8 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
 
     /*Init the new arc arc*/
     if(copy == NULL) {
-        lv_obj_add_flag(arc, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_click(arc, true);
+        lv_obj_add_protect(arc, LV_PROTECT_PRESS_LOST);
         lv_obj_set_ext_click_area(arc, LV_DPI / 10, LV_DPI / 10, LV_DPI / 10, LV_DPI / 10);
         lv_arc_set_value(arc, ext->min_value);
         lv_theme_apply(arc, LV_THEME_ARC);
@@ -128,7 +130,7 @@ lv_obj_t * lv_arc_create(lv_obj_t * par, const lv_obj_t * copy)
         lv_style_list_copy(&ext->style_arc, &copy_ext->style_arc);
 
         /*Refresh the style with new signal function*/
-        _lv_obj_refresh_style(arc, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        lv_obj_refresh_style(arc, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("arc created");
@@ -271,6 +273,8 @@ void lv_arc_set_bg_start_angle(lv_obj_t * arc, uint16_t start)
     }
 
     ext->bg_angle_start = start;
+
+    value_update(arc);
 }
 
 /**
@@ -303,6 +307,8 @@ void lv_arc_set_bg_end_angle(lv_obj_t * arc, uint16_t end)
         lv_obj_invalidate(arc);
     }
 
+    value_update(arc);
+
     ext->bg_angle_end = end;
 }
 
@@ -327,6 +333,8 @@ void lv_arc_set_bg_angles(lv_obj_t * arc, uint16_t start, uint16_t end)
     ext->bg_angle_end = end;
 
     inv_arc_area(arc, ext->bg_angle_start, ext->bg_angle_end, LV_ARC_PART_BG);
+
+    value_update(arc);
 }
 
 /**
@@ -699,23 +707,22 @@ static lv_design_res_t lv_arc_design(lv_obj_t * arc, const lv_area_t * clip_area
 static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
 {
     lv_res_t res;
-
+    if(sign == LV_SIGNAL_GET_STYLE) {
+        lv_get_style_info_t * info = param;
+        info->result = lv_arc_get_style(arc, info->part);
+        if(info->result != NULL) return LV_RES_OK;
+        else return ancestor_signal(arc, sign, param);
+    }
 
     /* Include the ancient signal function */
     res = ancestor_signal(arc, sign, param);
     if(res != LV_RES_OK) return res;
 
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     lv_arc_ext_t * ext = lv_obj_get_ext_attr(arc);
-    if(sign == LV_SIGNAL_GET_TYPE) {
-        return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
-    }
-    else if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_get_style_info_t * info = param;
-        info->result = lv_arc_get_style(arc, info->part);
-        if(info->result != NULL) return LV_RES_OK;
-        else return ancestor_signal(arc, sign, param);
-    } else if(sign == LV_SIGNAL_PRESSING) {
+
+    if(sign == LV_SIGNAL_PRESSING) {
         /* Only adjustable arcs can be dragged */
         if(!ext->adjustable) return res;
 
@@ -751,6 +758,9 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
         /*It must be in "dragging" mode to turn the arc*/
         if(ext->dragging == false) return res;
 
+        /*No angle can be determined if exactly the middle of the arc is being pressed*/
+        if(p.x == 0 && p.y == 0) return res;
+
         /*Calculate the angle of the pressed point*/
         int16_t angle;
         int16_t bg_end = ext->bg_angle_end;
@@ -758,13 +768,31 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
             bg_end = ext->bg_angle_end + 360;
         }
 
-        angle = 360 - _lv_atan2(p.x, p.y) + 90; /*Some transformation is required*/
+
+        angle = _lv_atan2(p.y, p.x);
         angle -= ext->rotation_angle;
-        if(angle < ext->bg_angle_start) angle = ext->bg_angle_start;
-        if(angle > bg_end) angle = bg_end;
+        angle -= ext->bg_angle_start;   /*Make the angle relative to the start angle*/
+        if(angle < 0) angle += 360;
+
+        int16_t deg_range = bg_end - ext->bg_angle_start;
+
+        int16_t last_angle_rel = ext->last_angle - ext->bg_angle_start;
+        int16_t delta_angle = angle - last_angle_rel;
+
+        /* Do not allow big jumps.
+         * It's mainly to avoid jumping to the opposite end if the "dead" range between min. an max. is crossed.
+         * Check which and was closer on the last valid press (ext->min_close) and prefer that end */
+        if(LV_MATH_ABS(delta_angle) > 180) {
+            if(ext->min_close) angle = 0;
+            else angle = deg_range;
+        }
+        else {
+            if(angle < deg_range / 2) ext->min_close = 1;
+            else ext->min_close = 0;
+        }
 
         /*Calculate the slew rate limited angle based on change rate (degrees/sec)*/
-        int16_t delta_angle = angle - ext->last_angle;
+        delta_angle = angle - last_angle_rel;
         uint32_t delta_tick = lv_tick_elaps(ext->last_tick);
         int16_t delta_angle_max = (ext->chg_rate * delta_tick) / 1000;
 
@@ -775,12 +803,14 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
             delta_angle = -delta_angle_max;
         }
 
-        angle = ext->last_angle + delta_angle; /*Apply the limited angle change*/
+        angle = last_angle_rel + delta_angle; /*Apply the limited angle change*/
 
         /*Rounding for symmetry*/
         int32_t round = ((bg_end - ext->bg_angle_start) * 8) / (ext->max_value - ext->min_value);
         round = (round + 4) >> 4;
         angle += round;
+
+        angle += ext->bg_angle_start;   /*Make the angle absolute again*/
 
         /*Set the new value*/
         int16_t old_value = ext->cur_value;
@@ -832,8 +862,8 @@ static lv_res_t lv_arc_signal(lv_obj_t * arc, lv_signal_t sign, void * param)
         }
     }
     else if(sign == LV_SIGNAL_CLEANUP) {
-        _lv_obj_reset_style_list_no_refr(arc, LV_ARC_PART_KNOB);
-        _lv_obj_reset_style_list_no_refr(arc, LV_ARC_PART_INDIC);
+        lv_obj_clean_style_list(arc, LV_ARC_PART_KNOB);
+        lv_obj_clean_style_list(arc, LV_ARC_PART_INDIC);
     }
 
     return res;
@@ -901,7 +931,7 @@ static void inv_arc_area(lv_obj_t * arc, uint16_t start_angle, uint16_t end_angl
     extra_area = rounded ? w / 2 + 2 : 0;
 
     if(part == LV_ARC_PART_INDIC && lv_style_list_get_style(&ext->style_knob, 0) != NULL) {
-        lv_coord_t knob_extra_size = _lv_obj_get_draw_rect_ext_pad_size(arc, LV_ARC_PART_KNOB);
+        lv_coord_t knob_extra_size = lv_obj_get_draw_rect_ext_pad_size(arc, LV_ARC_PART_KNOB);
 
         lv_coord_t knob_left = lv_obj_get_style_pad_left(arc, LV_ARC_PART_KNOB);
         lv_coord_t knob_right = lv_obj_get_style_pad_right(arc, LV_ARC_PART_KNOB);
