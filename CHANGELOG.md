@@ -1,5 +1,12 @@
 # Changelog
 
+## v7.8.0 (20.10.2020)
+
+### New features
+- make DMA2D non blocking 
+- add unscii-16 built-in font
+- add KConfig
+
 ## v7.7.2 (Planned to 17.11.2020)
 ### Bugfixes
 - fix(draw_triangle): fix polygon/triangle drawing when the order of points is counter-clockwise
