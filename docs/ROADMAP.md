@@ -5,7 +5,7 @@ This is a summary for thenew fatures of the major releases and a collection of i
 This list indicates only the current intention and can be changed.
 
 ## v8
-Planned to November/December 2020
+Planned to September/October 2020
 - Create an `lv_components` repository for compley widgets
    - It makes the core LVGL leaner
    - In `lv_components` we can have a lot and specific widgets
@@ -32,26 +32,24 @@ Planned to November/December 2020
 ## v8.1
 - Add radio button widget
 
-## v8.x
-- Unit testing (gtest?). See [#1658](https://github.com/lvgl/lvgl/issues/1658)
-- Benchmarking (gem5?). See [#1660](https://github.com/lvgl/lvgl/issues/1660)
-
 ## v9
 - Simplify `group`s. Discussion is [here](https://forum.lvgl.io/t/lv-group-tabindex/2927/3).
+- Unit testing (gtest?). See [#1658](https://github.com/lvgl/lvgl/issues/1658)
+- Benchmarking (gem5?). See [#1660](https://github.com/lvgl/lvgl/issues/1660)
 - Consider direct binary font format support
 - Remove the copy paramter from create functions
 - Style selectors and style-based states See [#1832](https://github.com/lvgl/lvgl/issues/1832)
-- Optimize line and cirle drawing and masking
-- Reconsider color format management for run time color format setting, and custom color format usage. (Also [RGB888](https://github.com/lvgl/lvgl/issues/1722))
-- 9-patch support for `lv_imgbtn`.
 
 ## v10
 - Remove property level states
 
 
 ## Ideas
+- 9-patch support for `lv_imgbtn`.
 - lv_mem_alloc_aligned(size, align)
 - Text node. See [#1701](https://github.com/lvgl/lvgl/issues/1701#issuecomment-699479408)
+- RGB888 support [#1722](https://github.com/lvgl/lvgl/issues/1722)
+- Consider ARGB4444, ARGB1555 format
 - CPP binding. See [Forum](https://forum.lvgl.io/t/is-it-possible-to-officially-support-optional-cpp-api/2736)
 - Optmize font decompression
 - Switch to RGBA colors in styles
