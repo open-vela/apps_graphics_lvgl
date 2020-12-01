@@ -660,8 +660,9 @@ void lv_textarea_set_pwd_mode(lv_obj_t * ta, bool en)
     lv_textarea_ext_t * ext = lv_obj_get_ext_attr(ta);
     if(ext->pwd_mode == en) return;
 
+    ext->pwd_mode = en == false ? 0 : 1;
     /*Pwd mode is now enabled*/
-    if(ext->pwd_mode == 0 && en != false) {
+    if(en != false) {
         char * txt   = lv_label_get_text(ext->label);
         size_t len = strlen(txt);
         ext->pwd_tmp = lv_mem_alloc(len + 1);
@@ -675,14 +676,12 @@ void lv_textarea_set_pwd_mode(lv_obj_t * ta, bool en)
         lv_textarea_clear_selection(ta);
     }
     /*Pwd mode is now disabled*/
-    else if(ext->pwd_mode == 1 && en == false) {
+    else {
         lv_textarea_clear_selection(ta);
         lv_label_set_text(ext->label, ext->pwd_tmp);
         lv_mem_free(ext->pwd_tmp);
         ext->pwd_tmp = NULL;
     }
-
-    ext->pwd_mode = en == false ? 0 : 1;
 
     refr_cursor_area(ta);
 }
@@ -1633,7 +1632,7 @@ static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_
             ext->sel_start    = char_id_at_click;
             ext->sel_end      = LV_LABEL_TEXT_SEL_OFF;
             ext->text_sel_in_prog = 1;
-            lv_obj_add_flag(ta, LV_OBJ_FLAG_SCROLL_FREEZE);
+            lv_obj_set_scroll_freeze(ta, true);
         }
         else if(ext->text_sel_in_prog && sign == LV_SIGNAL_PRESSING) {
             /*Input device may be moving. Store the end position */
@@ -1641,7 +1640,7 @@ static void update_cursor_position_on_click(lv_obj_t * ta, lv_signal_t sign, lv_
         }
         else if(ext->text_sel_in_prog && (sign == LV_SIGNAL_PRESS_LOST || sign == LV_SIGNAL_RELEASED)) {
             /*Input device is released. Check if anything was selected.*/
-            lv_obj_clear_flag(ta, LV_OBJ_FLAG_SCROLL_FREEZE);
+            lv_obj_set_scroll_freeze(ta, false);
         }
     }
 
@@ -1734,15 +1733,7 @@ static void draw_placeholder(lv_obj_t * ta, const lv_area_t * clip_area)
 
         if(ext->one_line) ph_dsc.flag |= LV_TXT_FLAG_EXPAND;
 
-        lv_coord_t left = lv_obj_get_style_pad_left(ta, LV_TEXTAREA_PART_MAIN);
-        lv_coord_t top = lv_obj_get_style_pad_top(ta, LV_TEXTAREA_PART_MAIN);
-        lv_area_t ph_coords;
-        lv_area_copy(&ph_coords, &ta->coords);
-        ph_coords.x1 += left;
-        ph_coords.x2 += left;
-        ph_coords.y1 += top;
-        ph_coords.y2 += top;
-        lv_draw_label(&ph_coords, clip_area, &ph_dsc, ext->placeholder_txt, NULL);
+        lv_draw_label(&ta->coords, clip_area, &ph_dsc, ext->placeholder_txt, NULL);
     }
 }
 
