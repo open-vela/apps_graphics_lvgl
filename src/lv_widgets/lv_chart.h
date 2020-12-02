@@ -123,7 +123,7 @@ typedef struct {
 /*Parts of the chart*/
 enum {
     LV_CHART_PART_BG = LV_OBJ_PART_MAIN,
-    LV_CHART_PART_SERIES_BG,
+    LV_CHART_PART_SERIES_BG = _LV_OBJ_PART_VIRTUAL_LAST,
     LV_CHART_PART_SERIES,
     LV_CHART_PART_CURSOR
 };
@@ -157,7 +157,7 @@ lv_chart_series_t * lv_chart_add_series(lv_obj_t * chart, lv_color_t color);
  * Add a cursor with a given color
  * @param chart pointer to chart object
  * @param color color of the cursor
- * @param dir direction of the cursor. `LV_CHART_CURSOR_RIGHT/LEFT/TOP/DOWN`. OR-ed vaéues are possible
+ * @param dir direction of the cursor. `LV_CHART_CURSOR_RIGHT/LEFT/TOP/DOWN`. OR-ed values are possible
  * @return pointer to the created cursor
  */
 lv_chart_cursor_t * lv_chart_add_cursor(lv_obj_t * chart, lv_color_t color, lv_cursor_direction_t dir);
