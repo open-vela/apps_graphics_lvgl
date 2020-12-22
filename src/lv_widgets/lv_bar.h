@@ -19,6 +19,7 @@ extern "C" {
 
 #include "../lv_core/lv_obj.h"
 #include "../lv_misc/lv_anim.h"
+#include "lv_cont.h"
 #include "lv_btn.h"
 #include "lv_label.h"
 
@@ -58,36 +59,32 @@ typedef struct {
 } lv_bar_anim_t;
 #endif
 
+/** Data of bar*/
+typedef struct {
+    /*No inherited ext, derived from the base object */
 
-LV_CLASS_DECLARE_START(lv_bar, lv_obj);
-
-#define _lv_bar_constructor   void (*constructor)(struct _lv_obj_t * obj, struct _lv_obj_t * parent, const struct _lv_obj_t * copy)
-
+    /*New data for this type */
+    int16_t cur_value; /*Current value of the bar*/
+    int16_t min_value; /*Minimum value of the bar*/
+    int16_t max_value; /*Maximum value of the bar*/
+    int16_t start_value; /*Start value of the bar*/
+    lv_area_t indic_area;   /*Save the indicator area. MIght be used by derived types*/
 #if LV_USE_ANIMATION
-#define _lv_bar_anim_data \
-    lv_anim_value_t anim_time; \
-    lv_bar_anim_t cur_value_anim; \
+    lv_anim_value_t anim_time;
+    lv_bar_anim_t cur_value_anim;
     lv_bar_anim_t start_value_anim;
-#else
-#define _lv_bar_anim_data
 #endif
+    uint8_t type : 2;           /*Type of bar*/
+    lv_style_list_t style_indic; /*Style of the indicator*/
+} lv_bar_ext_t;
 
-#define _lv_bar_data             \
-  _lv_obj_data                  \
-  int16_t cur_value; /*Current value of the bar*/ \
-  int16_t min_value; /*Minimum value of the bar*/ \
-  int16_t max_value; /*Maximum value of the bar*/ \
-  int16_t start_value; /*Start value of the bar*/ \
-  lv_area_t indic_area;   /*Save the indicator area. Might be used by derived types*/ \
-  _lv_bar_anim_data \
-  uint8_t type : 2;           /*Type of bar*/                     \
-
-#define _lv_bar_class_dsc        \
-  _lv_obj_class_dsc              \
-
-LV_CLASS_DECLARE_END(lv_bar, lv_obj);
-
-extern lv_bar_class_t lv_bar;
+/** Bar parts */
+enum {
+    LV_BAR_PART_BG, /** Bar background style. */
+    LV_BAR_PART_INDIC, /** Bar fill area style. */
+    _LV_BAR_PART_VIRTUAL_LAST
+};
+typedef uint8_t lv_bar_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -96,11 +93,10 @@ extern lv_bar_class_t lv_bar;
 /**
  * Create a bar objects
  * @param par pointer to an object, it will be the parent of the new bar
- * @param copy DEPRECATED, will be removed in v9.
- *             Pointer to an other bar to copy.
+ * @param copy pointer to a bar object, if not NULL then the new object will be copied from it
  * @return pointer to the created bar
  */
-lv_obj_t * lv_bar_create(lv_obj_t * parent, const lv_obj_t * copy);
+lv_obj_t * lv_bar_create(lv_obj_t * par, const lv_obj_t * copy);
 
 /*=====================
  * Setter functions
