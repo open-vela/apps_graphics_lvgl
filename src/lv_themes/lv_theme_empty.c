@@ -87,9 +87,8 @@ lv_theme_t * lv_theme_empty_init(lv_color_t color_primary, lv_color_t color_seco
     theme.flags = flags;
 
     style_init_reset(&styles->opa_cover);
-    lv_style_set_bg_opa(&styles->opa_cover, LV_STATE_DEFAULT, LV_OPA_COVER);
+    lv_style_set_bg_opa(&styles->opa_cover, LV_OPA_COVER);
 
-    theme.apply_xcb = NULL;
     theme.apply_cb = theme_apply;
     return &theme;
 }
@@ -99,8 +98,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj, lv_theme_style_t name)
 {
     LV_UNUSED(th);
     if(name == LV_THEME_SCR) {
-        lv_obj_clean_style_list(obj, LV_OBJ_PART_MAIN);
-        lv_obj_add_style(obj, LV_OBJ_PART_MAIN, &styles->opa_cover);
+        lv_obj_add_style(obj, LV_PART_MAIN, LV_STATE_DEFAULT, &styles->opa_cover);
     }
 }
 
