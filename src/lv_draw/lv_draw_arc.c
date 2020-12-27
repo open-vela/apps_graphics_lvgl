@@ -75,7 +75,7 @@ void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius,  uin
     if(dsc->width == 0) return;
     if(start_angle == end_angle) return;
 
-    lv_style_int_t width = dsc->width;
+    lv_coord_t width = dsc->width;
     if(width > radius) width = radius;
 
     lv_draw_rect_dsc_t cir_dsc;
@@ -99,8 +99,8 @@ void lv_draw_arc(lv_coord_t center_x, lv_coord_t center_y, uint16_t radius,  uin
         return;
     }
 
-    if(start_angle >= 360) start_angle -= 360;
-    if(end_angle >= 360) end_angle -= 360;
+    while(start_angle >= 360) start_angle -= 360;
+    while(end_angle >= 360) end_angle -= 360;
 
     lv_draw_mask_angle_param_t mask_angle_param;
     lv_draw_mask_angle_init(&mask_angle_param, center_x, center_y, start_angle, end_angle);
