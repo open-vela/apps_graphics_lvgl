@@ -17,7 +17,13 @@ extern "C" {
 
 #if LV_USE_ROLLER != 0
 
+/*Testing of dependencies*/
+#if LV_USE_PAGE == 0
+#error "lv_roller: lv_page is required. Enable it in lv_conf.h (LV_USE_PAGE 1) "
+#endif
+
 #include "../lv_core/lv_obj.h"
+#include "lv_page.h"
 #include "lv_label.h"
 
 /*********************
@@ -36,40 +42,27 @@ enum {
 
 typedef uint8_t lv_roller_mode_t;
 
-LV_CLASS_DECLARE_START(lv_roller, lv_obj);
-
-#define _lv_roller_constructor   void (*constructor)(struct _lv_obj_t * obj, struct _lv_obj_t * parent, const struct _lv_obj_t * copy)
-
-#define _lv_roller_data             \
-  _lv_obj_data                  \
-  uint16_t option_cnt;          /*Number of options*/       \
-  uint16_t sel_opt_id;          /*Index of the current option*/ \
-  uint16_t sel_opt_id_ori;      /*Store the original index on focus*/   \
-  uint32_t anim_time;           \
-  lv_roller_mode_t mode : 1;    \
-  uint32_t moved : 1;   \
-
-#define _lv_roller_class_dsc        \
-  _lv_obj_class_dsc              \
-
-LV_CLASS_DECLARE_END(lv_roller, lv_obj);
-
-extern lv_roller_class_t lv_roller;
 
 
-LV_CLASS_DECLARE_START(lv_roller_label, lv_label);
+/*Data of roller*/
+typedef struct {
+    lv_page_ext_t page; /*Ext. of ancestor*/
 
-#define _lv_roller_label_constructor   void (*constructor)(struct _lv_obj_t * obj, struct _lv_obj_t * parent, const struct _lv_obj_t * copy)
+    /*New data for this type */
+    lv_style_list_t style_sel; /*Style of the selected option*/
+    uint16_t option_cnt;          /*Number of options*/
+    uint16_t sel_opt_id;          /*Index of the current option*/
+    uint16_t sel_opt_id_ori;      /*Store the original index on focus*/
+    lv_roller_mode_t mode : 1;
+    uint8_t auto_fit : 1;         /*1: Automatically set the width*/
+} lv_roller_ext_t;
 
-#define _lv_roller_label_data             \
-  _lv_label_data                  \
-
-#define _lv_roller_label_class_dsc        \
-  _lv_label_class_dsc              \
-
-LV_CLASS_DECLARE_END(lv_roller_label, lv_label);
-
-extern lv_roller_label_class_t lv_roller_label;
+enum {
+    LV_ROLLER_PART_BG = LV_PAGE_PART_BG,
+    LV_ROLLER_PART_SELECTED = _LV_PAGE_PART_VIRTUAL_LAST,
+    _LV_ROLLER_PART_VIRTUAL_LAST,
+};
+typedef uint8_t lv_roller_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -100,7 +93,7 @@ void lv_roller_set_options(lv_obj_t * roller, const char * options, lv_roller_mo
  * @param roller - pointer to a roller object
  * @param align - one of lv_label_align_t values (left, right, center)
  */
-void lv_roller_set_label_align(lv_obj_t * roller, lv_label_align_t align);
+void lv_roller_set_align(lv_obj_t * roller, lv_label_align_t align);
 
 /**
  * Set the selected option
@@ -118,11 +111,21 @@ void lv_roller_set_selected(lv_obj_t * roller, uint16_t sel_opt, lv_anim_enable_
 void lv_roller_set_visible_row_count(lv_obj_t * roller, uint8_t row_cnt);
 
 /**
- * Get the animation time of the roller
+ * Allow automatically setting the width of roller according to it's content.
  * @param roller pointer to a roller object
- * @param the animation time in milliseconds
+ * @param auto_fit true: enable auto fit
  */
-void lv_roller_set_anim_time(lv_obj_t * roller, uint32_t anim_time);
+void lv_roller_set_auto_fit(lv_obj_t * roller, bool auto_fit);
+
+/**
+ * Set the open/close animation time.
+ * @param roller pointer to a roller object
+ * @param anim_time: open/close animation time [ms]
+ */
+static inline void lv_roller_set_anim_time(lv_obj_t * roller, uint16_t anim_time)
+{
+    lv_page_set_anim_time(roller, anim_time);
+}
 
 /*=====================
  * Getter functions
@@ -154,7 +157,14 @@ void lv_roller_get_selected_str(const lv_obj_t * roller, char * buf, uint32_t bu
  * @param roller pointer to a roller object
  * @return LV_LABEL_ALIGN_LEFT, LV_LABEL_ALIGN_RIGHT or LV_LABEL_ALIGN_CENTER
  */
-lv_label_align_t lv_roller_get_label_align(const lv_obj_t * roller);
+lv_label_align_t lv_roller_get_align(const lv_obj_t * roller);
+
+/**
+ * Get whether the auto fit option is enabled or not.
+ * @param roller pointer to a roller object
+ * @return true: auto fit is enabled
+ */
+bool lv_roller_get_auto_fit(lv_obj_t * roller);
 
 /**
  * Get the options of a roller
@@ -164,11 +174,15 @@ lv_label_align_t lv_roller_get_label_align(const lv_obj_t * roller);
 const char * lv_roller_get_options(const lv_obj_t * roller);
 
 /**
- * Get the animation time of the roller
- * @param roller pointer to a roller object
- * @return the animation time in milliseconds
+ * Get the open/close animation time.
+ * @param roller pointer to a roller
+ * @return open/close animation time [ms]
  */
-uint32_t lv_roller_get_anim_time(lv_obj_t * roller);
+static inline uint16_t lv_roller_get_anim_time(const lv_obj_t * roller)
+{
+    return lv_page_get_anim_time(roller);
+}
+
 
 /**********************
  *      MACROS
