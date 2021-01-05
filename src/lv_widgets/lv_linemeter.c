@@ -97,7 +97,7 @@ lv_obj_t * lv_linemeter_create(lv_obj_t * par, const lv_obj_t * copy)
         ext->cur_value             = copy_ext->cur_value;
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(linemeter, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        _lv_obj_refresh_style(linemeter, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("line meter created");
@@ -308,9 +308,9 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
 {
     lv_linemeter_ext_t * ext    = lv_obj_get_ext_attr(lmeter);
 
-    lv_style_int_t left = lv_obj_get_style_pad_left(lmeter, LV_LINEMETER_PART_MAIN);
-    lv_style_int_t right = lv_obj_get_style_pad_right(lmeter, LV_LINEMETER_PART_MAIN);
-    lv_style_int_t top = lv_obj_get_style_pad_top(lmeter, LV_LINEMETER_PART_MAIN);
+    lv_coord_t left = lv_obj_get_style_pad_left(lmeter, LV_LINEMETER_PART_MAIN);
+    lv_coord_t right = lv_obj_get_style_pad_right(lmeter, LV_LINEMETER_PART_MAIN);
+    lv_coord_t top = lv_obj_get_style_pad_top(lmeter, LV_LINEMETER_PART_MAIN);
 
     lv_coord_t r_out = (lv_obj_get_width(lmeter) - left - right) / 2 ;
     lv_coord_t r_in  = r_out - lv_obj_get_style_scale_width(lmeter, part);
@@ -335,7 +335,7 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
     line_dsc.raw_end = 1;
 #endif
 
-    lv_style_int_t end_line_width = lv_obj_get_style_scale_end_line_width(lmeter, part);
+    lv_coord_t end_line_width = lv_obj_get_style_scale_end_line_width(lmeter, part);
 
 #if LV_LINEMETER_PRECISE > 0
     lv_area_t mask_area;
@@ -467,8 +467,8 @@ void lv_linemeter_draw_scale(lv_obj_t * lmeter, const lv_area_t * clip_area, uin
 #endif
 
     if(part == LV_LINEMETER_PART_MAIN && level < ext->line_cnt - 1) {
-        lv_style_int_t border_width = lv_obj_get_style_scale_border_width(lmeter, part);
-        lv_style_int_t end_border_width = lv_obj_get_style_scale_end_border_width(lmeter, part);
+        lv_coord_t border_width = lv_obj_get_style_scale_border_width(lmeter, part);
+        lv_coord_t end_border_width = lv_obj_get_style_scale_end_border_width(lmeter, part);
 
         if(border_width || end_border_width) {
             int16_t end_angle = ((level) * ext->scale_angle) / (ext->line_cnt - 1) + angle_ofs;
@@ -542,14 +542,10 @@ static lv_res_t lv_linemeter_signal(lv_obj_t * lmeter, lv_signal_t sign, void * 
     /* Include the ancient signal function */
     res = ancestor_signal(lmeter, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+    if(sign == LV_SIGNAL_GET_TYPE) return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
-    }
-    else if(sign == LV_SIGNAL_STYLE_CHG) {
-        lv_obj_refresh_ext_draw_pad(lmeter);
-        lv_obj_invalidate(lmeter);
     }
 
     return res;
