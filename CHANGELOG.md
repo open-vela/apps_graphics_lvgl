@@ -1,18 +1,11 @@
 # Changelog
 
-## v7.9.1 (Planned at 19.01.2020
-
-### Bugfixes
-- fix(cpicker) fix division by zero 
-- fix(dropdown) fix selecting options after the last one 
-
-## v7.9.0 (Plann1d at 05.01.2020
+## v7.9.0 
 
 ### New features
 - feat(chart) add lv_chart_remove_series and lv_chart_hide_series
 - feat(img_cahce) allow disabling image cacheing
 - calendar: make get_day_of_week() public
-- Added support for Zephyr integration
  
 ### Bugfixes
 - fix(draw_rect) free buffer used for arabic processing
@@ -21,12 +14,9 @@
 - fix(textarea) buffer overflow in password mode with UTF-8 characters
 - fix(textarea) cursor position after hiding character in password mode
 - fix(linemeter) draw critical lines with correct color
-- fix(kconfig) handle disable sprintf float correctly.
-- fix(layout) stop layout after recursion threshold is reached
-- fix(gauge) fix redraw with image needle
+- fix(lv_conf_internal) be sure Kconfig defines are always uppercase
 
-
-## v7.8.1
+## v7.8.1 (Plannad at 15.12.2020)
 
 ### Bugfixes
 - fix(lv_scr_load_anim) fix when multiple screen are loaded at tsame time with delay
