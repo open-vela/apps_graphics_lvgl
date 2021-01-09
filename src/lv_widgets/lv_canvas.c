@@ -705,7 +705,7 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_rect: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_rect: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -766,18 +766,18 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * @param max_w max width of the text. The text will be wrapped to fit into this size
  * @param label_draw_dsc pointer to a valid label descriptor `lv_draw_label_dsc_t`
  * @param txt text to display
- * @param align align of the text (`LV_TEXT_ALIGN_LEFT/RIGHT/CENTER`)
+ * @param align align of the text (`LV_LABEL_ALIGN_LEFT/RIGHT/CENTER`)
  */
 void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t max_w,
                          lv_draw_label_dsc_t * label_draw_dsc,
-                         const char * txt, lv_text_align_t align)
+                         const char * txt, lv_label_align_t align)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_text: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_text: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -815,17 +815,17 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
 
     lv_txt_flag_t flag;
     switch(align) {
-        case LV_TEXT_ALIGN_LEFT:
-            flag = LV_TEXT_FLAG_NONE;
+        case LV_LABEL_ALIGN_LEFT:
+            flag = LV_TXT_FLAG_NONE;
             break;
-        case LV_TEXT_ALIGN_RIGHT:
-            flag = LV_TEXT_FLAG_RIGHT;
+        case LV_LABEL_ALIGN_RIGHT:
+            flag = LV_TXT_FLAG_RIGHT;
             break;
-        case LV_TEXT_ALIGN_CENTER:
-            flag = LV_TEXT_FLAG_CENTER;
+        case LV_LABEL_ALIGN_CENTER:
+            flag = LV_TXT_FLAG_CENTER;
             break;
         default:
-            flag = LV_TEXT_FLAG_NONE;
+            flag = LV_TXT_FLAG_NONE;
             break;
     }
 
@@ -852,7 +852,7 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_img: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_img: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -917,7 +917,7 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_line: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_line: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
     /* Create a dummy display to fool the lv_draw function.
@@ -980,7 +980,7 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_polygon: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_polygon: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1044,7 +1044,7 @@ void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_arc: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_arc: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1108,10 +1108,9 @@ static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(canvas, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) {
-        return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
-    }
-    else if(sign == LV_SIGNAL_CLEANUP) {
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+
+    if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     }
 
