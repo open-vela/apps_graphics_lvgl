@@ -41,41 +41,69 @@ LV_EXPORT_CONST_INT(LV_LABEL_TEXT_SEL_OFF);
 
 /** Long mode behaviors. Used in 'lv_label_ext_t' */
 enum {
-    LV_LABEL_LONG_EXPAND,      /**< Expand the object size to the text size*/
-    LV_LABEL_LONG_WRAP,        /**< Keep the object width, wrap the too long lines and expand the object height*/
-    LV_LABEL_LONG_DOT,         /**< Keep the size and write dots at the end if the text is too long*/
-    LV_LABEL_LONG_SROLL,       /**< Keep the size and roll the text back and forth*/
-    LV_LABEL_LONG_SROLL_CIRC,  /**< Keep the size and roll the text circularly*/
-    LV_LABEL_LONG_CLIP,        /**< Keep the size and clip the text out of it*/
+    LV_LABEL_LONG_EXPAND,    /**< Expand the object size to the text size*/
+    LV_LABEL_LONG_BREAK,     /**< Keep the object width, break the too long lines and expand the object
+                                height*/
+    LV_LABEL_LONG_DOT,       /**< Keep the size and write dots at the end if the text is too long*/
+    LV_LABEL_LONG_SROLL,      /**< Keep the size and roll the text back and forth*/
+    LV_LABEL_LONG_SROLL_CIRC, /**< Keep the size and roll the text circularly*/
+    LV_LABEL_LONG_CROP,      /**< Keep the size and crop the text out of it*/
 };
 typedef uint8_t lv_label_long_mode_t;
 
+/** Label align policy*/
+enum {
+    LV_LABEL_ALIGN_LEFT, /**< Align text to left */
+    LV_LABEL_ALIGN_CENTER, /**< Align text to center */
+    LV_LABEL_ALIGN_RIGHT, /**< Align text to right */
+    LV_LABEL_ALIGN_AUTO, /**< Use LEFT or RIGHT depending on the direction of the text (LTR/RTL)*/
+};
+typedef uint8_t lv_label_align_t;
+
+/** Data of label*/
 typedef struct {
-    lv_obj_t obj;
-    char * text;
+    /*Inherited from 'base_obj' so no inherited ext.*/ /*Ext. of ancestor*/
+    /*New data for this type */
+    char * text;        /*Text of the label*/
+
     union {
-        char * tmp_ptr; /* Pointer to the allocated memory containing the character replaced by dots*/
+        char * tmp_ptr; /* Pointer to the allocated memory containing the character which are replaced by dots (Handled
+                           by the library)*/
         char tmp[LV_LABEL_DOT_NUM + 1]; /* Directly store the characters if <=4 characters */
     } dot;
-    uint32_t dot_end;  /*The real text length, used in dot mode*/
 
-#if LV_LABEL_LONG_TXT_HINT
-    lv_draw_label_hint_t hint;
-#endif
+    uint32_t dot_end;  /*The text end position in dot mode (Handled by the library)*/
 
-#if LV_LABEL_TEXT_SEL
-    uint32_t sel_start; uint32_t sel_end;
+#if LV_USE_ANIMATION
+    uint16_t anim_speed; /*Speed of scroll and roll animation in px/sec unit*/
 #endif
 
     lv_point_t offset; /*Text draw position offset*/
+
+#if LV_LABEL_LONG_TXT_HINT
+    lv_draw_label_hint_t hint; /*Used to buffer info about large text*/
+#endif
+
+#if LV_LABEL_TEXT_SEL
+    uint32_t sel_start;
+    uint32_t sel_end;
+#endif
+
     lv_label_long_mode_t long_mode : 3; /*Determinate what to do with the long texts*/
     uint8_t static_txt : 1;             /*Flag to indicate the text is static*/
+    uint8_t align : 2;                  /*Align type from 'lv_label_align_t'*/
     uint8_t recolor : 1;                /*Enable in-line letter re-coloring*/
     uint8_t expand : 1;                 /*Ignore real width (used by the library with LV_LABEL_LONG_SROLL)*/
-    uint8_t dot_tmp_alloc : 1; /*1: dot_tmp has been allocated;.0: dot_tmp directly holds up to 4 bytes of characters */
-}lv_label_t;
+    uint8_t dot_tmp_alloc : 1; /*True if dot_tmp has been allocated. False if dot_tmp directly holds up to 4 bytes of
+                                  characters */
+} lv_label_ext_t;
 
-extern const lv_obj_class_t lv_label;
+/** Label styles*/
+enum {
+    LV_LABEL_PART_MAIN,
+};
+
+typedef uint8_t lv_label_part_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -83,12 +111,11 @@ extern const lv_obj_class_t lv_label;
 
 /**
  * Create a label objects
- * @param parent pointer to an object, it will be the parent of the new label
- * @param copy DEPRECATED, will be removed in v9.
- *             Pointer to an other label to copy.
+ * @param par pointer to an object, it will be the parent of the new label
+ * @param copy pointer to a button object, if not NULL then the new object will be copied from it
  * @return pointer to the created button
  */
-lv_obj_t * lv_label_create(lv_obj_t * parent, const lv_obj_t * copy);
+lv_obj_t * lv_label_create(lv_obj_t * par, const lv_obj_t * copy);
 
 /*=====================
  * Setter functions
@@ -126,11 +153,25 @@ void lv_label_set_text_static(lv_obj_t * label, const char * text);
 void lv_label_set_long_mode(lv_obj_t * label, lv_label_long_mode_t long_mode);
 
 /**
+ * Set the align of the label (left or center)
+ * @param label pointer to a label object
+ * @param align 'LV_LABEL_ALIGN_LEFT' or 'LV_LABEL_ALIGN_LEFT'
+ */
+void lv_label_set_align(lv_obj_t * label, lv_label_align_t align);
+
+/**
  * Enable the recoloring by in-line commands
  * @param label pointer to a label object
  * @param en true: enable recoloring, false: disable
  */
 void lv_label_set_recolor(lv_obj_t * label, bool en);
+
+/**
+ * Set the label's animation speed in LV_LABEL_LONG_SROLL/SROLL_CIRC modes
+ * @param label pointer to a label object
+ * @param anim_speed speed of animation in px/sec unit
+ */
+void lv_label_set_anim_speed(lv_obj_t * label, uint16_t anim_speed);
 
 /**
  * @brief Set the selection start index.
@@ -145,7 +186,6 @@ void lv_label_set_text_sel_start(lv_obj_t * label, uint32_t index);
  * @param index index to set. `LV_LABEL_TXT_SEL_OFF` to select nothing.
  */
 void lv_label_set_text_sel_end(lv_obj_t * label, uint32_t index);
-
 /*=====================
  * Getter functions
  *====================*/
@@ -167,9 +207,9 @@ lv_label_long_mode_t lv_label_get_long_mode(const lv_obj_t * label);
 /**
  * Get the align attribute
  * @param label pointer to a label object
- * @return LV_TEXT_ALIGN_LEFT or LV_TEXT_ALIGN_CENTER
+ * @return LV_LABEL_ALIGN_LEFT or LV_LABEL_ALIGN_CENTER
  */
-lv_text_align_t lv_label_get_align(const lv_obj_t * label);
+lv_label_align_t lv_label_get_align(const lv_obj_t * label);
 
 /**
  * Get the recoloring attribute
@@ -224,6 +264,8 @@ uint32_t lv_label_get_text_sel_start(const lv_obj_t * label);
  * @return selection end index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
  */
 uint32_t lv_label_get_text_sel_end(const lv_obj_t * label);
+
+lv_style_list_t * lv_label_get_style(lv_obj_t * label, uint8_t type);
 
 /*=====================
  * Other functions
