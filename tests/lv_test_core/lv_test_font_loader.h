@@ -36,3 +36,4 @@ void lv_test_font_loader(void);
 #endif
 
 #endif /*LV_TEST_FONT_LOADER_H*/
+
