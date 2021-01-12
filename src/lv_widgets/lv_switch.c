@@ -34,15 +34,15 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_res_t lv_switch_signal(lv_obj_t * sw, lv_signal_t sign, void * param);
+static void lv_switch_constructor(lv_obj_t * obj, lv_obj_t * parent, const lv_obj_t * copy);
+static void lv_switch_destructor(void * obj);
+static lv_res_t lv_switch_signal(lv_obj_t * obj, lv_signal_t sign, void * param);
 static lv_design_res_t lv_switch_design(lv_obj_t * sw, const lv_area_t * clip_area, lv_design_mode_t mode);
-static lv_style_list_t * lv_switch_get_style(lv_obj_t * sw, uint8_t part);
 
 /**********************
  *  STATIC VARIABLES
  **********************/
-static lv_signal_cb_t ancestor_signal;
-static lv_design_cb_t ancestor_design;
+lv_switch_class_t lv_switch;
 
 /**********************
  *      MACROS
@@ -54,131 +54,62 @@ static lv_design_cb_t ancestor_design;
 
 /**
  * Create a switch objects
- * @param par pointer to an object, it will be the parent of the new switch
- * @param copy pointer to a switch object, if not NULL then the new object will be copied from it
+ * @param parent pointer to an object, it will be the parent of the new switch
+ * @param copy DEPRECATED, will be removed in v9.
+ *             Pointer to an other switch to copy.
  * @return pointer to the created switch
  */
-lv_obj_t * lv_switch_create(lv_obj_t * par, const lv_obj_t * copy)
+lv_obj_t * lv_switch_create(lv_obj_t * parent, const lv_obj_t * copy)
 {
-    LV_LOG_TRACE("switch create started");
-
-    /*Create the ancestor of switch*/
-    lv_obj_t * sw = lv_bar_create(par, copy);
-    LV_ASSERT_MEM(sw);
-
-    if(sw == NULL) return NULL;
-
-    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(sw);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(sw);
-
-    /*Allocate the switch type specific extended data*/
-    lv_switch_ext_t * ext = lv_obj_allocate_ext_attr(sw, sizeof(lv_switch_ext_t));
-    LV_ASSERT_MEM(ext);
-    if(ext == NULL) {
-        lv_obj_del(sw);
-        return NULL;
+    if(!lv_switch._inited) {
+        LV_CLASS_INIT(lv_switch, lv_obj);
+        lv_switch.constructor = lv_switch_constructor;
+        lv_switch.destructor = lv_switch_destructor;
+        lv_switch.design_cb = lv_switch_design;
+        lv_switch.signal_cb = lv_switch_signal;
     }
 
-    lv_style_list_init(&ext->style_knob);
+    lv_obj_t * obj = lv_class_new(&lv_switch);
+    lv_switch.constructor(obj, parent, copy);
 
-    /*The signal and design functions are not copied so set them here*/
-    lv_obj_set_signal_cb(sw, lv_switch_signal);
-    lv_obj_set_design_cb(sw, lv_switch_design);
+    lv_obj_create_finish(obj, parent, copy);
 
-    /*Init the new switch switch*/
-    if(copy == NULL) {
-        lv_obj_set_click(sw, true);
-        lv_obj_add_protect(sw, LV_PROTECT_PRESS_LOST);
-        lv_obj_set_size(sw, LV_DPX(60), LV_DPX(35));
-        lv_bar_set_range(sw, 0, 1);
-
-        lv_theme_apply(sw, LV_THEME_SWITCH);
-    }
-    /*Copy an existing switch*/
-    else {
-        lv_switch_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
-
-        lv_style_list_copy(&ext->style_knob, &copy_ext->style_knob);
-        lv_obj_refresh_style(sw, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
-    }
-
-    /*Refresh the style with new signal function*/
-
-    LV_LOG_INFO("switch created");
-
-    return sw;
+    return obj;
 }
 
-/*=====================
- * Setter functions
- *====================*/
-
-/**
- * Turn ON the switch
- * @param sw pointer to a switch object
- * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
- */
-void lv_switch_on(lv_obj_t * sw, lv_anim_enable_t anim)
-{
-    LV_ASSERT_OBJ(sw, LV_OBJX_NAME);
-
-#if LV_USE_ANIMATION == 0
-    anim = LV_ANIM_OFF;
-#endif
-    if(lv_bar_get_value(sw) == 1)
-        return;
-    lv_bar_set_value(sw, 1, anim);
-    lv_obj_add_state(sw, LV_STATE_CHECKED);
-}
-
-/**
- * Turn OFF the switch
- * @param sw pointer to a switch object
- * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
- */
-void lv_switch_off(lv_obj_t * sw, lv_anim_enable_t anim)
-{
-    LV_ASSERT_OBJ(sw, LV_OBJX_NAME);
-
-#if LV_USE_ANIMATION == 0
-    anim = LV_ANIM_OFF;
-#endif
-    if(lv_bar_get_value(sw) == 0)
-        return;
-    lv_bar_set_value(sw, 0, anim);
-    lv_obj_clear_state(sw, LV_STATE_CHECKED);
-}
-
-/**
- * Toggle the position of the switch
- * @param sw pointer to a switch object
- * @param anim LV_ANIM_ON: set the value with an animation; LV_ANIM_OFF: change the value immediately
- * @return resulting state of the switch.
- */
-bool lv_switch_toggle(lv_obj_t * sw, lv_anim_enable_t anim)
-{
-    LV_ASSERT_OBJ(sw, LV_OBJX_NAME);
-
-#if LV_USE_ANIMATION == 0
-    anim = LV_ANIM_OFF;
-#endif
-
-    bool state = lv_switch_get_state(sw);
-    if(state)
-        lv_switch_off(sw, anim);
-    else
-        lv_switch_on(sw, anim);
-
-    return !state;
-}
-
-/*=====================
- * Getter functions
- *====================*/
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+
+static void lv_switch_constructor(lv_obj_t * obj, lv_obj_t * parent, const lv_obj_t * copy)
+{
+    LV_LOG_TRACE("switch create started");
+
+    LV_CLASS_CONSTRUCTOR_BEGIN(obj, lv_switch)
+    lv_switch.base_p->constructor(obj, parent, copy);
+
+    lv_switch_t * sw = (lv_switch_t *) obj;
+
+   if(copy == NULL) {
+       lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+       lv_obj_add_flag(obj, LV_OBJ_FLAG_CHECKABLE);
+       lv_obj_set_size(obj, LV_DPX(60), LV_DPX(35));
+   }
+
+   LV_CLASS_CONSTRUCTOR_END(obj, lv_switch)
+   LV_LOG_INFO("switch created");
+}
+
+static void lv_switch_destructor(void * obj)
+{
+//    lv_bar_t * bar = obj;
+//
+//    _lv_obj_reset_style_list_no_refr(obj, LV_BAR_PART_INDIC);
+//    _lv_obj_reset_style_list_no_refr(sw, LV_PART_KNOB);
+//
+//    bar->class_p->base_p->destructor(obj);
+}
 
 /**
  * Handle the drawing related tasks of the sliders
@@ -190,7 +121,7 @@ bool lv_switch_toggle(lv_obj_t * sw, lv_anim_enable_t anim)
  *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
  * @param return an element of `lv_design_res_t`
  */
-static lv_design_res_t lv_switch_design(lv_obj_t * sw, const lv_area_t * clip_area, lv_design_mode_t mode)
+static lv_design_res_t lv_switch_design(lv_obj_t * obj, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
     if(mode == LV_DESIGN_COVER_CHK) {
@@ -198,40 +129,59 @@ static lv_design_res_t lv_switch_design(lv_obj_t * sw, const lv_area_t * clip_ar
     }
     /*Draw the object*/
     else if(mode == LV_DESIGN_DRAW_MAIN) {
-        lv_bidi_dir_t base_dir = lv_obj_get_base_dir(sw);
 
-        /*The ancestor design function will draw the background and the indicator.
-         * It also sets ext->bar.indic_area*/
-        ancestor_design(sw, clip_area, mode);
+        /*The ancestor design function will draw the background.*/
+        lv_switch.base_p->design_cb(obj, clip_area, mode);
 
-        lv_switch_ext_t * ext = lv_obj_get_ext_attr(sw);
+        lv_bidi_dir_t base_dir = lv_obj_get_base_dir(obj);
 
-        lv_coord_t objw = lv_obj_get_width(sw);
-        lv_coord_t objh = lv_obj_get_height(sw);
+        lv_switch_t * sw = (lv_switch_t *)obj;
+
+        /*Calculate the indicator area*/
+        lv_coord_t bg_left = lv_obj_get_style_pad_left(obj,     LV_PART_MAIN);
+        lv_coord_t bg_right = lv_obj_get_style_pad_right(obj,   LV_PART_MAIN);
+        lv_coord_t bg_top = lv_obj_get_style_pad_top(obj,       LV_PART_MAIN);
+        lv_coord_t bg_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_MAIN);
+
+        bool chk = lv_obj_get_state(obj) & LV_STATE_CHECKED;
+        /*Draw the indicator in checked state*/
+        if(chk) {
+            /*Respect the background's padding*/
+            lv_area_t indic_area;
+            lv_area_copy(&indic_area, &sw->coords);
+            indic_area.x1 += bg_left;
+            indic_area.x2 -= bg_right;
+            indic_area.y1 += bg_top;
+            indic_area.y2 -= bg_bottom;
+
+            lv_draw_rect_dsc_t draw_indic_dsc;
+            lv_draw_rect_dsc_init(&draw_indic_dsc);
+            lv_obj_init_draw_rect_dsc(obj, LV_PART_INDICATOR, &draw_indic_dsc);
+            lv_draw_rect(&indic_area, clip_area, &draw_indic_dsc);
+        }
+
+        /*Draw the knob*/
+        lv_coord_t objh = lv_obj_get_height(obj);
         lv_coord_t knob_size = objh;
         lv_area_t knob_area;
 
-        lv_style_int_t bg_left = lv_obj_get_style_pad_left(sw,   LV_SWITCH_PART_BG);
-        lv_style_int_t bg_right = lv_obj_get_style_pad_right(sw,  LV_SWITCH_PART_BG);
-
-        lv_coord_t max_indic_w = objw - bg_left - bg_right;
-        lv_coord_t act_indic_w = lv_area_get_width(&ext->bar.indic_area);
-        if(base_dir != LV_BIDI_DIR_RTL) {
-            knob_area.x1 = ext->bar.indic_area.x2 - ((act_indic_w * knob_size) / max_indic_w);
+        /*Left*/
+        if((base_dir != LV_BIDI_DIR_RTL && !chk) || (base_dir == LV_BIDI_DIR_RTL && chk)) {
+            knob_area.x1 = sw->coords.x1 + bg_left;
             knob_area.x2 = knob_area.x1 + knob_size;
         }
         else {
-            knob_area.x2 = ext->bar.indic_area.x1 + ((act_indic_w * knob_size) / max_indic_w);
+            knob_area.x2 = sw->coords.x2 - bg_right;
             knob_area.x1 = knob_area.x2 - knob_size;
         }
 
-        knob_area.y1 = sw->coords.y1;
-        knob_area.y2 = sw->coords.y2;
+        knob_area.y1 = sw->coords.y1 + bg_top;
+        knob_area.y2 = sw->coords.y2 - bg_bottom;
 
-        lv_style_int_t knob_left = lv_obj_get_style_pad_left(sw,   LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_right = lv_obj_get_style_pad_right(sw,  LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_top = lv_obj_get_style_pad_top(sw,    LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_bottom = lv_obj_get_style_pad_bottom(sw, LV_SWITCH_PART_KNOB);
+        lv_coord_t knob_left = lv_obj_get_style_pad_left(obj, LV_PART_KNOB);
+        lv_coord_t knob_right = lv_obj_get_style_pad_right(obj, LV_PART_KNOB);
+        lv_coord_t knob_top = lv_obj_get_style_pad_top(obj, LV_PART_KNOB);
+        lv_coord_t knob_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_KNOB);
 
         /*Apply the paddings on the knob area*/
         knob_area.x1 -= knob_left;
@@ -241,18 +191,19 @@ static lv_design_res_t lv_switch_design(lv_obj_t * sw, const lv_area_t * clip_ar
 
         lv_draw_rect_dsc_t knob_rect_dsc;
         lv_draw_rect_dsc_init(&knob_rect_dsc);
-        lv_obj_init_draw_rect_dsc(sw, LV_SWITCH_PART_KNOB, &knob_rect_dsc);
+        lv_obj_init_draw_rect_dsc(obj, LV_PART_KNOB, &knob_rect_dsc);
 
         lv_draw_rect(&knob_area, clip_area, &knob_rect_dsc);
 
     }
     /*Post draw when the children are drawn*/
     else if(mode == LV_DESIGN_DRAW_POST) {
-        return ancestor_design(sw, clip_area, mode);
+        return lv_switch.base_p->design_cb(obj, clip_area, mode);
     }
 
     return LV_DESIGN_RES_OK;
 }
+
 
 /**
  * Signal function of the switch
@@ -261,63 +212,34 @@ static lv_design_res_t lv_switch_design(lv_obj_t * sw, const lv_area_t * clip_ar
  * @param param pointer to a signal specific variable
  * @return LV_RES_OK: the object is not deleted in the function; LV_RES_INV: the object is deleted
  */
-static lv_res_t lv_switch_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
+static lv_res_t lv_switch_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
 {
     lv_res_t res;
 
-    if(sign == LV_SIGNAL_GET_STYLE) {
-        lv_get_style_info_t * info = param;
-        info->result = lv_switch_get_style(sw, info->part);
-        if(info->result != NULL) return LV_RES_OK;
-        else return ancestor_signal(sw, sign, param);
-    }
-
-    if(sign == LV_SIGNAL_GET_TYPE) {
-        res = ancestor_signal(sw, sign, param);
-        if(res != LV_RES_OK) return res;
-        return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
-    }
-
     /* Include the ancient signal function */
-    res = ancestor_signal(sw, sign, param);
+    res = lv_switch.base_p->signal_cb(obj, sign, param);
     if(res != LV_RES_OK) return res;
 
-    if(sign == LV_SIGNAL_CLEANUP) {
-        lv_obj_clean_style_list(sw, LV_SWITCH_PART_KNOB);
-    }
-    else if(sign == LV_SIGNAL_RELEASED) {
-        if(lv_switch_get_state(sw)) lv_switch_off(sw, LV_ANIM_ON);
-        else lv_switch_on(sw, LV_ANIM_ON);
 
-        res = lv_event_send(sw, LV_EVENT_VALUE_CHANGED, NULL);
-        if(res != LV_RES_OK) return res;
-
-    }
-    else if(sign == LV_SIGNAL_CONTROL) {
-#if LV_USE_GROUP
-        char c = *((char *)param);
-        if(c == LV_KEY_RIGHT || c == LV_KEY_UP) lv_switch_on(sw, LV_ANIM_ON);
-        else if(c == LV_KEY_LEFT || c == LV_KEY_DOWN) lv_switch_off(sw, LV_ANIM_ON);
-
-        res   = lv_event_send(sw, LV_EVENT_VALUE_CHANGED, NULL);
-        if(res != LV_RES_OK) return res;
-#endif
-    }
     else if(sign == LV_SIGNAL_REFR_EXT_DRAW_PAD) {
-        lv_style_int_t knob_left = lv_obj_get_style_pad_left(sw,   LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_right = lv_obj_get_style_pad_right(sw,  LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_top = lv_obj_get_style_pad_top(sw,    LV_SWITCH_PART_KNOB);
-        lv_style_int_t knob_bottom = lv_obj_get_style_pad_bottom(sw, LV_SWITCH_PART_KNOB);
+        lv_coord_t knob_left = lv_obj_get_style_pad_left(obj,   LV_PART_KNOB);
+        lv_coord_t knob_right = lv_obj_get_style_pad_right(obj,  LV_PART_KNOB);
+        lv_coord_t knob_top = lv_obj_get_style_pad_top(obj,    LV_PART_KNOB);
+        lv_coord_t knob_bottom = lv_obj_get_style_pad_bottom(obj, LV_PART_KNOB);
 
         /* The smaller size is the knob diameter*/
-        lv_coord_t knob_size = LV_MATH_MIN(lv_obj_get_width(sw), lv_obj_get_height(sw)) >> 1;
+        lv_coord_t knob_size = LV_MATH_MIN(lv_obj_get_width(obj), lv_obj_get_height(obj)) >> 1;
         knob_size += LV_MATH_MAX(LV_MATH_MAX(knob_left, knob_right), LV_MATH_MAX(knob_bottom, knob_top));
         knob_size += 2;         /*For rounding error*/
 
-        knob_size += lv_obj_get_draw_rect_ext_pad_size(sw, LV_SWITCH_PART_KNOB);
+        knob_size += _lv_obj_get_draw_rect_ext_pad_size(obj, LV_PART_KNOB);
 
-        /*Indic. size is handled by bar*/
-        sw->ext_draw_pad = LV_MATH_MAX(sw->ext_draw_pad, knob_size);
+        lv_coord_t * s = param;
+        *s = LV_MATH_MAX(*s, knob_size);
+        *s = LV_MATH_MAX(*s, _lv_obj_get_draw_rect_ext_pad_size(obj, LV_PART_INDICATOR));
+    }
+    else if(sign == LV_SIGNAL_RELEASED) {
+        lv_obj_invalidate(obj);
     }
     else if(sign == LV_SIGNAL_GET_EDITABLE) {
 #if LV_USE_GROUP
@@ -329,27 +251,4 @@ static lv_res_t lv_switch_signal(lv_obj_t * sw, lv_signal_t sign, void * param)
     return res;
 }
 
-static lv_style_list_t * lv_switch_get_style(lv_obj_t * sw, uint8_t part)
-{
-    LV_ASSERT_OBJ(sw, LV_OBJX_NAME);
-
-    lv_switch_ext_t * ext = lv_obj_get_ext_attr(sw);
-    lv_style_list_t * style_dsc_p;
-
-    switch(part) {
-        case LV_SWITCH_PART_BG:
-            style_dsc_p = &sw->style_list;
-            break;
-        case LV_SWITCH_PART_INDIC:
-            style_dsc_p = &ext->bar.style_indic;
-            break;
-        case LV_SWITCH_PART_KNOB:
-            style_dsc_p = &ext->style_knob;
-            break;
-        default:
-            style_dsc_p = NULL;
-    }
-
-    return style_dsc_p;
-}
 #endif
