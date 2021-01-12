@@ -43,7 +43,6 @@ typedef struct {
     uint8_t bpp;   /**< Bit-per-pixel: 1, 2, 4, 8*/
 } lv_font_glyph_dsc_t;
 
-
 /** The bitmaps might be upscaled by 3 to achieve subpixel rendering. */
 enum {
     LV_FONT_SUBPX_NONE,
@@ -68,13 +67,12 @@ typedef struct _lv_font_struct {
     uint8_t subpx  : 2;             /**< An element of `lv_font_subpx_t`*/
 
     int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
-    int8_t underline_thickness;     /**< Thickness of the underline*/
+    int8_t  underline_thickness;     /**< Thickness of the underline*/
 
     void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
 #if LV_USE_USER_DATA
     lv_font_user_data_t user_data;  /**< Custom user data for font. */
 #endif
-
 
 } lv_font_t;
 

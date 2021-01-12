@@ -148,8 +148,6 @@ void lv_canvas_transform(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, u
                          lv_coord_t offset_y,
                          int32_t pivot_x, int32_t pivot_y, bool antialias);
 
-
-
 /**
  * Apply horizontal blur on the canvas
  * @param canvas pointer to a canvas object
@@ -194,11 +192,11 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * @param max_w max width of the text. The text will be wrapped to fit into this size
  * @param label_draw_dsc pointer to a valid label descriptor `lv_draw_label_dsc_t`
  * @param txt text to display
- * @param align align of the text (`LV_TEXT_ALIGN_LEFT/RIGHT/CENTER`)
+ * @param align align of the text (`LV_LABEL_ALIGN_LEFT/RIGHT/CENTER`)
  */
 void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t max_w,
                          lv_draw_label_dsc_t * label_draw_dsc,
-                         const char * txt, lv_text_align_t align);
+                         const char * txt, lv_label_align_t align);
 
 /**
  * Draw an image on the canvas

@@ -1,5 +1,5 @@
 /**
- * @file lv_ll.c
+ * @file lv_ll.h
  * Handle linked lists. The nodes are dynamically allocated by the 'lv_mem' module.
  */
 
@@ -157,9 +157,9 @@ bool _lv_ll_is_empty(lv_ll_t * ll_p);
  *      MACROS
  **********************/
 
-#define _LV_LL_READ(list, i) for((i) = _lv_ll_get_head(list); i != NULL; (i) = _lv_ll_get_next(list, i))
+#define _LV_LL_READ(list, i) for(i = _lv_ll_get_head(&list); i != NULL; i = _lv_ll_get_next(&list, i))
 
-#define _LV_LL_READ_BACK(list, i) for(i = _lv_ll_get_tail(list); i != NULL; i = _lv_ll_get_prev(list, i))
+#define _LV_LL_READ_BACK(list, i) for(i = _lv_ll_get_tail(&list); i != NULL; i = _lv_ll_get_prev(&list, i))
 
 #ifdef __cplusplus
 } /* extern "C" */

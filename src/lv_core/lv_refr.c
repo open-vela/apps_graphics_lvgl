@@ -11,7 +11,7 @@
 #include "lv_disp.h"
 #include "../lv_hal/lv_hal_tick.h"
 #include "../lv_hal/lv_hal_disp.h"
-#include "../lv_misc/lv_timer.h"
+#include "../lv_misc/lv_task.h"
 #include "../lv_misc/lv_mem.h"
 #include "../lv_misc/lv_math.h"
 #include "../lv_misc/lv_gc.h"
@@ -22,10 +22,6 @@
 #if LV_USE_PERF_MONITOR
     #include "../lv_widgets/lv_label.h"
 #endif
-
-#if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
 
 /*********************
  *      DEFINES
@@ -148,7 +144,7 @@ void _lv_inv_area(lv_disp_t * disp, const lv_area_t * area_p)
             lv_area_copy(&disp->inv_areas[disp->inv_p], &scr_area);
         }
         disp->inv_p++;
-        lv_timer_pause(disp->refr_task, false);
+        lv_task_set_prio(disp->refr_task, LV_REFR_TASK_PRIO);
     }
 }
 
@@ -176,20 +172,20 @@ void _lv_refr_set_disp_refreshing(lv_disp_t * disp)
  * Called periodically to handle the refreshing
  * @param task pointer to the task itself
  */
-void _lv_disp_refr_task(lv_timer_t * tmr)
+void _lv_disp_refr_task(lv_task_t * task)
 {
     LV_LOG_TRACE("lv_refr_task: started");
 
     uint32_t start = lv_tick_get();
     uint32_t elaps = 0;
 
-    disp_refr = tmr->user_data;
+    disp_refr = task->user_data;
 
 #if LV_USE_PERF_MONITOR == 0
     /* Ensure the task does not run again automatically.
      * This is done before refreshing in case refreshing invalidates something else.
      */
-    lv_timer_pause(tmr, true);
+    lv_task_set_prio(task, LV_TASK_PRIO_OFF);
 #endif
 
     /*Do nothing if there is no active screen*/
@@ -281,7 +277,7 @@ void _lv_disp_refr_task(lv_timer_t * tmr)
     static lv_obj_t * perf_label = NULL;
     if(perf_label == NULL) {
         perf_label = lv_label_create(lv_layer_sys(), NULL);
-        lv_label_set_align(perf_label, LV_TEXT_ALIGN_RIGHT);
+        lv_label_set_align(perf_label, LV_LABEL_ALIGN_RIGHT);
         lv_obj_set_style_local_bg_opa(perf_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_COVER);
         lv_obj_set_style_local_bg_color(perf_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
         lv_obj_set_style_local_text_color(perf_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
@@ -564,7 +560,6 @@ static void lv_refr_area_part(const lv_area_t * area_p)
 
     }
 
-
     if(top_act_scr == NULL) {
         top_act_scr = disp_refr->act_scr;
     }
@@ -593,20 +588,19 @@ static lv_obj_t * lv_refr_get_top_obj(const lv_area_t * area_p, lv_obj_t * obj)
     lv_obj_t * found_p = NULL;
 
     /*If this object is fully cover the draw area check the children too */
-    if(_lv_area_is_in(area_p, &obj->coords, 0) && lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN) == false) {
-        lv_design_res_t design_res = obj->class_p->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
+    if(_lv_area_is_in(area_p, &obj->coords, 0) && obj->hidden == 0) {
+        lv_design_res_t design_res = obj->design_cb(obj, area_p, LV_DESIGN_COVER_CHK);
         if(design_res == LV_DESIGN_RES_MASKED) return NULL;
 
 #if LV_USE_OPA_SCALE
-        if(design_res == LV_DESIGN_RES_COVER && lv_obj_get_style_opa(obj, LV_PART_MAIN) != LV_OPA_COVER) {
+        if(design_res == LV_DESIGN_RES_COVER && lv_obj_get_style_opa_scale(obj, LV_OBJ_PART_MAIN) != LV_OPA_COVER) {
             design_res = LV_DESIGN_RES_NOT_COVER;
         }
 #endif
 
-        uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-            lv_obj_t * child = lv_obj_get_child(obj, i);
-            found_p = lv_refr_get_top_obj(area_p, child);
+        lv_obj_t * i;
+        _LV_LL_READ(obj->child_ll, i) {
+            found_p = lv_refr_get_top_obj(area_p, i);
 
             /*If a children is ok then break*/
             if(found_p != NULL) {
@@ -649,22 +643,19 @@ static void lv_refr_obj_and_children(lv_obj_t * top_p, const lv_area_t * mask_p)
 
     /*Do until not reach the screen*/
     while(par != NULL) {
-        bool go = false;
-        uint32_t i;
-        for(i = 0; i < lv_obj_get_child_cnt(par); i++) {
-            lv_obj_t * child = lv_obj_get_child(par, i);
-            if(!go) {
-                if(child == border_p) go = true;
-            } else {
-                /*Refresh the objects*/
-                lv_refr_obj(child, mask_p);
-            }
+        /*object before border_p has to be redrawn*/
+        lv_obj_t * i = _lv_ll_get_prev(&(par->child_ll), border_p);
+
+        while(i != NULL) {
+            /*Refresh the objects*/
+            lv_refr_obj(i, mask_p);
+            i = _lv_ll_get_prev(&(par->child_ll), i);
         }
 
         /*Call the post draw design function of the parents of the to object*/
-        par->class_p->design_cb(par, mask_p, LV_DESIGN_DRAW_POST);
+        if(par->design_cb) par->design_cb(par, mask_p, LV_DESIGN_DRAW_POST);
 
-        /*The new border will be the last parents,
+        /*The new border will be there last parents,
          *so the 'younger' brothers of parent will be refreshed*/
         border_p = par;
         /*Go a level deeper*/
@@ -680,7 +671,7 @@ static void lv_refr_obj_and_children(lv_obj_t * top_p, const lv_area_t * mask_p)
 static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
 {
     /*Do not refresh hidden objects*/
-    if(lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN)) return;
+    if(obj->hidden != 0) return;
 
     bool union_ok; /* Store the return value of area_union */
     /* Truncate the original mask to the coordinates of the parent
@@ -688,7 +679,7 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
     lv_area_t obj_mask;
     lv_area_t obj_ext_mask;
     lv_area_t obj_area;
-    lv_coord_t ext_size = _lv_obj_get_ext_draw_pad(obj);
+    lv_coord_t ext_size = obj->ext_draw_pad;
     lv_obj_get_coords(obj, &obj_area);
     obj_area.x1 -= ext_size;
     obj_area.y1 -= ext_size;
@@ -698,8 +689,9 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
 
     /*Draw the parent and its children only if they ore on 'mask_parent'*/
     if(union_ok != false) {
+
         /* Redraw the object */
-        obj->class_p->design_cb(obj, &obj_ext_mask, LV_DESIGN_DRAW_MAIN);
+        if(obj->design_cb) obj->design_cb(obj, &obj_ext_mask, LV_DESIGN_DRAW_MAIN);
 
 #if MASK_AREA_DEBUG
         static lv_color_t debug_color = LV_COLOR_RED;
@@ -708,7 +700,7 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
         draw_dsc.bg_color.full = debug_color.full;
         draw_dsc.bg_opa = LV_OPA_20;
         draw_dsc.border_width = 2;
-        draw_dsc.border_opa = LV_OPA_70;
+        draw_dsc.border_opa = LV_OPA_50;
         draw_dsc.border_color.full = (debug_color.full + 0x13) * 9;
 
         lv_draw_rect(&obj_ext_mask, &obj_ext_mask, &draw_dsc);
@@ -723,12 +715,11 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
         union_ok = _lv_area_intersect(&obj_mask, mask_ori_p, &obj_area);
         if(union_ok != false) {
             lv_area_t mask_child; /*Mask from obj and its child*/
+            lv_obj_t * child_p;
             lv_area_t child_area;
-            uint32_t i;
-            for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
-                lv_obj_t * child = lv_obj_get_child(obj, i);
-                lv_obj_get_coords(child, &child_area);
-                ext_size = _lv_obj_get_ext_draw_pad(child);
+            _LV_LL_READ_BACK(obj->child_ll, child_p) {
+                lv_obj_get_coords(child_p, &child_area);
+                ext_size = child_p->ext_draw_pad;
                 child_area.x1 -= ext_size;
                 child_area.y1 -= ext_size;
                 child_area.x2 += ext_size;
@@ -740,13 +731,13 @@ static void lv_refr_obj(lv_obj_t * obj, const lv_area_t * mask_ori_p)
                 /*If the parent and the child has common area then refresh the child */
                 if(union_ok) {
                     /*Refresh the next children*/
-                    lv_refr_obj(child, &mask_child);
+                    lv_refr_obj(child_p, &mask_child);
                 }
             }
         }
 
         /* If all the children are redrawn make 'post draw' design */
-        obj->class_p->design_cb(obj, &obj_ext_mask, LV_DESIGN_DRAW_POST);
+        if(obj->design_cb) obj->design_cb(obj, &obj_ext_mask, LV_DESIGN_DRAW_POST);
     }
 }
 
