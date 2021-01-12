@@ -27,6 +27,7 @@
  *
  */
 
+
 /*********************
  *      INCLUDES
  *********************/
@@ -58,6 +59,7 @@
 #else
     #error Only 16bit color depth is supported. Set LV_COLOR_DEPTH to 16.
 #endif
+
 
 /**********************
  *      TYPEDEFS
@@ -133,6 +135,7 @@ void lv_gpu_nxp_pxp_deinit(void)
     PXP_DisableInterrupts(PXP, kPXP_CompleteInterruptEnable);
     PXP_Deinit(LV_GPU_NXP_PXP_ID);
 }
+
 
 /**
  * Fill area, with optional opacity.
@@ -279,6 +282,7 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest, lv_coord_t dest_width, const lv_colo
         PXP_SetAlphaSurfaceOverlayColorKey(LV_GPU_NXP_PXP_ID, colorKey, colorKey);
     }
     PXP_EnableAlphaSurfaceOverlayColorKey(LV_GPU_NXP_PXP_ID, colorKeyEnabled);
+
 
     /* Output buffer. */
     outputBufferConfig.pixelFormat    = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT;

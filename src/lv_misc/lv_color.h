@@ -87,6 +87,7 @@ enum {
 #error "Invalid LV_COLOR_DEPTH in lv_conf.h! Set it to 1, 8, 16 or 32!"
 #endif
 
+
 /* Adjust color mix functions rounding.
  * GPUs might calculate color mix (blending) differently.
  * Should be in range of 0..254
@@ -148,6 +149,7 @@ enum {
 # define LV_COLOR_GET_G32(c) (c).ch.green
 # define LV_COLOR_GET_B32(c) (c).ch.blue
 # define LV_COLOR_GET_A32(c) (c).ch.alpha
+
 
 /*---------------------------------------
  * Macros for the current color depth
@@ -278,6 +280,7 @@ typedef lv_color32_t lv_color_t;
 #error "Invalid LV_COLOR_DEPTH in lv_conf.h! Set it to 1, 8, 16 or 32!"
 #endif
 
+
 typedef struct {
     uint16_t h;
     uint8_t s;
@@ -288,6 +291,9 @@ typedef struct {
 /*No idea where the guard is required but else throws warnings in the docs*/
 typedef uint8_t lv_opa_t;
 //! @endcond
+
+
+typedef lv_color_t (*lv_color_filter_cb_t)(lv_color_t, lv_opa_t);
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -446,6 +452,7 @@ static inline uint32_t lv_color_to32(lv_color_t color)
 #endif
 }
 
+
 //! @cond Doxygen_Suppress
 
 /**
@@ -491,6 +498,7 @@ LV_ATTRIBUTE_FAST_MEM static inline void lv_color_premult(lv_color_t c, uint8_t 
 
 }
 
+
 /**
  * Mix two colors with a given ratio. It runs faster then `lv_color_mix` but requires some pre computation.
  * @param c1 The first color. Should be preprocessed with `lv_color_premult(c1)`
@@ -521,6 +529,7 @@ LV_ATTRIBUTE_FAST_MEM static inline lv_color_t lv_color_mix_premult(uint16_t * p
 
     return ret;
 }
+
 
 /**
  * Mix two colors. Both color can have alpha value. It requires ARGB888 colors.
@@ -657,6 +666,7 @@ static inline lv_color_t lv_color_hex3(uint32_t c)
                          (uint8_t)((c & 0xF) | ((c & 0xF) << 4)));
 }
 
+
 //! @cond Doxygen_Suppress
 //!
 LV_ATTRIBUTE_FAST_MEM void lv_color_fill(lv_color_t * buf, lv_color_t color, uint32_t px_num);
@@ -665,6 +675,8 @@ LV_ATTRIBUTE_FAST_MEM void lv_color_fill(lv_color_t * buf, lv_color_t color, uin
 lv_color_t lv_color_lighten(lv_color_t c, lv_opa_t lvl);
 
 lv_color_t lv_color_darken(lv_color_t c, lv_opa_t lvl);
+
+lv_color_t lv_color_change_lightness(lv_color_t c, lv_opa_t lvl);
 
 /**
  * Convert a HSV color to RGB
@@ -690,6 +702,7 @@ lv_color_hsv_t lv_color_rgb_to_hsv(uint8_t r8, uint8_t g8, uint8_t b8);
  * @return the given color in HSV
  */
 lv_color_hsv_t lv_color_to_hsv(lv_color_t color);
+
 
 /**********************
  *      MACROS

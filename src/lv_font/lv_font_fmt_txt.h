@@ -45,6 +45,7 @@ typedef struct {
 #endif
 } lv_font_fmt_txt_glyph_dsc_t;
 
+
 /** Format of font character map. */
 enum {
     LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY,
@@ -54,6 +55,7 @@ enum {
 };
 
 typedef uint8_t lv_font_fmt_txt_cmap_type_t;
+
 
 /* Map codepoints to a `glyph_dsc`s
  * Several formats are supported to optimize memory usage
@@ -143,12 +145,14 @@ typedef struct {
     uint8_t right_class_cnt;
 } lv_font_fmt_txt_kern_classes_t;
 
+
 /** Bitmap formats*/
 typedef enum {
     LV_FONT_FMT_TXT_PLAIN      = 0,
     LV_FONT_FMT_TXT_COMPRESSED = 1,
     LV_FONT_FMT_TXT_COMPRESSED_NO_PREFILTER = 1,
 } lv_font_fmt_txt_bitmap_format_t;
+
 
 /*Describe store additional data for fonts */
 typedef struct {
