@@ -121,6 +121,25 @@ lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
 }
 
 /**
+ * Assign a screen to a display.
+ * @param disp pointer to a display where to assign the screen
+ * @param scr pointer to a screen object to assign
+ */
+void lv_disp_assign_screen(lv_disp_t * disp, lv_obj_t * scr)
+{
+    if(lv_obj_get_parent(scr) != NULL) {
+        LV_LOG_WARN("lv_disp_assign_screen: try to assign a non-screen object");
+        return;
+    }
+
+    lv_disp_t * old_disp = lv_obj_get_disp(scr);
+
+    if(old_disp == disp) return;
+
+    _lv_ll_chg_list(&old_disp->scr_ll, &disp->scr_ll, scr, true);
+}
+
+/**
  * Set the background color of a display
  * @param disp pointer to a display
  * @param color color of the background
@@ -161,7 +180,6 @@ void lv_disp_set_bg_image(lv_disp_t * disp, const void  * img_src)
     _lv_inv_area(disp, &a);
 }
 
-
 /**
  * Opacity of the background
  * @param disp pointer to a display
@@ -197,13 +215,12 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     lv_disp_t * d = lv_obj_get_disp(new_scr);
     lv_obj_t * act_scr = lv_scr_act();
 
-
-    if(d->del_prev && act_scr != d->scr_to_load) {
+    if(d->del_prev && act_scr != d->scr_to_load && d->scr_to_load) {
         lv_obj_del(act_scr);
         lv_disp_load_scr(d->scr_to_load);
         lv_anim_del(d->scr_to_load, NULL);
         lv_obj_set_pos(d->scr_to_load, 0, 0);
-        lv_style_remove_prop(lv_obj_get_local_style(d->scr_to_load, LV_PART_MAIN, LV_STATE_DEFAULT), LV_STYLE_OPA);
+        lv_style_remove_prop(lv_obj_get_local_style(d->scr_to_load, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 
         act_scr = d->scr_to_load;
     }
@@ -224,8 +241,8 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     /*Be sure both screens are in a normal position*/
     lv_obj_set_pos(new_scr, 0, 0);
     lv_obj_set_pos(lv_scr_act(), 0, 0);
-    lv_style_remove_prop(lv_obj_get_local_style(new_scr, LV_PART_MAIN, LV_STATE_DEFAULT), LV_STYLE_OPA);
-    lv_style_remove_prop(lv_obj_get_local_style(lv_scr_act(), LV_PART_MAIN, LV_STATE_DEFAULT), LV_STYLE_OPA);
+    lv_style_remove_prop(lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_style_remove_prop(lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 
     lv_anim_t a_new;
     lv_anim_init(&a_new);
@@ -362,7 +379,7 @@ void lv_disp_clean_dcache(lv_disp_t * disp)
  * @param disp pointer to a display
  * @return pointer to the display refresher task. (NULL on error)
  */
-lv_timer_t * _lv_disp_get_refr_task(lv_disp_t * disp)
+lv_task_t * _lv_disp_get_refr_task(lv_disp_t * disp)
 {
     if(!disp) disp = lv_disp_get_default();
     if(!disp) {
@@ -388,7 +405,7 @@ static void scr_load_anim_start(lv_anim_t * a)
 
 static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v)
 {
-//    lv_obj_set_style_bg_color(obj, LV_PART_MAIN, LV_STATE_DEFAULT, v);
+    lv_obj_set_style_local_opa_scale(obj, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, v);
 }
 
 static void scr_anim_ready(lv_anim_t * a)
@@ -398,6 +415,6 @@ static void scr_anim_ready(lv_anim_t * a)
     if(d->prev_scr && d->del_prev) lv_obj_del(d->prev_scr);
     d->prev_scr = NULL;
     d->scr_to_load = NULL;
-    lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_PART_MAIN, LV_STATE_DEFAULT), LV_STYLE_OPA);
+    lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
 }
 #endif

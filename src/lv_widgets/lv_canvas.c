@@ -44,7 +44,6 @@ static void set_px_cb_alpha2(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t
 static void set_px_cb_alpha4(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
                              lv_color_t color, lv_opa_t opa);
 
-
 static void set_px_cb_alpha8(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
                              lv_color_t color, lv_opa_t opa);
 
@@ -377,7 +376,6 @@ void lv_canvas_transform(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, u
 #endif
 }
 
-
 /**
  * Apply horizontal blur on the canvas
  * @param canvas pointer to a canvas object
@@ -439,7 +437,6 @@ void lv_canvas_blur_hor(lv_obj_t * canvas, const lv_area_t * area, uint16_t r)
         lv_color_t c;
         lv_opa_t opa = LV_OPA_TRANSP;
         _lv_memcpy(line_buf, &ext->dsc.data[y * line_w], line_w);
-
 
         for(x = a.x1 - r_back; x <= a.x1 + r_front; x++) {
             x_safe = x < 0 ? 0 : x;
@@ -512,7 +509,6 @@ void lv_canvas_blur_hor(lv_obj_t * canvas, const lv_area_t * area, uint16_t r)
 
     _lv_mem_buf_release(line_buf);
 }
-
 
 /**
  * Apply vertical blur on the canvas
@@ -705,7 +701,7 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_rect: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_rect: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -766,18 +762,18 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * @param max_w max width of the text. The text will be wrapped to fit into this size
  * @param label_draw_dsc pointer to a valid label descriptor `lv_draw_label_dsc_t`
  * @param txt text to display
- * @param align align of the text (`LV_TEXT_ALIGN_LEFT/RIGHT/CENTER`)
+ * @param align align of the text (`LV_LABEL_ALIGN_LEFT/RIGHT/CENTER`)
  */
 void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t max_w,
                          lv_draw_label_dsc_t * label_draw_dsc,
-                         const char * txt, lv_text_align_t align)
+                         const char * txt, lv_label_align_t align)
 {
     LV_ASSERT_OBJ(canvas, LV_OBJX_NAME);
 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_text: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_text: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -815,17 +811,17 @@ void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
 
     lv_txt_flag_t flag;
     switch(align) {
-        case LV_TEXT_ALIGN_LEFT:
-            flag = LV_TEXT_FLAG_NONE;
+        case LV_LABEL_ALIGN_LEFT:
+            flag = LV_TXT_FLAG_NONE;
             break;
-        case LV_TEXT_ALIGN_RIGHT:
-            flag = LV_TEXT_FLAG_RIGHT;
+        case LV_LABEL_ALIGN_RIGHT:
+            flag = LV_TXT_FLAG_RIGHT;
             break;
-        case LV_TEXT_ALIGN_CENTER:
-            flag = LV_TEXT_FLAG_CENTER;
+        case LV_LABEL_ALIGN_CENTER:
+            flag = LV_TXT_FLAG_CENTER;
             break;
         default:
-            flag = LV_TEXT_FLAG_NONE;
+            flag = LV_TXT_FLAG_NONE;
             break;
     }
 
@@ -852,7 +848,7 @@ void lv_canvas_draw_img(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, const voi
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_img: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_img: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -917,7 +913,7 @@ void lv_canvas_draw_line(lv_obj_t * canvas, const lv_point_t points[], uint32_t 
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_line: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_line: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
     /* Create a dummy display to fool the lv_draw function.
@@ -980,7 +976,7 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_polygon: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_polygon: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1044,7 +1040,7 @@ void lv_canvas_draw_arc(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_
     lv_img_dsc_t * dsc = lv_canvas_get_img(canvas);
 
     if(dsc->header.cf >= LV_IMG_CF_INDEXED_1BIT && dsc->header.cf <= LV_IMG_CF_INDEXED_8BIT) {
-        LV_LOG_WARN("lv_canvas_draw_arc: can't raw to LV_IMG_CF_INDEXED canvas");
+        LV_LOG_WARN("lv_canvas_draw_arc: can't draw to LV_IMG_CF_INDEXED canvas");
         return;
     }
 
@@ -1108,10 +1104,9 @@ static lv_res_t lv_canvas_signal(lv_obj_t * canvas, lv_signal_t sign, void * par
     /* Include the ancient signal function */
     res = ancestor_signal(canvas, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) {
-        return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
-    }
-    else if(sign == LV_SIGNAL_CLEANUP) {
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+
+    if(sign == LV_SIGNAL_CLEANUP) {
         /*Nothing to cleanup. (No dynamically allocated memory in 'ext')*/
     }
 
@@ -1211,7 +1206,6 @@ static void set_px_alpha_generic(lv_img_dsc_t * d, lv_coord_t x, lv_coord_t y, l
     lv_img_buf_set_px_alpha(d, x, y, br);
 }
 
-
 static void set_px_true_color_alpha(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x,
                                     lv_coord_t y,
                                     lv_color_t color, lv_opa_t opa)
@@ -1233,7 +1227,6 @@ static void set_px_true_color_alpha(lv_disp_drv_t * disp_drv, uint8_t * buf, lv_
     lv_color_t res_color;
 
     lv_color_mix_with_alpha(bg_color, bg_opa, color, opa, &res_color, &res_opa);
-
 
     lv_img_buf_set_px_alpha(&d, x, y, res_opa);
     lv_img_buf_set_px_color(&d, x, y, res_color);

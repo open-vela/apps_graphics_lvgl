@@ -21,7 +21,7 @@ extern "C" {
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_ll.h"
-#include "../lv_misc/lv_timer.h"
+#include "../lv_misc/lv_task.h"
 
 /*********************
  *      DEFINES
@@ -149,18 +149,18 @@ typedef struct _disp_t {
     lv_disp_drv_t driver;
 
     /**< A task which periodically checks the dirty areas and refreshes them*/
-    lv_timer_t * refr_task;
+    lv_task_t * refr_task;
 
     /** Screens of the display*/
-    struct _lv_obj_t ** screens;          /**< Array of screen objects. `NULL` terminated*/
-    struct _lv_obj_t * act_scr;   /**< Currently active screen on this display */
-    struct _lv_obj_t * prev_scr;  /**< Previous screen. Used during screen animations */
+    lv_ll_t scr_ll;
+    struct _lv_obj_t * act_scr;         /**< Currently active screen on this display */
+    struct _lv_obj_t * prev_scr;        /**< Previous screen. Used during screen animations */
 #if LV_USE_ANIMATION
     struct _lv_obj_t * scr_to_load;     /**< The screen prepared to load in lv_scr_load_anim*/
 #endif
     struct _lv_obj_t * top_layer; /**< @see lv_disp_get_layer_top */
     struct _lv_obj_t * sys_layer; /**< @see lv_disp_get_layer_sys */
-    uint32_t screen_cnt;
+
 uint8_t del_prev  :
     1;        /**< 1: Automatically delete the previous screen when the screen load animation is ready */
 
@@ -176,7 +176,6 @@ uint8_t del_prev  :
     /*Miscellaneous data*/
     uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
-
 
 typedef enum {
     LV_DISP_SIZE_SMALL,
