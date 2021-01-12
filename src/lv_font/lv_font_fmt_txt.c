@@ -16,6 +16,10 @@
 #include "../lv_misc/lv_utils.h"
 #include "../lv_misc/lv_mem.h"
 
+#if defined(LV_GC_INCLUDE)
+    #include LV_GC_INCLUDE
+#endif /* LV_ENABLE_GC */
+
 /*********************
  *      DEFINES
  *********************/
@@ -194,6 +198,7 @@ void _lv_font_clean_up_fmt_txt(void)
         LV_GC_ROOT(_lv_font_decompr_buf) = NULL;
     }
 }
+
 
 /**********************
  *   STATIC FUNCTIONS
@@ -551,6 +556,7 @@ static inline uint8_t rle_next(void)
             rle_rdp += rle_bpp;
             rle_state = RLE_STATE_SINGLE;
         }
+
 
     }
     else if(rle_state == RLE_STATE_COUNTER) {

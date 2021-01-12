@@ -79,13 +79,6 @@ lv_obj_t * lv_disp_get_layer_top(lv_disp_t * disp);
 lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp);
 
 /**
- * Assign a screen to a display.
- * @param disp pointer to a display where to assign the screen
- * @param scr pointer to a screen object to assign
- */
-void lv_disp_assign_screen(lv_disp_t * disp, lv_obj_t * scr);
-
-/**
  * Set the background color of a display
  * @param disp pointer to a display
  * @param color color of the background
@@ -144,7 +137,7 @@ void lv_disp_clean_dcache(lv_disp_t * disp);
  * @param disp pointer to a display
  * @return pointer to the display refresher task. (NULL on error)
  */
-lv_task_t * _lv_disp_get_refr_task(lv_disp_t * disp);
+lv_timer_t * _lv_disp_get_refr_task(lv_disp_t * disp);
 
 /*------------------------------------------------
  * To improve backward compatibility
@@ -205,6 +198,7 @@ static inline void lv_scr_load(lv_obj_t * scr)
  */
 #define LV_VER_RES lv_disp_get_ver_res(lv_disp_get_default())
 #endif
+
 
 /**
  * Same as Android's DIP. (Different name is chosen to avoid mistype between LV_DPI and LV_DIP)

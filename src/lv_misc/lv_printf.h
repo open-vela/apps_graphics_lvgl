@@ -32,6 +32,7 @@
 #ifndef _LV_PRINTF_H_
 #define _LV_PRINTF_H_
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,8 +61,10 @@ int lv_vsnprintf(char * buffer, size_t count, const char * format, va_list va);
 #include LV_SPRINTF_INCLUDE
 #endif
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // _LV_PRINTF_H_
+
+#endif  // _PRINTF_H_

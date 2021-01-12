@@ -10,6 +10,10 @@
 #include "lv_gc.h"
 #include "string.h"
 
+#if defined(LV_GC_INCLUDE)
+    #include LV_GC_INCLUDE
+#endif /* LV_ENABLE_GC */
+
 /*********************
  *      DEFINES
  *********************/
