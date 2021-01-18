@@ -13,16 +13,19 @@
 #include <string.h>
 #include "../lv_misc/lv_debug.h"
 #include "../lv_hal/lv_hal_tick.h"
-#include "lv_task.h"
+#include "lv_timer.h"
 #include "lv_math.h"
 #include "lv_gc.h"
+
+#if defined(LV_GC_INCLUDE)
+    #include LV_GC_INCLUDE
+#endif /* LV_ENABLE_GC */
 
 /*********************
  *      DEFINES
  *********************/
 #define LV_ANIM_RESOLUTION 1024
 #define LV_ANIM_RES_SHIFT 10
-#define LV_ANIM_TASK_PRIO LV_TASK_PRIO_HIGH
 
 /**********************
  *      TYPEDEFS
@@ -31,7 +34,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void anim_task(lv_task_t * param);
+static void anim_task(lv_timer_t * param);
 static void anim_mark_list_change(void);
 static bool anim_ready_handler(lv_anim_t * a);
 
@@ -40,7 +43,7 @@ static bool anim_ready_handler(lv_anim_t * a);
  **********************/
 static uint32_t last_task_run;
 static bool anim_list_changed;
-static lv_task_t * _lv_anim_task;
+static lv_timer_t * _lv_anim_tmr;
 const lv_anim_path_t lv_anim_path_def = {.cb = lv_anim_path_linear};
 
 /**********************
@@ -58,7 +61,7 @@ void _lv_anim_core_init(void)
 {
     _lv_ll_init(&LV_GC_ROOT(_lv_anim_ll), sizeof(lv_anim_t));
     last_task_run = lv_tick_get();
-    _lv_anim_task = lv_task_create(anim_task, LV_DISP_DEF_REFR_PERIOD, LV_ANIM_TASK_PRIO, NULL);
+    _lv_anim_tmr = lv_timer_create(anim_task, LV_DISP_DEF_REFR_PERIOD, NULL);
     anim_mark_list_change(); /*Turn off the animation task*/
     anim_list_changed = false; /*The list has not actually changed*/
 }
@@ -88,7 +91,7 @@ void lv_anim_init(lv_anim_t * a)
 void lv_anim_start(lv_anim_t * a)
 {
     LV_LOG_TRACE("animation create started")
-    /* Do not let two animations for the same 'var' with the same 'fp'*/
+    /* Do not let two animations for the  same 'var' with the same 'fp'*/
     if(a->exec_cb != NULL) lv_anim_del(a->var, a->exec_cb); /*fp == NULL would delete all animations of var*/
 
     /*If the list is empty the anim task was suspended and it's last run measure is invalid*/
@@ -158,7 +161,7 @@ bool lv_anim_del(void * var, lv_anim_exec_xcb_t exec_cb)
 lv_anim_t * lv_anim_get(void * var, lv_anim_exec_xcb_t exec_cb)
 {
     lv_anim_t * a;
-    _LV_LL_READ(LV_GC_ROOT(_lv_anim_ll), a) {
+    _LV_LL_READ(&LV_GC_ROOT(_lv_anim_ll), a) {
         if(a->var == var && a->exec_cb == exec_cb) {
             return a;
         }
@@ -175,7 +178,7 @@ uint16_t lv_anim_count_running(void)
 {
     uint16_t cnt = 0;
     lv_anim_t * a;
-    _LV_LL_READ(LV_GC_ROOT(_lv_anim_ll), a) cnt++;
+    _LV_LL_READ(&LV_GC_ROOT(_lv_anim_ll), a) cnt++;
 
     return cnt;
 }
@@ -256,7 +259,7 @@ lv_anim_value_t lv_anim_path_ease_in(const lv_anim_path_t * path, const lv_anim_
     else
         t = (uint32_t)((uint32_t)a->act_time * 1024) / a->time;
 
-    int32_t step = _lv_bezier3(t, 0, 1, 1, 1024);
+    int32_t step = _lv_bezier3(t, 0, 0, 580, 1024);
 
     int32_t new_value;
     new_value = (int32_t)step * (a->end - a->start);
@@ -283,7 +286,7 @@ lv_anim_value_t lv_anim_path_ease_out(const lv_anim_path_t * path, const lv_anim
     else
         t = (uint32_t)((uint32_t)a->act_time * 1024) / a->time;
 
-    int32_t step = _lv_bezier3(t, 0, 1023, 1023, 1024);
+    int32_t step = _lv_bezier3(t, 0, 420, 1000, 1024);
 
     int32_t new_value;
     new_value = (int32_t)step * (a->end - a->start);
@@ -310,7 +313,7 @@ lv_anim_value_t lv_anim_path_ease_in_out(const lv_anim_path_t * path, const lv_a
     else
         t = (uint32_t)((uint32_t)a->act_time * 1024) / a->time;
 
-    int32_t step = _lv_bezier3(t, 0, 100, 924, 1024);
+    int32_t step = _lv_bezier3(t, 0, 64, 1024 - 64, 1024);
 
     int32_t new_value;
     new_value = (int32_t)step * (a->end - a->start);
@@ -346,6 +349,7 @@ lv_anim_value_t lv_anim_path_overshoot(const lv_anim_path_t * path, const lv_ani
 
     return (lv_anim_value_t)new_value;
 }
+
 
 /**
  * Calculate the current value of an animation with 3 bounces
@@ -435,12 +439,12 @@ lv_anim_value_t lv_anim_path_step(const lv_anim_path_t * path, const lv_anim_t *
  * Periodically handle the animations.
  * @param param unused
  */
-static void anim_task(lv_task_t * param)
+static void anim_task(lv_timer_t * param)
 {
     (void)param;
 
     lv_anim_t * a;
-    _LV_LL_READ(LV_GC_ROOT(_lv_anim_ll), a) {
+    _LV_LL_READ(&LV_GC_ROOT(_lv_anim_ll), a) {
         a->has_run = 0;
     }
 
@@ -456,7 +460,7 @@ static void anim_task(lv_task_t * param)
         anim_list_changed = false;
 
         if(!a->has_run) {
-            a->has_run = 1; /*The list readying might be reset so need to know which anim has run already*/
+            a->has_run = 1; /*The list readying might be reseted so need to know which anim has run already*/
 
             /*The animation will run now for the first time. Call `start_cb`*/
             int32_t new_act_time = a->act_time + elaps;
@@ -551,8 +555,8 @@ static void anim_mark_list_change(void)
 {
     anim_list_changed = true;
     if(_lv_ll_get_head(&LV_GC_ROOT(_lv_anim_ll)) == NULL)
-        lv_task_set_prio(_lv_anim_task, LV_TASK_PRIO_OFF);
+        lv_timer_pause(_lv_anim_tmr, true);
     else
-        lv_task_set_prio(_lv_anim_task, LV_ANIM_TASK_PRIO);
+        lv_timer_pause(_lv_anim_tmr, false);
 }
 #endif
