@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 
-#include "lv_timer.h"
+#include "lv_task.h"
 #include "lv_types.h"
 
 /*********************
@@ -29,13 +29,6 @@ extern "C" {
  * Type for async callback.
  */
 typedef void (*lv_async_cb_t)(void *);
-
-typedef struct _lv_async_info_t {
-    lv_async_cb_t cb;
-    void * user_data;
-} lv_async_info_t;
-
-struct _lv_obj_t;
 
 /**********************
  * GLOBAL PROTOTYPES
