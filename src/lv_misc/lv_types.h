@@ -22,6 +22,7 @@ extern "C" {
 #include <stdint.h>
 #endif
 
+
 // If __UINTPTR_MAX__ or UINTPTR_MAX are available, use them to determine arch size
 #if defined(__UINTPTR_MAX__) && __UINTPTR_MAX__ > 0xFFFFFFFF
 #define LV_ARCH_64
@@ -34,6 +35,7 @@ extern "C" {
 #define LV_ARCH_64
 
 #endif
+
 
 /**********************
  *      TYPEDEFS
@@ -48,6 +50,8 @@ enum {
     LV_RES_OK,      /*The object is valid (no deleted) after the action*/
 };
 typedef uint8_t lv_res_t;
+
+
 
 #if defined(__cplusplus) || __STDC_VERSION__ >= 199901L
 // If c99 or newer,  use the definition of uintptr_t directly from <stdint.h>
@@ -64,6 +68,7 @@ typedef uint32_t lv_uintptr_t;
 
 #endif
 
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -79,3 +84,4 @@ typedef uint32_t lv_uintptr_t;
 #endif
 
 #endif /*LV_TYPES_H*/
+

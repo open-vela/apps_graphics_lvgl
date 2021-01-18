@@ -1,5 +1,5 @@
 /**
- * @file lv_math.h
+ * @file math_base.h
  *
  */
 
@@ -19,23 +19,6 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define LV_MATH_MIN(a, b) ((a) < (b) ? (a) : (b))
-#define LV_MATH_MIN3(a, b, c) (LV_MATH_MIN(LV_MATH_MIN(a,b), c))
-#define LV_MATH_MIN4(a, b, c, d) (LV_MATH_MIN(LV_MATH_MIN(a,b), LV_MATH_MIN(c,d)))
-
-#define LV_MATH_MAX(a, b) ((a) > (b) ? (a) : (b))
-#define LV_MATH_MAX3(a, b, c) (LV_MATH_MAX(LV_MATH_MAX(a,b), c))
-#define LV_MATH_MAX4(a, b, c, d) (LV_MATH_MAX(LV_MATH_MAX(a,b), LV_MATH_MAX(c,d)))
-
-#define LV_MATH_ABS(x) ((x) > 0 ? (x) : (-(x)))
-
-#define LV_MATH_UDIV255(x) ((uint32_t)((uint32_t) (x) * 0x8081) >> 0x17)
-
-#define LV_IS_SIGNED(t) (((t)(-1)) < ((t) 0))
-#define LV_UMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
-#define LV_SMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0x7ULL << ((sizeof(t) * 8ULL) - 4ULL)))
-#define LV_MAX_OF(t) ((unsigned long) (LV_IS_SIGNED(t) ? LV_SMAX_OF(t) : LV_UMAX_OF(t)))
-
 #define LV_TRIGO_SIN_MAX 32767
 #define LV_TRIGO_SHIFT 15 /**<  >> LV_TRIGO_SHIFT to normalize*/
 
@@ -51,6 +34,7 @@ typedef struct {
     uint16_t f;
 } lv_sqrt_res_t;
 
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -63,6 +47,12 @@ typedef struct {
  */
 LV_ATTRIBUTE_FAST_MEM int16_t _lv_trigo_sin(int16_t angle);
 
+
+static inline LV_ATTRIBUTE_FAST_MEM int16_t _lv_trigo_cos(int16_t angle)
+{
+    return _lv_trigo_sin(angle + 90);
+}
+
 //! @endcond
 
 /**
@@ -74,7 +64,7 @@ LV_ATTRIBUTE_FAST_MEM int16_t _lv_trigo_sin(int16_t angle);
  * @param u3 end values in range of [0..LV_BEZIER_VAL_MAX]
  * @return the value calculated from the given parameters in range of [0..LV_BEZIER_VAL_MAX]
  */
-uint32_t _lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t u3);
+int32_t _lv_bezier3(uint32_t t, int32_t u0, int32_t u1, int32_t u2, int32_t u3);
 
 /**
  * Calculate the atan2 of a vector.
@@ -83,6 +73,7 @@ uint32_t _lv_bezier3(uint32_t t, uint32_t u0, uint32_t u1, uint32_t u2, uint32_t
  * @return the angle in degree calculated from the given parameters in range of [0..360]
  */
 uint16_t _lv_atan2(int x, int y);
+
 
 //! @cond Doxygen_Suppress
 
@@ -117,11 +108,31 @@ int64_t _lv_pow(int64_t base, int8_t exp);
  * @param max_out max output range
  * @return the mapped number
  */
-int32_t _lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min, int32_t max);
+int16_t _lv_map(int32_t x, int32_t min_in, int32_t max_in, int32_t min, int32_t max);
+
 
 /**********************
  *      MACROS
  **********************/
+#define LV_MATH_MIN(a, b) ((a) < (b) ? (a) : (b))
+#define LV_MATH_MIN3(a, b, c) (LV_MATH_MIN(LV_MATH_MIN(a,b), c))
+#define LV_MATH_MIN4(a, b, c, d) (LV_MATH_MIN(LV_MATH_MIN(a,b), LV_MATH_MIN(c,d)))
+
+#define LV_MATH_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define LV_MATH_MAX3(a, b, c) (LV_MATH_MAX(LV_MATH_MAX(a,b), c))
+#define LV_MATH_MAX4(a, b, c, d) (LV_MATH_MAX(LV_MATH_MAX(a,b), LV_MATH_MAX(c,d)))
+
+#define LV_CLAMP(min, val, max) (LV_MATH_MAX(min, (LV_MATH_MIN(val, max))))
+
+#define LV_MATH_ABS(x) ((x) > 0 ? (x) : (-(x)))
+
+#define LV_MATH_UDIV255(x) ((uint32_t)((uint32_t) (x) * 0x8081) >> 0x17)
+
+#define LV_IS_SIGNED(t) (((t)(-1)) < ((t) 0))
+#define LV_UMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
+#define LV_SMAX_OF(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | (0x7ULL << ((sizeof(t) * 8ULL) - 4ULL)))
+#define LV_MAX_OF(t) ((unsigned long) (LV_IS_SIGNED(t) ? LV_SMAX_OF(t) : LV_UMAX_OF(t)))
+
 
 #ifdef __cplusplus
 } /* extern "C" */
