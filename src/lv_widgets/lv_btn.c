@@ -23,6 +23,8 @@
  *      DEFINES
  *********************/
 #define LV_OBJX_NAME "lv_btn"
+#define LV_BTN_INK_VALUE_MAX 256
+#define LV_BTN_INK_VALUE_MAX_SHIFT 8
 
 /**********************
  *      TYPEDEFS
@@ -31,23 +33,14 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_btn_constructor(lv_obj_t * obj, lv_obj_t * parent, const lv_obj_t * copy);
-static void lv_btn_destructor(lv_obj_t * obj);
-static lv_drawer_res_t lv_btn_drawer(lv_obj_t * bar, const lv_area_t * clip_area, lv_drawer_mode_t mode);
-static lv_res_t lv_btn_signal(lv_obj_t * bar, lv_signal_t sign, void * param);
+static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area, lv_design_mode_t mode);
+static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param);
 
 /**********************
  *  STATIC VARIABLES
  **********************/
-const lv_obj_class_t lv_btn  = {
-    .constructor = lv_btn_constructor,
-    .destructor = lv_btn_destructor,
-    .signal_cb = lv_btn_signal,
-    .drawer_cb = lv_btn_drawer,
-    .instance_size = sizeof(lv_btn_t),
-    .base_class = &lv_obj
-};
-
+static lv_signal_cb_t ancestor_signal;
+static lv_design_cb_t ancestor_design;
 
 /**********************
  *      MACROS
@@ -59,60 +52,268 @@ const lv_obj_class_t lv_btn  = {
 
 /**
  * Create a button object
- * @param parent pointer to an object, it will be the parent of the new button
- * @param copy DEPRECATED, will be removed in v9.
- *             Pointer to an other button to copy.
+ * @param par pointer to an object, it will be the parent of the new button
+ * @param copy pointer to a button object, if not NULL then the new object will be copied from it
  * @return pointer to the created button
  */
-lv_obj_t * lv_btn_create(lv_obj_t * parent, const lv_obj_t * copy)
+lv_obj_t * lv_btn_create(lv_obj_t * par, const lv_obj_t * copy)
 {
-     LV_LOG_TRACE("button create started");
-     return lv_obj_create_from_class(&lv_btn, parent, copy);
+    LV_LOG_TRACE("button create started");
+
+    lv_obj_t * btn;
+
+    btn = lv_cont_create(par, copy);
+    LV_ASSERT_MEM(btn);
+    if(btn == NULL) return NULL;
+
+    if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(btn);
+    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(btn);
+
+    /*Allocate the extended data*/
+    lv_btn_ext_t * ext = lv_obj_allocate_ext_attr(btn, sizeof(lv_btn_ext_t));
+    LV_ASSERT_MEM(ext);
+    if(ext == NULL) {
+        lv_obj_del(btn);
+        return NULL;
+    }
+
+    ext->checkable = 0;
+
+    lv_obj_set_signal_cb(btn, lv_btn_signal);
+    lv_obj_set_design_cb(btn, lv_btn_design);
+
+    /*If no copy do the basic initialization*/
+    if(copy == NULL) {
+        /*Set layout if the button is not a screen*/
+        if(par) {
+            lv_obj_set_size(btn, LV_DPI, LV_DPI / 3);
+            lv_btn_set_layout(btn, LV_LAYOUT_CENTER);
+        }
+
+        lv_obj_set_click(btn, true); /*Be sure the button is clickable*/
+
+        lv_theme_apply(btn, LV_THEME_BTN);
+    }
+    /*Copy 'copy'*/
+    else {
+        lv_btn_ext_t * copy_ext = lv_obj_get_ext_attr(copy);
+        ext->checkable             = copy_ext->checkable;
+
+        /*Refresh the style with new signal function*/
+        lv_obj_refresh_style(btn, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+    }
+
+    LV_LOG_INFO("button created");
+
+    return btn;
 }
 
 /*=====================
  * Setter functions
  *====================*/
 
+/**
+ * Enable the toggled states
+ * @param btn pointer to a button object
+ * @param tgl true: enable toggled states, false: disable
+ */
+void lv_btn_set_checkable(lv_obj_t * btn, bool tgl)
+{
+    LV_ASSERT_OBJ(btn, LV_OBJX_NAME);
+
+    lv_btn_ext_t * ext = lv_obj_get_ext_attr(btn);
+
+    ext->checkable = tgl != false ? 1 : 0;
+}
+
+/**
+ * Set the state of the button
+ * @param btn pointer to a button object
+ * @param state the new state of the button (from lv_btn_state_t enum)
+ */
+void lv_btn_set_state(lv_obj_t * btn, lv_btn_state_t state)
+{
+    LV_ASSERT_OBJ(btn, LV_OBJX_NAME);
+
+    switch(state) {
+        case LV_BTN_STATE_RELEASED:
+            lv_obj_clear_state(btn, LV_STATE_PRESSED | LV_STATE_CHECKED | LV_STATE_DISABLED);
+            break;
+        case LV_BTN_STATE_PRESSED:
+            lv_obj_clear_state(btn, LV_STATE_CHECKED | LV_STATE_DISABLED);
+            lv_obj_add_state(btn, LV_STATE_PRESSED);
+            break;
+        case LV_BTN_STATE_CHECKED_RELEASED:
+            lv_obj_add_state(btn, LV_STATE_CHECKED);
+            lv_obj_clear_state(btn, LV_STATE_PRESSED | LV_STATE_DISABLED);
+            break;
+        case LV_BTN_STATE_CHECKED_PRESSED:
+            lv_obj_add_state(btn, LV_STATE_PRESSED | LV_STATE_CHECKED);
+            lv_obj_clear_state(btn, LV_STATE_DISABLED);
+            break;
+        case LV_BTN_STATE_DISABLED:
+            lv_obj_clear_state(btn, LV_STATE_PRESSED | LV_STATE_CHECKED);
+            lv_obj_add_state(btn, LV_STATE_DISABLED);
+            break;
+        case LV_BTN_STATE_CHECKED_DISABLED:
+            lv_obj_clear_state(btn, LV_STATE_PRESSED);
+            lv_obj_add_state(btn, LV_STATE_DISABLED | LV_STATE_CHECKED);
+            break;
+    }
+}
+
+/**
+ * Toggle the state of the button (ON->OFF, OFF->ON)
+ * @param btn pointer to a button object
+ */
+void lv_btn_toggle(lv_obj_t * btn)
+{
+    LV_ASSERT_OBJ(btn, LV_OBJX_NAME);
+
+    if(lv_obj_get_state(btn, LV_BTN_PART_MAIN) & LV_STATE_CHECKED) {
+        lv_obj_clear_state(btn, LV_STATE_CHECKED);
+    }
+    else {
+        lv_obj_add_state(btn, LV_STATE_CHECKED);
+    }
+}
+
 /*=====================
  * Getter functions
  *====================*/
+
+/**
+ * Get the current state of the button
+ * @param btn pointer to a button object
+ * @return the state of the button (from lv_btn_state_t enum).
+ * If the button is in disabled state `LV_BTN_STATE_DISABLED` will be ORed to the other button states.
+ */
+lv_btn_state_t lv_btn_get_state(const lv_obj_t * btn)
+{
+    LV_ASSERT_OBJ(btn, LV_OBJX_NAME);
+
+    lv_state_t obj_state = lv_obj_get_state(btn, LV_BTN_PART_MAIN);
+
+    if(obj_state & LV_STATE_DISABLED) {
+        if(obj_state & LV_STATE_CHECKED) return LV_BTN_STATE_CHECKED_DISABLED;
+        else return LV_BTN_STATE_DISABLED;
+    }
+
+    if(obj_state & LV_STATE_CHECKED) {
+        if(obj_state & LV_STATE_PRESSED) return LV_BTN_STATE_CHECKED_PRESSED;
+        else return LV_BTN_STATE_CHECKED_RELEASED;
+    }
+    else {
+        if(obj_state & LV_STATE_PRESSED) return LV_BTN_STATE_PRESSED;
+        else return LV_BTN_STATE_RELEASED;
+    }
+}
+
+/**
+ * Get the toggle enable attribute of the button
+ * @param btn pointer to a button object
+ * @return true: toggle enabled, false: disabled
+ */
+bool lv_btn_get_checkable(const lv_obj_t * btn)
+{
+    LV_ASSERT_OBJ(btn, LV_OBJX_NAME);
+
+    lv_btn_ext_t * ext = lv_obj_get_ext_attr(btn);
+
+    return ext->checkable != 0 ? true : false;
+}
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static void lv_btn_constructor(lv_obj_t * obj, lv_obj_t * parent, const lv_obj_t * copy)
+/**
+ * Handle the drawing related tasks of the drop down lists
+ * @param btn pointer to an object
+ * @param mask the object will be drawn only in this area
+ * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
+ *                                  (return 'true' if yes)
+ *             LV_DESIGN_DRAW: draw the object (always return 'true')
+ *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
+ * @param return an element of `lv_design_res_t`
+ */
+static lv_design_res_t lv_btn_design(lv_obj_t * btn, const lv_area_t * clip_area, lv_design_mode_t mode)
 {
-    LV_LOG_TRACE("lv_btn create started");
+    if(mode == LV_DESIGN_COVER_CHK) {
+        return ancestor_design(btn, clip_area, mode);
+    }
+    else if(mode == LV_DESIGN_DRAW_MAIN) {
+        ancestor_design(btn, clip_area, mode);
+    }
+    else if(mode == LV_DESIGN_DRAW_POST) {
+        ancestor_design(btn, clip_area, mode);
+    }
 
-    lv_obj_construct_base(obj, parent, copy);
-
-    lv_obj_set_size(obj, LV_DPI, LV_DPI / 3);
-    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
-
-    LV_LOG_INFO("btn created");
+    return LV_DESIGN_RES_OK;
 }
 
-static void lv_btn_destructor(lv_obj_t * obj)
+/**
+ * Signal function of the button
+ * @param btn pointer to a button object
+ * @param sign a signal type from lv_signal_t enum
+ * @param param pointer to a signal specific variable
+ * @return LV_RES_OK: the object is not deleted in the function; LV_RES_INV: the object is deleted
+ */
+static lv_res_t lv_btn_signal(lv_obj_t * btn, lv_signal_t sign, void * param)
 {
-//    lv_bar_t * bar = obj;
-//
-//    _lv_obj_reset_style_list_no_refr(obj, LV_BAR_PART_INDIC);
-//#if LV_USE_ANIMATION
-//    lv_anim_del(&bar->cur_value_anim, NULL);
-//    lv_anim_del(&bar->start_value_anim, NULL);
-//#endif
+    lv_res_t res;
 
-//    lv_btn.base_p->destructor(obj);
-}
-static lv_drawer_res_t lv_btn_drawer(lv_obj_t * obj, const lv_area_t * clip_area, lv_drawer_mode_t mode)
-{
-    return lv_obj.drawer_cb(obj, clip_area, mode);
+    /* Include the ancient signal function */
+    res = ancestor_signal(btn, sign, param);
+    if(res != LV_RES_OK) return res;
+    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+
+    bool tgl           = lv_btn_get_checkable(btn);
+
+    if(sign == LV_SIGNAL_RELEASED) {
+        /*If not dragged and it was not long press action then
+         *change state and run the action*/
+        if(lv_indev_is_dragging(param) == false && tgl) {
+            uint32_t toggled = 0;
+            if(lv_obj_get_state(btn, LV_BTN_PART_MAIN) & LV_STATE_CHECKED) {
+                lv_btn_set_state(btn, LV_BTN_STATE_RELEASED);
+                toggled = 0;
+            }
+            else {
+                lv_btn_set_state(btn, LV_BTN_STATE_CHECKED_RELEASED);
+                toggled = 1;
+            }
+
+            res = lv_event_send(btn, LV_EVENT_VALUE_CHANGED, &toggled);
+            if(res != LV_RES_OK) return res;
+        }
+    }
+    else if(sign == LV_SIGNAL_CONTROL) {
+#if LV_USE_GROUP
+        char c = *((char *)param);
+        if(c == LV_KEY_RIGHT || c == LV_KEY_UP) {
+            if(lv_btn_get_checkable(btn)) {
+                lv_btn_set_state(btn, LV_BTN_STATE_CHECKED_RELEASED);
+
+                uint32_t state = 1;
+                res            = lv_event_send(btn, LV_EVENT_VALUE_CHANGED, &state);
+                if(res != LV_RES_OK) return res;
+            }
+
+        }
+        else if(c == LV_KEY_LEFT || c == LV_KEY_DOWN) {
+            if(lv_btn_get_checkable(btn)) {
+                lv_btn_set_state(btn, LV_BTN_STATE_RELEASED);
+
+                uint32_t state = 0;
+                res            = lv_event_send(btn, LV_EVENT_VALUE_CHANGED, &state);
+                if(res != LV_RES_OK) return res;
+            }
+        }
+#endif
+    }
+
+    return res;
 }
 
-static lv_res_t lv_btn_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
-{
-    return lv_obj.signal_cb(obj, sign, param);
-}
 #endif

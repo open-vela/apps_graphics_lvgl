@@ -15,10 +15,6 @@
 #include "../lv_misc/lv_gc.h"
 #include "lv_hal_disp.h"
 
-#if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
-
 /*********************
  *      DEFINES
  *********************/
@@ -54,8 +50,8 @@ void lv_indev_drv_init(lv_indev_drv_t * driver)
     _lv_memset_00(driver, sizeof(lv_indev_drv_t));
 
     driver->type                 = LV_INDEV_TYPE_NONE;
-    driver->scroll_limit           = LV_INDEV_DEF_DRAG_LIMIT;
-    driver->scroll_throw           = LV_INDEV_DEF_DRAG_THROW;
+    driver->drag_limit           = LV_INDEV_DEF_DRAG_LIMIT;
+    driver->drag_throw           = LV_INDEV_DEF_DRAG_THROW;
     driver->long_press_time      = LV_INDEV_DEF_LONG_PRESS_TIME;
     driver->long_press_rep_time  = LV_INDEV_DEF_LONG_PRESS_REP_TIME;
     driver->gesture_limit        = LV_INDEV_DEF_GESTURE_LIMIT;
@@ -92,7 +88,7 @@ lv_indev_t * lv_indev_drv_register(lv_indev_drv_t * driver)
     indev->group            = NULL;
     indev->btn_points       = NULL;
 
-    indev->driver.read_task = lv_timer_create(_lv_indev_read_task, LV_INDEV_DEF_READ_PERIOD, indev);
+    indev->driver.read_task = lv_task_create(_lv_indev_read_task, LV_INDEV_DEF_READ_PERIOD, LV_TASK_PRIO_HIGH, indev);
 
     return indev;
 }
@@ -139,7 +135,7 @@ bool _lv_indev_read(lv_indev_t * indev, lv_indev_data_t * data)
         data->point.x = indev->proc.types.pointer.act_point.x;
         data->point.y = indev->proc.types.pointer.act_point.y;
     }
-    /*Similarly set at least the last key in case of the  the user doesn't set it  on release*/
+    /*Similarly set at least the last key in case of the user doesn't set it on release*/
     else if(indev->driver.type == LV_INDEV_TYPE_KEYPAD) {
         data->key = indev->proc.types.keypad.last_key;
     }
