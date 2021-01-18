@@ -25,7 +25,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * clip_area, lv_design_mode_t mode);
+static lv_drawer_res_t lv_objmask_drawer(lv_obj_t * objmask, const lv_area_t * clip_area, lv_drawer_mode_t mode);
 static lv_res_t lv_objmask_signal(lv_obj_t * objmask, lv_signal_t sign, void * param);
 static uint16_t get_param_size(lv_draw_mask_type_t type);
 
@@ -33,7 +33,7 @@ static uint16_t get_param_size(lv_draw_mask_type_t type);
  *  STATIC VARIABLES
  **********************/
 static lv_signal_cb_t ancestor_signal;
-static lv_design_cb_t ancestor_design;
+static lv_drawer_cb_t ancestor_drawer;
 
 /**********************
  *      MACROS
@@ -54,7 +54,7 @@ lv_obj_t * lv_objmask_create(lv_obj_t * par, const lv_obj_t * copy)
     LV_LOG_TRACE("object mask create started");
 
     /*Create the ancestor of object mask*/
-    lv_obj_t * objmask = lv_cont_create(par, copy);
+    lv_obj_t * objmask = lv_obj_create(par, copy);
     LV_ASSERT_MEM(objmask);
     if(objmask == NULL) return NULL;
 
@@ -67,14 +67,14 @@ lv_obj_t * lv_objmask_create(lv_obj_t * par, const lv_obj_t * copy)
     }
 
     if(ancestor_signal == NULL) ancestor_signal = lv_obj_get_signal_cb(objmask);
-    if(ancestor_design == NULL) ancestor_design = lv_obj_get_design_cb(objmask);
+    if(ancestor_drawer == NULL) ancestor_drawer = lv_obj_get_drawer_cb(objmask);
 
     /*Initialize the allocated 'ext' */
     _lv_ll_init(&ext->mask_ll, sizeof(lv_objmask_mask_t));
 
-    /*The signal and design functions are not copied so set them here*/
+    /*The signal and drawer functions are not copied so set them here*/
     lv_obj_set_signal_cb(objmask, lv_objmask_signal);
-    lv_obj_set_design_cb(objmask, lv_objmask_design);
+    lv_obj_set_drawer_cb(objmask, lv_objmask_drawer);
 
     /*Init the new object mask object mask*/
     if(copy == NULL) {
@@ -86,7 +86,7 @@ lv_obj_t * lv_objmask_create(lv_obj_t * par, const lv_obj_t * copy)
         /* lv_objmask_ext_t * copy_ext = lv_obj_get_ext_attr(copy); */
 
         /*Refresh the style with new signal function*/
-        lv_obj_refresh_style(objmask, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
+        _lv_obj_refresh_style(objmask, LV_OBJ_PART_ALL, LV_STYLE_PROP_ALL);
     }
 
     LV_LOG_INFO("object mask created");
@@ -161,7 +161,7 @@ void lv_objmask_remove_mask(lv_obj_t * objmask, lv_objmask_mask_t * mask)
     /*Remove all masks*/
     if(mask == NULL) {
         lv_objmask_mask_t * m;
-        _LV_LL_READ(ext->mask_ll, m) {
+        _LV_LL_READ(&ext->mask_ll, m) {
             lv_mem_free(m->param);
         }
 
@@ -177,13 +177,17 @@ void lv_objmask_remove_mask(lv_obj_t * objmask, lv_objmask_mask_t * mask)
     lv_obj_invalidate(objmask);
 }
 
+
+
 /*=====================
  * Setter functions
  *====================*/
 
+
 /*=====================
  * Getter functions
  *====================*/
+
 
 /*=====================
  * Other functions
@@ -197,23 +201,23 @@ void lv_objmask_remove_mask(lv_obj_t * objmask, lv_objmask_mask_t * mask)
  * Handle the drawing related tasks of the object masks
  * @param objmask pointer to an object
  * @param clip_area the object will be drawn only in this area
- * @param mode LV_DESIGN_COVER_CHK: only check if the object fully covers the 'mask_p' area
+ * @param mode LV_DRAWER_COVER_CHK: only check if the object fully covers the 'mask_p' area
  *                                  (return 'true' if yes)
- *             LV_DESIGN_DRAW: draw the object (always return 'true')
- *             LV_DESIGN_DRAW_POST: drawing after every children are drawn
- * @param return an element of `lv_design_res_t`
+ *             LV_DRAWER_DRAW: draw the object (always return 'true')
+ *             LV_DRAWER_DRAW_POST: drawing after every children are drawn
+ * @param return an element of `lv_drawer_res_t`
  */
-static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * clip_area, lv_design_mode_t mode)
+static lv_drawer_res_t lv_objmask_drawer(lv_obj_t * objmask, const lv_area_t * clip_area, lv_drawer_mode_t mode)
 {
     /*Return false if the object is not covers the mask_p area*/
-    if(mode == LV_DESIGN_COVER_CHK) {
+    if(mode == LV_DRAWER_COVER_CHK) {
         lv_objmask_ext_t * ext = lv_obj_get_ext_attr(objmask);
-        if(_lv_ll_get_len(&ext->mask_ll) > 0) return LV_DESIGN_RES_MASKED;
-        else return ancestor_design(objmask, clip_area, mode);
+        if(_lv_ll_get_len(&ext->mask_ll) > 0) return LV_DRAWER_RES_MASKED;
+        else return ancestor_drawer(objmask, clip_area, mode);
     }
     /*Draw the object*/
-    else if(mode == LV_DESIGN_DRAW_MAIN) {
-        ancestor_design(objmask, clip_area, mode);
+    else if(mode == LV_DRAWER_DRAW_MAIN) {
+        ancestor_drawer(objmask, clip_area, mode);
 
         lv_objmask_ext_t * ext = lv_obj_get_ext_attr(objmask);
 
@@ -222,7 +226,7 @@ static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * c
 
         lv_objmask_mask_t * m;
 
-        _LV_LL_READ(ext->mask_ll, m) {
+        _LV_LL_READ(&ext->mask_ll, m) {
             lv_draw_mask_common_dsc_t * dsc = m->param;
 
             if(dsc->type == LV_DRAW_MASK_TYPE_LINE) {
@@ -283,15 +287,15 @@ static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * c
                 lv_draw_mask_add(p_new, m->param);
             }
 
+
         }
     }
     /*Post draw when the children are drawn*/
-    else if(mode == LV_DESIGN_DRAW_POST) {
+    else if(mode == LV_DRAWER_DRAW_POST) {
         lv_objmask_ext_t * ext = lv_obj_get_ext_attr(objmask);
-
         lv_objmask_mask_t * m;
 
-        _LV_LL_READ(ext->mask_ll, m) {
+        _LV_LL_READ(&ext->mask_ll, m) {
             void * param;
             param = lv_draw_mask_remove_custom(m->param);
             _lv_mem_buf_release(param);
@@ -299,7 +303,7 @@ static lv_design_res_t lv_objmask_design(lv_obj_t * objmask, const lv_area_t * c
 
     }
 
-    return LV_DESIGN_RES_OK;
+    return LV_DRAWER_RES_OK;
 }
 
 /**
@@ -316,12 +320,12 @@ static lv_res_t lv_objmask_signal(lv_obj_t * objmask, lv_signal_t sign, void * p
     /* Include the ancient signal function */
     res = ancestor_signal(objmask, sign, param);
     if(res != LV_RES_OK) return res;
-    if(sign == LV_SIGNAL_GET_TYPE) return lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
+    if(sign == LV_SIGNAL_GET_TYPE) return _lv_obj_handle_get_type_signal(param, LV_OBJX_NAME);
 
     if(sign == LV_SIGNAL_CLEANUP) {
         lv_objmask_ext_t * ext = lv_obj_get_ext_attr(objmask);
         lv_objmask_mask_t * i;
-        _LV_LL_READ(ext->mask_ll, i) {
+        _LV_LL_READ(&ext->mask_ll, i) {
             if(i->param) {
                 lv_mem_free(i->param);
                 i->param = NULL;

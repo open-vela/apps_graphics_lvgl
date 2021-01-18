@@ -19,7 +19,7 @@ extern "C" {
 
 /*Testing of dependencies*/
 #if LV_USE_BAR == 0
-#error "lv_slider: lv_bar is required. Enable it in lv_conf.h (LV_USE_BAR 1)"
+#error "lv_slider: lv_bar is required. Enable it in lv_conf.h (LV_USE_BAR  1) "
 #endif
 
 #include "../lv_core/lv_obj.h"
@@ -40,24 +40,16 @@ enum {
 };
 typedef uint8_t lv_slider_type_t;
 
-/*Data of slider*/
 typedef struct {
-    lv_bar_ext_t bar; /*Ext. of ancestor*/
-    /*New data for this type */
-    lv_style_list_t style_knob; /*Style of the knob*/
+    lv_bar_t bar;       /*Add the ancestor's type first*/
     lv_area_t left_knob_area;
     lv_area_t right_knob_area;
     int16_t * value_to_set; /* Which bar value to set */
     uint8_t dragging : 1;       /*1: the slider is being dragged*/
     uint8_t left_knob_focus : 1; /*1: with encoder now the right knob can be adjusted*/
-} lv_slider_ext_t;
+}lv_slider_t;
 
-/** Built-in styles of slider*/
-enum {
-    LV_SLIDER_PART_BG, /** Slider background style. */
-    LV_SLIDER_PART_INDIC, /** Slider indicator (filled area) style. */
-    LV_SLIDER_PART_KNOB, /** Slider knob style. */
-};
+extern const lv_obj_class_t lv_slider;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -65,11 +57,12 @@ enum {
 
 /**
  * Create a slider objects
- * @param par pointer to an object, it will be the parent of the new slider
- * @param copy pointer to a slider object, if not NULL then the new object will be copied from it
+ * @param parent pointer to an object, it will be the parent of the new slider
+ * @param copy DEPRECATED, will be removed in v9.
+ *             Pointer to an other slider to copy.
  * @return pointer to the created slider
  */
-lv_obj_t * lv_slider_create(lv_obj_t * par, const lv_obj_t * copy);
+lv_obj_t * lv_slider_create(lv_obj_t * parent, const lv_obj_t * copy);
 
 /*=====================
  * Setter functions
@@ -109,16 +102,6 @@ static inline void lv_slider_set_range(lv_obj_t * slider, int16_t min, int16_t m
 }
 
 /**
- * Set the animation time of the slider
- * @param slider pointer to a bar object
- * @param anim_time the animation time in milliseconds.
- */
-static inline void lv_slider_set_anim_time(lv_obj_t * slider, uint16_t anim_time)
-{
-    lv_bar_set_anim_time(slider, anim_time);
-}
-
-/**
  * Make the slider symmetric to zero. The indicator will grow from zero instead of the minimum
  * position.
  * @param slider pointer to a slider object
@@ -143,7 +126,10 @@ static inline void lv_slider_set_type(lv_obj_t * slider, lv_slider_type_t type)
  * @param slider pointer to a slider object
  * @return the value of the main knob of the slider
  */
-int16_t lv_slider_get_value(const lv_obj_t * slider);
+static inline int16_t lv_slider_get_value(const lv_obj_t * slider)
+{
+    return lv_bar_get_value(slider);
+}
 
 /**
  * Get the value of the left knob of a slider
@@ -182,15 +168,6 @@ static inline int16_t lv_slider_get_max_value(const lv_obj_t * slider)
  */
 bool lv_slider_is_dragged(const lv_obj_t * slider);
 
-/**
- * Get the animation time of the slider
- * @param slider pointer to a slider object
- * @return the animation time in milliseconds.
- */
-static inline uint16_t lv_slider_get_anim_time(lv_obj_t * slider)
-{
-    return lv_bar_get_anim_time(slider);
-}
 
 /**
  * Get whether the slider is symmetric or not.
@@ -200,12 +177,9 @@ static inline uint16_t lv_slider_get_anim_time(lv_obj_t * slider)
 static inline lv_slider_type_t lv_slider_get_type(lv_obj_t * slider)
 {
     lv_bar_type_t type = lv_bar_get_type(slider);
-    if(type == LV_BAR_TYPE_SYMMETRICAL)
-        return LV_SLIDER_TYPE_SYMMETRICAL;
-    else if(type == LV_BAR_TYPE_CUSTOM)
-        return LV_SLIDER_TYPE_RANGE;
-    else
-        return LV_SLIDER_TYPE_NORMAL;
+    if(type == LV_BAR_TYPE_SYMMETRICAL) return LV_SLIDER_TYPE_SYMMETRICAL;
+    else if(type == LV_BAR_TYPE_CUSTOM)return LV_SLIDER_TYPE_RANGE;
+    else return LV_SLIDER_TYPE_NORMAL;
 }
 
 /**********************
