@@ -13,10 +13,6 @@
 #include "../lv_themes/lv_theme.h"
 #include "../lv_misc/lv_gc.h"
 
-#if defined(LV_GC_INCLUDE)
-    #include LV_GC_INCLUDE
-#endif /* LV_ENABLE_GC */
-
 /*********************
  *      DEFINES
  *********************/
@@ -31,6 +27,7 @@
 static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *),
                             void * (*move)(const lv_ll_t *, const void *));
 static void lv_group_refocus(lv_group_t * g);
+static void obj_to_foreground(lv_obj_t * obj);
 
 /**********************
  *  STATIC VARIABLES
@@ -84,7 +81,7 @@ lv_group_t * lv_group_create(void)
  */
 void lv_group_del(lv_group_t * group)
 {
-    /*Defocus the the currently focused object*/
+    /*Defocus the currently focused object*/
     if(group->obj_focus != NULL) {
         (*group->obj_focus)->signal_cb(*group->obj_focus, LV_SIGNAL_DEFOCUS, NULL);
         lv_obj_invalidate(*group->obj_focus);
@@ -92,8 +89,8 @@ void lv_group_del(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(&group->obj_ll, obj) {
-        if((*obj)->spec_attr) (*obj)->spec_attr->group_p = NULL;
+    _LV_LL_READ(group->obj_ll, obj) {
+        (*obj)->group_p = NULL;
     }
 
     _lv_ll_clear(&(group->obj_ll));
@@ -111,7 +108,7 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
     if(group == NULL) return;
     /*Do not add the object twice*/
     lv_obj_t ** obj_i;
-    _LV_LL_READ(&group->obj_ll, obj_i) {
+    _LV_LL_READ(group->obj_ll, obj_i) {
         if((*obj_i) == obj) {
             LV_LOG_INFO("lv_group_add_obj: the object is already added to this group");
             return;
@@ -119,18 +116,15 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
     }
 
     /*If the object is already in a group and focused then defocus it*/
-    lv_group_t * group_cur = lv_obj_get_group(obj);
-    if(group_cur) {
+    if(obj->group_p) {
         if(lv_obj_is_focused(obj)) {
-            lv_group_refocus(group_cur);
+            lv_group_refocus(obj->group_p);
 
             LV_LOG_INFO("lv_group_add_obj: assign object to an other group");
         }
     }
 
-    if(obj->spec_attr == NULL) lv_obj_allocate_spec_attr(obj);
-    obj->spec_attr->group_p = group;
-
+    obj->group_p     = group;
     lv_obj_t ** next = _lv_ll_ins_tail(&group->obj_ll);
     LV_ASSERT_MEM(next);
     if(next == NULL) return;
@@ -149,7 +143,7 @@ void lv_group_add_obj(lv_group_t * group, lv_obj_t * obj)
  */
 void lv_group_remove_obj(lv_obj_t * obj)
 {
-    lv_group_t * g = lv_obj_get_group(obj);
+    lv_group_t * g = obj->group_p;
     if(g == NULL) return;
 
     /*Focus on the next object*/
@@ -175,11 +169,11 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
     /*Search the object and remove it from its group */
     lv_obj_t ** i;
-    _LV_LL_READ(&g->obj_ll, i) {
+    _LV_LL_READ(g->obj_ll, i) {
         if(*i == obj) {
             _lv_ll_remove(&g->obj_ll, i);
             lv_mem_free(i);
-            if(obj->spec_attr) obj->spec_attr->group_p = NULL;
+            obj->group_p = NULL;
             break;
         }
     }
@@ -191,7 +185,7 @@ void lv_group_remove_obj(lv_obj_t * obj)
  */
 void lv_group_remove_all_objs(lv_group_t * group)
 {
-    /*Defocus the the currently focused object*/
+    /*Defocus the currently focused object*/
     if(group->obj_focus != NULL) {
         (*group->obj_focus)->signal_cb(*group->obj_focus, LV_SIGNAL_DEFOCUS, NULL);
         lv_obj_invalidate(*group->obj_focus);
@@ -200,8 +194,8 @@ void lv_group_remove_all_objs(lv_group_t * group)
 
     /*Remove the objects from the group*/
     lv_obj_t ** obj;
-    _LV_LL_READ(&group->obj_ll, obj) {
-        if((*obj)->spec_attr) (*obj)->spec_attr->group_p = NULL;
+    _LV_LL_READ(group->obj_ll, obj) {
+        (*obj)->group_p = NULL;
     }
 
     _lv_ll_clear(&(group->obj_ll));
@@ -214,7 +208,7 @@ void lv_group_remove_all_objs(lv_group_t * group)
 void lv_group_focus_obj(lv_obj_t * obj)
 {
     if(obj == NULL) return;
-    lv_group_t * g = lv_obj_get_group(obj);
+    lv_group_t * g = obj->group_p;
     if(g == NULL) return;
 
     if(g->frozen != 0) return;
@@ -225,7 +219,7 @@ void lv_group_focus_obj(lv_obj_t * obj)
     lv_group_set_editing(g, false);
 
     lv_obj_t ** i;
-    _LV_LL_READ(&g->obj_ll, i) {
+    _LV_LL_READ(g->obj_ll, i) {
         if(*i == obj) {
             if(g->obj_focus != NULL) {
                 (*g->obj_focus)->signal_cb(*g->obj_focus, LV_SIGNAL_DEFOCUS, NULL);
@@ -242,6 +236,9 @@ void lv_group_focus_obj(lv_obj_t * obj)
                 lv_res_t res = lv_event_send(*g->obj_focus, LV_EVENT_FOCUSED, NULL);
                 if(res != LV_RES_OK) return;
                 lv_obj_invalidate(*g->obj_focus);
+
+                /*If the object or its parent has `top == true` bring it to the foreground*/
+                obj_to_foreground(*g->obj_focus);
             }
             break;
         }
@@ -486,10 +483,10 @@ static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
         can_move = true;
 
         if(obj_next == NULL) continue;
-        if(lv_obj_get_state(*obj_next) & LV_STATE_DISABLED) continue;
+        if(lv_obj_get_state(*obj_next, LV_OBJ_PART_MAIN) & LV_STATE_DISABLED) continue;
 
-        /*Hidden objects don't receive focus*/
-        if(lv_obj_has_flag(*obj_next, LV_OBJ_FLAG_HIDDEN) == false) break;
+        /*Hidden and disabled objects don't receive focus*/
+        if(!lv_obj_get_hidden(*obj_next)) break;
     }
 
     if(obj_next == group->obj_focus) return; /*There's only one visible object and it's already focused*/
@@ -507,10 +504,28 @@ static void focus_next_core(lv_group_t * group, void * (*begin)(const lv_ll_t *)
     lv_res_t res = lv_event_send(*group->obj_focus, LV_EVENT_FOCUSED, NULL);
     if(res != LV_RES_OK) return;
 
+    /*If the object or its parent has `top == true` bring it to the foreground*/
+    obj_to_foreground(*group->obj_focus);
+
     lv_obj_invalidate(*group->obj_focus);
 
     if(group->focus_cb) group->focus_cb(group);
 }
 
+static void obj_to_foreground(lv_obj_t * obj)
+{
+    /*Search for 'top' attribute*/
+    lv_obj_t * i        = obj;
+    lv_obj_t * last_top = NULL;
+    while(i != NULL) {
+        if(i->top != 0) last_top = i;
+        i = lv_obj_get_parent(i);
+    }
+
+    if(last_top != NULL) {
+        /*Move the last_top object to the foreground*/
+        lv_obj_move_foreground(last_top);
+    }
+}
 
 #endif /*LV_USE_GROUP != 0*/
