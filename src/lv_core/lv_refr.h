@@ -50,7 +50,7 @@ void _lv_refr_init(void);
 /**
  * Redraw the invalidated areas now.
  * Normally the redrawing is periodically executed in `lv_task_handler` but a long blocking process
- * can prevent the call of `lv_task_handler`. In this case if the the GUI is updated in the process
+ * can prevent the call of `lv_task_handler`. In this case if the GUI is updated in the process
  * (e.g. progress bar) this function can be called when the screen should be updated.
  * @param disp pointer to display to refresh. NULL to refresh all displays.
  */
@@ -90,7 +90,7 @@ uint32_t lv_refr_get_fps_avg(void);
  * Called periodically to handle the refreshing
  * @param task pointer to the task itself
  */
-void _lv_disp_refr_task(lv_timer_t * task);
+void _lv_disp_refr_task(lv_task_t * task);
 
 /**********************
  *   STATIC FUNCTIONS

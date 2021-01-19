@@ -14,7 +14,7 @@
 #include "../src/lv_font/lv_font.h"
 #include "../src/lv_font/lv_font_loader.h"
 
-#include "lv_test_font_loader.h" 
+#include "lv_test_font_loader.h"
 
 /*********************
  *      DEFINES
@@ -51,9 +51,9 @@ extern lv_font_t font_3;
 void lv_test_font_loader(void)
 {
 #if LV_USE_FILESYSTEM
-    lv_font_t * font_1_bin = lv_font_load("F:font_1.fnt");
-    lv_font_t * font_2_bin = lv_font_load("F:font_2.fnt");
-    lv_font_t * font_3_bin = lv_font_load("F:font_3.fnt");
+    lv_font_t * font_1_bin = lv_font_load("f:font_1.fnt");
+    lv_font_t * font_2_bin = lv_font_load("f:font_2.fnt");
+    lv_font_t * font_3_bin = lv_font_load("f:font_3.fnt");
 
     compare_fonts(&font_1, font_1_bin);
     compare_fonts(&font_2, font_2_bin);
@@ -212,4 +212,3 @@ static int compare_fonts(lv_font_t * f1, lv_font_t * f2)
  **********************/
 
 #endif // LV_BUILD_TEST
-
