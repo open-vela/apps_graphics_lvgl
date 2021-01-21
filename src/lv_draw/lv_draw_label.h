@@ -13,9 +13,10 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+#include "lv_draw_blend.h"
 #include "../lv_misc/lv_bidi.h"
 #include "../lv_misc/lv_txt.h"
-#include "../lv_core/lv_style.h"
+#include "../lv_misc/lv_color.h"
 
 /*********************
  *      DEFINES
@@ -26,20 +27,39 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
+/*Text decorations (Use 'OR'ed values)*/
+enum {
+    LV_TEXT_DECOR_NONE          = 0x00,
+    LV_TEXT_DECOR_UNDERLINE     = 0x01,
+    LV_TEXT_DECOR_STRIKETHROUGH = 0x02,
+    _LV_TEXT_DECOR_LAST
+};
+
+typedef uint8_t lv_text_decor_t;
+/** Label align policy*/
+enum {
+    LV_TEXT_ALIGN_LEFT, /**< Align text to left */
+    LV_TEXT_ALIGN_CENTER, /**< Align text to center */
+    LV_TEXT_ALIGN_RIGHT, /**< Align text to right */
+    LV_TEXT_ALIGN_AUTO, /**<  */
+};
+typedef uint8_t lv_text_align_t;
+
+
 typedef struct {
     lv_color_t color;
     lv_color_t sel_color;
     lv_color_t sel_bg_color;
     const lv_font_t * font;
     lv_opa_t opa;
-    lv_style_int_t line_space;
-    lv_style_int_t letter_space;
+    lv_coord_t line_space;
+    lv_coord_t letter_space;
     uint32_t sel_start;
     uint32_t sel_end;
     lv_coord_t ofs_x;
     lv_coord_t ofs_y;
     lv_bidi_dir_t bidi_dir;
-    lv_txt_flag_t flag;
+    lv_text_flag_t flag;
     lv_text_decor_t decor;
     lv_blend_mode_t blend_mode;
 } lv_draw_label_dsc_t;
@@ -76,7 +96,7 @@ LV_ATTRIBUTE_FAST_MEM void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc);
  * @param dsc pointer to draw descriptor
  * @param txt `\0` terminated text to write
  * @param hint pointer to a `lv_draw_label_hint_t` variable.
- * It is managed by the drawer to speed up the drawing of very long texts (thousands of lines).
+ * It is managed by the draw to speed up the drawing of very long texts (thousands of lines).
  */
 LV_ATTRIBUTE_FAST_MEM void lv_draw_label(const lv_area_t * coords, const lv_area_t * mask,
                                          const lv_draw_label_dsc_t * dsc,
