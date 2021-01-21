@@ -14,6 +14,10 @@
 #include <string.h>
 #include "lv_gc.h"
 
+#if defined(LV_GC_INCLUDE)
+    #include LV_GC_INCLUDE
+#endif /* LV_ENABLE_GC */
+
 /*********************
  *      DEFINES
  *********************/
@@ -79,62 +83,58 @@ bool lv_fs_is_ready(char letter)
  * @param mode read: FS_MODE_RD, write: FS_MODE_WR, both: FS_MODE_RD | FS_MODE_WR
  * @return LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
-lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mode)
+void * lv_fs_open(const char * path, lv_fs_mode_t mode)
 {
-    file_p->drv    = NULL;
-    file_p->file_d = NULL;
-
-    if(path == NULL) return LV_FS_RES_INV_PARAM;
-
-    char letter = path[0];
-
-    file_p->drv = lv_fs_get_drv(letter);
-
-    if(file_p->drv == NULL) {
-        return LV_FS_RES_NOT_EX;
+    if(path == NULL) {
+        LV_LOG_WARN("Can't open file: path is NULL");
+        return NULL;
     }
 
-    if(file_p->drv->ready_cb != NULL) {
-        if(file_p->drv->ready_cb(file_p->drv) == false) {
-            file_p->drv = NULL;
-            return LV_FS_RES_HW_ERR;
+    char letter = path[0];
+    lv_fs_drv_t * drv = lv_fs_get_drv(letter);
+
+
+    if(drv == NULL) {
+        LV_LOG_WARN("Can't open file (%s): unknown driver letter", path);
+        return NULL;
+    }
+
+    if(drv->ready_cb) {
+        if(drv->ready_cb(drv) == false) {
+            LV_LOG_WARN("Can't open file (%s): driver not ready", path);
+            return NULL;
         }
     }
 
-    if(file_p->drv->open_cb == NULL) {
-        file_p->drv = NULL;
-        return LV_FS_RES_NOT_IMP;
+    if(drv->open_cb == NULL) {
+        LV_LOG_WARN("Can't open file (%s): open function not exists", path);
+        return NULL;
     }
+
+    lv_fs_file_t * file_p = lv_mem_alloc(sizeof(lv_fs_file_t));
+    if(file_p == NULL) {
+        LV_LOG_WARN("Can't open file (%s): out of memory", path);
+        return NULL;
+    }
+
+    file_p->drv = drv;
+    file_p->file_d = NULL;
 
     const char * real_path = lv_fs_get_real_path(path);
+    file_p->file_d = drv->open_cb(drv, real_path, mode);
 
-    if(file_p->drv->file_size == 0) {  /*Is file_d zero size?*/
-        /*Pass file_d's address to open_cb, so the implementor can allocate memory byself*/
-        return file_p->drv->open_cb(file_p->drv, &file_p->file_d, real_path, mode);
+    if(file_p->file_d == NULL || file_p->file_d == (void*)(-1)) {
+        lv_mem_free(file_p);
+        return NULL;
     }
 
-    file_p->file_d = lv_mem_alloc(file_p->drv->file_size);
-    LV_ASSERT_MEM(file_p->file_d);
-    if(file_p->file_d == NULL) {
-        file_p->drv = NULL;
-        return LV_FS_RES_OUT_OF_MEM; /* Out of memory */
-    }
-
-    lv_fs_res_t res = file_p->drv->open_cb(file_p->drv, file_p->file_d, real_path, mode);
-
-    if(res != LV_FS_RES_OK) {
-        lv_mem_free(file_p->file_d);
-        file_p->file_d = NULL;
-        file_p->drv    = NULL;
-    }
-
-    return res;
+    return file_p;
 }
 
 /**
  * Close an already opened file
  * @param file_p pointer to a lv_fs_file_t variable
- * @return LV_FS_RES_OK or any error from lv_fs_res_t enum
+ * @return  LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
 lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
 {
@@ -148,9 +148,7 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
 
     lv_fs_res_t res = file_p->drv->close_cb(file_p->drv, file_p->file_d);
 
-    lv_mem_free(file_p->file_d); /*Clean up*/
-    file_p->file_d = NULL;
-    file_p->drv    = NULL;
+    lv_mem_free(file_p); /*Clean up*/
 
     return res;
 }
@@ -158,7 +156,7 @@ lv_fs_res_t lv_fs_close(lv_fs_file_t * file_p)
 /**
  * Delete a file
  * @param path path of the file to delete
- * @return LV_FS_RES_OK or any error from lv_fs_res_t enum
+ * @return  LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
 lv_fs_res_t lv_fs_remove(const char * path)
 {
@@ -234,7 +232,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
  * @param pos the new position expressed in bytes index (0: start of file)
  * @return LV_FS_RES_OK or any error from lv_fs_res_t enum
  */
-lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos)
+lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos, lv_fs_whence_t whence)
 {
     if(file_p->drv == NULL) {
         return LV_FS_RES_INV_PARAM;
@@ -244,7 +242,7 @@ lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos)
         return LV_FS_RES_NOT_IMP;
     }
 
-    lv_fs_res_t res = file_p->drv->seek_cb(file_p->drv, file_p->file_d, pos);
+    lv_fs_res_t res = file_p->drv->seek_cb(file_p->drv, file_p->file_d, pos, whence);
 
     return res;
 }
@@ -258,12 +256,12 @@ lv_fs_res_t lv_fs_seek(lv_fs_file_t * file_p, uint32_t pos)
 lv_fs_res_t lv_fs_tell(lv_fs_file_t * file_p, uint32_t * pos)
 {
     if(file_p->drv == NULL) {
-        *pos = 0;
+        pos = 0;
         return LV_FS_RES_INV_PARAM;
     }
 
     if(file_p->drv->tell_cb == NULL) {
-        *pos = 0;
+        pos = 0;
         return LV_FS_RES_NOT_IMP;
     }
 
@@ -284,7 +282,7 @@ lv_fs_res_t lv_fs_trunc(lv_fs_file_t * file_p)
         return LV_FS_RES_INV_PARAM;
     }
 
-    if(file_p->drv->trunc_cb == NULL) {
+    if(file_p->drv->tell_cb == NULL) {
         return LV_FS_RES_NOT_IMP;
     }
 
@@ -355,9 +353,6 @@ lv_fs_res_t lv_fs_rename(const char * oldname, const char * newname)
  */
 lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
 {
-    rddir_p->drv   = NULL;
-    rddir_p->dir_d = NULL;
-
     if(path == NULL) return LV_FS_RES_INV_PARAM;
 
     char letter = path[0];
@@ -365,42 +360,24 @@ lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
     rddir_p->drv = lv_fs_get_drv(letter);
 
     if(rddir_p->drv == NULL) {
+        rddir_p->dir_d = NULL;
         return LV_FS_RES_NOT_EX;
-    }
-
-    if(rddir_p->drv->ready_cb != NULL) {
-        if(rddir_p->drv->ready_cb(rddir_p->drv) == false) {
-            rddir_p->drv = NULL;
-            return LV_FS_RES_HW_ERR;
-        }
-    }
-
-    if(rddir_p->drv->dir_open_cb == NULL) {
-        rddir_p->drv = NULL;
-        return LV_FS_RES_NOT_IMP;
-    }
-
-    const char * real_path = lv_fs_get_real_path(path);
-
-    if(rddir_p->drv->rddir_size == 0) {  /*Is dir_d zero size?*/
-        /*Pass dir_d's address to dir_open_cb, so the implementor can allocate memory byself*/
-        return rddir_p->drv->dir_open_cb(rddir_p->drv, &rddir_p->dir_d, real_path);
     }
 
     rddir_p->dir_d = lv_mem_alloc(rddir_p->drv->rddir_size);
     LV_ASSERT_MEM(rddir_p->dir_d);
     if(rddir_p->dir_d == NULL) {
-        rddir_p->drv = NULL;
+        rddir_p->dir_d = NULL;
         return LV_FS_RES_OUT_OF_MEM; /* Out of memory */
     }
 
-    lv_fs_res_t res = rddir_p->drv->dir_open_cb(rddir_p->drv, rddir_p->dir_d, real_path);
-
-    if(res != LV_FS_RES_OK) {
-        lv_mem_free(rddir_p->dir_d);
-        rddir_p->dir_d = NULL;
-        rddir_p->drv   = NULL;
+    if(rddir_p->drv->dir_open_cb == NULL) {
+        return LV_FS_RES_NOT_IMP;
     }
+
+    const char * real_path = lv_fs_get_real_path(path);
+
+    lv_fs_res_t res = rddir_p->drv->dir_open_cb(rddir_p->drv, rddir_p->dir_d, real_path);
 
     return res;
 }
@@ -420,7 +397,6 @@ lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn)
     }
 
     if(rddir_p->drv->dir_read_cb == NULL) {
-        fn[0] = '\0';
         return LV_FS_RES_NOT_IMP;
     }
 
@@ -440,15 +416,19 @@ lv_fs_res_t lv_fs_dir_close(lv_fs_dir_t * rddir_p)
         return LV_FS_RES_INV_PARAM;
     }
 
-    if(rddir_p->drv->dir_close_cb == NULL) {
-        return LV_FS_RES_NOT_IMP;
-    }
+    lv_fs_res_t res;
 
-    lv_fs_res_t res = rddir_p->drv->dir_close_cb(rddir_p->drv, rddir_p->dir_d);
+    if(rddir_p->drv->dir_close_cb == NULL) {
+        res = LV_FS_RES_NOT_IMP;
+    }
+    else {
+        res = rddir_p->drv->dir_close_cb(rddir_p->drv, rddir_p->dir_d);
+    }
 
     lv_mem_free(rddir_p->dir_d); /*Clean up*/
     rddir_p->dir_d = NULL;
     rddir_p->drv   = NULL;
+    rddir_p->dir_d = NULL;
 
     return res;
 }
@@ -468,22 +448,19 @@ lv_fs_res_t lv_fs_free_space(char letter, uint32_t * total_p, uint32_t * free_p)
         return LV_FS_RES_INV_PARAM;
     }
 
-    if(drv->ready_cb != NULL) {
-        if(drv->ready_cb(drv) == false) {
-            return LV_FS_RES_HW_ERR;
-        }
-    }
+    lv_fs_res_t res;
 
     if(drv->free_space_cb == NULL) {
-        return LV_FS_RES_NOT_IMP;
+        res = LV_FS_RES_NOT_IMP;
     }
+    else {
+        uint32_t total_tmp = 0;
+        uint32_t free_tmp  = 0;
+        res                = drv->free_space_cb(drv, &total_tmp, &free_tmp);
 
-    uint32_t total_tmp = 0;
-    uint32_t free_tmp  = 0;
-    lv_fs_res_t res    = drv->free_space_cb(drv, &total_tmp, &free_tmp);
-
-    if(total_p != NULL) *total_p = total_tmp;
-    if(free_p != NULL) *free_p = free_tmp;
+        if(total_p != NULL) *total_p = total_tmp;
+        if(free_p != NULL) *free_p = free_tmp;
+    }
 
     return res;
 }
@@ -524,7 +501,7 @@ lv_fs_drv_t * lv_fs_get_drv(char letter)
 {
     lv_fs_drv_t * drv;
 
-    _LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    _LV_LL_READ(&LV_GC_ROOT(_lv_drv_ll), drv) {
         if(drv->letter == letter) {
             return drv;
         }
@@ -542,7 +519,7 @@ char * lv_fs_get_letters(char * buf)
     lv_fs_drv_t * drv;
     uint8_t i = 0;
 
-    _LV_LL_READ(LV_GC_ROOT(_lv_drv_ll), drv) {
+    _LV_LL_READ(&LV_GC_ROOT(_lv_drv_ll), drv) {
         buf[i] = drv->letter;
         i++;
     }

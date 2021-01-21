@@ -30,16 +30,9 @@ extern "C" {
  **********************/
 /*Data of canvas*/
 typedef struct {
-    lv_img_ext_t img; /*Ext. of ancestor*/
-    /*New data for this type */
+    lv_img_t img;
     lv_img_dsc_t dsc;
-} lv_canvas_ext_t;
-
-/*Canvas part*/
-enum {
-    LV_CANVAS_PART_MAIN,
-};
-typedef uint8_t lv_canvas_part_t;
+} lv_canvas_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -148,6 +141,8 @@ void lv_canvas_transform(lv_obj_t * canvas, lv_img_dsc_t * img, int16_t angle, u
                          lv_coord_t offset_y,
                          int32_t pivot_x, int32_t pivot_y, bool antialias);
 
+
+
 /**
  * Apply horizontal blur on the canvas
  * @param canvas pointer to a canvas object
@@ -192,11 +187,10 @@ void lv_canvas_draw_rect(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord
  * @param max_w max width of the text. The text will be wrapped to fit into this size
  * @param label_draw_dsc pointer to a valid label descriptor `lv_draw_label_dsc_t`
  * @param txt text to display
- * @param align align of the text (`LV_LABEL_ALIGN_LEFT/RIGHT/CENTER`)
+ * @param align align of the text (`LV_TEXT_ALIGN_LEFT/RIGHT/CENTER`)
  */
 void lv_canvas_draw_text(lv_obj_t * canvas, lv_coord_t x, lv_coord_t y, lv_coord_t max_w,
-                         lv_draw_label_dsc_t * label_draw_dsc,
-                         const char * txt, lv_label_align_t align);
+                         lv_draw_label_dsc_t * label_draw_dsc, const char * txt);
 
 /**
  * Draw an image on the canvas
@@ -232,7 +226,7 @@ void lv_canvas_draw_polygon(lv_obj_t * canvas, const lv_point_t points[], uint32
 /**
  * Draw an arc on the canvas
  * @param canvas pointer to a canvas object
- * @param x origo x of the arc
+ * @param x origo x  of the arc
  * @param y origo y of the arc
  * @param r radius of the arc
  * @param start_angle start angle in degrees
