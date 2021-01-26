@@ -20,6 +20,7 @@ extern "C" {
 #include "../lv_misc/lv_fs.h"
 #include "../lv_misc/lv_types.h"
 #include "../lv_misc/lv_area.h"
+#include "../lv_core/lv_style.h"
 
 /*********************
  *      DEFINES
@@ -90,7 +91,7 @@ typedef struct _lv_img_decoder {
     lv_img_decoder_close_f_t close_cb;
 
 #if LV_USE_USER_DATA
-    lv_user_data_t user_data;
+    lv_img_decoder_user_data_t user_data;
 #endif
 } lv_img_decoder_t;
 
