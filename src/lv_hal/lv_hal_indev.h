@@ -20,7 +20,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 #include "../lv_misc/lv_area.h"
-#include "../lv_misc/lv_task.h"
+#include "../lv_misc/lv_timer.h"
 
 /*********************
  *      DEFINES
@@ -51,13 +51,12 @@ enum { LV_INDEV_STATE_REL = 0, LV_INDEV_STATE_PR };
 typedef uint8_t lv_indev_state_t;
 
 enum {
-    LV_DRAG_DIR_HOR = 0x1, /**< Object can be dragged horizontally. */
-    LV_DRAG_DIR_VER = 0x2, /**< Object can be dragged vertically. */
-    LV_DRAG_DIR_BOTH = 0x3, /**< Object can be dragged in all directions. */
-    LV_DRAG_DIR_ONE = 0x4, /**< Object can be dragged only one direction (the first move). */
+    LV_INDEV_SCROLL_DIR_NONE,
+    LV_INDEV_SCROLL_DIR_HOR,
+    LV_INDEV_SCROLL_DIR_VER,
 };
 
-typedef uint8_t lv_drag_dir_t;
+typedef uint8_t lv_indev_scroll_dir_t;
 
 enum {
     LV_GESTURE_DIR_TOP,     /**< Gesture dir up. */
@@ -100,13 +99,13 @@ typedef struct _lv_indev_drv_t {
     struct _disp_t * disp;
 
     /**< Task to read the periodically read the input device*/
-    lv_task_t * read_task;
+    lv_timer_t * read_task;
 
     /**< Number of pixels to slide before actually drag the object*/
-    uint8_t drag_limit;
+    uint8_t scroll_limit;
 
     /**< Drag throw slow-down in [%]. Greater value means faster slow-down */
-    uint8_t drag_throw;
+    uint8_t scroll_throw;
 
     /**< At least this difference should between two points to evaluate as gesture */
     uint8_t gesture_min_velocity;
@@ -132,19 +131,20 @@ typedef struct _lv_indev_proc_t {
             lv_point_t act_point; /**< Current point of input device. */
             lv_point_t last_point; /**< Last point of input device. */
             lv_point_t vect; /**< Difference between `act_point` and `last_point`. */
-            lv_point_t drag_sum; /*Count the dragged pixels to check LV_INDEV_DEF_DRAG_LIMIT*/
-            lv_point_t drag_throw_vect;
+            lv_point_t scroll_sum; /*Count the dragged pixels to check LV_INDEV_DEF_DRAG_LIMIT*/
+            lv_point_t scroll_throw_vect;
+            lv_point_t scroll_throw_vect_ori;
             struct _lv_obj_t * act_obj;      /*The object being pressed*/
             struct _lv_obj_t * last_obj;     /*The last object which was pressed (used by drag_throw and
                                                 other post-release event)*/
+            struct _lv_obj_t * scroll_obj;      /*The object being scrolled*/
             struct _lv_obj_t * last_pressed; /*The lastly pressed object*/
+            lv_area_t scroll_area;
 
             lv_gesture_dir_t gesture_dir;
             lv_point_t gesture_sum; /*Count the gesture pixels to check LV_INDEV_DEF_GESTURE_LIMIT*/
             /*Flags*/
-            uint8_t drag_limit_out : 1;
-            uint8_t drag_in_prog : 1;
-            lv_drag_dir_t drag_dir  : 3;
+            lv_indev_scroll_dir_t scroll_dir  : 2;
             uint8_t gesture_sent : 1;
         } pointer;
         struct {
