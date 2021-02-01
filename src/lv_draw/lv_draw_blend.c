@@ -42,7 +42,7 @@ LV_ATTRIBUTE_FAST_MEM static void fill_normal(const lv_area_t * disp_area, lv_co
                                               lv_color_t color, lv_opa_t opa,
                                               const lv_opa_t * mask, lv_draw_mask_res_t mask_res);
 
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
 static void fill_blended(const lv_area_t * disp_area, lv_color_t * disp_buf,  const lv_area_t * draw_area,
                          lv_color_t color, lv_opa_t opa,
                          const lv_opa_t * mask, lv_draw_mask_res_t mask_res, lv_blend_mode_t mode);
@@ -57,7 +57,7 @@ LV_ATTRIBUTE_FAST_MEM static void map_normal(const lv_area_t * disp_area, lv_col
                                              const lv_area_t * map_area, const lv_color_t * map_buf, lv_opa_t opa,
                                              const lv_opa_t * mask, lv_draw_mask_res_t mask_res);
 
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
 static void map_blended(const lv_area_t * disp_area, lv_color_t * disp_buf,  const lv_area_t * draw_area,
                         const lv_area_t * map_area, const lv_color_t * map_buf, lv_opa_t opa,
                         const lv_opa_t * mask, lv_draw_mask_res_t mask_res, lv_blend_mode_t mode);
@@ -174,7 +174,7 @@ LV_ATTRIBUTE_FAST_MEM void _lv_blend_fill(const lv_area_t * clip_area, const lv_
     else if(mode == LV_BLEND_MODE_NORMAL) {
         fill_normal(disp_area, disp_buf, &draw_area, color, opa, mask, mask_res);
     }
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
     else {
         fill_blended(disp_area, disp_buf, &draw_area, color, opa, mask, mask_res, mode);
     }
@@ -191,7 +191,7 @@ LV_ATTRIBUTE_FAST_MEM void _lv_blend_fill(const lv_area_t * clip_area, const lv_
  * @param mask_res LV_MASK_RES_COVER: the mask has only 0xff values (no mask),
  *                 LV_MASK_RES_TRANSP: the mask has only 0x00 values (full transparent),
  *                 LV_MASK_RES_CHANGED: the mask has mixed values
- * @param opa overall opacity in 0x00..0xff range
+ * @param opa  overall opacity in 0x00..0xff range
  * @param mode blend mode from `lv_blend_mode_t`
  */
 LV_ATTRIBUTE_FAST_MEM void _lv_blend_map(const lv_area_t * clip_area, const lv_area_t * map_area,
@@ -241,7 +241,7 @@ LV_ATTRIBUTE_FAST_MEM void _lv_blend_map(const lv_area_t * clip_area, const lv_a
     else if(mode == LV_BLEND_MODE_NORMAL) {
         map_normal(disp_area, disp_buf, &draw_area, map_area, map_buf, opa, mask, mask_res);
     }
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
     else {
         map_blended(disp_area, disp_buf, &draw_area, map_area, map_buf, opa, mask, mask_res, mode);
     }
@@ -362,7 +362,6 @@ LV_ATTRIBUTE_FAST_MEM static void fill_normal(const lv_area_t * disp_area, lv_co
         }
         /*No mask with opacity*/
         else {
-
 #if LV_USE_GPU_NXP_PXP
             if(lv_area_get_size(draw_area) >= LV_GPU_NXP_PXP_FILL_OPA_SIZE_LIMIT) {
                 lv_gpu_nxp_pxp_fill(disp_buf, disp_w, draw_area, color, opa);
@@ -549,7 +548,7 @@ LV_ATTRIBUTE_FAST_MEM static void fill_normal(const lv_area_t * disp_area, lv_co
     }
 }
 
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
 /**
  * Fill an area with a color but apply blending algorithms
  * @param disp_area the current display area (destination area)
@@ -792,7 +791,7 @@ LV_ATTRIBUTE_FAST_MEM static void map_normal(const lv_area_t * disp_area, lv_col
 
             /*Software rendering*/
             for(y = 0; y < draw_area_h; y++) {
-                _lv_memcpy(disp_buf_first, map_buf_first, draw_area_w * sizeof(lv_color_t));
+                lv_memcpy(disp_buf_first, map_buf_first, draw_area_w * sizeof(lv_color_t));
                 disp_buf_first += disp_w;
                 map_buf_first += map_w;
             }
@@ -949,7 +948,7 @@ LV_ATTRIBUTE_FAST_MEM static void map_normal(const lv_area_t * disp_area, lv_col
         }
     }
 }
-#if LV_USE_BLEND_MODES
+#if LV_DRAW_COMPLEX
 static void map_blended(const lv_area_t * disp_area, lv_color_t * disp_buf,  const lv_area_t * draw_area,
                         const lv_area_t * map_area, const lv_color_t * map_buf, lv_opa_t opa,
                         const lv_opa_t * mask, lv_draw_mask_res_t mask_res, lv_blend_mode_t mode)
@@ -1031,41 +1030,41 @@ static inline lv_color_t color_blend_true_color_additive(lv_color_t fg, lv_color
     uint32_t tmp;
 #if LV_COLOR_DEPTH == 1
     tmp = bg.full + fg.full;
-    fg.full = LV_MATH_MIN(tmp, 1);
+    fg.full = LV_MIN(tmp, 1);
 #else
     tmp = bg.ch.red + fg.ch.red;
 #if LV_COLOR_DEPTH == 8
-    fg.ch.red = LV_MATH_MIN(tmp, 7);
+    fg.ch.red = LV_MIN(tmp, 7);
 #elif LV_COLOR_DEPTH == 16
-    fg.ch.red = LV_MATH_MIN(tmp, 31);
+    fg.ch.red = LV_MIN(tmp, 31);
 #elif LV_COLOR_DEPTH == 32
-    fg.ch.red = LV_MATH_MIN(tmp, 255);
+    fg.ch.red = LV_MIN(tmp, 255);
 #endif
 
 #if LV_COLOR_DEPTH == 8
-    fg.ch.green = LV_MATH_MIN(tmp, 7);
+    fg.ch.green = LV_MIN(tmp, 7);
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
     tmp = bg.ch.green + fg.ch.green;
-    fg.ch.green = LV_MATH_MIN(tmp, 63);
+    fg.ch.green = LV_MIN(tmp, 63);
 #else
     tmp = (bg.ch.green_h << 3) + bg.ch.green_l + (fg.ch.green_h << 3) + fg.ch.green_l;
-    tmp = LV_MATH_MIN(tmp, 63);
+    tmp = LV_MIN(tmp, 63);
     fg.ch.green_h = tmp >> 3;
     fg.ch.green_l = tmp & 0x7;
 #endif
 
 #elif LV_COLOR_DEPTH == 32
-    fg.ch.green = LV_MATH_MIN(tmp, 255);
+    fg.ch.green = LV_MIN(tmp, 255);
 #endif
 
     tmp = bg.ch.blue + fg.ch.blue;
 #if LV_COLOR_DEPTH == 8
-    fg.ch.blue = LV_MATH_MIN(tmp, 4);
+    fg.ch.blue = LV_MIN(tmp, 4);
 #elif LV_COLOR_DEPTH == 16
-    fg.ch.blue = LV_MATH_MIN(tmp, 31);
+    fg.ch.blue = LV_MIN(tmp, 31);
 #elif LV_COLOR_DEPTH == 32
-    fg.ch.blue = LV_MATH_MIN(tmp, 255);
+    fg.ch.blue = LV_MIN(tmp, 255);
 #endif
 #endif
 
@@ -1081,20 +1080,20 @@ static inline lv_color_t color_blend_true_color_subtractive(lv_color_t fg, lv_co
 
     int32_t tmp;
     tmp = bg.ch.red - fg.ch.red;
-    fg.ch.red = LV_MATH_MAX(tmp, 0);
+    fg.ch.red = LV_MAX(tmp, 0);
 
 #if LV_COLOR_16_SWAP == 0
     tmp = bg.ch.green - fg.ch.green;
-    fg.ch.green = LV_MATH_MAX(tmp, 0);
+    fg.ch.green = LV_MAX(tmp, 0);
 #else
     tmp = (bg.ch.green_h << 3) + bg.ch.green_l + (fg.ch.green_h << 3) + fg.ch.green_l;
-    tmp = LV_MATH_MAX(tmp, 0);
+    tmp = LV_MAX(tmp, 0);
     fg.ch.green_h = tmp >> 3;
     fg.ch.green_l = tmp & 0x7;
 #endif
 
     tmp = bg.ch.blue - fg.ch.blue;
-    fg.ch.blue = LV_MATH_MAX(tmp, 0);
+    fg.ch.blue = LV_MAX(tmp, 0);
 
     if(opa == LV_OPA_COVER) return fg;
 
