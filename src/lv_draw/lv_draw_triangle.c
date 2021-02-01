@@ -42,11 +42,7 @@
  */
 void lv_draw_triangle(const lv_point_t points[], const lv_area_t * clip_area, const lv_draw_rect_dsc_t * draw_dsc)
 {
-#if LV_DRAW_COMPLEX
     lv_draw_polygon(points, 3, clip_area, draw_dsc);
-#else
-    LV_LOG_WARN("Can't draw triangle with LV_DRAW_COMPLEX == 0");
-#endif /*LV_DRAW_COMPLEX*/
 }
 
 /**
@@ -59,12 +55,11 @@ void lv_draw_triangle(const lv_point_t points[], const lv_area_t * clip_area, co
 void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_area_t * clip_area,
                      const lv_draw_rect_dsc_t * draw_dsc)
 {
-#if LV_DRAW_COMPLEX
     if(point_cnt < 3) return;
     if(points == NULL) return;
 
     /*Join adjacent points if they are on the same coordinate*/
-    lv_point_t * p = lv_mem_buf_get(point_cnt * sizeof(lv_point_t));
+    lv_point_t * p = _lv_mem_buf_get(point_cnt * sizeof(lv_point_t));
     if(p == NULL) return;
     uint16_t i;
     uint16_t pcnt = 0;
@@ -83,24 +78,24 @@ void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_are
 
     point_cnt = pcnt;
     if(point_cnt < 3) {
-        lv_mem_buf_release(p);
+        _lv_mem_buf_release(p);
         return;
     }
 
     lv_area_t poly_coords = {.x1 = LV_COORD_MAX, .y1 = LV_COORD_MAX, .x2 = LV_COORD_MIN, .y2 = LV_COORD_MIN};
 
     for(i = 0; i < point_cnt; i++) {
-        poly_coords.x1 = LV_MIN(poly_coords.x1, p[i].x);
-        poly_coords.y1 = LV_MIN(poly_coords.y1, p[i].y);
-        poly_coords.x2 = LV_MAX(poly_coords.x2, p[i].x);
-        poly_coords.y2 = LV_MAX(poly_coords.y2, p[i].y);
+        poly_coords.x1 = LV_MATH_MIN(poly_coords.x1, p[i].x);
+        poly_coords.y1 = LV_MATH_MIN(poly_coords.y1, p[i].y);
+        poly_coords.x2 = LV_MATH_MAX(poly_coords.x2, p[i].x);
+        poly_coords.y2 = LV_MATH_MAX(poly_coords.y2, p[i].y);
     }
 
     bool is_common;
     lv_area_t poly_mask;
     is_common = _lv_area_intersect(&poly_mask, &poly_coords, clip_area);
     if(!is_common) {
-        lv_mem_buf_release(p);
+        _lv_mem_buf_release(p);
         return;
     }
     /*Find the lowest point*/
@@ -114,7 +109,7 @@ void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_are
         }
     }
 
-    lv_draw_mask_line_param_t * mp = lv_mem_buf_get(sizeof(lv_draw_mask_line_param_t) * point_cnt);
+    lv_draw_mask_line_param_t * mp = _lv_mem_buf_get(sizeof(lv_draw_mask_line_param_t) * point_cnt);
     lv_draw_mask_line_param_t * mp_next = mp;
 
     int32_t i_prev_left = y_min_i;
@@ -196,11 +191,9 @@ void lv_draw_polygon(const lv_point_t points[], uint16_t point_cnt, const lv_are
 
     lv_draw_mask_remove_custom(mp);
 
-    lv_mem_buf_release(mp);
-    lv_mem_buf_release(p);
-#else
-    LV_LOG_WARN("Can't draw polygon with LV_DRAW_COMPLEX == 0");
-#endif /*LV_DRAW_COMPLEX*/
+    _lv_mem_buf_release(mp);
+    _lv_mem_buf_release(p);
+
 }
 
 /**********************
