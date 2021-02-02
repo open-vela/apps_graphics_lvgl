@@ -18,6 +18,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "lv_mem.h"
 
 /*********************
  *      DEFINES
@@ -37,6 +38,8 @@ typedef uint8_t lv_anim_enable_t;
 
 /** Type of the animated value*/
 typedef lv_coord_t lv_anim_value_t;
+
+#if LV_USE_ANIMATION
 
 #define LV_ANIM_REPEAT_INFINITE      0xFFFF
 
@@ -78,7 +81,7 @@ typedef struct _lv_anim_t {
     int32_t start;               /**< Start value*/
     int32_t current;             /**< Current value */
     int32_t end;                 /**< End value*/
-    int32_t time;                /**< Animation time in ms*/
+    int32_t time;               /**< Animation time in ms*/
     int32_t act_time;            /**< Current time in animation. Set to negative to make delay.*/
     uint32_t playback_delay;     /**< Wait before play back*/
     uint32_t playback_time;      /**< Duration of playback animation*/
@@ -86,7 +89,7 @@ typedef struct _lv_anim_t {
     uint16_t repeat_cnt;         /**< Repeat count for the animation*/
     uint8_t early_apply  : 1;    /**< 1: Apply start value immediately even is there is `delay` */
 #if LV_USE_USER_DATA
-    lv_user_data_t user_data;    /**< Custom user data*/
+    lv_anim_user_data_t user_data; /**< Custom user data*/
 #endif
 
     /*Animation system use these - user shouldn't set*/
@@ -190,7 +193,10 @@ static inline void lv_anim_set_custom_exec_cb(lv_anim_t * a, lv_anim_custom_exec
  * @param path_cb a function the get the current value of the animation.
  *                The built in functions starts with `lv_anim_path_...`
  */
-void lv_anim_set_path(lv_anim_t * a, const lv_anim_path_t * path);
+static inline void lv_anim_set_path(lv_anim_t * a, const lv_anim_path_t * path)
+{
+    _lv_memcpy_small(&a->path, path, sizeof(lv_anim_path_t));
+}
 
 /**
  * Set a function call when the animation really starts (considering `delay`)
@@ -262,7 +268,10 @@ void lv_anim_start(lv_anim_t * a);
  * Initialize an animation path
  * @param path pointer to path
  */
-void lv_anim_path_init(lv_anim_path_t * path);
+static inline void lv_anim_path_init(lv_anim_path_t * path)
+{
+    _lv_memset_00(path, sizeof(lv_anim_path_t));
+}
 
 /**
  * Set a callback for a path
@@ -416,3 +425,4 @@ extern const lv_anim_path_t lv_anim_path_def;
 } /* extern "C" */
 #endif
 
+#endif /*LV_ANIM_H*/
