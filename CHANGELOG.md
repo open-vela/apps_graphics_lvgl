@@ -1,12 +1,6 @@
 # Changelog
 
-## v7.10.1 (Planned for 16.02.2021)
-
-### Bugfixes
-- fix(indev) clear the indev's `act_obj` in `lv_indev_reset`
-- fix(text) fix out of bounds read in `_lv_txt_get_width`
-
-## v7.10.0
+## v7.10.0 (Planned for 02.02.2021)
 
 ### New features
 - feat(indev) allow input events to be passed to disabled objects
