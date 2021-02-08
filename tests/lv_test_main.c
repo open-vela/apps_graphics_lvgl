@@ -27,21 +27,23 @@ int main(void)
 }
 
 #if LV_USE_FILESYSTEM
-static void * open_cb(struct _lv_fs_drv_t * drv, const char * path, lv_fs_mode_t mode)
+static lv_fs_res_t open_cb(struct _lv_fs_drv_t * drv, void * file_p, const char * path, lv_fs_mode_t mode)
 {
     (void) drv;
     (void) mode;
 
     FILE * fp = fopen(path, "rb"); // only reading is supported
 
-    return fp;
+    *((FILE **)file_p) = fp;
+    return NULL == fp ? LV_FS_RES_UNKNOWN : LV_FS_RES_OK;
 }
 
 static lv_fs_res_t close_cb(struct _lv_fs_drv_t * drv, void * file_p)
 {
     (void) drv;
 
-    fclose(file_p);
+    FILE * fp = *((FILE **) file_p);
+    fclose(fp);
     return LV_FS_RES_OK;
 }
 
@@ -49,30 +51,17 @@ static lv_fs_res_t read_cb(struct _lv_fs_drv_t * drv, void * file_p, void * buf,
 {
     (void) drv;
 
-    *br = fread(buf, 1, btr, file_p);
+    FILE * fp = *((FILE **) file_p);
+    *br = fread(buf, 1, btr, fp);
     return (*br <= 0) ? LV_FS_RES_UNKNOWN : LV_FS_RES_OK;
 }
 
-static lv_fs_res_t seek_cb(struct _lv_fs_drv_t * drv, void * file_p, uint32_t pos, lv_fs_whence_t w)
+static lv_fs_res_t seek_cb(struct _lv_fs_drv_t * drv, void * file_p, uint32_t pos)
 {
     (void) drv;
 
-    uint32_t w2;
-    switch(w) {
-    case LV_FS_SEEK_SET:
-        w2 = SEEK_SET;
-        break;
-    case LV_FS_SEEK_CUR:
-        w2 = SEEK_CUR;
-        break;
-    case LV_FS_SEEK_END:
-        w2 = SEEK_END;
-        break;
-    default:
-        w2 = SEEK_SET;
-    }
-
-    fseek (file_p, pos, w2);
+    FILE * fp = *((FILE **) file_p);
+    fseek (fp, pos, SEEK_SET);
 
     return LV_FS_RES_OK;
 }
@@ -81,11 +70,17 @@ static lv_fs_res_t tell_cb(struct _lv_fs_drv_t * drv, void * file_p, uint32_t * 
 {
     (void) drv;
 
-    *pos_p = ftell(file_p);
+    FILE * fp = *((FILE **) file_p);
+    *pos_p = ftell(fp);
 
     return LV_FS_RES_OK;
 }
 
+static bool ready_cb(struct _lv_fs_drv_t * drv)
+{
+    (void) drv;
+    return true;
+}
 #endif
 
 static void hal_init(void)
@@ -105,7 +100,9 @@ static void hal_init(void)
     lv_fs_drv_t drv;
     lv_fs_drv_init(&drv);                     /*Basic initialization*/
 
-    drv.letter = 'F';                         /*An uppercase letter to identify the drive */
+    drv.letter = 'f';                         /*An uppercase letter to identify the drive */
+    drv.file_size = sizeof(FILE *);   /*Size required to store a file object*/
+    drv.ready_cb = ready_cb;               /*Callback to tell if the drive is ready to use */
     drv.open_cb = open_cb;                 /*Callback to open a file */
     drv.close_cb = close_cb;               /*Callback to close a file */
     drv.read_cb = read_cb;                 /*Callback to read a file */
