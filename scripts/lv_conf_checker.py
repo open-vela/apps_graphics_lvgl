@@ -27,6 +27,12 @@ fout.write(
 
 #include <stdint.h>
 
+/* Add ESP-IDF related includes */
+#if defined (ESP_PLATFORM)
+#  include "sdkconfig.h"
+#  include "esp_attr.h"
+#endif
+
 /* Handle special Kconfig options */
 #include "lv_conf_kconfig.h"
 
