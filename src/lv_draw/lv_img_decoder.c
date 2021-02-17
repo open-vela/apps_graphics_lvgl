@@ -7,7 +7,7 @@
  *      INCLUDES
  *********************/
 #include "lv_img_decoder.h"
-#include "../lv_misc/lv_assert.h"
+#include "../lv_misc/lv_debug.h"
 #include "../lv_draw/lv_draw_img.h"
 #include "../lv_misc/lv_ll.h"
 #include "../lv_misc/lv_color.h"
@@ -23,7 +23,9 @@
  *      TYPEDEFS
  **********************/
 typedef struct {
+#if LV_USE_FILESYSTEM
     lv_fs_file_t * f;
+#endif
     lv_color_t * palette;
     lv_opa_t * opa;
 } lv_img_decoder_built_in_data_t;
@@ -63,7 +65,7 @@ void _lv_img_decoder_init(void)
     decoder = lv_img_decoder_create();
     if(decoder == NULL) {
         LV_LOG_WARN("lv_img_decoder_init: out of memory");
-        LV_ASSERT_MALLOC(decoder);
+        LV_ASSERT_MEM(decoder);
         return;
     }
 
@@ -80,7 +82,7 @@ void _lv_img_decoder_init(void)
  * @param header the image info will be stored here
  * @return LV_RES_OK: success; LV_RES_INV: wasn't able to get info about the image
  */
-lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header)
+lv_res_t lv_img_decoder_get_info(const char * src, lv_img_header_t * header)
 {
     header->always_zero = 0;
     header->h = 0;
@@ -89,7 +91,7 @@ lv_res_t lv_img_decoder_get_info(const void * src, lv_img_header_t * header)
 
     lv_res_t res = LV_RES_INV;
     lv_img_decoder_t * d;
-    _LV_LL_READ(&LV_GC_ROOT(_lv_img_defoder_ll), d) {
+    _LV_LL_READ(LV_GC_ROOT(_lv_img_defoder_ll), d) {
         res = LV_RES_INV;
         if(d->info_cb) {
             res = d->info_cb(d, src, header);
@@ -130,7 +132,7 @@ lv_res_t lv_img_decoder_open(lv_img_decoder_dsc_t * dsc, const void * src, lv_co
     lv_res_t res = LV_RES_INV;
 
     lv_img_decoder_t * d;
-    _LV_LL_READ(&LV_GC_ROOT(_lv_img_defoder_ll), d) {
+    _LV_LL_READ(LV_GC_ROOT(_lv_img_defoder_ll), d) {
         /*Info an Open callbacks are required*/
         if(d->info_cb == NULL || d->open_cb == NULL) continue;
 
@@ -191,10 +193,10 @@ lv_img_decoder_t * lv_img_decoder_create(void)
 {
     lv_img_decoder_t * decoder;
     decoder = _lv_ll_ins_head(&LV_GC_ROOT(_lv_img_defoder_ll));
-    LV_ASSERT_MALLOC(decoder);
+    LV_ASSERT_MEM(decoder);
     if(decoder == NULL) return NULL;
 
-    lv_memset_00(decoder, sizeof(lv_img_decoder_t));
+    _lv_memset_00(decoder, sizeof(lv_img_decoder_t));
 
     return decoder;
 }
@@ -269,13 +271,15 @@ lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * s
         header->h  = ((lv_img_dsc_t *)src)->header.h;
         header->cf = ((lv_img_dsc_t *)src)->header.cf;
     }
+#if LV_USE_FILESYSTEM
     else if(src_type == LV_IMG_SRC_FILE) {
-        lv_fs_file_t * f;
+        lv_fs_file_t file;
+        lv_fs_res_t res;
         uint32_t rn;
-        f = lv_fs_open(src, LV_FS_MODE_RD);
-        if(f) {
-            lv_fs_res_t res = lv_fs_read(f, header, sizeof(lv_img_header_t), &rn);
-            lv_fs_close(f);
+        res = lv_fs_open(&file, src, LV_FS_MODE_RD);
+        if(res == LV_FS_RES_OK) {
+            res = lv_fs_read(&file, header, sizeof(lv_img_header_t), &rn);
+            lv_fs_close(&file);
             if(res != LV_FS_RES_OK || rn != sizeof(lv_img_header_t)) {
                 LV_LOG_WARN("Image get info get read file header");
                 return LV_RES_INV;
@@ -285,12 +289,13 @@ lv_res_t lv_img_decoder_built_in_info(lv_img_decoder_t * decoder, const void * s
         if(header->cf < CF_BUILT_IN_FIRST || header->cf > CF_BUILT_IN_LAST) return LV_RES_INV;
 
     }
+#endif
     else if(src_type == LV_IMG_SRC_SYMBOL) {
         /*The size depend on the font but it is unknown here. It should be handled outside of the
          * function*/
         header->w = 1;
         header->h = 1;
-        /* Symbols always have transparent parts. Important because of cover check in the draw
+        /* Symbols always have transparent parts. Important because of cover check in the design
          * function. The actual value doesn't matter because lv_draw_label will draw it*/
         header->cf = LV_IMG_CF_ALPHA_1BIT;
     }
@@ -311,11 +316,14 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
 {
     /*Open the file if it's a file*/
     if(dsc->src_type == LV_IMG_SRC_FILE) {
+#if LV_USE_FILESYSTEM
+
         /*Support only "*.bin" files*/
         if(strcmp(lv_fs_get_ext(dsc->src), "bin")) return LV_RES_INV;
 
-        lv_fs_file_t * f = lv_fs_open(dsc->src, LV_FS_MODE_RD);
-        if(f == NULL) {
+        lv_fs_file_t f;
+        lv_fs_res_t res = lv_fs_open(&f, dsc->src, LV_FS_MODE_RD);
+        if(res != LV_FS_RES_OK) {
             LV_LOG_WARN("Built-in image decoder can't open the file");
             return LV_RES_INV;
         }
@@ -323,16 +331,29 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
         /*If the file was open successfully save the file descriptor*/
         if(dsc->user_data == NULL) {
             dsc->user_data = lv_mem_alloc(sizeof(lv_img_decoder_built_in_data_t));
-            LV_ASSERT_MALLOC(dsc->user_data);
+            LV_ASSERT_MEM(dsc->user_data);
             if(dsc->user_data == NULL) {
                 LV_LOG_ERROR("img_decoder_built_in_open: out of memory");
                 return LV_RES_INV;
             }
-            lv_memset_00(dsc->user_data, sizeof(lv_img_decoder_built_in_data_t));
+            _lv_memset_00(dsc->user_data, sizeof(lv_img_decoder_built_in_data_t));
         }
 
         lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
-        user_data->f = f;
+        user_data->f = lv_mem_alloc(sizeof(f));
+        LV_ASSERT_MEM(user_data->f);
+        if(user_data->f == NULL) {
+            LV_LOG_ERROR("img_decoder_built_in_open: out of memory");
+            lv_img_decoder_built_in_close(decoder, dsc);
+            return LV_RES_INV;
+        }
+
+        _lv_memcpy_small(user_data->f, &f, sizeof(f));
+
+#else
+        LV_LOG_WARN("Image built-in decoder cannot read file because LV_USE_FILESYSTEM = 0");
+        return LV_RES_INV;
+#endif
     }
     else if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
         /*The variables should have valid data*/
@@ -360,26 +381,27 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
     else if(cf == LV_IMG_CF_INDEXED_1BIT || cf == LV_IMG_CF_INDEXED_2BIT || cf == LV_IMG_CF_INDEXED_4BIT ||
             cf == LV_IMG_CF_INDEXED_8BIT) {
 
+#if LV_IMG_CF_INDEXED
         uint8_t px_size       = lv_img_cf_get_px_size(cf);
         uint32_t palette_size = 1 << px_size;
 
         /*Allocate the palette*/
         if(dsc->user_data == NULL) {
             dsc->user_data = lv_mem_alloc(sizeof(lv_img_decoder_built_in_data_t));
-            LV_ASSERT_MALLOC(dsc->user_data);
+            LV_ASSERT_MEM(dsc->user_data);
             if(dsc->user_data == NULL) {
                 LV_LOG_ERROR("img_decoder_built_in_open: out of memory");
                 lv_img_decoder_built_in_close(decoder, dsc);
                 return LV_RES_INV;
             }
-            lv_memset_00(dsc->user_data, sizeof(lv_img_decoder_built_in_data_t));
+            _lv_memset_00(dsc->user_data, sizeof(lv_img_decoder_built_in_data_t));
         }
 
         lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
         user_data->palette                         = lv_mem_alloc(palette_size * sizeof(lv_color_t));
-        LV_ASSERT_MALLOC(user_data->palette);
+        LV_ASSERT_MEM(user_data->palette);
         user_data->opa                             = lv_mem_alloc(palette_size * sizeof(lv_opa_t));
-        LV_ASSERT_MALLOC(user_data->opa);
+        LV_ASSERT_MEM(user_data->opa);
         if(user_data->palette == NULL || user_data->opa == NULL) {
             LV_LOG_ERROR("img_decoder_built_in_open: out of memory");
             lv_img_decoder_built_in_close(decoder, dsc);
@@ -388,7 +410,8 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
 
         if(dsc->src_type == LV_IMG_SRC_FILE) {
             /*Read the palette from file*/
-            lv_fs_seek(user_data->f, 4, LV_FS_SEEK_SET); /*Skip the header*/
+#if LV_USE_FILESYSTEM
+            lv_fs_seek(user_data->f, 4); /*Skip the header*/
             lv_color32_t cur_color;
             uint32_t i;
             for(i = 0; i < palette_size; i++) {
@@ -396,6 +419,10 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
                 user_data->palette[i] = lv_color_make(cur_color.ch.red, cur_color.ch.green, cur_color.ch.blue);
                 user_data->opa[i]     = cur_color.ch.alpha;
             }
+#else
+            LV_LOG_WARN("Image built-in decoder can read the palette because LV_USE_FILESYSTEM = 0");
+            return LV_RES_INV;
+#endif
         }
         else {
             /*The palette begins in the beginning of the image data. Just point to it.*/
@@ -410,12 +437,21 @@ lv_res_t lv_img_decoder_built_in_open(lv_img_decoder_t * decoder, lv_img_decoder
 
         dsc->img_data = NULL;
         return LV_RES_OK;
+#else
+        LV_LOG_WARN("Indexed (palette) images are not enabled in lv_conf.h. See LV_IMG_CF_INDEXED");
+        return LV_RES_INV;
+#endif
     }
     /*Alpha indexed images. */
     else if(cf == LV_IMG_CF_ALPHA_1BIT || cf == LV_IMG_CF_ALPHA_2BIT || cf == LV_IMG_CF_ALPHA_4BIT ||
             cf == LV_IMG_CF_ALPHA_8BIT) {
+#if LV_IMG_CF_ALPHA
         dsc->img_data = NULL;
         return LV_RES_OK; /*Nothing to process*/
+#else
+        LV_LOG_WARN("Alpha indexed images are not enabled in lv_conf.h. See LV_IMG_CF_ALPHA");
+        return LV_RES_INV;
+#endif
     }
     /*Unknown format. Can't decode it.*/
     else {
@@ -481,9 +517,12 @@ void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_ds
 
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
     if(user_data) {
+#if LV_USE_FILESYSTEM
         if(user_data->f) {
             lv_fs_close(user_data->f);
+            lv_mem_free(user_data->f);
         }
+#endif
         if(user_data->palette) lv_mem_free(user_data->palette);
         if(user_data->opa) lv_mem_free(user_data->opa);
 
@@ -500,13 +539,14 @@ void lv_img_decoder_built_in_close(lv_img_decoder_t * decoder, lv_img_decoder_ds
 static lv_res_t lv_img_decoder_built_in_line_true_color(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
                                                         lv_coord_t len, uint8_t * buf)
 {
+#if LV_USE_FILESYSTEM
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
     lv_fs_res_t res;
     uint8_t px_size = lv_img_cf_get_px_size(dsc->header.cf);
 
     uint32_t pos = ((y * dsc->header.w + x) * px_size) >> 3;
     pos += 4; /*Skip the header*/
-    res = lv_fs_seek(user_data->f, pos, LV_FS_SEEK_SET);
+    res = lv_fs_seek(user_data->f, pos);
     if(res != LV_FS_RES_OK) {
         LV_LOG_WARN("Built-in image decoder seek failed");
         return LV_RES_INV;
@@ -520,12 +560,22 @@ static lv_res_t lv_img_decoder_built_in_line_true_color(lv_img_decoder_dsc_t * d
     }
 
     return LV_RES_OK;
+#else
+    LV_UNUSED(dsc);
+    LV_UNUSED(x);
+    LV_UNUSED(y);
+    LV_UNUSED(len);
+    LV_UNUSED(buf);
+    LV_LOG_WARN("Image built-in decoder cannot read file because LV_USE_FILESYSTEM = 0");
+    return LV_RES_INV;
+#endif
 }
 
 static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
                                                    lv_coord_t len, uint8_t * buf)
 {
 
+#if LV_IMG_CF_ALPHA
     const lv_opa_t alpha1_opa_table[2]  = {0, 255};          /*Opacity mapping with bpp = 1 (Just for compatibility)*/
     const lv_opa_t alpha2_opa_table[4]  = {0, 85, 170, 255}; /*Opacity mapping with bpp = 2*/
     const lv_opa_t alpha4_opa_table[16] = {0,  17, 34,  51,  /*Opacity mapping with bpp = 4*/
@@ -585,8 +635,10 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
             break;
     }
 
+#if LV_USE_FILESYSTEM
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
-    uint8_t * fs_buf = lv_mem_buf_get(w);
+    uint8_t * fs_buf = _lv_mem_buf_get(w);
+#endif
 
     const uint8_t * data_tmp = NULL;
     if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
@@ -595,9 +647,15 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
         data_tmp = img_dsc->data + ofs;
     }
     else {
-        lv_fs_seek(user_data->f, ofs + 4, LV_FS_SEEK_SET); /*+4 to skip the header*/
+#if LV_USE_FILESYSTEM
+        lv_fs_seek(user_data->f, ofs + 4); /*+4 to skip the header*/
         lv_fs_read(user_data->f, fs_buf, w, NULL);
         data_tmp = fs_buf;
+#else
+        LV_LOG_WARN("Image built-in alpha line reader can't read file because LV_USE_FILESYSTEM = 0");
+        data_tmp = NULL; /*To avoid warnings*/
+        return LV_RES_INV;
+#endif
     }
 
     for(i = 0; i < len; i++) {
@@ -612,13 +670,22 @@ static lv_res_t lv_img_decoder_built_in_line_alpha(lv_img_decoder_dsc_t * dsc, l
             data_tmp++;
         }
     }
-    lv_mem_buf_release(fs_buf);
+#if LV_USE_FILESYSTEM
+    _lv_mem_buf_release(fs_buf);
+#endif
     return LV_RES_OK;
+
+#else
+    LV_LOG_WARN("Image built-in alpha line reader failed because LV_IMG_CF_ALPHA is 0 in lv_conf.h");
+    return LV_RES_INV;
+#endif
 }
 
 static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc, lv_coord_t x, lv_coord_t y,
                                                      lv_coord_t len, uint8_t * buf)
 {
+
+#if LV_IMG_CF_INDEXED
     uint8_t px_size = lv_img_cf_get_px_size(dsc->header.cf);
     uint16_t mask   = (1 << px_size) - 1; /*E.g. px_size = 2; mask = 0x03*/
 
@@ -657,16 +724,24 @@ static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc,
 
     lv_img_decoder_built_in_data_t * user_data = dsc->user_data;
 
-    uint8_t * fs_buf = lv_mem_buf_get(w);
+#if LV_USE_FILESYSTEM
+    uint8_t * fs_buf = _lv_mem_buf_get(w);
+#endif
     const uint8_t * data_tmp = NULL;
     if(dsc->src_type == LV_IMG_SRC_VARIABLE) {
         const lv_img_dsc_t * img_dsc = dsc->src;
         data_tmp                     = img_dsc->data + ofs;
     }
     else {
-        lv_fs_seek(user_data->f, ofs + 4, LV_FS_SEEK_SET); /*+4 to skip the header*/
+#if LV_USE_FILESYSTEM
+        lv_fs_seek(user_data->f, ofs + 4); /*+4 to skip the header*/
         lv_fs_read(user_data->f, fs_buf, w, NULL);
         data_tmp = fs_buf;
+#else
+        LV_LOG_WARN("Image built-in indexed line reader can't read file because LV_USE_FILESYSTEM = 0");
+        data_tmp = NULL; /*To avoid warnings*/
+        return LV_RES_INV;
+#endif
     }
 
     lv_coord_t i;
@@ -693,6 +768,12 @@ static lv_res_t lv_img_decoder_built_in_line_indexed(lv_img_decoder_dsc_t * dsc,
             data_tmp++;
         }
     }
-    lv_mem_buf_release(fs_buf);
+#if LV_USE_FILESYSTEM
+    _lv_mem_buf_release(fs_buf);
+#endif
     return LV_RES_OK;
+#else
+    LV_LOG_WARN("Image built-in indexed line reader failed because LV_IMG_CF_INDEXED is 0 in lv_conf.h");
+    return LV_RES_INV;
+#endif
 }
