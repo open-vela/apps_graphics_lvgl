@@ -35,7 +35,7 @@ extern "C" {
 
 /** Describes the properties of a glyph. */
 typedef struct {
-    uint16_t adv_w; /**< The glyph needs this space. Draw the next glyph after this width. */
+    uint16_t adv_w; /**< The glyph needs this space. Draw the next glyph after this width. 8 bit integer, 4 bit fractional */
     uint16_t box_w;  /**< Width of the glyph's bounding box*/
     uint16_t box_h;  /**< Height of the glyph's bounding box*/
     int16_t ofs_x;   /**< x offset of the bounding box*/
@@ -71,7 +71,7 @@ typedef struct _lv_font_struct {
 
     void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
 #if LV_USE_USER_DATA
-    lv_font_user_data_t user_data;  /**< Custom user data for font. */
+    lv_user_data_t user_data;       /**< Custom user data for font. */
 #endif
 
 } lv_font_t;
