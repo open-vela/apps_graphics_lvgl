@@ -60,8 +60,5 @@ zephyr_library_sources(${SOURCES})
 endif() # CONFIG_LVGL
 
 else()
-
-file(GLOB_RECURSE SOURCES src/*.c)
-add_library(lvgl STATIC ${SOURCES})
-
+message(FATAL_ERROR "Unknown platform.")
 endif()
