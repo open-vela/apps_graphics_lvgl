@@ -6,7 +6,7 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_misc/lv_assert.h"
+#include "../lv_misc/lv_debug.h"
 #include "lv_img_cache.h"
 #include "lv_img_decoder.h"
 #include "lv_draw_img.h"
@@ -33,6 +33,10 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+#if LV_IMG_CACHE_DEF_SIZE
+static bool lv_img_cache_match(const void * src1, const void * src2);
+#endif
+
 #if LV_IMG_CACHE_DEF_SIZE == 0
     static lv_img_cache_entry_t cache_temp;
 #endif
@@ -82,16 +86,8 @@ lv_img_cache_entry_t * _lv_img_cache_open(const void * src, lv_color_t color)
     }
 
     for(i = 0; i < entry_cnt; i++) {
-        bool match = false;
-        lv_img_src_t src_type = lv_img_src_get_type(cache[i].dec_dsc.src);
-        if(src_type == LV_IMG_SRC_VARIABLE) {
-            if(cache[i].dec_dsc.src == src && cache[i].dec_dsc.color.full == color.full) match = true;
-        }
-        else if(src_type == LV_IMG_SRC_FILE) {
-            if(strcmp(cache[i].dec_dsc.src, src) == 0) match = true;
-        }
-
-        if(match) {
+        if(color.full == cache[i].dec_dsc.color.full &&
+           lv_img_cache_match(src, cache[i].dec_dsc.src)) {
             /* If opened increment its life.
              * Image difficult to open should live longer to keep avoid frequent their recaching.
              * Therefore increase `life` with `time_to_open`*/
@@ -122,7 +118,6 @@ lv_img_cache_entry_t * _lv_img_cache_open(const void * src, lv_color_t color)
     else {
         LV_LOG_INFO("image draw: cache miss, cached to an empty entry");
     }
-
 #else
     cached_src = &cache_temp;
 #endif
@@ -131,9 +126,7 @@ lv_img_cache_entry_t * _lv_img_cache_open(const void * src, lv_color_t color)
     lv_res_t open_res = lv_img_decoder_open(&cached_src->dec_dsc, src, color);
     if(open_res == LV_RES_INV) {
         LV_LOG_WARN("Image draw cannot open the image resource");
-        lv_img_decoder_close(&cached_src->dec_dsc);
-        lv_memset_00(&cached_src->dec_dsc, sizeof(lv_img_decoder_dsc_t));
-        lv_memset_00(cached_src, sizeof(lv_img_cache_entry_t));
+        _lv_memset_00(cached_src, sizeof(lv_img_cache_entry_t));
         cached_src->life = INT32_MIN; /*Make the empty entry very "weak" to force its use  */
         return NULL;
     }
@@ -170,7 +163,7 @@ void lv_img_cache_set_size(uint16_t new_entry_cnt)
 
     /*Reallocate the cache*/
     LV_GC_ROOT(_lv_img_cache_array) = lv_mem_alloc(sizeof(lv_img_cache_entry_t) * new_entry_cnt);
-    LV_ASSERT_MALLOC(LV_GC_ROOT(_lv_img_cache_array));
+    LV_ASSERT_MEM(LV_GC_ROOT(_lv_img_cache_array));
     if(LV_GC_ROOT(_lv_img_cache_array) == NULL) {
         entry_cnt = 0;
         return;
@@ -178,11 +171,7 @@ void lv_img_cache_set_size(uint16_t new_entry_cnt)
     entry_cnt = new_entry_cnt;
 
     /*Clean the cache*/
-    uint16_t i;
-    for(i = 0; i < entry_cnt; i++) {
-        lv_memset_00(&LV_GC_ROOT(_lv_img_cache_array)[i].dec_dsc, sizeof(lv_img_decoder_dsc_t));
-        lv_memset_00(&LV_GC_ROOT(_lv_img_cache_array)[i], sizeof(lv_img_cache_entry_t));
-    }
+    _lv_memset_00(LV_GC_ROOT(_lv_img_cache_array), entry_cnt * sizeof(lv_img_cache_entry_t));
 #endif
 }
 
@@ -193,19 +182,17 @@ void lv_img_cache_set_size(uint16_t new_entry_cnt)
  */
 void lv_img_cache_invalidate_src(const void * src)
 {
-    LV_UNUSED(src);
 #if LV_IMG_CACHE_DEF_SIZE
     lv_img_cache_entry_t * cache = LV_GC_ROOT(_lv_img_cache_array);
 
     uint16_t i;
     for(i = 0; i < entry_cnt; i++) {
-        if(cache[i].dec_dsc.src == src || src == NULL) {
+        if(src == NULL || lv_img_cache_match(src, cache[i].dec_dsc.src)) {
             if(cache[i].dec_dsc.src != NULL) {
                 lv_img_decoder_close(&cache[i].dec_dsc);
             }
 
-            lv_memset_00(&cache[i].dec_dsc, sizeof(lv_img_decoder_dsc_t));
-            lv_memset_00(&cache[i], sizeof(lv_img_cache_entry_t));
+            _lv_memset_00(&cache[i], sizeof(lv_img_cache_entry_t));
         }
     }
 #endif
@@ -214,3 +201,17 @@ void lv_img_cache_invalidate_src(const void * src)
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+
+#if LV_IMG_CACHE_DEF_SIZE
+static bool lv_img_cache_match(const void * src1, const void * src2)
+{
+    lv_img_src_t src_type = lv_img_src_get_type(src1);
+    if(src_type == LV_IMG_SRC_VARIABLE)
+        return src1 == src2;
+    if(src_type != LV_IMG_SRC_FILE)
+        return false;
+    if(lv_img_src_get_type(src2) != LV_IMG_SRC_FILE)
+        return false;
+    return strcmp(src1, src2) == 0;
+}
+#endif
