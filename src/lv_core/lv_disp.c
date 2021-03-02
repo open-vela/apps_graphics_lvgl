@@ -22,11 +22,11 @@
  *  STATIC PROTOTYPES
  **********************/
 
-#if LV_USE_ANIMATION
-    static void scr_load_anim_start(lv_anim_t * a);
-    static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v);
-    static void scr_anim_ready(lv_anim_t * a);
-#endif
+static void scr_load_anim_start(lv_anim_t * a);
+static void opa_scale_anim(void * obj, int32_t v);
+static void set_x_anim(void * obj, int32_t v);
+static void set_y_anim(void * obj, int32_t v);
+static void scr_anim_ready(lv_anim_t * a);
 
 /**********************
  *  STATIC VARIABLES
@@ -106,7 +106,7 @@ lv_obj_t * lv_disp_get_layer_top(lv_disp_t * disp)
 /**
  * Return with the sys. layer. (Same on every screen and it is above the normal screen and the top
  * layer)
- * @param disp pointer to display which sys. layer should be get. (NULL to use the default screen)
+ * @param disp pointer to display which sys. layer  should be get. (NULL to use the default screen)
  * @return pointer to the sys layer object  (transparent screen sized lv_obj)
  */
 lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
@@ -121,22 +121,22 @@ lv_obj_t * lv_disp_get_layer_sys(lv_disp_t * disp)
 }
 
 /**
- * Assign a screen to a display.
- * @param disp pointer to a display where to assign the screen
- * @param scr pointer to a screen object to assign
+ * Get the theme of a display
+ * @param disp pointer to a display
+ * @return the display's theme (can be NULL)
  */
-void lv_disp_assign_screen(lv_disp_t * disp, lv_obj_t * scr)
+void lv_disp_set_theme(lv_disp_t * disp, lv_theme_t * th)
 {
-    if(lv_obj_get_parent(scr) != NULL) {
-        LV_LOG_WARN("lv_disp_assign_screen: try to assign a non-screen object");
-        return;
-    }
-
-    lv_disp_t * old_disp = lv_obj_get_disp(scr);
-
-    if(old_disp == disp) return;
-
-    _lv_ll_chg_list(&old_disp->scr_ll, &disp->scr_ll, scr, true);
+    disp->theme = th;
+}
+/**
+ * Get the theme of a display
+ * @param disp pointer to a display
+ * @return the display's theme (can be NULL)
+ */
+lv_theme_t * lv_disp_get_theme(lv_disp_t * disp)
+{
+    return disp->theme;
 }
 
 /**
@@ -200,8 +200,6 @@ void lv_disp_set_bg_opa(lv_disp_t * disp, lv_opa_t opa)
     _lv_inv_area(disp, &a);
 }
 
-#if LV_USE_ANIMATION
-
 /**
  * Switch screen with animation
  * @param scr pointer to the new screen to load
@@ -220,7 +218,7 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
         lv_disp_load_scr(d->scr_to_load);
         lv_anim_del(d->scr_to_load, NULL);
         lv_obj_set_pos(d->scr_to_load, 0, 0);
-        lv_style_remove_prop(lv_obj_get_local_style(d->scr_to_load, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+        lv_obj_remove_local_style_prop(d->scr_to_load, LV_PART_MAIN, LV_STATE_DEFAULT, LV_STYLE_OPA);
 
         act_scr = d->scr_to_load;
     }
@@ -241,8 +239,8 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     /*Be sure both screens are in a normal position*/
     lv_obj_set_pos(new_scr, 0, 0);
     lv_obj_set_pos(lv_scr_act(), 0, 0);
-    lv_style_remove_prop(lv_obj_get_local_style(new_scr, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
-    lv_style_remove_prop(lv_obj_get_local_style(lv_scr_act(), LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_obj_remove_local_style_prop(new_scr, LV_PART_MAIN, LV_STATE_DEFAULT, LV_STYLE_OPA);
+    lv_obj_remove_local_style_prop(lv_scr_act(), LV_PART_MAIN, LV_STATE_DEFAULT, LV_STYLE_OPA);
 
     lv_anim_t a_new;
     lv_anim_init(&a_new);
@@ -261,56 +259,56 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     switch(anim_type) {
         case LV_SCR_LOAD_ANIM_NONE:
             /* Create a dummy animation to apply the delay*/
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, 0, 0);
             break;
         case LV_SCR_LOAD_ANIM_OVER_LEFT:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, lv_disp_get_hor_res(d), 0);
             break;
         case LV_SCR_LOAD_ANIM_OVER_RIGHT:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, -lv_disp_get_hor_res(d), 0);
             break;
         case LV_SCR_LOAD_ANIM_OVER_TOP:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, lv_disp_get_ver_res(d), 0);
             break;
         case LV_SCR_LOAD_ANIM_OVER_BOTTOM:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, -lv_disp_get_ver_res(d), 0);
             break;
         case LV_SCR_LOAD_ANIM_MOVE_LEFT:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, lv_disp_get_hor_res(d), 0);
 
-            lv_anim_set_exec_cb(&a_old, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, -lv_disp_get_hor_res(d));
             break;
         case LV_SCR_LOAD_ANIM_MOVE_RIGHT:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
             lv_anim_set_values(&a_new, -lv_disp_get_hor_res(d), 0);
 
-            lv_anim_set_exec_cb(&a_old, (lv_anim_exec_xcb_t) lv_obj_set_x);
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
             lv_anim_set_values(&a_old, 0, lv_disp_get_hor_res(d));
             break;
         case LV_SCR_LOAD_ANIM_MOVE_TOP:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, lv_disp_get_ver_res(d), 0);
 
-            lv_anim_set_exec_cb(&a_old, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, -lv_disp_get_ver_res(d));
             break;
         case LV_SCR_LOAD_ANIM_MOVE_BOTTOM:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
             lv_anim_set_values(&a_new, -lv_disp_get_ver_res(d), 0);
 
-            lv_anim_set_exec_cb(&a_old, (lv_anim_exec_xcb_t) lv_obj_set_y);
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
             lv_anim_set_values(&a_old, 0, lv_disp_get_ver_res(d));
             break;
 
         case LV_SCR_LOAD_ANIM_FADE_ON:
-            lv_anim_set_exec_cb(&a_new, (lv_anim_exec_xcb_t) opa_scale_anim);
+            lv_anim_set_exec_cb(&a_new, opa_scale_anim);
             lv_anim_set_values(&a_new, LV_OPA_TRANSP, LV_OPA_COVER);
             break;
     }
@@ -318,8 +316,6 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     lv_anim_start(&a_new);
     lv_anim_start(&a_old);
 }
-
-#endif
 
 /**
  * Get elapsed time since last user activity on a display (e.g. click)
@@ -335,7 +331,7 @@ uint32_t lv_disp_get_inactive_time(const lv_disp_t * disp)
     d          = lv_disp_get_next(NULL);
     while(d) {
         uint32_t elaps = lv_tick_elaps(d->last_activity_time);
-        t = LV_MATH_MIN(t, elaps);
+        t = LV_MIN(t, elaps);
         d = lv_disp_get_next(d);
     }
 
@@ -379,7 +375,7 @@ void lv_disp_clean_dcache(lv_disp_t * disp)
  * @param disp pointer to a display
  * @return pointer to the display refresher task. (NULL on error)
  */
-lv_task_t * _lv_disp_get_refr_task(lv_disp_t * disp)
+lv_timer_t * _lv_disp_get_refr_task(lv_disp_t * disp)
 {
     if(!disp) disp = lv_disp_get_default();
     if(!disp) {
@@ -387,14 +383,13 @@ lv_task_t * _lv_disp_get_refr_task(lv_disp_t * disp)
         return NULL;
     }
 
-    return disp->refr_task;
+    return disp->refr_timer;
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-#if LV_USE_ANIMATION
 static void scr_load_anim_start(lv_anim_t * a)
 {
     lv_disp_t * d = lv_obj_get_disp(a->var);
@@ -403,9 +398,19 @@ static void scr_load_anim_start(lv_anim_t * a)
     lv_disp_load_scr(a->var);
 }
 
-static void opa_scale_anim(lv_obj_t * obj, lv_anim_value_t v)
+static void opa_scale_anim(void * obj, int32_t v)
 {
-    lv_obj_set_style_local_opa_scale(obj, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, v);
+    lv_obj_set_style_opa(obj, LV_PART_MAIN, LV_STATE_DEFAULT, v);
+}
+
+static void set_x_anim(void * obj, int32_t v)
+{
+    lv_obj_set_x(obj, v);
+}
+
+static void set_y_anim(void * obj, int32_t v)
+{
+    lv_obj_set_y(obj, v);
 }
 
 static void scr_anim_ready(lv_anim_t * a)
@@ -415,6 +420,5 @@ static void scr_anim_ready(lv_anim_t * a)
     if(d->prev_scr && d->del_prev) lv_obj_del(d->prev_scr);
     d->prev_scr = NULL;
     d->scr_to_load = NULL;
-    lv_style_remove_prop(lv_obj_get_local_style(a->var, LV_OBJ_PART_MAIN), LV_STYLE_OPA_SCALE);
+    lv_obj_remove_local_style_prop(a->var, LV_PART_MAIN, LV_STATE_DEFAULT, LV_STYLE_OPA);
 }
-#endif
