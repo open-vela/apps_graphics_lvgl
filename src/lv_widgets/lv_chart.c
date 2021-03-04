@@ -486,7 +486,7 @@ lv_coord_t * lv_chart_get_array(const lv_obj_t * obj, lv_chart_series_t * ser)
 
 int32_t lv_chart_get_pressed_point(const lv_obj_t * obj)
 {
-    lv_chart_t * chart = (lv_chart_t *)obj;
+    lv_chart_t * chart = (lv_chart_t *) obj;
     return chart->pressed_point_id;
 }
 
@@ -498,7 +498,7 @@ static void lv_chart_constructor(lv_obj_t * obj, const lv_obj_t * copy)
 {
     LV_TRACE_OBJ_CREATE("begin");
 
-    lv_chart_t * chart = (lv_chart_t *)obj;
+    lv_chart_t * chart = (lv_chart_t *) obj;
 
     _lv_ll_init(&chart->series_ll, sizeof(lv_chart_series_t));
 
@@ -535,7 +535,7 @@ static void lv_chart_constructor(lv_obj_t * obj, const lv_obj_t * copy)
 
 static void lv_chart_destructor(lv_obj_t * obj)
 {
-    lv_chart_t * chart = (lv_chart_t *)obj;
+    lv_chart_t * chart = (lv_chart_t *) obj;
     lv_chart_series_t * ser;
     while(chart->series_ll.head) {
         ser = _lv_ll_get_head(&chart->series_ll);
@@ -718,7 +718,6 @@ static void draw_series_line(lv_obj_t * obj, const lv_area_t * clip_area)
         hook_dsc.part = LV_PART_ITEMS;
         hook_dsc.line_dsc = &line_dsc_default;
         hook_dsc.rect_dsc = &point_dsc_default;
-        hook_dsc.sub_part_ptr = ser;
 
         for(i = 0; i < chart->point_cnt; i++) {
             p1.x = p2.x;

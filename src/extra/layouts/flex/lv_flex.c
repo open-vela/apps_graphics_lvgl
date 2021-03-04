@@ -32,7 +32,7 @@ typedef struct {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void flex_update(lv_obj_t * cont);
+static void flex_update(lv_obj_t * cont, lv_obj_t * item);
 static int32_t find_track_end(lv_obj_t * cont, int32_t item_start_id, lv_coord_t item_gap, lv_coord_t max_main_size, track_t * t);
 static void children_repos(lv_obj_t * cont, int32_t item_first_id, int32_t item_last_id, lv_coord_t abs_x, lv_coord_t abs_y, lv_coord_t max_main_size, lv_coord_t item_gap, track_t * t);
 static void place_content(lv_flex_place_t place, lv_coord_t max_size, lv_coord_t content_size, lv_coord_t item_cnt, lv_coord_t * start_pos, lv_coord_t * gap);
@@ -140,20 +140,22 @@ void lv_obj_set_flex_grow(struct _lv_obj_t * obj, uint8_t grow)
     if(!lv_obj_is_layout_positioned(obj)) return;
     lv_obj_t * parent = lv_obj_get_parent(obj);
     if(parent->spec_attr->layout_dsc->update_cb  != flex_update) return;
-    const lv_flex_t * f = (const lv_flex_t *)parent->spec_attr->layout_dsc;
+    const lv_flex_t * f = (const lv_flex_t *) parent->spec_attr->layout_dsc;
 
     if(f->dir == LV_FLEX_FLOW_ROW) lv_obj_set_width(obj, (LV_COORD_SET_LAYOUT(grow)));
     else lv_obj_set_height(obj, (LV_COORD_SET_LAYOUT(grow)));
 
-    lv_obj_mark_layout_as_dirty(parent);
+    lv_obj_update_layout(parent, obj);
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static void flex_update(lv_obj_t * cont)
+static void flex_update(lv_obj_t * cont, lv_obj_t * item)
 {
+    LV_UNUSED(item);
+
     if(cont->spec_attr == NULL) return;
     const lv_flex_t * f = (const lv_flex_t *)cont->spec_attr->layout_dsc;
 

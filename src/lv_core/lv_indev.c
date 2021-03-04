@@ -61,13 +61,13 @@ static lv_obj_t * indev_obj_act = NULL;
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_indev_read_timer_cb(lv_timer_t * timer)
+void lv_indev_read_task_cb(lv_timer_t * task)
 {
     INDEV_TRACE("begin");
 
     lv_indev_data_t data;
 
-    indev_act = timer->user_data;
+    indev_act = task->user_data;
 
     /*Read and process all indevs*/
     if(indev_act->driver.disp == NULL) return; /*Not assigned to any displays*/
@@ -272,10 +272,10 @@ lv_obj_t * lv_indev_get_obj_act(void)
     return indev_obj_act;
 }
 
-lv_timer_t * lv_indev_get_read_timer(lv_disp_t * indev)
+lv_timer_t * lv_indev_get_read_task(lv_disp_t * indev)
 {
     if(!indev) {
-        LV_LOG_WARN("lv_indev_get_read_timer: indev was NULL");
+        LV_LOG_WARN("lv_indev_get_read_task: indev was NULL");
         return NULL;
     }
 
@@ -302,7 +302,7 @@ lv_obj_t * lv_indev_search_obj(lv_obj_t * obj, lv_point_t * point)
         if(found_p == NULL && lv_obj_has_flag(obj, LV_OBJ_FLAG_CLICKABLE)) {
             lv_obj_t * hidden_i = obj;
             while(hidden_i != NULL) {
-                if(lv_obj_has_flag(hidden_i, LV_OBJ_FLAG_HIDDEN) == true) break;
+                if(lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN) == true) break;
                 hidden_i = lv_obj_get_parent(hidden_i);
             }
             /*No parent found with hidden == true*/

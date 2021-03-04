@@ -149,7 +149,7 @@ typedef struct _lv_disp_t {
     /**< Driver to the display*/
     lv_disp_drv_t driver;
 
-    /**< A timer which periodically checks the dirty areas and refreshes them*/
+    /**< A task which periodically checks the dirty areas and refreshes them*/
     lv_timer_t * refr_timer;
 
     /**< The theme assigned to the screen*/
@@ -175,7 +175,7 @@ typedef struct _lv_disp_t {
     uint32_t inv_p : 10;
 
     /*Miscellaneous data*/
-    uint32_t last_activity_time;        /**< Last time when there was activity on this display */
+    uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
 
 typedef enum {

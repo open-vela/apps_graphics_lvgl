@@ -144,7 +144,7 @@ void lv_init(void)
     /*Test if the IDE has UTF-8 encoding*/
     char * txt = "Á";
 
-    uint8_t * txt_u8 = (uint8_t *)txt;
+    uint8_t * txt_u8 = (uint8_t *) txt;
     if(txt_u8[0] != 0xc3 || txt_u8[1] != 0x81 || txt_u8[2] != 0x00) {
         LV_LOG_WARN("The strings has no UTF-8 encoding. Non-ASCII characters won't be displayed.")
     }
@@ -325,18 +325,17 @@ void lv_obj_add_flag(lv_obj_t * obj, lv_obj_flag_t f)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
 
-    bool was_on_layout = lv_obj_is_layout_positioned(obj);
-
     if(f & LV_OBJ_FLAG_HIDDEN) lv_obj_invalidate(obj);
 
     obj->flags |= f;
 
-    if(f & LV_OBJ_FLAG_HIDDEN) {
-    	lv_obj_invalidate(obj);
-    }
+    if(f & (LV_OBJ_FLAG_IGNORE_LAYOUT | LV_OBJ_FLAG_FLOATING)) lv_signal_send(lv_obj_get_parent(obj), LV_SIGNAL_CHILD_CHG, obj);
 
-    if((was_on_layout != lv_obj_is_layout_positioned(obj)) || (f & (LV_OBJ_FLAG_LAYOUT_1 |  LV_OBJ_FLAG_LAYOUT_2))) {
-        lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
+    if(f & (LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_LAYOUT_1 |  LV_OBJ_FLAG_LAYOUT_2)) {
+    	lv_obj_invalidate(obj);
+    	if(lv_obj_is_layout_positioned(obj)) {
+    		lv_obj_update_layout(lv_obj_get_parent(obj), obj);
+    	}
     }
 }
 
@@ -344,20 +343,15 @@ void lv_obj_clear_flag(lv_obj_t * obj, lv_obj_flag_t f)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
 
-    bool was_on_layout = lv_obj_is_layout_positioned(obj);
-
     obj->flags &= (~f);
 
     if(f & LV_OBJ_FLAG_HIDDEN) {
     	lv_obj_invalidate(obj);
     	if(lv_obj_is_layout_positioned(obj)) {
-    	    lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
+    		lv_obj_update_layout(lv_obj_get_parent(obj), obj);
     	}
     }
-
-    if((was_on_layout != lv_obj_is_layout_positioned(obj)) || (f & (LV_OBJ_FLAG_LAYOUT_1 |  LV_OBJ_FLAG_LAYOUT_2))) {
-        lv_obj_mark_layout_as_dirty(lv_obj_get_parent(obj));
-    }
+    if(f & (LV_OBJ_FLAG_IGNORE_LAYOUT | LV_OBJ_FLAG_FLOATING)) lv_signal_send(lv_obj_get_parent(obj), LV_SIGNAL_CHILD_CHG, obj);
 }
 
 void lv_obj_add_state(lv_obj_t * obj, lv_state_t state)
@@ -933,7 +927,7 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
                     lv_obj_set_size(child, child->w_set, child->h_set);
                 }
             }
-            lv_obj_mark_layout_as_dirty(obj);
+            lv_obj_update_layout(obj, NULL);
         }
 
 
@@ -966,7 +960,7 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
         }
     }
     else if(sign == LV_SIGNAL_CHILD_CHG) {
-        lv_obj_mark_layout_as_dirty(obj);
+        lv_obj_update_layout(obj, param);
 
         if(obj->w_set == LV_SIZE_CONTENT || obj->h_set == LV_SIZE_CONTENT) {
             lv_obj_set_size(obj, obj->w_set, obj->h_set);
@@ -975,7 +969,7 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
     else if(sign == LV_SIGNAL_BASE_DIR_CHG) {
         /* The layout might depend on the base dir.
          * E.g. the first is element is on the left or right*/
-        lv_obj_mark_layout_as_dirty(obj);
+        lv_obj_update_layout(obj, NULL);
     }
     else if(sign == LV_SIGNAL_SCROLL) {
         res = lv_event_send(obj, LV_EVENT_SCROLL, NULL);
@@ -993,7 +987,7 @@ static lv_res_t lv_obj_signal(lv_obj_t * obj, lv_signal_t sign, void * param)
     }
     else if(sign == LV_SIGNAL_STYLE_CHG) {
         /* Padding might have changed so the layout should be recalculated*/
-        lv_obj_mark_layout_as_dirty(obj);
+        lv_obj_update_layout(obj, NULL);
 
         /*Reposition non grid objects on by one*/
         uint32_t i;

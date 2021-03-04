@@ -80,7 +80,7 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
 {
     if(unicode_letter == '\t') unicode_letter = ' ';
 
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return NULL;
 
@@ -148,7 +148,7 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
         unicode_letter = ' ';
         is_tab = true;
     }
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return false;
 
@@ -204,10 +204,10 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
 {
     if(letter == '\0') return 0;
 
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
 
     /*Check the cache first*/
-    if(letter == fdsc->last_letter) return fdsc->last_glyph_id;
+    if(fdsc->cache && letter == fdsc->cache->last_letter) return fdsc->cache->last_glyph_id;
 
     uint16_t i;
     for(i = 0; i < fdsc->cmap_num; i++) {
@@ -246,20 +246,24 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
         }
 
         /*Update the cache*/
-        fdsc->last_letter = letter;
-        fdsc->last_glyph_id = glyph_id;
+        if(fdsc->cache) {
+            fdsc->cache->last_letter = letter;
+            fdsc->cache->last_glyph_id = glyph_id;
+        }
         return glyph_id;
     }
 
-    fdsc->last_letter = letter;
-    fdsc->last_glyph_id = 0;
+    if(fdsc->cache) {
+        fdsc->cache->last_letter = letter;
+        fdsc->cache->last_glyph_id = 0;
+    }
     return 0;
 
 }
 
 static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t gid_right)
 {
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
 
     int8_t value = 0;
 
