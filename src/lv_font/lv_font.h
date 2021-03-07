@@ -69,9 +69,9 @@ typedef struct _lv_font_struct {
     int8_t underline_position;      /**< Distance between the top of the underline and base line (< 0 means below the base line)*/
     int8_t underline_thickness;     /**< Thickness of the underline*/
 
-    const void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
+    void * dsc;                     /**< Store implementation specific or run_time data or caching here*/
 #if LV_USE_USER_DATA
-    void * user_data;               /**< Custom user data for font. */
+    lv_font_user_data_t user_data;  /**< Custom user data for font. */
 #endif
 
 } lv_font_t;
@@ -137,7 +137,7 @@ LV_FONT_DECLARE(lv_font_montserrat_12)
 #endif
 
 #if LV_FONT_MONTSERRAT_14
-LV_FONT_DECLARE(const lv_font_montserrat_14)
+LV_FONT_DECLARE(lv_font_montserrat_14)
 #endif
 
 #if LV_FONT_MONTSERRAT_16
