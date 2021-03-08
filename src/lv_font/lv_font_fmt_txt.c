@@ -8,7 +8,7 @@
  *********************/
 #include "lv_font.h"
 #include "lv_font_fmt_txt.h"
-#include "../lv_misc/lv_debug.h"
+#include "../lv_misc/lv_assert.h"
 #include "../lv_misc/lv_types.h"
 #include "../lv_misc/lv_gc.h"
 #include "../lv_misc/lv_log.h"
@@ -80,7 +80,7 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
 {
     if(unicode_letter == '\t') unicode_letter = ' ';
 
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return NULL;
 
@@ -112,9 +112,9 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
                 break;
         }
 
-        if(_lv_mem_get_size(LV_GC_ROOT(_lv_font_decompr_buf)) < buf_size) {
+        if(lv_mem_get_size(LV_GC_ROOT(_lv_font_decompr_buf)) < buf_size) {
             uint8_t * tmp = lv_mem_realloc(LV_GC_ROOT(_lv_font_decompr_buf), buf_size);
-            LV_ASSERT_MEM(tmp);
+            LV_ASSERT_MALLOC(tmp);
             if(tmp == NULL) return NULL;
             LV_GC_ROOT(_lv_font_decompr_buf) = tmp;
         }
@@ -148,7 +148,7 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
         unicode_letter = ' ';
         is_tab = true;
     }
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return false;
 
@@ -188,10 +188,12 @@ bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t *
  */
 void _lv_font_clean_up_fmt_txt(void)
 {
+#if LV_USE_FONT_COMPRESSED
     if(LV_GC_ROOT(_lv_font_decompr_buf)) {
         lv_mem_free(LV_GC_ROOT(_lv_font_decompr_buf));
         LV_GC_ROOT(_lv_font_decompr_buf) = NULL;
     }
+#endif
 }
 
 /**********************
@@ -202,7 +204,7 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
 {
     if(letter == '\0') return 0;
 
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
 
     /*Check the cache first*/
     if(letter == fdsc->last_letter) return fdsc->last_glyph_id;
@@ -257,7 +259,7 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
 
 static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t gid_right)
 {
-    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
+    lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *)font->dsc;
 
     int8_t value = 0;
 
@@ -349,12 +351,12 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
 
     rle_init(in, bpp);
 
-    uint8_t * line_buf1 = _lv_mem_buf_get(w);
+    uint8_t * line_buf1 = lv_mem_buf_get(w);
 
     uint8_t * line_buf2 = NULL;
 
     if(prefilter) {
-        line_buf2 = _lv_mem_buf_get(w);
+        line_buf2 = lv_mem_buf_get(w);
     }
 
     decompress_line(line_buf1, w);
@@ -387,8 +389,8 @@ static void decompress(const uint8_t * in, uint8_t * out, lv_coord_t w, lv_coord
         }
     }
 
-    _lv_mem_buf_release(line_buf1);
-    _lv_mem_buf_release(line_buf2);
+    lv_mem_buf_release(line_buf1);
+    lv_mem_buf_release(line_buf2);
 }
 
 /**
