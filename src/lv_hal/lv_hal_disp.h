@@ -21,7 +21,7 @@ extern "C" {
 #include "../lv_misc/lv_color.h"
 #include "../lv_misc/lv_area.h"
 #include "../lv_misc/lv_ll.h"
-#include "../lv_misc/lv_timer.h"
+#include "../lv_misc/lv_task.h"
 
 /*********************
  *      DEFINES
@@ -38,9 +38,8 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-struct _lv_disp_t;
-struct _lv_disp_drv_t;
-struct _lv_theme_t;
+struct _disp_t;
+struct _disp_drv_t;
 
 /**
  * Structure for holding display buffer information.
@@ -72,7 +71,7 @@ typedef enum {
 /**
  * Display Driver structure to be registered by HAL
  */
-typedef struct _lv_disp_drv_t {
+typedef struct _disp_drv_t {
 
     lv_coord_t hor_res; /**< Horizontal resolution. */
     lv_coord_t ver_res; /**< Vertical resolution. */
@@ -81,9 +80,11 @@ typedef struct _lv_disp_drv_t {
      * LVGL will use this buffer(s) to draw the screens contents */
     lv_disp_buf_t * buffer;
 
+#if LV_ANTIALIAS
+    uint32_t antialiasing : 1; /**< 1: antialiasing is enabled on this display. */
+#endif
+    uint32_t rotated : 2;
     uint32_t sw_rotate : 1; /**< 1: use software rotation (slower) */
-    uint32_t antialiasing : 1; /**< 1: anti-aliasing is enabled on this display. */
-    uint32_t rotated : 3; /**< 1: turn the display by 90 degree. @warning Does not update coordinates for you!*/
 
 #if LV_COLOR_SCREEN_TRANSP
     /**Handle if the screen doesn't have a solid (opa == LV_OPA_COVER) background.
@@ -98,43 +99,50 @@ typedef struct _lv_disp_drv_t {
 
     /** MANDATORY: Write the internal buffer (VDB) to the display. 'lv_disp_flush_ready()' has to be
      * called when finished */
-    void (*flush_cb)(struct _lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
+    void (*flush_cb)(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 
     /** OPTIONAL: Extend the invalidated areas to match with the display drivers requirements
      * E.g. round `y` to, 8, 16 ..) on a monochrome display*/
-    void (*rounder_cb)(struct _lv_disp_drv_t * disp_drv, lv_area_t * area);
+    void (*rounder_cb)(struct _disp_drv_t * disp_drv, lv_area_t * area);
 
     /** OPTIONAL: Set a pixel in a buffer according to the special requirements of the display
      * Can be used for color format not supported in LittelvGL. E.g. 2 bit -> 4 gray scales
      * @note Much slower then drawing with supported color formats. */
-    void (*set_px_cb)(struct _lv_disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
+    void (*set_px_cb)(struct _disp_drv_t * disp_drv, uint8_t * buf, lv_coord_t buf_w, lv_coord_t x, lv_coord_t y,
                       lv_color_t color, lv_opa_t opa);
 
     /** OPTIONAL: Called after every refresh cycle to tell the rendering and flushing time + the
      * number of flushed pixels */
-    void (*monitor_cb)(struct _lv_disp_drv_t * disp_drv, uint32_t time, uint32_t px);
+    void (*monitor_cb)(struct _disp_drv_t * disp_drv, uint32_t time, uint32_t px);
 
     /** OPTIONAL: Called periodically while lvgl waits for operation to be completed.
      * For example flushing or GPU
      * User can execute very simple tasks here or yield the task */
-    void (*wait_cb)(struct _lv_disp_drv_t * disp_drv);
+    void (*wait_cb)(struct _disp_drv_t * disp_drv);
 
     /** OPTIONAL: Called when lvgl needs any CPU cache that affects rendering to be cleaned */
-    void (*clean_dcache_cb)(struct _lv_disp_drv_t * disp_drv);
+    void (*clean_dcache_cb)(struct _disp_drv_t * disp_drv);
 
     /** OPTIONAL: called to wait while the gpu is working */
-    void (*gpu_wait_cb)(struct _lv_disp_drv_t * disp_drv);
+    void (*gpu_wait_cb)(struct _disp_drv_t * disp_drv);
+
+#if LV_USE_GPU
+
+    /** OPTIONAL: Blend two memories using opacity (GPU only)*/
+    void (*gpu_blend_cb)(struct _disp_drv_t * disp_drv, lv_color_t * dest, const lv_color_t * src, uint32_t length,
+                         lv_opa_t opa);
 
     /** OPTIONAL: Fill a memory with a color (GPU only)*/
-    void (*gpu_fill_cb)(struct _lv_disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
+    void (*gpu_fill_cb)(struct _disp_drv_t * disp_drv, lv_color_t * dest_buf, lv_coord_t dest_width,
                         const lv_area_t * fill_area, lv_color_t color);
+#endif
 
     /** On CHROMA_KEYED images this color will be transparent.
      * `LV_COLOR_TRANSP` by default. (lv_conf.h)*/
     lv_color_t color_chroma_key;
 
 #if LV_USE_USER_DATA
-    void * user_data; /**< Custom display driver user data */
+    lv_disp_drv_user_data_t user_data; /**< Custom display driver user data */
 #endif
 
 } lv_disp_drv_t;
@@ -145,29 +153,29 @@ struct _lv_obj_t;
  * Display structure.
  * @note `lv_disp_drv_t` should be the first member of the structure.
  */
-typedef struct _lv_disp_t {
+typedef struct _disp_t {
     /**< Driver to the display*/
     lv_disp_drv_t driver;
 
-    /**< A timer which periodically checks the dirty areas and refreshes them*/
-    lv_timer_t * refr_timer;
-
-    /**< The theme assigned to the screen*/
-    struct _lv_theme_t * theme;
+    /**< A task which periodically checks the dirty areas and refreshes them*/
+    lv_task_t * refr_task;
 
     /** Screens of the display*/
-    struct _lv_obj_t ** screens;    /**< Array of screen objects. */
-    struct _lv_obj_t * act_scr;     /**< Currently active screen on this display */
-    struct _lv_obj_t * prev_scr;    /**< Previous screen. Used during screen animations */
-    struct _lv_obj_t * scr_to_load; /**< The screen prepared to load in lv_scr_load_anim*/
-    struct _lv_obj_t * top_layer;   /**< @see lv_disp_get_layer_top */
-    struct _lv_obj_t * sys_layer;   /**< @see lv_disp_get_layer_sys */
-    uint32_t screen_cnt;
-    uint8_t del_prev  : 1;          /**< 1: Automatically delete the previous screen when the screen load animation is ready */
+    lv_ll_t scr_ll;
+    struct _lv_obj_t * act_scr;         /**< Currently active screen on this display */
+    struct _lv_obj_t * prev_scr;        /**< Previous screen. Used during screen animations */
+#if LV_USE_ANIMATION
+    struct _lv_obj_t * scr_to_load;     /**< The screen prepared to load in lv_scr_load_anim*/
+#endif
+    struct _lv_obj_t * top_layer; /**< @see lv_disp_get_layer_top */
+    struct _lv_obj_t * sys_layer; /**< @see lv_disp_get_layer_sys */
 
-    lv_color_t bg_color;            /**< Default display color when screens are transparent*/
-    const void * bg_img;            /**< An image source to display as wallpaper*/
-    lv_opa_t bg_opa;                /**<Opacity of the background color or wallpaper */
+uint8_t del_prev  :
+    1;        /**< 1: Automatically delete the previous screen when the screen load animation is ready */
+
+    lv_color_t bg_color;          /**< Default display color when screens are transparent*/
+    const void * bg_img;       /**< An image source to display as wallpaper*/
+    lv_opa_t bg_opa;              /**<Opacity of the background color or wallpaper */
 
     /** Invalidated (marked to redraw) areas*/
     lv_area_t inv_areas[LV_INV_BUF_SIZE];
@@ -175,7 +183,7 @@ typedef struct _lv_disp_t {
     uint32_t inv_p : 10;
 
     /*Miscellaneous data*/
-    uint32_t last_activity_time;        /**< Last time when there was activity on this display */
+    uint32_t last_activity_time; /**< Last time there was activity on this display */
 } lv_disp_t;
 
 typedef enum {
@@ -275,6 +283,12 @@ bool lv_disp_get_antialiasing(lv_disp_t * disp);
  */
 lv_coord_t lv_disp_get_dpi(lv_disp_t * disp);
 
+/**
+ * Get the size category of the display based on it's hor. res. and dpi.
+ * @param disp pointer to a display (NULL to use the default display)
+ * @return LV_DISP_SIZE_SMALL/MEDIUM/LARGE/EXTRA_LARGE
+ */
+lv_disp_size_t lv_disp_get_size_category(lv_disp_t * disp);
 
 /**
  * Set the rotation of this display.
