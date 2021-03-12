@@ -107,8 +107,8 @@ lv_res_t lv_gpu_nxp_vglite_fill(lv_color_t * dest_buf, lv_coord_t dest_width, lv
         rect.width = (fill_area->x2 - fill_area->x1) + 1;
         rect.height = (fill_area->y2 - fill_area->y1) + 1;
 
-        if(disp && disp->driver->clean_dcache_cb) {  /* Clean & invalidate cache */
-            disp->driver->clean_dcache_cb(&disp->driver);
+        if(disp && disp->driver.clean_dcache_cb) {  /* Clean & invalidate cache */
+            disp->driver.clean_dcache_cb(&disp->driver);
         }
 
         err |= vg_lite_clear(&rt, &rect, col32.full);
@@ -141,8 +141,8 @@ lv_res_t lv_gpu_nxp_vglite_fill(lv_color_t * dest_buf, lv_coord_t dest_width, lv
         colMix.ch.blue = ((uint16_t)col32.ch.blue * opa) >> 8;
         colMix.ch.alpha = opa;
 
-        if(disp && disp->driver->clean_dcache_cb) {  /* Clean & invalidate cache */
-            disp->driver->clean_dcache_cb(&disp->driver);
+        if(disp && disp->driver.clean_dcache_cb) {  /* Clean & invalidate cache */
+            disp->driver.clean_dcache_cb(&disp->driver);
         }
 
         vg_lite_matrix_t matrix;
@@ -219,8 +219,8 @@ lv_res_t lv_gpu_nxp_vglite_blit(lv_gpu_nxp_vglite_blit_info_t * blit)
     vg_lite_identity(&matrix);
     vg_lite_translate(blit->dst_area.x1, blit->dst_area.y1, &matrix);
 
-    if(disp && disp->driver->clean_dcache_cb) {  /* Clean & invalidate cache */
-        disp->driver->clean_dcache_cb(&disp->driver);
+    if(disp && disp->driver.clean_dcache_cb) {  /* Clean & invalidate cache */
+        disp->driver.clean_dcache_cb(&disp->driver);
     }
 
     uint32_t color;
@@ -289,7 +289,7 @@ static lv_res_t init_vg_buf(vg_lite_buffer_t * dst, uint32_t width, uint32_t hei
 
     memset(&dst->yuv, 0, sizeof(dst->yuv));
 
-    dst->memory = (void *)ptr;
+    dst->memory = (void *) ptr;
     dst->address = (uint32_t) dst->memory;
     dst->handle = 0x0;
 
