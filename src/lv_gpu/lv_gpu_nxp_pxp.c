@@ -211,7 +211,7 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, lv_coord_t dest_width, const lv_
  *
  * By default, image is copied directly, with optional opacity configured by \p opa.
  * Color keying can be enabled by calling lv_gpu_nxp_pxp_enable_color_key() before calling this function.
- * Recoloring can be enabled by calling lv_gpu_nxp_pxp_enable_recolor() before calling this function.
+ * Recoloring can be enabled by calling  lv_gpu_nxp_pxp_enable_recolor() before calling this function.
  * Note that color keying and recoloring at the same time is not supported and black rectangle is rendered.
  *
  * @param[in/out] dest destination buffer
@@ -377,7 +377,7 @@ static void lv_gpu_nxp_pxp_blit_recolor(lv_color_t * dest, lv_coord_t dest_width
     if(colorKeyEnabled) {
         /* should never get here, recolor & color keying not supported. Draw black box instead. */
         const lv_area_t fill_area = {.x1 = 0, .y1 = 0, .x2 = copy_width - 1, .y2 = copy_height - 1};
-        lv_gpu_nxp_pxp_fill(dest, dest_width, &fill_area, LV_COLOR_BLACK, LV_OPA_MAX);
+        lv_gpu_nxp_pxp_fill(dest, dest_width, &fill_area, lv_color_black(), LV_OPA_MAX);
         LV_LOG_WARN("Recoloring and color keying is not supported. Black rectangle rendered.");
         return ;
     }
@@ -439,7 +439,7 @@ static void lv_gpu_nxp_pxp_blit_recolor(lv_color_t * dest, lv_coord_t dest_width
             /* Recolor with transparency */
 
             /* Step 1: Recolor with full opacity to temporary buffer */
-            lv_color_t * tmpBuf  = (lv_color_t *) _lv_mem_buf_get(copy_width * copy_height * sizeof(lv_color_t));
+            lv_color_t * tmpBuf  = (lv_color_t *)lv_mem_buf_get(copy_width * copy_height * sizeof(lv_color_t));
             lv_gpu_nxp_pxp_blit_recolor(tmpBuf, copy_width, src, src_width, copy_width, copy_height, LV_OPA_COVER, recolor,
                                         recolorOpa);
 
@@ -449,7 +449,7 @@ static void lv_gpu_nxp_pxp_blit_recolor(lv_color_t * dest, lv_coord_t dest_width
             lv_gpu_nxp_pxp_enable_recolor(recolor, recolorOpa); /* restore state */
 
             /* Step 3: Clean-up memory */
-            _lv_mem_buf_release(tmpBuf);
+            lv_mem_buf_release(tmpBuf);
         }
     }
 }
