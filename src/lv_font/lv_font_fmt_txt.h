@@ -150,11 +150,6 @@ typedef enum {
     LV_FONT_FMT_TXT_COMPRESSED_NO_PREFILTER = 1,
 } lv_font_fmt_txt_bitmap_format_t;
 
-typedef struct {
-    uint32_t last_letter;
-    uint32_t last_glyph_id;
-}lv_font_fmt_txt_glyph_cache_t;
-
 /*Describe store additional data for fonts */
 typedef struct {
     /*The bitmaps of all glyphs*/
@@ -192,7 +187,9 @@ typedef struct {
     uint16_t bitmap_format  : 2;
 
     /*Cache the last letter and is glyph id*/
-    lv_font_fmt_txt_glyph_cache_t * cache;
+    uint32_t last_letter;
+    uint32_t last_glyph_id;
+
 } lv_font_fmt_txt_dsc_t;
 
 /**********************
