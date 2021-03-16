@@ -1,17 +1,13 @@
+#include "../../lvgl.h"
+
 /*******************************************************************************
  * Size: 8 px
  * Bpp: 1
- * Opts: --no-compress --no-prefilter --bpp 1 --size 8 --font unscii-8.ttf -r 0x20-0x7F --format lvgl -o lv_font_unscii_8.c --force-fast-kern-format
+ * Opts:
  ******************************************************************************/
 
-#ifdef LV_LVGL_H_INCLUDE_SIMPLE
-#include "lvgl.h"
-#else
-#include "../../lvgl.h"
-#endif
-
 #ifndef LV_FONT_UNSCII_8
-#define LV_FONT_UNSCII_8 1
+    #define LV_FONT_UNSCII_8 1
 #endif
 
 #if LV_FONT_UNSCII_8
@@ -21,296 +17,295 @@
  *----------------*/
 
 /*Store the image of the glyphs*/
-static LV_ATTRIBUTE_LARGE_CONST const uint8_t glyph_bitmap[] = {
-    /* U+0020 " " */
+static LV_ATTRIBUTE_LARGE_CONST const uint8_t gylph_bitmap[] = {
+    /* U+20 " " */
     0x0,
 
-    /* U+0021 "!" */
+    /* U+21 "!" */
     0xff, 0xcc,
 
-    /* U+0022 "\"" */
+    /* U+22 "\"" */
     0xcf, 0x3c, 0xc0,
 
-    /* U+0023 "#" */
+    /* U+23 "#" */
     0x6c, 0xdb, 0xfb, 0x6f, 0xed, 0x9b, 0x0,
 
-    /* U+0024 "$" */
+    /* U+24 "$" */
     0x31, 0xfc, 0x1e, 0xf, 0xe3, 0x0,
 
-    /* U+0025 "%" */
+    /* U+25 "%" */
     0xc7, 0x98, 0x61, 0x86, 0x78, 0xc0,
 
-    /* U+0026 "&" */
+    /* U+26 "&" */
     0x38, 0xd8, 0xe3, 0xbd, 0xd9, 0x9d, 0x80,
 
-    /* U+0027 "'" */
+    /* U+27 "'" */
     0x6f, 0x0,
 
-    /* U+0028 "(" */
+    /* U+28 "(" */
     0x36, 0xcc, 0xc6, 0x30,
 
-    /* U+0029 ")" */
+    /* U+29 ")" */
     0xc6, 0x33, 0x36, 0xc0,
 
-    /* U+002A "*" */
+    /* U+2A "*" */
     0x66, 0x3c, 0xff, 0x3c, 0x66,
 
-    /* U+002B "+" */
+    /* U+2B "+" */
     0x30, 0xcf, 0xcc, 0x30,
 
-    /* U+002C "," */
+    /* U+2C "," */
     0x6f, 0x0,
 
-    /* U+002D "-" */
+    /* U+2D "-" */
     0xfc,
 
-    /* U+002E "." */
+    /* U+2E "." */
     0xf0,
 
-    /* U+002F "/" */
+    /* U+2F "/" */
     0x3, 0x6, 0xc, 0x18, 0x30, 0x60, 0xc0,
 
-    /* U+0030 "0" */
+    /* U+30 "0" */
     0x7b, 0x3d, 0xfb, 0xcf, 0x37, 0x80,
 
-    /* U+0031 "1" */
+    /* U+31 "1" */
     0x31, 0xc3, 0xc, 0x30, 0xcf, 0xc0,
 
-    /* U+0032 "2" */
+    /* U+32 "2" */
     0x7b, 0x31, 0x8c, 0x63, 0xf, 0xc0,
 
-    /* U+0033 "3" */
+    /* U+33 "3" */
     0x7b, 0x30, 0xce, 0xf, 0x37, 0x80,
 
-    /* U+0034 "4" */
+    /* U+34 "4" */
     0x1c, 0x79, 0xb6, 0x6f, 0xe1, 0x83, 0x0,
 
-    /* U+0035 "5" */
+    /* U+35 "5" */
     0xff, 0xf, 0x83, 0xf, 0x37, 0x80,
 
-    /* U+0036 "6" */
+    /* U+36 "6" */
     0x39, 0x8c, 0x3e, 0xcf, 0x37, 0x80,
 
-    /* U+0037 "7" */
+    /* U+37 "7" */
     0xfc, 0x30, 0xc6, 0x30, 0xc3, 0x0,
 
-    /* U+0038 "8" */
+    /* U+38 "8" */
     0x7b, 0x3c, 0xde, 0xcf, 0x37, 0x80,
 
-    /* U+0039 "9" */
+    /* U+39 "9" */
     0x7b, 0x3c, 0xdf, 0xc, 0x67, 0x0,
 
-    /* U+003A ":" */
+    /* U+3A ":" */
     0xf0, 0xf0,
 
-    /* U+003B ";" */
+    /* U+3B ";" */
     0x6c, 0x6, 0xf0,
 
-    /* U+003C "<" */
+    /* U+3C "<" */
     0x19, 0x99, 0x86, 0x18, 0x60,
 
-    /* U+003D "=" */
+    /* U+3D "=" */
     0xfc, 0xf, 0xc0,
 
-    /* U+003E ">" */
+    /* U+3E ">" */
     0xc3, 0xc, 0x33, 0x33, 0x0,
 
-    /* U+003F "?" */
+    /* U+3F "?" */
     0x7b, 0x30, 0xc6, 0x30, 0x3, 0x0,
 
-    /* U+0040 "@" */
+    /* U+40 "@" */
     0x7d, 0x8f, 0x7e, 0xfd, 0xf8, 0x1f, 0x0,
 
-    /* U+0041 "A" */
+    /* U+41 "A" */
     0x31, 0xec, 0xf3, 0xff, 0x3c, 0xc0,
 
-    /* U+0042 "B" */
+    /* U+42 "B" */
     0xfb, 0x3c, 0xfe, 0xcf, 0x3f, 0x80,
 
-    /* U+0043 "C" */
+    /* U+43 "C" */
     0x7b, 0x3c, 0x30, 0xc3, 0x37, 0x80,
 
-    /* U+0044 "D" */
+    /* U+44 "D" */
     0xf3, 0x6c, 0xf3, 0xcf, 0x6f, 0x0,
 
-    /* U+0045 "E" */
+    /* U+45 "E" */
     0xff, 0xc, 0x3e, 0xc3, 0xf, 0xc0,
 
-    /* U+0046 "F" */
+    /* U+46 "F" */
     0xff, 0xc, 0x3e, 0xc3, 0xc, 0x0,
 
-    /* U+0047 "G" */
+    /* U+47 "G" */
     0x7b, 0x3c, 0x37, 0xcf, 0x37, 0xc0,
 
-    /* U+0048 "H" */
+    /* U+48 "H" */
     0xcf, 0x3c, 0xff, 0xcf, 0x3c, 0xc0,
 
-    /* U+0049 "I" */
+    /* U+49 "I" */
     0xfc, 0xc3, 0xc, 0x30, 0xcf, 0xc0,
 
-    /* U+004A "J" */
+    /* U+4A "J" */
     0xc, 0x30, 0xc3, 0xf, 0x37, 0x80,
 
-    /* U+004B "K" */
+    /* U+4B "K" */
     0xc7, 0x9b, 0x67, 0x8d, 0x99, 0xb1, 0x80,
 
-    /* U+004C "L" */
+    /* U+4C "L" */
     0xc3, 0xc, 0x30, 0xc3, 0xf, 0xc0,
 
-    /* U+004D "M" */
+    /* U+4D "M" */
     0xc7, 0xdf, 0xfe, 0xbc, 0x78, 0xf1, 0x80,
 
-    /* U+004E "N" */
+    /* U+4E "N" */
     0xc7, 0xcf, 0xde, 0xfc, 0xf8, 0xf1, 0x80,
 
-    /* U+004F "O" */
+    /* U+4F "O" */
     0x7b, 0x3c, 0xf3, 0xcf, 0x37, 0x80,
 
-    /* U+0050 "P" */
+    /* U+50 "P" */
     0xfb, 0x3c, 0xfe, 0xc3, 0xc, 0x0,
 
-    /* U+0051 "Q" */
+    /* U+51 "Q" */
     0x7b, 0x3c, 0xf3, 0xcf, 0x66, 0xc0,
 
-    /* U+0052 "R" */
+    /* U+52 "R" */
     0xfb, 0x3c, 0xfe, 0xdb, 0x3c, 0xc0,
 
-    /* U+0053 "S" */
+    /* U+53 "S" */
     0x7b, 0x3c, 0x1e, 0xf, 0x37, 0x80,
 
-    /* U+0054 "T" */
+    /* U+54 "T" */
     0xfc, 0xc3, 0xc, 0x30, 0xc3, 0x0,
 
-    /* U+0055 "U" */
+    /* U+55 "U" */
     0xcf, 0x3c, 0xf3, 0xcf, 0x37, 0x80,
 
-    /* U+0056 "V" */
+    /* U+56 "V" */
     0xcf, 0x3c, 0xf3, 0xcd, 0xe3, 0x0,
 
-    /* U+0057 "W" */
+    /* U+57 "W" */
     0xc7, 0x8f, 0x1e, 0xbf, 0xfd, 0xf1, 0x80,
 
-    /* U+0058 "X" */
+    /* U+58 "X" */
     0xc3, 0x66, 0x3c, 0x18, 0x3c, 0x66, 0xc3,
 
-    /* U+0059 "Y" */
+    /* U+59 "Y" */
     0xc3, 0x66, 0x3c, 0x18, 0x18, 0x18, 0x18,
 
-    /* U+005A "Z" */
+    /* U+5A "Z" */
     0xfc, 0x31, 0x8c, 0x63, 0xf, 0xc0,
 
-    /* U+005B "[" */
+    /* U+5B "[" */
     0xfc, 0xcc, 0xcc, 0xf0,
 
-    /* U+005C "\\" */
+    /* U+5C "\\" */
     0xc0, 0x60, 0x30, 0x18, 0xc, 0x6, 0x3,
 
-    /* U+005D "]" */
+    /* U+5D "]" */
     0xf3, 0x33, 0x33, 0xf0,
 
-    /* U+005E "^" */
+    /* U+5E "^" */
     0x10, 0x71, 0xb6, 0x30,
 
-    /* U+005F "_" */
+    /* U+5F "_" */
     0xff,
 
-    /* U+0060 "`" */
+    /* U+60 "`" */
     0xc6, 0x30,
 
-    /* U+0061 "a" */
+    /* U+61 "a" */
     0x78, 0x37, 0xf3, 0x7c,
 
-    /* U+0062 "b" */
+    /* U+62 "b" */
     0xc3, 0xf, 0xb3, 0xcf, 0x3f, 0x80,
 
-    /* U+0063 "c" */
+    /* U+63 "c" */
     0x7e, 0x31, 0x87, 0x80,
 
-    /* U+0064 "d" */
+    /* U+64 "d" */
     0xc, 0x37, 0xf3, 0xcf, 0x37, 0xc0,
 
-    /* U+0065 "e" */
+    /* U+65 "e" */
     0x7b, 0x3f, 0xf0, 0x78,
 
-    /* U+0066 "f" */
+    /* U+66 "f" */
     0x3b, 0x3e, 0xc6, 0x31, 0x80,
 
-    /* U+0067 "g" */
+    /* U+67 "g" */
     0x7f, 0x3c, 0xdf, 0xf, 0xe0,
 
-    /* U+0068 "h" */
+    /* U+68 "h" */
     0xc3, 0xf, 0xb3, 0xcf, 0x3c, 0xc0,
 
-    /* U+0069 "i" */
+    /* U+69 "i" */
     0x60, 0x38, 0xc6, 0x31, 0xe0,
 
-    /* U+006A "j" */
+    /* U+6A "j" */
     0x18, 0x6, 0x31, 0x8c, 0x7e,
 
-    /* U+006B "k" */
+    /* U+6B "k" */
     0xc3, 0xc, 0xf6, 0xf3, 0x6c, 0xc0,
 
-    /* U+006C "l" */
+    /* U+6C "l" */
     0xe3, 0x18, 0xc6, 0x31, 0xe0,
 
-    /* U+006D "m" */
+    /* U+6D "m" */
     0xcd, 0xff, 0x5e, 0xbc, 0x60,
 
-    /* U+006E "n" */
+    /* U+6E "n" */
     0xfb, 0x3c, 0xf3, 0xcc,
 
-    /* U+006F "o" */
+    /* U+6F "o" */
     0x7b, 0x3c, 0xf3, 0x78,
 
-    /* U+0070 "p" */
+    /* U+70 "p" */
     0xfb, 0x3c, 0xfe, 0xc3, 0x0,
 
-    /* U+0071 "q" */
+    /* U+71 "q" */
     0x7f, 0x3c, 0xdf, 0xc, 0x30,
 
-    /* U+0072 "r" */
+    /* U+72 "r" */
     0xfb, 0x3c, 0x30, 0xc0,
 
-    /* U+0073 "s" */
+    /* U+73 "s" */
     0x7f, 0x7, 0x83, 0xf8,
 
-    /* U+0074 "t" */
+    /* U+74 "t" */
     0x61, 0x8f, 0xd8, 0x61, 0x83, 0xc0,
 
-    /* U+0075 "u" */
+    /* U+75 "u" */
     0xcf, 0x3c, 0xf3, 0x7c,
 
-    /* U+0076 "v" */
+    /* U+76 "v" */
     0xcf, 0x3c, 0xde, 0x30,
 
-    /* U+0077 "w" */
+    /* U+77 "w" */
     0xc7, 0x8f, 0x5b, 0xe6, 0xc0,
 
-    /* U+0078 "x" */
+    /* U+78 "x" */
     0xc6, 0xd8, 0xe3, 0x6c, 0x60,
 
-    /* U+0079 "y" */
+    /* U+79 "y" */
     0xcf, 0x3c, 0xdf, 0xd, 0xe0,
 
-    /* U+007A "z" */
+    /* U+7A "z" */
     0xfc, 0x63, 0x18, 0xfc,
 
-    /* U+007B "{" */
+    /* U+7B "{" */
     0x1c, 0xc3, 0x38, 0x30, 0xc1, 0xc0,
 
-    /* U+007C "|" */
+    /* U+7C "|" */
     0xff, 0xfc,
 
-    /* U+007D "}" */
+    /* U+7D "}" */
     0xe0, 0xc3, 0x7, 0x30, 0xce, 0x0,
 
-    /* U+007E "~" */
+    /* U+7E "~" */
     0x77, 0xb8,
 
-    /* U+007F "" */
+    /* U+7F "" */
     0xc1, 0x42, 0xbd, 0x2c, 0x40, 0x81, 0x0
 };
-
 
 /*---------------------
  *  GLYPH DESCRIPTION
@@ -420,31 +415,21 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
  *  CHARACTER MAPPING
  *--------------------*/
 
-
-
 /*Collect the unicode lists and glyph_id offsets*/
-static const lv_font_fmt_txt_cmap_t cmaps[] =
-{
+static const lv_font_fmt_txt_cmap_t cmaps[] = {
     {
         .range_start = 32, .range_length = 96, .glyph_id_start = 1,
         .unicode_list = NULL, .glyph_id_ofs_list = NULL, .list_length = 0, .type = LV_FONT_FMT_TXT_CMAP_FORMAT0_TINY
     }
 };
 
-
-
 /*--------------------
  *  ALL CUSTOM DATA
  *--------------------*/
 
-#if LV_VERSION_CHECK(8, 0, 0)
 /*Store all the custom data of the font*/
-static  lv_font_fmt_txt_glyph_cache_t cache;
-static const lv_font_fmt_txt_dsc_t font_dsc = {
-#else
 static lv_font_fmt_txt_dsc_t font_dsc = {
-#endif
-    .glyph_bitmap = glyph_bitmap,
+    .glyph_bitmap = gylph_bitmap,
     .glyph_dsc = glyph_dsc,
     .cmaps = cmaps,
     .kern_dsc = NULL,
@@ -452,23 +437,15 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
     .cmap_num = 1,
     .bpp = 1,
     .kern_classes = 0,
-    .bitmap_format = 0,
-#if LV_VERSION_CHECK(8, 0, 0)
-    .cache = &cache
-#endif
+    .bitmap_format = 0
 };
-
 
 /*-----------------
  *  PUBLIC FONT
  *----------------*/
 
 /*Initialize a public general font descriptor*/
-#if LV_VERSION_CHECK(8, 0, 0)
-const lv_font_t lv_font_unscii_8 = {
-#else
 lv_font_t lv_font_unscii_8 = {
-#endif
     .get_glyph_dsc = lv_font_get_glyph_dsc_fmt_txt,    /*Function pointer to get glyph's data*/
     .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/
     .line_height = 9,          /*The maximum line height required by the font*/
@@ -483,7 +460,4 @@ lv_font_t lv_font_unscii_8 = {
     .dsc = &font_dsc           /*The custom font data. Will be accessed by `get_glyph_bitmap/dsc` */
 };
 
-
-
 #endif /*#if LV_FONT_UNSCII_8*/
-

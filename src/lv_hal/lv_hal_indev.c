@@ -1,5 +1,5 @@
 /**
- * @file lv_hal_indev.c
+ * @file hal_indev.c
  *
  * @description Input device HAL interface
  *
@@ -8,7 +8,7 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_misc/lv_assert.h"
+#include "../lv_misc/lv_debug.h"
 #include "../lv_hal/lv_hal_indev.h"
 #include "../lv_core/lv_indev.h"
 #include "../lv_misc/lv_mem.h"
@@ -24,10 +24,6 @@
  **********************/
 
 /**********************
- *  GLOBAL PROTOTYPES
- **********************/
-
-/**********************
  *  STATIC PROTOTYPES
  **********************/
 
@@ -38,11 +34,6 @@
 /**********************
  *      MACROS
  **********************/
-#if LV_LOG_TRACE_INDEV
-#  define INDEV_TRACE(...) LV_LOG_TRACE( __VA_ARGS__)
-#else
-#  define INDEV_TRACE(...)
-#endif
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -56,11 +47,11 @@
  */
 void lv_indev_drv_init(lv_indev_drv_t * driver)
 {
-    lv_memset_00(driver, sizeof(lv_indev_drv_t));
+    _lv_memset_00(driver, sizeof(lv_indev_drv_t));
 
     driver->type                 = LV_INDEV_TYPE_NONE;
-    driver->scroll_limit         = LV_INDEV_DEF_SCROLL_LIMIT;
-    driver->scroll_throw         = LV_INDEV_DEF_SCROLL_THROW;
+    driver->drag_limit           = LV_INDEV_DEF_DRAG_LIMIT;
+    driver->drag_throw           = LV_INDEV_DEF_DRAG_THROW;
     driver->long_press_time      = LV_INDEV_DEF_LONG_PRESS_TIME;
     driver->long_press_rep_time  = LV_INDEV_DEF_LONG_PRESS_REP_TIME;
     driver->gesture_limit        = LV_INDEV_DEF_GESTURE_LIMIT;
@@ -69,8 +60,7 @@ void lv_indev_drv_init(lv_indev_drv_t * driver)
 
 /**
  * Register an initialized input device driver.
- * @param driver pointer to an initialized 'lv_indev_drv_t' variable.
- * Only pointer is saved, so the driver should be static or dynamically allocated.
+ * @param driver pointer to an initialized 'lv_indev_drv_t' variable (can be local variable)
  * @return pointer to the new input device or NULL on error
  */
 lv_indev_t * lv_indev_drv_register(lv_indev_drv_t * driver)
@@ -86,15 +76,19 @@ lv_indev_t * lv_indev_drv_register(lv_indev_drv_t * driver)
 
     lv_indev_t * indev = _lv_ll_ins_head(&LV_GC_ROOT(_lv_indev_ll));
     if(!indev) {
-        LV_ASSERT_MALLOC(indev);
+        LV_ASSERT_MEM(indev);
         return NULL;
     }
 
-    lv_memset_00(indev, sizeof(lv_indev_t));
-    indev->driver = driver;
+    _lv_memset_00(indev, sizeof(lv_indev_t));
+    _lv_memcpy(&indev->driver, driver, sizeof(lv_indev_drv_t));
 
-    indev->proc.reset_query  = 1;
-    indev->driver->read_timer = lv_timer_create(lv_indev_read_timer_cb, LV_INDEV_DEF_READ_PERIOD, indev);
+    indev->proc.reset_query = 1;
+    indev->cursor           = NULL;
+    indev->group            = NULL;
+    indev->btn_points       = NULL;
+
+    indev->driver.read_task = lv_task_create(_lv_indev_read_task, LV_INDEV_DEF_READ_PERIOD, LV_TASK_PRIO_HIGH, indev);
 
     return indev;
 }
@@ -133,29 +127,31 @@ bool _lv_indev_read(lv_indev_t * indev, lv_indev_data_t * data)
 {
     bool cont = false;
 
-    lv_memset_00(data, sizeof(lv_indev_data_t));
+    _lv_memset_00(data, sizeof(lv_indev_data_t));
 
-    /* For touchpad sometimes users don't set the last pressed coordinate on release.
+    /* For touchpad sometimes users don't the last pressed coordinate on release.
      * So be sure a coordinates are initialized to the last point */
-    if(indev->driver->type == LV_INDEV_TYPE_POINTER) {
+    if(indev->driver.type == LV_INDEV_TYPE_POINTER) {
         data->point.x = indev->proc.types.pointer.act_point.x;
         data->point.y = indev->proc.types.pointer.act_point.y;
     }
     /*Similarly set at least the last key in case of the user doesn't set it on release*/
-    else if(indev->driver->type == LV_INDEV_TYPE_KEYPAD) {
+    else if(indev->driver.type == LV_INDEV_TYPE_KEYPAD) {
         data->key = indev->proc.types.keypad.last_key;
     }
     /*For compatibility assume that used button was enter (encoder push) */
-    else if(indev->driver->type == LV_INDEV_TYPE_ENCODER) {
+    else if(indev->driver.type == LV_INDEV_TYPE_ENCODER) {
         data->key = LV_KEY_ENTER;
+        data->enc_diff = 0;
     }
 
-    if(indev->driver->read_cb) {
-        INDEV_TRACE("calling indev_read_cb");
-        cont = indev->driver->read_cb(indev->driver, data);
+    if(indev->driver.read_cb) {
+        LV_LOG_TRACE("indev read started");
+        cont = indev->driver.read_cb(&indev->driver, data);
+        LV_LOG_TRACE("indev read finished");
     }
     else {
-        LV_LOG_WARN("indev_read_cb is not registered");
+        LV_LOG_WARN("indev function registered");
     }
 
     return cont;
