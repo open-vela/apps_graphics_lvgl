@@ -1,4 +1,4 @@
-# Kconfig file for LVGL v7.12.0-dev
+# Kconfig file for LVGL v7.11.0
 
 menu "LVGL configuration"
 
@@ -274,6 +274,7 @@ menu "LVGL configuration"
                 With complex image decoders (e.g. PNG or JPG) caching can
                 save the continuous open/decode of images.
                 However the opened images might consume additional RAM.
+                LV_IMG_CACHE_DEF_SIZE must be >= 1
     endmenu
 
     menu "Compiler Settings"
