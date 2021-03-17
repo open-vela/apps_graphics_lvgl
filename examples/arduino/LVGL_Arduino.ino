@@ -11,7 +11,11 @@ TFT_eSPI tft = TFT_eSPI(); /* TFT instance */
 static uint32_t screenWidth = 320;
 static uint32_t screenHeight = 240;
 
+<<<<<<< HEAD
+static lv_disp_buf_t disp_buf;
+=======
 static lv_draw_buf_t draw_buf;
+>>>>>>> xiaoxiang781216-disp
 static lv_color_t buf[screenWidth * 10];
 
 #if LV_USE_LOG != 0
@@ -103,7 +107,7 @@ void setup()
 
     /* Try an example from the lv_examples Arduino library
        make sure to include it as written above.
-    lv_ex_btn_1(); */
+    lv_example_btn_1(); */
 }
 
 void loop()
