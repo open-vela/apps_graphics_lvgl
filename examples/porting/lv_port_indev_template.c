@@ -68,8 +68,7 @@ static lv_indev_state_t encoder_state;
 
 void lv_port_indev_init(void)
 {
-    /**
-     * Here you will find example implementation of input devices supported by LittelvGL:
+    /* Here you will find example implementation of input devices supported by LittelvGL:
      *  - Touchpad
      *  - Mouse (with cursor support)
      *  - Keypad (supports GUI usage only with key)
@@ -126,10 +125,10 @@ void lv_port_indev_init(void)
     indev_drv.read_cb = keypad_read;
     indev_keypad = lv_indev_drv_register(&indev_drv);
 
-    /*Later you should create group(s) with `lv_group_t * group = lv_group_create()`,
-     *add objects to the group with `lv_group_add_obj(group, obj)`
-     *and assign this input device to group to navigate in it:
-     *`lv_indev_set_group(indev_keypad, group);`*/
+    /* Later you should create group(s) with `lv_group_t * group = lv_group_create()`,
+     * add objects to the group with `lv_group_add_obj(group, obj)`
+     * and assign this input device to group to navigate in it:
+     * `lv_indev_set_group(indev_keypad, group);` */
 
     /*------------------
      * Encoder
@@ -144,10 +143,10 @@ void lv_port_indev_init(void)
     indev_drv.read_cb = encoder_read;
     indev_encoder = lv_indev_drv_register(&indev_drv);
 
-    /*Later you should create group(s) with `lv_group_t * group = lv_group_create()`,
-     *add objects to the group with `lv_group_add_obj(group, obj)`
-     *and assign this input device to group to navigate in it:
-     *`lv_indev_set_group(indev_encoder, group);`*/
+    /* Later you should create group(s) with `lv_group_t * group = lv_group_create()`,
+     * add objects to the group with `lv_group_add_obj(group, obj)`
+     * and assign this input device to group to navigate in it:
+     * `lv_indev_set_group(indev_encoder, group);` */
 
     /*------------------
      * Button
@@ -184,7 +183,7 @@ static void touchpad_init(void)
     /*Your code comes here*/
 }
 
-/*Will be called by the library to read the touchpad*/
+/* Will be called by the library to read the touchpad */
 static bool touchpad_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
     static lv_coord_t last_x = 0;
@@ -227,13 +226,13 @@ static void touchpad_get_xy(lv_coord_t * x, lv_coord_t * y)
  * Mouse
  * -----------------*/
 
-/*Initialize your mouse*/
+/* Initialize your mouse */
 static void mouse_init(void)
 {
     /*Your code comes here*/
 }
 
-/*Will be called by the library to read the mouse*/
+/* Will be called by the library to read the mouse */
 static bool mouse_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
     /*Get the current x and y coordinates*/
@@ -271,13 +270,13 @@ static void mouse_get_xy(lv_coord_t * x, lv_coord_t * y)
  * Keypad
  * -----------------*/
 
-/*Initialize your keypad*/
+/* Initialize your keypad */
 static void keypad_init(void)
 {
     /*Your code comes here*/
 }
 
-/*Will be called by the library to read the mouse*/
+/* Will be called by the library to read the mouse */
 static bool keypad_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
     static uint32_t last_key = 0;
@@ -332,13 +331,13 @@ static uint32_t keypad_get_key(void)
  * Encoder
  * -----------------*/
 
-/*Initialize your keypad*/
+/* Initialize your keypad */
 static void encoder_init(void)
 {
     /*Your code comes here*/
 }
 
-/*Will be called by the library to read the encoder*/
+/* Will be called by the library to read the encoder */
 static bool encoder_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
 
@@ -362,13 +361,13 @@ static void encoder_handler(void)
  * Button
  * -----------------*/
 
-/*Initialize your buttons*/
+/* Initialize your buttons */
 static void button_init(void)
 {
     /*Your code comes here*/
 }
 
-/*Will be called by the library to read the button*/
+/* Will be called by the library to read the button */
 static bool button_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
 
@@ -417,8 +416,8 @@ static bool button_is_pressed(uint8_t id)
     return false;
 }
 
-#else /*Enable this file at the top*/
+#else /* Enable this file at the top */
 
-/*This dummy typedef exists purely to silence -Wpedantic.*/
+/* This dummy typedef exists purely to silence -Wpedantic. */
 typedef int keep_pedantic_happy;
 #endif
