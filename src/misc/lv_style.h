@@ -134,12 +134,6 @@ typedef enum {
     LV_STYLE_PAD_ROW                 = 20 | LV_STYLE_PROP_LAYOUT_REFR,
     LV_STYLE_PAD_COLUMN              = 21 | LV_STYLE_PROP_LAYOUT_REFR,
 
-    LV_STYLE_WIDTH                   = 22 | LV_STYLE_PROP_LAYOUT_REFR,
-    LV_STYLE_HEIGHT                  = 23 | LV_STYLE_PROP_LAYOUT_REFR,
-    LV_STYLE_X                       = 24 | LV_STYLE_PROP_LAYOUT_REFR,
-    LV_STYLE_Y                       = 25 | LV_STYLE_PROP_LAYOUT_REFR,
-    LV_STYLE_LAYOUT                  = 26 | LV_STYLE_PROP_LAYOUT_REFR,
-
     /*Group 2*/
     LV_STYLE_BG_COLOR                = 32,
     LV_STYLE_BG_COLOR_FILTERED       = 32 | LV_STYLE_PROP_FILTER,
@@ -324,11 +318,11 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
  * @param style pointer to a style
  * @param prop  the ID of a property
  * @param value pointer to a `lv_style_value_t` variable to store the value
- * @return LV_RES_INV: the property wsn't found in the style (`value` is unchanged)
- *         LV_RES_OK: the property was fond, and `value` is set accordingly
+ * @return false: the property wsn't found in the style (`value` is unchanged)
+ *         true: the property was fond, and `value` is set accordingly
  * @note For performance reasons there are no sanity check on `style`
  */
-lv_res_t lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value);
+bool lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value);
 
 
 /**
@@ -336,14 +330,14 @@ lv_res_t lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_va
  * @param style pointer to a style
  * @param prop  the ID of a property
  * @param value pointer to a `lv_style_value_t` variable to store the value
- * @return LV_RES_INV: the property wsn't found in the style (`value` is unchanged)
- *         LV_RES_OK: the property was fond, and `value` is set accordingly
+ * @return false: the property wsn't found in the style (`value` is unchanged)
+ *         true: the property was fond, and `value` is set accordingly
  * @note For performance reasons there are no sanity check on `style`
  * @note This function is the same as ::lv_style_get_prop but inlined. Use it only on performance critical places
  */
-static inline lv_res_t lv_style_get_prop_inlined(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+static inline bool lv_style_get_prop_inlined(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
 {
-    if(style->prop_cnt == 0) return LV_RES_INV;
+    if(style->prop_cnt == 0) return false;
 
     if(style->prop_cnt > 1) {
         uint8_t * tmp = style->v_p.values_and_props + style->prop_cnt * sizeof(lv_style_value_t);
@@ -353,14 +347,14 @@ static inline lv_res_t lv_style_get_prop_inlined(lv_style_t * style, lv_style_pr
             if(props[i] == prop) {
                 lv_style_value_t * values = (lv_style_value_t *)style->v_p.values_and_props;
                 *value = values[i];
-                return LV_RES_OK;
+                return true;
             }
         }
     } else if(style->prop1 == prop) {
         *value = style->v_p.value1;
         return true;
     }
-    return LV_RES_INV;
+    return false;
 }
 
 /**
