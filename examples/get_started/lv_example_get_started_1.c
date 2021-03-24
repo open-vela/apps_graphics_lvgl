@@ -1,5 +1,5 @@
 #include "../../lvgl.h"
-#if LV_BUILD_EXAMPLES && LV_USE_BTN
+#if LV_BUILD_EXAMPLES
 
 static void btn_event_cb(lv_obj_t * btn, lv_event_t event)
 {
