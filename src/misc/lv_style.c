@@ -188,7 +188,7 @@ void lv_style_set_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_
     style->has_group |= 1 << group;
 }
 
-bool lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
+lv_res_t lv_style_get_prop(lv_style_t * style, lv_style_prop_t prop, lv_style_value_t * value)
 {
    return lv_style_get_prop_inlined(style, prop, value);
 }
@@ -221,7 +221,6 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
         case LV_STYLE_SHADOW_OPA:
         case LV_STYLE_LINE_OPA:
         case LV_STYLE_ARC_OPA:
-        case LV_STYLE_CONTENT_OPA:
             value.num = LV_OPA_COVER;
             break;
         case LV_STYLE_BG_GRAD_STOP:
@@ -231,7 +230,6 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
             value.num = LV_BORDER_SIDE_FULL;
             break;
         case LV_STYLE_TEXT_FONT:
-        case LV_STYLE_CONTENT_FONT:
             value.ptr = LV_FONT_DEFAULT;
             break;
         case LV_STYLE_SIZE:

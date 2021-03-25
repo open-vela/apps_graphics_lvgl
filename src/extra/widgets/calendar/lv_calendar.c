@@ -23,7 +23,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void my_constructor(lv_obj_t * obj, const lv_obj_t * copy);
+static void my_constructor(lv_obj_t * obj);
 static void draw_event_cb(lv_obj_t * obj, lv_event_t e);
 
 static uint8_t get_day_of_week(uint32_t year, uint32_t month, uint32_t day);
@@ -53,7 +53,7 @@ static const char * day_names_def[7] = LV_CALENDAR_DEFAULT_DAY_NAMES;
 
 lv_obj_t * lv_calendar_create(lv_obj_t * parent)
 {
-    lv_obj_t * obj = lv_obj_create_from_class(&lv_calendar_class, parent, NULL);
+    lv_obj_t * obj = lv_obj_create_from_class(&lv_calendar_class, parent);
 
     return obj;
 }
@@ -204,9 +204,8 @@ bool lv_calendar_get_pressed_date(const lv_obj_t * obj, lv_calendar_date_t * dat
  *  STATIC FUNCTIONS
  **********************/
 
-static void my_constructor(lv_obj_t * obj, const lv_obj_t * copy)
+static void my_constructor(lv_obj_t * obj)
 {
-    LV_UNUSED(copy);
     lv_calendar_t * calendar = (lv_calendar_t *)obj;
 
     /*Initialize the allocated 'ext'*/
@@ -221,7 +220,7 @@ static void my_constructor(lv_obj_t * obj, const lv_obj_t * copy)
     calendar->highlighted_dates      = NULL;
     calendar->highlighted_dates_num  = 0;
 
-    lv_obj_set_size(obj, LV_DPX(240), LV_DPX(240));
+    lv_obj_set_size(obj, LV_DPX(180), LV_DPX(180));
 
     lv_memset_00(calendar->nums, sizeof(calendar->nums));
     uint8_t i;
