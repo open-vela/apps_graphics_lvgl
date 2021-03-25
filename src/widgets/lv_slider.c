@@ -31,7 +31,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_slider_constructor(lv_obj_t * obj, const lv_obj_t * copy);
+static void lv_slider_constructor(lv_obj_t * obj);
 static void lv_slider_event(lv_obj_t * obj, lv_event_t e);
 static void position_knob(lv_obj_t * obj, lv_area_t * knob_area, lv_coord_t knob_size, bool hor);
 static void draw_knob(lv_obj_t * obj);
@@ -55,10 +55,10 @@ const lv_obj_class_t lv_slider_class = {
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_obj_t * lv_slider_create(lv_obj_t * parent, const lv_obj_t * copy)
+lv_obj_t * lv_slider_create(lv_obj_t * parent)
 {
     LV_LOG_INFO("begin")
-    return lv_obj_create_from_class(&lv_slider_class, parent, copy);
+    return lv_obj_create_from_class(&lv_slider_class, parent);
 }
 
 bool lv_slider_is_dragged(const lv_obj_t * obj)
@@ -73,7 +73,7 @@ bool lv_slider_is_dragged(const lv_obj_t * obj)
  *   STATIC FUNCTIONS
  **********************/
 
-static void lv_slider_constructor(lv_obj_t * obj, const lv_obj_t * copy)
+static void lv_slider_constructor(lv_obj_t * obj)
 {
     lv_slider_t * slider = (lv_slider_t *)obj;
 
@@ -82,18 +82,10 @@ static void lv_slider_constructor(lv_obj_t * obj, const lv_obj_t * copy)
     slider->dragging = 0;
     slider->left_knob_focus = 0;
 
-    /*Init the new slider slider*/
-    if(copy == NULL) {
-        lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN);
-        lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_ext_click_area(obj, LV_DPX(8));
-        lv_obj_set_height(obj, LV_DPX(10));
-    } else {
-        lv_slider_t * copy_slider = (lv_slider_t * ) copy;
-        lv_area_copy(&slider->left_knob_area, &copy_slider->left_knob_area);
-        lv_area_copy(&slider->right_knob_area, &copy_slider->right_knob_area);
-    }
-
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_ext_click_area(obj, LV_DPX(8));
+    lv_obj_set_height(obj, LV_DPX(10));
 }
 
 static void lv_slider_event(lv_obj_t * obj, lv_event_t e)
@@ -105,7 +97,7 @@ static void lv_slider_event(lv_obj_t * obj, lv_event_t e)
     if(res != LV_RES_OK) return;
 
     lv_slider_t * slider = (lv_slider_t *)obj;
-    lv_slider_type_t type = lv_slider_get_type(obj);
+    lv_slider_mode_t type = lv_slider_get_mode(obj);
 
     /*Advanced hit testing: react only on dragging the knob(s)*/
     if(e == LV_EVENT_HIT_TEST) {
@@ -115,17 +107,17 @@ static void lv_slider_event(lv_obj_t * obj, lv_event_t e)
         info->result = _lv_area_is_point_on(&slider->right_knob_area, info->point, 0);
 
         /*There's still a change we have a hit, if we have another knob*/
-        if((info->result == false) && (type == LV_SLIDER_TYPE_RANGE)) {
+        if((info->result == false) && (type == LV_SLIDER_MODE_RANGE)) {
             info->result = _lv_area_is_point_on(&slider->left_knob_area, info->point, 0);
         }
     }
     else if(e == LV_EVENT_PRESSED) {
         lv_point_t p;
         slider->dragging = true;
-        if(type == LV_SLIDER_TYPE_NORMAL || type == LV_SLIDER_TYPE_SYMMETRICAL) {
+        if(type == LV_SLIDER_MODE_NORMAL || type == LV_SLIDER_MODE_SYMMETRICAL) {
             slider->value_to_set = &slider->bar.cur_value;
         }
-        else if(type == LV_SLIDER_TYPE_RANGE) {
+        else if(type == LV_SLIDER_MODE_RANGE) {
             lv_indev_get_point(lv_indev_get_act(), &p);
             bool hor = lv_obj_get_width(obj) >= lv_obj_get_height(obj);
             lv_bidi_dir_t base_dir = lv_obj_get_base_dir(obj);
@@ -249,7 +241,7 @@ static void lv_slider_event(lv_obj_t * obj, lv_event_t e)
         lv_indev_type_t indev_type = lv_indev_get_type(lv_indev_get_act());
         if(indev_type == LV_INDEV_TYPE_ENCODER) {
             if(editing) {
-                if(lv_slider_get_type(obj) == LV_SLIDER_TYPE_RANGE) {
+                if(lv_slider_get_mode(obj) == LV_SLIDER_MODE_RANGE) {
                     if(slider->left_knob_focus == 0) slider->left_knob_focus = 1;
                     else {
                         slider->left_knob_focus = 0;
@@ -269,14 +261,8 @@ static void lv_slider_event(lv_obj_t * obj, lv_event_t e)
             slider->left_knob_focus = 0;
         }
     }
-    else if(e == LV_EVENT_COORD_CHANGED) {
-        /*The knob size depends on slider size.
-         *During the drawing method the obj. size is used by the knob so refresh the obj. size.*/
-        void * param = lv_event_get_param();
-        if(lv_obj_get_width(obj) != lv_area_get_width(param) ||
-           lv_obj_get_height(obj) != lv_area_get_height(param)) {
-            lv_obj_refresh_ext_draw_size(obj);
-        }
+    else if(e == LV_EVENT_SIZE_CHANGED) {
+        lv_obj_refresh_ext_draw_size(obj);
     }
     else if(e == LV_EVENT_REFR_EXT_DRAW_SIZE) {
         lv_coord_t knob_left = lv_obj_get_style_pad_left(obj, LV_PART_KNOB);
@@ -331,7 +317,7 @@ static void draw_knob(lv_obj_t * obj)
     bool hor = objw >= objh ? true : false;
     lv_coord_t knob_size = hor ? objh : objw;
     bool sym = false;
-    if(slider->bar.type == LV_BAR_TYPE_SYMMETRICAL && slider->bar.min_value < 0 && slider->bar.max_value > 0) sym = true;
+    if(slider->bar.mode == LV_BAR_MODE_SYMMETRICAL && slider->bar.min_value < 0 && slider->bar.max_value > 0) sym = true;
 
     lv_area_t knob_area;
 
@@ -378,7 +364,7 @@ static void draw_knob(lv_obj_t * obj)
 	dsc.draw_area = &slider->right_knob_area;
 	dsc.rect_dsc = &knob_rect_dsc;
 
-    if(lv_slider_get_type(obj) != LV_SLIDER_TYPE_RANGE) {
+    if(lv_slider_get_mode(obj) != LV_SLIDER_MODE_RANGE) {
 		lv_event_send(obj, LV_EVENT_DRAW_PART_BEGIN, &dsc);
 		lv_draw_rect(&slider->right_knob_area, clip_area, &knob_rect_dsc);
 		lv_event_send(obj, LV_EVENT_DRAW_PART_END, &dsc);

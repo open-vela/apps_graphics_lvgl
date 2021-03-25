@@ -20,7 +20,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void lv_tabview_constructor(lv_obj_t * obj, const lv_obj_t * copy);
+static void lv_tabview_constructor(lv_obj_t * obj);
 static void lv_tabview_destructor(lv_obj_t * obj);
 static void btns_event_cb(lv_obj_t * btns, lv_event_t e);
 static void cont_event_cb(lv_obj_t * cont, lv_event_t e);
@@ -49,7 +49,7 @@ lv_obj_t * lv_tabview_create(lv_obj_t * parent, lv_dir_t tab_pos, lv_coord_t tab
 {
     tabpos_create = tab_pos;
     tabsize_create = tab_size;
-    return lv_obj_create_from_class(&lv_tabview_class, parent, NULL);
+    return lv_obj_create_from_class(&lv_tabview_class, parent);
 }
 
 lv_obj_t * lv_tabview_add_tab(lv_obj_t * obj, const char * name)
@@ -57,7 +57,7 @@ lv_obj_t * lv_tabview_add_tab(lv_obj_t * obj, const char * name)
     lv_tabview_t * tabview = (lv_tabview_t *)obj;
     lv_obj_t * cont = lv_tabview_get_content(obj);
 
-    lv_obj_t * page = lv_obj_create(cont, NULL);
+    lv_obj_t * page = lv_obj_create(cont);
     lv_obj_clear_flag(page, LV_OBJ_FLAG_CLICK_FOCUSABLE);
     uint32_t tab_id = lv_obj_get_child_cnt(cont);
 
@@ -145,37 +145,34 @@ lv_obj_t * lv_tabview_get_tab_btns(lv_obj_t * tv)
  *   STATIC FUNCTIONS
  **********************/
 
-static void lv_tabview_constructor(lv_obj_t * obj, const lv_obj_t * copy)
+static void lv_tabview_constructor(lv_obj_t * obj)
 {
-    LV_UNUSED(copy);
     lv_tabview_t * tabview = (lv_tabview_t *)obj;
 
     tabview->tab_pos = tabpos_create;
-    lv_flex_init(&tabview->flex);
 
     switch(tabview->tab_pos) {
     case LV_DIR_TOP:
-        lv_flex_set_flow(&tabview->flex, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
         break;
     case LV_DIR_BOTTOM:
-        lv_flex_set_flow(&tabview->flex, LV_FLEX_FLOW_COLUMN_REVERSE);
+        lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN_REVERSE);
         break;
     case LV_DIR_LEFT:
-        lv_flex_set_flow(&tabview->flex, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_ROW);
         break;
     case LV_DIR_RIGHT:
-        lv_flex_set_flow(&tabview->flex, LV_FLEX_FLOW_ROW_REVERSE);
+        lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_ROW_REVERSE);
         break;
     }
 
     lv_obj_set_size(obj, LV_SIZE_PCT(100), LV_SIZE_PCT(100));
-    lv_obj_set_layout(obj, &tabview->flex);
 
     lv_obj_t * btnm;
     lv_obj_t * cont;
 
-    btnm = lv_btnmatrix_create(obj, NULL);
-    cont = lv_obj_create(obj, NULL);
+    btnm = lv_btnmatrix_create(obj);
+    cont = lv_obj_create(obj);
 
     lv_btnmatrix_set_one_checked(btnm, true);
     tabview->map = lv_mem_alloc(sizeof(const char *));
@@ -202,7 +199,7 @@ static void lv_tabview_constructor(lv_obj_t * obj, const lv_obj_t * copy)
          break;
      }
 
-    lv_obj_set_layout(cont, &lv_flex_row_nowrap);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
     lv_obj_set_scroll_snap_x(cont, LV_SCROLL_SNAP_CENTER);
     lv_obj_add_flag(cont, LV_OBJ_FLAG_SCROLL_ONE);
     lv_obj_clear_flag(cont, LV_OBJ_FLAG_SCROLL_ON_FOCUS);

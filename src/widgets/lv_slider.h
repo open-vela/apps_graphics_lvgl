@@ -34,11 +34,11 @@ extern "C" {
  **********************/
 
 enum {
-    LV_SLIDER_TYPE_NORMAL = LV_BAR_TYPE_NORMAL,
-    LV_SLIDER_TYPE_SYMMETRICAL = LV_BAR_TYPE_SYMMETRICAL,
-    LV_SLIDER_TYPE_RANGE = LV_BAR_TYPE_RANGE
+    LV_SLIDER_MODE_NORMAL = LV_BAR_MODE_NORMAL,
+    LV_SLIDER_MODE_SYMMETRICAL = LV_BAR_MODE_SYMMETRICAL,
+    LV_SLIDER_MODE_RANGE = LV_BAR_MODE_RANGE
 };
-typedef uint8_t lv_slider_type_t;
+typedef uint8_t lv_slider_mode_t;
 
 typedef struct {
     lv_bar_t bar;       /*Add the ancestor's type first*/
@@ -57,12 +57,10 @@ extern const lv_obj_class_t lv_slider_class;
 
 /**
  * Create a slider objects
- * @param parent    pointer to an object, it will be the parent of the new slider
- * @param copy      DEPRECATED, will be removed in v9.
- *                  Pointer to an other slider to copy.
+ * @param parent    pointer to an object, it will be the parent of the new slider.
  * @return          pointer to the created slider
  */
-lv_obj_t * lv_slider_create(lv_obj_t * parent, const lv_obj_t * copy);
+lv_obj_t * lv_slider_create(lv_obj_t * parent);
 
 /*=====================
  * Setter functions
@@ -102,13 +100,13 @@ static inline void lv_slider_set_range(lv_obj_t * obj, int16_t min, int16_t max)
 }
 
 /**
- * Set the type of slider.
+ * Set the mode of slider.
  * @param obj       pointer to a slider object
- * @param en        the type of the slider. See ::lv_slider_type_t
+ * @param mode      the mode of the slider. See ::lv_slider_mode_t
  */
-static inline void lv_slider_set_type(lv_obj_t * obj, lv_slider_type_t type)
+static inline void lv_slider_set_mode(lv_obj_t * obj, lv_slider_mode_t mode)
 {
-    lv_bar_set_type(obj, (lv_bar_type_t)type);
+    lv_bar_set_mode(obj, (lv_bar_mode_t)mode);
 }
 
 /*=====================
@@ -163,16 +161,16 @@ static inline int16_t lv_slider_get_max_value(const lv_obj_t * obj)
 bool lv_slider_is_dragged(const lv_obj_t * obj);
 
 /**
- * Get the type of the slider.
+ * Get the mode of the slider.
  * @param obj       pointer to a bar object
- * @return          see ::lv_slider_type_t
+ * @return          see ::lv_slider_mode_t
  */
-static inline lv_slider_type_t lv_slider_get_type(lv_obj_t * slider)
+static inline lv_slider_mode_t lv_slider_get_mode(lv_obj_t * slider)
 {
-    lv_bar_type_t type = lv_bar_get_type(slider);
-    if(type == LV_BAR_TYPE_SYMMETRICAL) return LV_SLIDER_TYPE_SYMMETRICAL;
-    else if(type == LV_BAR_TYPE_RANGE) return LV_SLIDER_TYPE_RANGE;
-    else return LV_SLIDER_TYPE_NORMAL;
+    lv_bar_mode_t mode = lv_bar_get_mode(slider);
+    if(mode == LV_BAR_MODE_SYMMETRICAL) return LV_SLIDER_MODE_SYMMETRICAL;
+    else if(mode == LV_BAR_MODE_RANGE) return LV_SLIDER_MODE_RANGE;
+    else return LV_SLIDER_MODE_NORMAL;
 }
 
 /**********************

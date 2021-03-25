@@ -223,6 +223,22 @@ void lv_obj_set_local_style_prop(lv_obj_t * obj, uint32_t part, uint32_t state, 
     lv_obj_refresh_style(obj, part, prop);
 }
 
+
+lv_res_t lv_obj_get_local_style_prop(lv_obj_t * obj, uint32_t part, uint32_t state, lv_style_prop_t prop, lv_style_value_t * value)
+{
+    uint32_t i;
+    for(i = 0; i < obj->style_cnt; i++) {
+        if(obj->styles[i].is_local &&
+           obj->styles[i].part == part &&
+           obj->styles[i].state == state)
+        {
+            return lv_style_get_prop(obj->styles[i].style, prop, value);
+        }
+    }
+
+    return LV_RES_INV;
+}
+
 bool lv_obj_remove_local_style_prop(lv_obj_t * obj, uint32_t part, uint32_t state, lv_style_prop_t prop)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -344,14 +360,6 @@ _lv_style_state_cmp_t _lv_obj_style_state_compare(lv_obj_t * obj, lv_state_t sta
             else if(lv_style_get_prop(style, LV_STYLE_SHADOW_OFS_Y, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
             else if(lv_style_get_prop(style, LV_STYLE_SHADOW_SPREAD, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
             else if(lv_style_get_prop(style, LV_STYLE_LINE_WIDTH, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_TEXT, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_OFS_X, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_OFS_Y, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_ALIGN, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_FONT, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_LINE_SPACE, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_LETTER_SPACE, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
-            else if(lv_style_get_prop(style, LV_STYLE_CONTENT_OPA, &v)) res = _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD;
             else {
                 if(res != _LV_STYLE_STATE_CMP_DIFF_DRAW_PAD) {
                     if((obj->styles[i].part == LV_PART_MAIN || obj->styles[i].part == LV_PART_SCROLLBAR)) {
@@ -416,6 +424,7 @@ static lv_style_t * get_local_style(lv_obj_t * obj, uint32_t part, uint32_t stat
 
     obj->style_cnt++;
     obj->styles = lv_mem_realloc(obj->styles, obj->style_cnt * sizeof(lv_obj_style_t));
+    LV_ASSERT_MALLOC(obj->styles);
 
     for(i = obj->style_cnt - 1; i > 0 ; i--) {
         /*Copy only normal styles (not local and transition).
