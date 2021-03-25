@@ -150,6 +150,48 @@ static inline void lv_style_set_pad_column(lv_style_t * style, lv_coord_t value)
     lv_style_set_prop(style, LV_STYLE_PAD_COLUMN, v);
 }
 
+static inline void lv_style_set_width(lv_style_t * style, lv_coord_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_WIDTH, v);
+}
+
+static inline void lv_style_set_height(lv_style_t * style, lv_coord_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_HEIGHT, v);
+}
+
+
+static inline void lv_style_set_x(lv_style_t * style, lv_coord_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_X, v);
+}
+
+static inline void lv_style_set_y(lv_style_t * style, lv_coord_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_Y, v);
+}
+
+
+static inline void lv_style_set_layout(lv_style_t * style, lv_coord_t value)
+{
+    lv_style_value_t v = {
+        .num = (int32_t)value
+    };
+    lv_style_set_prop(style, LV_STYLE_LAYOUT, v);
+}
+
 static inline void lv_style_set_bg_color(lv_style_t * style, lv_color_t value)
 {
     lv_style_value_t v = {
@@ -604,93 +646,5 @@ static inline void lv_style_set_arc_img_src(lv_style_t * style, const void * val
         .ptr = value
     };
     lv_style_set_prop(style, LV_STYLE_ARC_IMG_SRC, v);
-}
-
-static inline void lv_style_set_content_text(lv_style_t * style, const char * value)
-{
-    lv_style_value_t v = {
-        .ptr = value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_TEXT, v);
-}
-
-static inline void lv_style_set_content_align(lv_style_t * style, lv_align_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_ALIGN, v);
-}
-
-static inline void lv_style_set_content_ofs_x(lv_style_t * style, lv_coord_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_OFS_X, v);
-}
-
-static inline void lv_style_set_content_ofs_y(lv_style_t * style, lv_coord_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_OFS_Y, v);
-}
-
-static inline void lv_style_set_content_opa(lv_style_t * style, lv_opa_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_OPA, v);
-}
-
-static inline void lv_style_set_content_font(lv_style_t * style, const lv_font_t * value)
-{
-    lv_style_value_t v = {
-        .ptr = value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_FONT, v);
-}
-
-static inline void lv_style_set_content_color(lv_style_t * style, lv_color_t value)
-{
-    lv_style_value_t v = {
-        .color = value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_COLOR, v);
-}
-
-static inline void lv_style_set_content_color_filtered(lv_style_t * style, lv_color_t value)
-{
-    lv_style_value_t v = {
-        .color = value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_COLOR_FILTERED, v);
-}
-
-static inline void lv_style_set_content_letter_space(lv_style_t * style, lv_coord_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_LETTER_SPACE, v);
-}
-
-static inline void lv_style_set_content_line_space(lv_style_t * style, lv_coord_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_LINE_SPACE, v);
-}
-
-static inline void lv_style_set_content_decor(lv_style_t * style, lv_text_decor_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_CONTENT_DECOR, v);
 }
 
