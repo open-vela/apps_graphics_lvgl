@@ -346,7 +346,7 @@ static void obj_del_core(lv_obj_t * obj)
 
     /*Remove all style*/
     lv_obj_enable_style_refresh(false); /*No need to refresh the style because the object will be deleted*/
-    lv_obj_remove_style(obj, LV_PART_ANY, LV_STATE_ANY, NULL);
+    lv_obj_remove_style_all(obj);
     lv_obj_enable_style_refresh(true);
 
     /*Reset all input devices if the object to delete is used*/
@@ -370,29 +370,29 @@ static void obj_del_core(lv_obj_t * obj)
 
     /*Remove the screen for the screen list*/
     if(obj->parent == NULL) {
-        lv_disp_t * disp = lv_obj_get_disp(obj);
-        uint32_t i;
-        /*Find the screen in the list*/
-        for(i = 0; i < disp->screen_cnt; i++) {
-            if(disp->screens[i] == obj) break;
-        }
+    	lv_disp_t * disp = lv_obj_get_disp(obj);
+		uint32_t i;
+		/*Find the screen in the list*/
+		for(i = 0; i < disp->screen_cnt; i++) {
+			if(disp->screens[i] == obj) break;
+		}
 
-        uint32_t id = i;
-        for(i = id; i < disp->screen_cnt - 1; i++) {
-            disp->screens[i] = disp->screens[i + 1];
-        }
-        disp->screen_cnt--;
-        disp->screens = lv_mem_realloc(disp->screens, disp->screen_cnt * sizeof(lv_obj_t *));
+		uint32_t id = i;
+		for(i = id; i < disp->screen_cnt - 1; i++) {
+			disp->screens[i] = disp->screens[i + 1];
+		}
+		disp->screen_cnt--;
+		disp->screens = lv_mem_realloc(disp->screens, disp->screen_cnt * sizeof(lv_obj_t *));
     }
     /*Remove the object from the child list of its parent*/
     else {
-        uint32_t id = lv_obj_get_child_id(obj);
-        uint32_t i;
-        for(i = id; i < obj->parent->spec_attr->child_cnt - 1; i++) {
-            obj->parent->spec_attr->children[i] = obj->parent->spec_attr->children[i + 1];
-        }
-        obj->parent->spec_attr->child_cnt--;
-        obj->parent->spec_attr->children = lv_mem_realloc(obj->parent->spec_attr->children, obj->parent->spec_attr->child_cnt * sizeof(lv_obj_t *));
+		uint32_t id = lv_obj_get_child_id(obj);
+		uint32_t i;
+		for(i = id; i < obj->parent->spec_attr->child_cnt - 1; i++) {
+			obj->parent->spec_attr->children[i] = obj->parent->spec_attr->children[i + 1];
+		}
+		obj->parent->spec_attr->child_cnt--;
+		obj->parent->spec_attr->children = lv_mem_realloc(obj->parent->spec_attr->children, obj->parent->spec_attr->child_cnt * sizeof(lv_obj_t *));
     }
 
     /*Free the object itself*/
