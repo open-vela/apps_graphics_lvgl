@@ -240,14 +240,14 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
     static lv_obj_t * perf_label = NULL;
     if(perf_label == NULL) {
         perf_label = lv_label_create(lv_layer_sys());
-        lv_obj_set_style_bg_opa(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
-        lv_obj_set_style_bg_color(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, lv_color_black());
-        lv_obj_set_style_text_color(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, lv_color_white());
-        lv_obj_set_style_pad_top(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_bottom(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_left(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_right(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_text_align(perf_label, LV_PART_MAIN, LV_STATE_DEFAULT, LV_TEXT_ALIGN_RIGHT);
+        lv_obj_set_style_bg_opa(perf_label, LV_OPA_50, 0);
+        lv_obj_set_style_bg_color(perf_label, lv_color_black(), 0);
+        lv_obj_set_style_text_color(perf_label, lv_color_white(), 0);
+        lv_obj_set_style_pad_top(perf_label, 3, 0);
+        lv_obj_set_style_pad_bottom(perf_label, 3, 0);
+        lv_obj_set_style_pad_left(perf_label, 3, 0);
+        lv_obj_set_style_pad_right(perf_label, 3, 0);
+        lv_obj_set_style_text_align(perf_label, LV_TEXT_ALIGN_RIGHT, 0);
         lv_label_set_text(perf_label, "?");
         lv_obj_align(perf_label, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
     }
@@ -284,13 +284,13 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
     static lv_obj_t * mem_label = NULL;
     if(mem_label == NULL) {
         mem_label = lv_label_create(lv_layer_sys());
-        lv_obj_set_style_bg_opa(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
-        lv_obj_set_style_bg_color(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, lv_color_black());
-        lv_obj_set_style_text_color(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, lv_color_white());
-        lv_obj_set_style_pad_top(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_bottom(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_left(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
-        lv_obj_set_style_pad_right(mem_label, LV_PART_MAIN, LV_STATE_DEFAULT, 3);
+        lv_obj_set_style_bg_opa(mem_label, LV_OPA_50, 0);
+        lv_obj_set_style_bg_color(mem_label, lv_color_black(), 0);
+        lv_obj_set_style_text_color(mem_label, lv_color_white(), 0);
+        lv_obj_set_style_pad_top(mem_label, 3, 0);
+        lv_obj_set_style_pad_bottom(mem_label, 3, 0);
+        lv_obj_set_style_pad_left(mem_label, 3, 0);
+        lv_obj_set_style_pad_right(mem_label, 3, 0);
         lv_label_set_text(mem_label, "?");
         lv_obj_align(mem_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     }
@@ -751,7 +751,7 @@ static void draw_buf_rotate_180(lv_disp_drv_t *drv, lv_area_t *area, lv_color_t 
 }
 
 static LV_ATTRIBUTE_FAST_MEM void draw_buf_rotate_90(bool invert_i, lv_coord_t area_w, lv_coord_t area_h, lv_color_t *orig_color_p, lv_color_t *rot_buf) {
-
+    
     uint32_t invert = (area_w * area_h) - 1;
     uint32_t initial_i = ((area_w - 1) * area_h);
     for(lv_coord_t y = 0; y < area_h; y++) {
@@ -823,7 +823,7 @@ static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
         call_flush_cb(drv, area, color_p);
     } else if(drv->rotated == LV_DISP_ROT_90 || drv->rotated == LV_DISP_ROT_270) {
         /*Allocate a temporary buffer to store rotated image*/
-        lv_color_t * rot_buf = NULL;
+        lv_color_t * rot_buf = NULL; 
         lv_disp_draw_buf_t * draw_buf = lv_disp_get_draw_buf(disp_refr);
         lv_coord_t area_w = lv_area_get_width(area);
         lv_coord_t area_h = lv_area_get_height(area);
@@ -862,7 +862,7 @@ static void draw_buf_rotate(lv_area_t *area, lv_color_t *color_p) {
                 /*Rotate other areas using a maximum buffer size*/
                 if(rot_buf == NULL) rot_buf = lv_mem_buf_get(LV_DISP_ROT_MAX_BUF);
                 draw_buf_rotate_90(drv->rotated == LV_DISP_ROT_270, area_w, height, color_p, rot_buf);
-
+                
                 if(drv->rotated == LV_DISP_ROT_90) {
                     area->x1 = init_y_off + row;
                     area->x2 = init_y_off + row + height - 1;
