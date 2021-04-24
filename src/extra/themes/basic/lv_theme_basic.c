@@ -18,10 +18,10 @@
  *********************/
 
 #define COLOR_WHITE   lv_color_white()
-#define COLOR_LIGHT   lv_color_grey_lighten_3()
-#define COLOR_MID     lv_color_grey_lighten_1()
-#define COLOR_DARK    lv_color_grey()
-#define COLOR_DIM     lv_color_grey_darken_2()
+#define COLOR_LIGHT   lv_palette_lighten(LV_PALETTE_GREY, 3)
+#define COLOR_MID     lv_palette_lighten(LV_PALETTE_GREY, 1)
+#define COLOR_DARK    lv_palette_main(LV_PALETTE_GREY)
+#define COLOR_DIM     lv_palette_darken(LV_PALETTE_GREY, 2)
 #define PAD_DEF       LV_DPX(5)
 
 /**********************
@@ -79,7 +79,7 @@ static void style_init(void)
 {
     style_init_reset(&styles->scrollbar);
     lv_style_set_bg_opa(&styles->scrollbar, LV_OPA_COVER);
-    lv_style_set_bg_color(&styles->scrollbar, lv_color_grey_darken_2());
+    lv_style_set_bg_color(&styles->scrollbar, lv_palette_darken(LV_PALETTE_GREY, 2));
     lv_style_set_width(&styles->scrollbar,  PAD_DEF);
 
     style_init_reset(&styles->scr);
@@ -100,6 +100,8 @@ static void style_init(void)
     lv_style_set_line_color(&styles->light, COLOR_MID);
     lv_style_set_arc_width(&styles->light, LV_DPX(2));
     lv_style_set_arc_color(&styles->light, COLOR_MID);
+    lv_style_set_width(&styles->light, 100);
+    lv_style_set_height(&styles->light, 60);
 
 
     style_init_reset(&styles->dark);
@@ -113,6 +115,8 @@ static void style_init(void)
     lv_style_set_line_color(&styles->dark, COLOR_DIM);
     lv_style_set_arc_width(&styles->dark, LV_DPX(2));
     lv_style_set_arc_color(&styles->dark, COLOR_DIM);
+    lv_style_set_width(&styles->dark, 100);
+    lv_style_set_height(&styles->dark, 60);
 
     static lv_color_filter_dsc_t dark_filter;
     lv_color_filter_dsc_init(&dark_filter, dark_color_filter_cb);
@@ -159,8 +163,8 @@ lv_theme_t * lv_theme_basic_init(lv_disp_t * disp)
     }
 
     theme.disp = disp;
-    theme.palette_primary = LV_COLOR_PALETTE_NONE;
-    theme.palette_secondary = LV_COLOR_PALETTE_NONE;
+    theme.palette_primary = LV_PALETTE_NONE;
+    theme.palette_secondary = LV_PALETTE_NONE;
     theme.font_small = LV_FONT_DEFAULT;
     theme.font_normal = LV_FONT_DEFAULT;
     theme.font_large = LV_FONT_DEFAULT;
