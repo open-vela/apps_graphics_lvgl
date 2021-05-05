@@ -362,10 +362,7 @@ static void children_repos(lv_obj_t * cont, flex_t * f, int32_t item_first_id, i
         if(grow_size) {
             lv_coord_t s = 0;
             for(i = 0; i < t->grow_item_cnt; i++) {
-                if(t->grow_dsc[i].item == item) {
-                    s = t->grow_dsc[i].final_size;
-                    break;
-                }
+                if(t->grow_dsc[i].item == item) s = t->grow_dsc[i].final_size;
             }
             lv_area_t old_coords;
             lv_area_copy(&old_coords, &item->coords);
