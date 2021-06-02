@@ -3,8 +3,6 @@
     Copyright (c) 2007-21 Mike Karlesky, Mark VanderVoord, Greg Williams
     [Released under MIT License. Please refer to license.txt for details]
 ========================================== */
-#if LV_BUILD_TEST
-#define UNITY_INCLUDE_PRINT_FORMATTED 1
 
 #ifndef UNITY_FRAMEWORK_H
 #define UNITY_FRAMEWORK_H
@@ -661,8 +659,3 @@ void verifyTest(void);
 }
 #endif
 #endif
-
-
-#include "unity_support.h"
-
-#endif /*LV_BUILD_TEST*/
