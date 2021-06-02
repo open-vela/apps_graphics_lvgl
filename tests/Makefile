@@ -4,7 +4,6 @@
 CC ?= gcc
 LVGL_DIR ?= ${shell pwd}/../..
 LVGL_DIR_NAME ?= lvgl
-OBJDIR = objs
 
 WARNINGS = -Werror -Wall -Wextra \
            -Wshadow -Wundef -Wmaybe-uninitialized -Wmissing-prototypes -Wpointer-arith -Wuninitialized \
@@ -26,11 +25,7 @@ include ../lvgl.mk
 
 CSRCS += ${TEST_SRC}
 CSRCS += unity/unity.c
-CSRCS += unity/unity_support.c
 CSRCS += lv_test_init.c
-CSRCS += src/test_fonts/font_1.c
-CSRCS += src/test_fonts/font_2.c
-CSRCS += src/test_fonts/font_3.c
 
 OBJEXT ?= .o
 
@@ -46,13 +41,12 @@ OBJS = $(AOBJS) $(COBJS)
 
 all: default
 
-$(OBJDIR)/%.o: %.c
-	@$(CC)  $(CFLAGS) -c -o $@ $<
-	@echo "CC $<"	
+%.o: %.c
+	@$(CC)  $(CFLAGS) -c $< -o $@
+	@echo "CC $<"
 
 default: $(AOBJS) $(COBJS) $(MAINOBJ)
 	$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
 
 clean:
-	find . -type f -name '*.o' -exec rm -f {} +
-	rm -f $(BIN) 
+	rm -f $(BIN) $(AOBJS) $(COBJS) $(MAINOBJ)

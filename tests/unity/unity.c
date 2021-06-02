@@ -3,8 +3,7 @@
     Copyright (c) 2007-21 Mike Karlesky, Mark VanderVoord, Greg Williams
     [Released under MIT License. Please refer to license.txt for details]
 ============================================================================ */
-#if LV_BUILD_TEST
-#define UNITY_INCLUDE_PRINT_FORMATTED   1
+
 #include "unity.h"
 #include <stddef.h>
 
@@ -2109,5 +2108,3 @@ int UnityTestMatches(void)
 
 #endif /* UNITY_USE_COMMAND_LINE_ARGS */
 /*-----------------------------------------------*/
-#endif /*LV_BUILD_TEST*/
-

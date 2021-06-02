@@ -91,7 +91,7 @@ static void hal_init(void)
 {
     static lv_disp_draw_buf_t draw_buf;
 
-    lv_disp_draw_buf_init(&draw_buf, disp_buf1, NULL, HOR_RES * VER_RES);
+    lv_disp_draw_buf_init(&draw_buf, disp_buf1, NULL, LV_HOR_RES * LV_VER_RES);
 
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
@@ -113,6 +113,7 @@ static void hal_init(void)
 
     lv_fs_drv_register(&drv);                 /*Finally register the drive*/
 }
+#include <stdio.h>
 
 static void dummy_flush_cb(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
