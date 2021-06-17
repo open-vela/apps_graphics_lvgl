@@ -20,7 +20,6 @@
    event
    indev
    display
-   color
    font
    image
    file-system
