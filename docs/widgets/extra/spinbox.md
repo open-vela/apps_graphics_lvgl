@@ -20,6 +20,8 @@ The parts of the Spinbox are identiacl to the [Text area](/widgets/core/textarea
 
 `lv_spinbox_set_step(spinbox, 100)` sets which digits to change on increment/decrement. Only 10^n values values can be set, and not for example 3. 
 
+`lv_spinbox_set_pos(spinbox, 1)` sets the cursor to a specific digit to change on increment/decrement. For example position '0' sets the cursor to the least significant digit.
+
 ### Format
 
 `lv_spinbox_set_digit_format(spinbox, digit_count, separator_position)` sets the number format. `digit_count` is the number of digit excluding the decimal separator and the sign.
