@@ -55,7 +55,8 @@ void _lv_indev_scroll_handler(_lv_indev_proc_t * proc)
 
         init_scroll_limits(proc);
 
-        lv_event_send(scroll_obj, LV_EVENT_SCROLL_BEGIN, NULL);
+        lv_indev_t * indev_act = lv_indev_get_act();
+        lv_event_send(scroll_obj, LV_EVENT_SCROLL_BEGIN, indev_act);
         if(proc->reset_query) return;
     }
 
@@ -422,7 +423,7 @@ static lv_coord_t find_snap_point_x(const lv_obj_t * obj, lv_coord_t min, lv_coo
     for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
         lv_obj_t * child = lv_obj_get_child(obj, i);
         if(lv_obj_has_flag_any(child, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_FLOATING)) continue;
-        if(lv_obj_has_flag(child, LV_OBJ_FLAG_SNAPPABLE)) {
+        if(lv_obj_has_flag(child, LV_OBJ_FLAG_SNAPABLE)) {
             lv_coord_t x_child = 0;
             lv_coord_t x_parent = 0;
             switch(align) {
@@ -476,7 +477,7 @@ static lv_coord_t find_snap_point_y(const lv_obj_t * obj, lv_coord_t min, lv_coo
     for(i = 0; i < lv_obj_get_child_cnt(obj); i++) {
         lv_obj_t * child = lv_obj_get_child(obj, i);
         if(lv_obj_has_flag_any(child, LV_OBJ_FLAG_HIDDEN | LV_OBJ_FLAG_FLOATING)) continue;
-        if(lv_obj_has_flag(child, LV_OBJ_FLAG_SNAPPABLE)) {
+        if(lv_obj_has_flag(child, LV_OBJ_FLAG_SNAPABLE)) {
             lv_coord_t y_child = 0;
             lv_coord_t y_parent = 0;
             switch(align) {
