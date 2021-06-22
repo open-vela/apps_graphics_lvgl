@@ -14,18 +14,27 @@ WARNINGS = -Werror -Wall -Wextra \
 WARNINGS += -Wpedantic -pedantic-errors
 
 #-Wno-unused-value -Wno-unused-parameter
-OPTIMIZATION ?= -g0
+OPTIMIZATION ?= -O3 -g0
 
-CFLAGS ?= -I$(LVGL_DIR)/ --coverage -Iunity $(DEFINES) $(WARNINGS) $(OPTIMIZATION) -I$(LVGL_DIR) -I.
+CFLAGS ?= -I$(LVGL_DIR)/ $(DEFINES) $(WARNINGS) $(OPTIMIZATION) -I$(LVGL_DIR) -I.
 
-LDFLAGS ?=  -lpng --coverage 
-BIN ?= test
+LDFLAGS ?=  -lpng
+BIN ?= demo
+
+#Collect the files to compile
+MAINSRC = ./lv_test_main.c
 
 include ../lvgl.mk
 
-CSRCS += ${TEST_SRC}
-CSRCS += lv_test_init.c
-CSRCS := $(CSRCS) $(EXTRA_CSRCS)
+CSRCS += lv_test_assert.c
+CSRCS += lv_test_core/lv_test_core.c
+CSRCS += lv_test_core/lv_test_obj.c
+CSRCS += lv_test_core/lv_test_style.c
+CSRCS += lv_test_core/lv_test_font_loader.c
+CSRCS += lv_test_widgets/lv_test_label.c
+CSRCS += lv_test_fonts/font_1.c
+CSRCS += lv_test_fonts/font_2.c
+CSRCS += lv_test_fonts/font_3.c
 
 OBJEXT ?= .o
 
@@ -42,12 +51,11 @@ OBJS = $(AOBJS) $(COBJS)
 all: default
 
 %.o: %.c
-	@$(CC)  $(CFLAGS) -c -o $@ $<
-#	@echo "CC $<"	
+	@$(CC)  $(CFLAGS) -c $< -o $@
+	@echo "CC $<"
 
 default: $(AOBJS) $(COBJS) $(MAINOBJ)
 	$(CC) -o $(BIN) $(MAINOBJ) $(AOBJS) $(COBJS) $(LDFLAGS)
 
 clean:
-	find ../ -type f -name '*.o' -exec rm -f {} +
-	rm -f $(BIN) 
+	rm -f $(BIN) $(AOBJS) $(COBJS) $(MAINOBJ)
