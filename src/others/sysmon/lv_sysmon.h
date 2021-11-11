@@ -14,8 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 
-#include "../../misc/lv_timer.h"
-#include "../../others/observer/lv_observer.h"
+#include "../../../lvgl.h"
 
 #if LV_USE_SYSMON
 
@@ -30,38 +29,12 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-
 typedef struct {
-    lv_subject_t subject;
+    lv_label_t label;
     lv_timer_t * timer;
-} lv_sysmon_backend_data_t;
+} lv_sysmon_t;
 
-#if LV_USE_PERF_MONITOR
-typedef struct {
-    struct {
-        uint32_t refr_start;
-        uint32_t refr_interval_sum;
-        uint32_t refr_elaps_sum;
-        uint32_t refr_cnt;
-        uint32_t render_start;
-        uint32_t render_elaps_sum;
-        uint32_t render_cnt;
-        uint32_t flush_start;
-        uint32_t flush_elaps_sum;
-        uint32_t flush_cnt;
-    } measured;
-
-    struct {
-        uint32_t fps;
-        uint32_t cpu;
-        uint32_t refr_avg_time;
-        uint32_t render_avg_time;
-        uint32_t flush_avg_time;
-        uint32_t render_real_avg_time;
-    } calculated;
-
-} lv_sysmon_perf_info_t;
-#endif
+extern const lv_obj_class_t lv_sysmon_class;
 
 /**********************
  * GLOBAL PROTOTYPES
