@@ -14,4 +14,3 @@ Others
     imgfont
     ime_pinyin
     obj_id
-    obj_property

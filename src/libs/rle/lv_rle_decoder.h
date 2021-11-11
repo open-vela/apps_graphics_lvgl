@@ -1,10 +1,10 @@
 /**
- * @file lv_demo_render.h
+ * @file lv_rle_decoder.h
  *
  */
 
-#ifndef LV_DEMO_RENDER_H
-#define LV_DEMO_RENDER_H
+#ifndef LV_RLE_DECODER_H
+#define LV_RLE_DECODER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,9 +13,9 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_demos.h"
+#include "../../../lvgl.h"
 
-#if LV_USE_DEMO_RENDER
+#if LV_USE_RLE
 
 /*********************
  *      DEFINES
@@ -30,19 +30,18 @@ extern "C" {
  **********************/
 
 /**
- * Run the render verification for a scenario
- * @param idx   index of the scenario to run
+ * Register the RLE decoder functions in LVGL
  */
-void lv_demo_render(uint32_t idx);
+void lv_rle_decoder_init(void);
 
 /**********************
  *      MACROS
  **********************/
 
-#endif /*LV_USE_DEMO_RENDER*/
+#endif /*LV_USE_RLE*/
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /*LV_DEMO_RENDER_H*/
+#endif /*LV_RLE_DECODER_H*/
