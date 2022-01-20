@@ -43,21 +43,18 @@ PACK_BUILD=build/
 
 # alternative: specify directory names to be added to pack base directory
 PACK_DIRS="
-  ../src
-  ../docs
-  ../rt-thread
-  ../zephyr
-  ../cmake
-  ../demos
+  ../../src
+  ../../docs
+  ../../demos
 "
 
   
 # Specify file names to be added to pack base directory
 PACK_BASE_FILES="
-  ../LICENCE.txt
-  ../README.md
-  ../README_zh.md
-  ../lvgl.h
+  ../../LICENCE.txt
+  ../../README.md
+  ../../README_zh.md
+  ../../lvgl.h
   lv_conf_cmsis.h
   lv_cmsis_pack.txt
 "
@@ -144,7 +141,7 @@ mkdir -p ${PACK_BUILD}/examples/porting
 # Copy files into build base directory: $PACK_BUILD
 # pdsc file is mandatory in base directory:
 cp -f  ./$PACK_VENDOR.$PACK_NAME.pdsc ${PACK_BUILD}
-cp -f ../examples/porting/* ${PACK_BUILD}/examples/porting
+cp -f ../../examples/porting/* ${PACK_BUILD}/examples/porting
 
 
 # directories
