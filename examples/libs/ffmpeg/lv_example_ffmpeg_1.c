@@ -2,6 +2,7 @@
 #if LV_BUILD_EXAMPLES
 #if LV_USE_FFMPEG
 
+
 /**
  * Open an image from a file
  */

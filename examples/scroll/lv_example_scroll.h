@@ -32,6 +32,7 @@ void lv_example_scroll_4(void);
 void lv_example_scroll_5(void);
 void lv_example_scroll_6(void);
 
+
 /**********************
  *      MACROS
  **********************/
