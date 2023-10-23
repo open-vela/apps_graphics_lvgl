@@ -66,7 +66,7 @@ void lv_demo_keypad_encoder(void)
         }
     }
 
-    tv = lv_tabview_create(lv_screen_active());
+    tv = lv_tabview_create(lv_screen_active(), LV_DIR_TOP, LV_DPI_DEF / 3);
 
     t1 = lv_tabview_add_tab(tv, "Selectors");
     t2 = lv_tabview_add_tab(tv, "Text input");
@@ -195,7 +195,7 @@ static void msgbox_event_cb(lv_event_t * e)
 
 static void ta_event_cb(lv_event_t * e)
 {
-    lv_indev_t * indev = lv_indev_active();
+    lv_indev_t * indev = lv_indev_get_act();
     if(indev == NULL) return;
     lv_indev_type_t indev_type = lv_indev_get_type(indev);
 

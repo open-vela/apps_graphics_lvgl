@@ -36,8 +36,8 @@ static void anim_x_cb(void * var, int32_t v);
  */
 void lv_example_anim_3(void)
 {
-    static int32_t col_dsc[] = {LV_GRID_FR(1), 200, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-    static int32_t row_dsc[] = {30, 10, 10, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), 200, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t row_dsc[] = {30, 10, 10, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
 
     /*Create a container with grid*/
     lv_obj_t * cont = lv_obj_create(lv_screen_active());
@@ -64,7 +64,7 @@ void lv_example_anim_3(void)
 
 static int32_t anim_path_bezier3_cb(const lv_anim_t * a)
 {
-    uint32_t t = lv_map(a->act_time, 0, a->duration, 0, 1024);
+    uint32_t t = lv_map(a->act_time, 0, a->time, 0, 1024);
     int32_t step = lv_bezier3(t, 0, ginfo.p1, ginfo.p2, 1024);
     int32_t new_value;
     new_value = step * (a->end_value - a->start_value);

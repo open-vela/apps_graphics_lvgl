@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+
 #ifndef LV_VGLITE_UTILS_H
 #define LV_VGLITE_UTILS_H
 

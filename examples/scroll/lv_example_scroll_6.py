@@ -8,7 +8,7 @@ def scroll_event_cb(e):
 
     r = cont.get_height() * 7 // 10
 
-    child_cnt = cont.get_child_count()
+    child_cnt = cont.get_child_cnt()
     for i in range(child_cnt):
         child = cont.get_child(i)
         child_a = lv.area_t()
