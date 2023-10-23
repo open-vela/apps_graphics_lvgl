@@ -3,6 +3,7 @@
 
 static lv_obj_t * spinbox;
 
+
 static void lv_spinbox_increment_event_cb(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -19,6 +20,7 @@ static void lv_spinbox_decrement_event_cb(lv_event_t * e)
     }
 }
 
+
 void lv_example_spinbox_1(void)
 {
     spinbox = lv_spinbox_create(lv_screen_active());
@@ -28,7 +30,7 @@ void lv_example_spinbox_1(void)
     lv_obj_set_width(spinbox, 100);
     lv_obj_center(spinbox);
 
-    int32_t h = lv_obj_get_height(spinbox);
+    lv_coord_t h = lv_obj_get_height(spinbox);
 
     lv_obj_t * btn = lv_button_create(lv_screen_active());
     lv_obj_set_size(btn, h, h);

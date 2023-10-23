@@ -39,8 +39,9 @@ extern "C" {
 
 enum _lv_text_flag_t {
     LV_TEXT_FLAG_NONE    = 0x00,
-    LV_TEXT_FLAG_EXPAND  = 0x01, /**< Ignore max-width to avoid automatic word wrapping*/
-    LV_TEXT_FLAG_FIT     = 0x02, /**< Max-width is already equal to the longest line. (Used to skip some calculation)*/
+    LV_TEXT_FLAG_RECOLOR = 0x01, /**< Enable parsing of recolor command*/
+    LV_TEXT_FLAG_EXPAND  = 0x02, /**< Ignore max-width to avoid automatic word wrapping*/
+    LV_TEXT_FLAG_FIT     = 0x04, /**< Max-width is already equal to the longest line. (Used to skip some calculation)*/
 };
 
 #ifdef DOXYGEN
@@ -48,6 +49,7 @@ typedef _lv_text_flag_t lv_text_flag_t;
 #else
 typedef uint8_t lv_text_flag_t;
 #endif /*DOXYGEN*/
+
 
 /** Label align policy*/
 enum _lv_text_align_t {
@@ -62,6 +64,7 @@ typedef _lv_text_align_t lv_text_align_t;
 #else
 typedef uint8_t lv_text_align_t;
 #endif /*DOXYGEN*/
+
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -79,8 +82,8 @@ typedef uint8_t lv_text_align_t;
 
  * line breaks
  */
-void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font, int32_t letter_space,
-                      int32_t line_space, int32_t max_width, lv_text_flag_t flag);
+void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t * font, lv_coord_t letter_space,
+                      lv_coord_t line_space, lv_coord_t max_width, lv_text_flag_t flag);
 
 /**
  * Get the next line of text. Check line length and break chars too.
@@ -95,8 +98,8 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
  * @return the index of the first char of the new line (in byte index not letter index. With UTF-8
  * they are different)
  */
-uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font, int32_t letter_space,
-                                int32_t max_width, int32_t * used_width, lv_text_flag_t flag);
+uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font, lv_coord_t letter_space,
+                                lv_coord_t max_width, lv_coord_t * used_width, lv_text_flag_t flag);
 
 /**
  * Give the length of a text with a given font
@@ -107,7 +110,7 @@ uint32_t _lv_text_get_next_line(const char * txt, const lv_font_t * font, int32_
  * @param letter_space letter space
  * @return length of a char_num long text
  */
-int32_t lv_text_get_width(const char * txt, uint32_t length, const lv_font_t * font, int32_t letter_space);
+lv_coord_t lv_text_get_width(const char * txt, uint32_t length, const lv_font_t * font, lv_coord_t letter_space);
 
 /**
  * Insert a string into an other
@@ -167,6 +170,7 @@ static inline bool _lv_text_is_break_char(uint32_t letter)
     return ret;
 }
 
+
 /**
  * Test if char is break char or not (a text can broken here or not)
  * @param letter a letter
@@ -177,8 +181,8 @@ static inline bool _lv_text_is_a_word(uint32_t letter)
     /*Cheap check on invalid letter*/
     if(letter == 0) return false;
 
-    /*CJK Unified Ideographs*/
-    if(letter >= 0x4E00 && letter <= 0x9FFF) {
+    /*Chinese characters*/
+    if(letter >= 0x4E00 && letter <= 0x9FA5) {
         return true;
     }
 
@@ -189,31 +193,6 @@ static inline bool _lv_text_is_a_word(uint32_t letter)
 
     /*CJK symbols and punctuation*/
     if(letter >= 0x3000 && letter <= 0x303F) {
-        return true;
-    }
-
-    /*CJK Radicals Supplement*/
-    if(letter >= 0x2E80 && letter <= 0x2EFF) {
-        return true;
-    }
-
-    /*CJK Strokes*/
-    if(letter >= 0x31C0 && letter <= 0x31EF) {
-        return true;
-    }
-
-    /*Hiragana and Katakana*/
-    if(letter >= 0x3040 && letter <= 0x30FF) {
-        return true;
-    }
-
-    /*Chinese Vertical Forms*/
-    if(letter >= 0xFE10 && letter <= 0xFE1F) {
-        return true;
-    }
-
-    /*CJK Compatibility Forms*/
-    if(letter >= 0xFE30 && letter <= 0xFE4F) {
         return true;
     }
 

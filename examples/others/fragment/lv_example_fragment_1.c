@@ -37,6 +37,7 @@ void lv_example_fragment_1(void)
     lv_fragment_manager_replace(manager, fragment, &root);
 }
 
+
 static void sample_fragment_ctor(lv_fragment_t * self, void * args)
 {
     ((struct sample_fragment_t *) self)->name = args;

@@ -3,6 +3,7 @@
  *
  */
 
+
 /*********************
  *      INCLUDES
  *********************/
@@ -341,3 +342,4 @@ static lv_fs_res_t fs_dir_close(lv_fs_drv_t * drv, void * dir_p)
 #endif
 
 #endif /*LV_USE_FS_POSIX*/
+

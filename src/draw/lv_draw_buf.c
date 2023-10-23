@@ -11,6 +11,7 @@
 #include "../stdlib/lv_string.h"
 #include "../core/lv_global.h"
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -27,8 +28,8 @@ static void * buf_malloc(size_t size, lv_color_format_t color_format);
 static void buf_free(void * buf);
 static void * buf_align(void * buf, lv_color_format_t color_format);
 static uint32_t width_to_stride(uint32_t w, lv_color_format_t color_format);
-static void * buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, int32_t x,
-                           int32_t y);
+static void * buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, lv_coord_t x,
+                           lv_coord_t y);
 
 static void buf_clear(void * buf, uint32_t w, uint32_t h, lv_color_format_t color_format, const lv_area_t * a);
 
@@ -66,6 +67,7 @@ lv_draw_buf_handlers_t * lv_draw_buf_get_handlers(void)
     return &handlers;
 }
 
+
 uint32_t lv_draw_buf_width_to_stride(uint32_t w, lv_color_format_t color_format)
 {
     if(handlers.width_to_stride_cb) return handlers.width_to_stride_cb(w, color_format);
@@ -94,8 +96,8 @@ void lv_draw_buf_invalidate_cache(void * buf, uint32_t stride, lv_color_format_t
     if(handlers.invalidate_cache_cb) handlers.invalidate_cache_cb(buf, stride, color_format, area);
 }
 
-void * lv_draw_buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, int32_t x,
-                            int32_t y)
+void * lv_draw_buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, lv_coord_t x,
+                            lv_coord_t y)
 {
     if(handlers.go_to_xy_cb) return handlers.go_to_xy_cb(buf, stride, color_format, x, y);
     else return NULL;
@@ -105,6 +107,7 @@ void lv_draw_buf_clear(void * buf, uint32_t w, uint32_t h, lv_color_format_t col
 {
     if(handlers.buf_clear_cb) handlers.buf_clear_cb(buf, w, h, color_format, a);
 }
+
 
 void lv_draw_buf_copy(void * dest_buf, uint32_t dest_w, uint32_t dest_h, const lv_area_t * dest_area_to_copy,
                       void * src_buf,  uint32_t src_w, uint32_t src_h, const lv_area_t * src_area_to_copy,
@@ -118,6 +121,7 @@ void lv_draw_buf_copy(void * dest_buf, uint32_t dest_w, uint32_t dest_h, const l
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+
 
 static void * buf_malloc(size_t size_bytes, lv_color_format_t color_format)
 {
@@ -153,8 +157,8 @@ static uint32_t width_to_stride(uint32_t w, lv_color_format_t color_format)
     return (width_byte + LV_DRAW_BUF_STRIDE_ALIGN - 1) & ~(LV_DRAW_BUF_STRIDE_ALIGN - 1);
 }
 
-static void * buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, int32_t x,
-                           int32_t y)
+static void * buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, lv_coord_t x,
+                           lv_coord_t y)
 {
     const uint8_t * buf_tmp = buf;
     buf_tmp += stride * y;
@@ -177,7 +181,7 @@ static void buf_clear(void * buf, uint32_t w, uint32_t h, lv_color_format_t colo
     bufc += a->x1 * px_size;
 
     uint32_t line_length = lv_area_get_width(a) * px_size;
-    int32_t y;
+    lv_coord_t y;
     for(y = a->y1; y <= a->y2; y++) {
         lv_memzero(bufc, line_length);
         bufc += stride;
@@ -207,10 +211,11 @@ static void buf_copy(void * dest_buf, uint32_t dest_w, uint32_t dest_h, const lv
     src_bufc += src_area_to_copy->x1 * px_size;
 
     uint32_t line_length = lv_area_get_width(dest_area_to_copy) * px_size;
-    int32_t y;
+    lv_coord_t y;
     for(y = dest_area_to_copy->y1; y <= dest_area_to_copy->y2; y++) {
         lv_memcpy(dest_bufc, src_bufc, line_length);
         dest_bufc += dest_stride;
         src_bufc += src_stride;
     }
 }
+

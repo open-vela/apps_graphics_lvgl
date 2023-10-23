@@ -7,8 +7,8 @@ static lv_obj_t * active_screen = NULL;
 static lv_obj_t * line = NULL;
 
 static const uint16_t default_point_num = 0U;
-static const int32_t initial_extra_draw_size = 5U;
-static const int32_t final_extra_draw_size = 10U;
+static const lv_coord_t initial_extra_draw_size = 5U;
+static const lv_coord_t final_extra_draw_size = 10U;
 
 void setUp(void)
 {
@@ -41,18 +41,18 @@ void test_line_should_return_valid_y_invert(void)
 
 void test_line_size_should_be_updated_after_adding_points(void)
 {
-    static lv_point_precise_t points[] = { {5, 5} };
-    uint16_t point_cnt = (uint16_t) sizeof(points) / sizeof(lv_point_precise_t);
+    static lv_point_t points[] = { {5, 5} };
+    uint16_t point_cnt = (uint16_t) sizeof(points) / sizeof(lv_point_t);
     lv_line_set_points(line, points, point_cnt);
 
-    int32_t calculated_width = 0;
-    int32_t calculated_height = 0;
+    lv_coord_t calculated_width = 0;
+    lv_coord_t calculated_height = 0;
 
     /* Get the biggest coordinate on both axis */
     uint16_t point_idx = 0;
     for(point_idx = 0; point_idx < point_cnt; point_idx++) {
-        calculated_width = (int32_t)LV_MAX(points[point_idx].x, calculated_width);
-        calculated_height = (int32_t)LV_MAX(points[point_idx].y, calculated_height);
+        calculated_width = LV_MAX(points[point_idx].x, calculated_width);
+        calculated_height = LV_MAX(points[point_idx].y, calculated_height);
     }
 
     TEST_ASSERT_EQUAL_UINT16(calculated_width, lv_obj_get_self_width(line));
@@ -88,17 +88,19 @@ void test_line_should_update_extra_draw_size_based_on_style(void)
     TEST_ASSERT_EQUAL(final_extra_draw_size, _lv_obj_get_ext_draw_size(line));
 }
 
+
 void test_line_basic_render(void)
 {
-    static lv_point_precise_t points[] = { {5, 5},
+    static lv_point_t points[] = { {5, 5},
         {100, 5},    /*Horizontal*/
         {100, 100},  /*Vertical*/
         {120, 5},    /*Steep*/
         {200, 20},   /*Flat*/
     };
-    uint16_t point_cnt = (uint16_t) sizeof(points) / sizeof(lv_point_precise_t);
+    uint16_t point_cnt = (uint16_t) sizeof(points) / sizeof(lv_point_t);
     lv_line_set_points(line, points, point_cnt);
     lv_obj_set_pos(line, 10, 10);
+
 
     line = lv_line_create(active_screen);
     lv_line_set_points(line, points, point_cnt);
@@ -107,7 +109,7 @@ void test_line_basic_render(void)
     lv_obj_set_style_line_dash_gap(line, 3, LV_PART_MAIN);
     lv_obj_set_style_line_dash_width(line, 10, LV_PART_MAIN);
 
-    TEST_ASSERT_EQUAL_SCREENSHOT("widgets/line_1.png");
+    TEST_ASSERT_EQUAL_SCREENSHOT("line_1.png");
 }
 
 #endif

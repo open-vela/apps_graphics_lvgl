@@ -47,8 +47,9 @@ lv_obj_t * lv_obj_class_create_obj(const lv_obj_class_t * class_p, lv_obj_t * pa
 {
     LV_TRACE_OBJ_CREATE("Creating object with %p class on %p parent", (void *)class_p, (void *)parent);
     uint32_t s = get_instance_size(class_p);
-    lv_obj_t * obj = lv_malloc_zeroed(s);
+    lv_obj_t * obj = lv_malloc(s);
     if(obj == NULL) return NULL;
+    lv_memzero(obj, s);
     obj->class_p = class_p;
     obj->parent = parent;
 
@@ -178,6 +179,7 @@ static void lv_obj_construct(const lv_obj_class_t * class_p, lv_obj_t * obj)
         /*Restore the original class*/
         obj->class_p = original_class_p;
     }
+
 
     if(obj->class_p->constructor_cb) obj->class_p->constructor_cb(class_p, obj);
 }

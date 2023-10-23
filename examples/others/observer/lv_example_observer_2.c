@@ -18,6 +18,7 @@ void lv_example_observer_2(void)
     ui_init();
 }
 
+
 /*--------------------------------------------------
  * APPLICATION
  *

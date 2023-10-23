@@ -22,6 +22,7 @@ extern "C" {
 #error "lv_slider: lv_bar is required. Enable it in lv_conf.h (LV_USE_BAR 1)"
 #endif
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -41,6 +42,7 @@ typedef _lv_slider_mode_t lv_slider_mode_t;
 typedef uint8_t lv_slider_mode_t;
 #endif /*DOXYGEN*/
 
+
 typedef struct {
     lv_bar_t bar;       /*Add the ancestor's type first*/
     lv_area_t left_knob_area;
@@ -51,7 +53,7 @@ typedef struct {
     uint8_t left_knob_focus : 1; /*1: with encoder now the right knob can be adjusted*/
 } lv_slider_t;
 
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_slider_class;
+extern const lv_obj_class_t lv_slider_class;
 
 /**********************
  * GLOBAL PROTOTYPES
