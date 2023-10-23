@@ -67,6 +67,7 @@ void lv_obj_init_draw_label_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_l
  */
 void lv_obj_init_draw_image_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_image_dsc_t * draw_dsc);
 
+
 /**
  * Initialize a line draw descriptor from an object's styles in its current state
  * @param obj pointer to an object
@@ -91,7 +92,7 @@ void lv_obj_init_draw_arc_dsc(struct _lv_obj_t * obj, uint32_t part, lv_draw_arc
  * @param part      part of the object
  * @return          the extra size required around the object
  */
-int32_t lv_obj_calculate_ext_draw_size(struct _lv_obj_t * obj, uint32_t part);
+lv_coord_t lv_obj_calculate_ext_draw_size(struct _lv_obj_t * obj, uint32_t part);
 
 /**
  * Send a 'LV_EVENT_REFR_EXT_DRAW_SIZE' Call the ancestor's event handler to the object to refresh the value of the extended draw size.
@@ -105,7 +106,8 @@ void lv_obj_refresh_ext_draw_size(struct _lv_obj_t * obj);
  * @param obj       pointer to an object
  * @return          the size extended draw area around the real coordinates
  */
-int32_t _lv_obj_get_ext_draw_size(const struct _lv_obj_t * obj);
+lv_coord_t _lv_obj_get_ext_draw_size(const struct _lv_obj_t * obj);
+
 
 lv_layer_type_t _lv_obj_get_layer_type(const struct _lv_obj_t * obj);
 

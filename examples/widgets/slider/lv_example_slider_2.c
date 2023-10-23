@@ -1,6 +1,8 @@
 #include "../../lv_examples.h"
 #if LV_USE_SLIDER && LV_BUILD_EXAMPLES
 
+
+
 /**
  * Show how to style a slider.
  */

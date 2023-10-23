@@ -15,6 +15,7 @@ extern "C" {
  *********************/
 #include "../lv_conf_internal.h"
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -30,6 +31,7 @@ typedef struct {
     lv_layout_update_cb_t cb;
     void * user_data;
 } lv_layout_dsc_t;
+
 
 typedef enum {
     LV_LAYOUT_NONE = 0,
@@ -61,6 +63,7 @@ void _lv_layout_deinit(void);
  */
 uint32_t lv_layout_register(lv_layout_update_cb_t cb, void * user_data);
 
+
 /**
  * Update the layout of a widget
  * @param obj   pointer to a widget
@@ -78,6 +81,7 @@ void _lv_layout_apply(struct _lv_obj_t * obj);
 #if LV_USE_GRID
 #include "grid/lv_grid.h"
 #endif /* LV_USE_GRID */
+
 
 #ifdef __cplusplus
 } /*extern "C"*/

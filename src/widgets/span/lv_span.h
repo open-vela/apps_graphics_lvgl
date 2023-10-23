@@ -52,6 +52,7 @@ typedef _lv_span_mode_t lv_span_mode_t;
 typedef uint32_t lv_span_mode_t;
 #endif /*DOXYGEN*/
 
+
 typedef struct {
     char * txt;             /* a pointer to display text */
     lv_obj_t * spangroup;   /* a pointer to spangroup */
@@ -63,16 +64,16 @@ typedef struct {
 typedef struct {
     lv_obj_t obj;
     int32_t lines;
-    int32_t indent;      /* first line indent */
-    int32_t cache_w;     /* the cache automatically calculates the width */
-    int32_t cache_h;     /* similar cache_w */
+    lv_coord_t indent;      /* first line indent */
+    lv_coord_t cache_w;     /* the cache automatically calculates the width */
+    lv_coord_t cache_h;     /* similar cache_w */
     lv_ll_t  child_ll;
     uint32_t mode : 2;       /* details see lv_span_mode_t */
     uint32_t overflow : 1;   /* details see lv_span_overflow_t */
     uint32_t refresh : 1;    /* the spangroup need refresh cache_w and cache_h */
 } lv_spangroup_t;
 
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_spangroup_class;
+extern const lv_obj_class_t lv_spangroup_class;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -140,7 +141,7 @@ void lv_spangroup_set_overflow(lv_obj_t * obj, lv_span_overflow_t overflow);
  * @param obj pointer to a spangroup object.
  * @param indent The first line indentation
  */
-void lv_spangroup_set_indent(lv_obj_t * obj, int32_t indent);
+void lv_spangroup_set_indent(lv_obj_t * obj, lv_coord_t indent);
 
 /**
  * Set the mode of the spangroup.
@@ -179,7 +180,7 @@ lv_span_t * lv_spangroup_get_child(const lv_obj_t * obj, int32_t id);
  * @param obj   The spangroup object to get the child count of.
  * @return      The span count of the spangroup.
  */
-uint32_t lv_spangroup_get_child_count(const lv_obj_t * obj);
+uint32_t lv_spangroup_get_child_cnt(const lv_obj_t * obj);
 
 /**
  * get the align of the spangroup.
@@ -200,7 +201,7 @@ lv_span_overflow_t lv_spangroup_get_overflow(lv_obj_t * obj);
  * @param obj pointer to a spangroup object.
  * @return the indent value.
  */
-int32_t lv_spangroup_get_indent(lv_obj_t * obj);
+lv_coord_t lv_spangroup_get_indent(lv_obj_t * obj);
 
 /**
  * get the mode of the spangroup.
@@ -219,7 +220,7 @@ int32_t lv_spangroup_get_max_lines(lv_obj_t * obj);
  * get max line height of all span in the spangroup.
  * @param obj pointer to a spangroup object.
  */
-int32_t lv_spangroup_get_max_line_h(lv_obj_t * obj);
+lv_coord_t lv_spangroup_get_max_line_h(lv_obj_t * obj);
 
 /**
  * get the text content width when all span of spangroup on a line.
@@ -236,7 +237,8 @@ uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width);
  * @param width the width of the span group.
 
  */
-int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width);
+lv_coord_t lv_spangroup_get_expand_height(lv_obj_t * obj, lv_coord_t width);
+
 
 /*=====================
  * Other functions

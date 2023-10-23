@@ -9,6 +9,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+
 #ifndef LV_PXP_CFG_H
 #define LV_PXP_CFG_H
 

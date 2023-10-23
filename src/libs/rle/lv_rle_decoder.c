@@ -7,7 +7,9 @@
  * Decoder support both variable and file as image source.
  *
  * The original binary data is directly decompressed to ram, and decoded by
- * lvgl built-in decoder.
+ * lvgl built-in decoder. For true-color and true-color-with-alpha image format,
+ * the decoded data is directly used by lvgl via built-in decoder without
+ * additional ram cost.
  */
 
 /*********************
@@ -15,7 +17,6 @@
  *********************/
 #include <stdlib.h>
 #include "lv_rle_decoder.h"
-#include "../bin_decoder/lv_bin_decoder.h"
 
 #if LV_USE_RLE
 
@@ -53,8 +54,14 @@ typedef struct {
  **********************/
 static lv_res_t decoder_info(struct _lv_image_decoder_t * decoder,
                              const void * src, lv_image_header_t * header);
-static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc,
-                                const lv_image_decoder_args_t * args);
+static lv_res_t decoder_open(lv_image_decoder_t * dec,
+                             lv_image_decoder_dsc_t * dsc);
+#if 0
+static lv_res_t decoder_read_line(lv_image_decoder_t * decoder,
+                                  lv_image_decoder_dsc_t * dsc, lv_coord_t x,
+                                  lv_coord_t y, lv_coord_t len, uint8_t * buf);
+#endif
+
 static void decoder_close(lv_image_decoder_t * dec, lv_image_decoder_dsc_t * dsc);
 
 /**********************
@@ -74,6 +81,9 @@ void lv_rle_decoder_init(void)
     lv_image_decoder_t * dec = lv_image_decoder_create();
     lv_image_decoder_set_info_cb(dec, decoder_info);
     lv_image_decoder_set_open_cb(dec, decoder_open);
+#if 0
+    lv_image_decoder_set_read_line_cb(dec, decoder_read_line);
+#endif
     lv_image_decoder_set_close_cb(dec, decoder_close);
 }
 
@@ -242,6 +252,7 @@ static lv_res_t decoder_info(struct _lv_image_decoder_t * decoder,
             return LV_RES_INV;
         }
 
+        header->always_zero = 0;
         header->cf = img_dsc->header.cf;
         header->w = img_dsc->header.w;
         header->h = img_dsc->header.h;
@@ -301,7 +312,7 @@ static inline lv_res_t decode_from_file(lv_image_decoder_t * decoder,
         goto error_file;
     }
 
-    img_buf = lv_draw_buf_malloc(buf_len, header->cf);
+    img_buf = lv_malloc(buf_len);
     if(img_buf == NULL) {
         LV_LOG_ERROR("alloc img buf failed: %" LV_PRId32, buf_len);
         goto error_file;
@@ -452,10 +463,9 @@ static inline lv_res_t decode_from_variable(lv_image_decoder_t * decoder,
     return LV_RES_OK;
 }
 
-static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc,
-                                const lv_image_decoder_args_t * args)
+static lv_res_t decoder_open(lv_image_decoder_t * decoder,
+                             lv_image_decoder_dsc_t * dsc)
 {
-    LV_UNUSED(args);
     lv_fs_res_t res;
     lv_rle_file_header_t fileheader;
     lv_rle_decoder_data_t * data;
@@ -492,7 +502,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     data->decoder_dsc.src_type = LV_IMAGE_SRC_VARIABLE;
     data->decoder_dsc.src = &data->img_dsc;
 
-    res = lv_bin_decoder_open(decoder, &data->decoder_dsc, dsc->args);
+    res = lv_image_decoder_built_in_open(decoder, &data->decoder_dsc);
     if(res != LV_RES_OK) {
         lv_free(img_data);
         lv_free(data);
@@ -505,11 +515,25 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     return LV_RES_OK;
 }
 
+#if 0
+static lv_res_t decoder_read_line(lv_image_decoder_t * decoder,
+                                  lv_image_decoder_dsc_t * dsc, lv_coord_t x,
+                                  lv_coord_t y, lv_coord_t len, uint8_t * buf)
+{
+    lv_rle_decoder_data_t * data = dsc->user_data;
+    if(data == NULL)
+        return LV_RES_INV;
+
+    return lv_image_decoder_built_in_read_line(decoder, &data->decoder_dsc, x, y,
+                                             len, buf);
+}
+#endif
+
 static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
     if(dsc->user_data) {
         lv_rle_decoder_data_t * decoder_data = dsc->user_data;
-        lv_bin_decoder_close(decoder, &decoder_data->decoder_dsc);
+        lv_image_decoder_built_in_close(decoder, &decoder_data->decoder_dsc);
         if(decoder_data->img_dsc.data)
             lv_free((void *)decoder_data->img_dsc.data);
         lv_free(dsc->user_data);

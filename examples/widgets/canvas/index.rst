@@ -45,9 +45,3 @@ Draw a line to the canvas
 
 .. lv_example:: widgets/canvas/lv_example_canvas_7
   :language: c
-
-Draw a vector graphic to the canvas
--------------------------
-
-.. lv_example:: widgets/canvas/lv_example_canvas_8
-  :language: c

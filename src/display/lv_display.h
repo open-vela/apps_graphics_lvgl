@@ -63,6 +63,7 @@ typedef enum {
     LV_DISPLAY_RENDER_MODE_FULL,
 } lv_display_render_mode_t;
 
+
 typedef enum {
     LV_SCR_LOAD_ANIM_NONE,
     LV_SCR_LOAD_ANIM_OVER_LEFT,
@@ -82,8 +83,8 @@ typedef enum {
     LV_SCR_LOAD_ANIM_OUT_BOTTOM,
 } lv_screen_load_anim_t;
 
+
 typedef void (*lv_display_flush_cb_t)(struct _lv_display_t * disp, const lv_area_t * area, uint8_t * px_map);
-typedef void (*lv_display_flush_wait_cb_t)(struct _lv_display_t * disp);
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -95,13 +96,13 @@ typedef void (*lv_display_flush_wait_cb_t)(struct _lv_display_t * disp);
  * @param ver_res   vertical resolution in pixels
  * @return          pointer to a display object or `NULL` on error
  */
-lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res);
+lv_display_t * lv_display_create(lv_coord_t hor_res, lv_coord_t ver_res);
 
 /**
  * Remove a display
  * @param disp      pointer to display
  */
-void lv_display_delete(lv_display_t * disp);
+void lv_display_remove(lv_display_t * disp);
 
 /**
  * Set a default display. The new screens will be created on it by default.
@@ -134,7 +135,7 @@ lv_display_t * lv_display_get_next(lv_display_t * disp);
  * @param hor_res   the new horizontal resolution
  * @param ver_res   the new vertical resolution
  */
-void lv_display_set_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res);
+void lv_display_set_resolution(lv_display_t * disp, lv_coord_t hor_res, lv_coord_t ver_res);
 
 /**
  * It's not mandatory to use the whole display for LVGL, however in some cases physical resolution is important.
@@ -144,7 +145,7 @@ void lv_display_set_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver
  * @param hor_res   the new physical horizontal resolution, or -1 to assume it's the same as the normal hor. res.
  * @param ver_res   the new physical vertical resolution, or -1 to assume it's the same as the normal hor. res.
  */
-void lv_display_set_physical_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res);
+void lv_display_set_physical_resolution(lv_display_t * disp, lv_coord_t hor_res, lv_coord_t ver_res);
 
 /**
  * If physical resolution is not the same as the normal resolution
@@ -153,7 +154,7 @@ void lv_display_set_physical_resolution(lv_display_t * disp, int32_t hor_res, in
  * @param x         X offset
  * @param y         Y offset
  */
-void lv_display_set_offset(lv_display_t * disp, int32_t x, int32_t y);
+void lv_display_set_offset(lv_display_t * disp, lv_coord_t x, lv_coord_t y);
 
 /**
  * Set the rotation of this display. LVGL will swap the horizontal and vertical resolutions internally.
@@ -170,49 +171,49 @@ void lv_display_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation
  * @param disp      pointer to a display
  * @param dpi       the new DPI
  */
-void lv_display_set_dpi(lv_display_t * disp, int32_t dpi);
+void lv_display_set_dpi(lv_display_t * disp, lv_coord_t dpi);
 
 /**
  * Get the horizontal resolution of a display.
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          the horizontal resolution of the display.
  */
-int32_t lv_display_get_horizontal_resolution(const lv_display_t * disp);
+lv_coord_t lv_display_get_horizontal_resolution(const lv_display_t * disp);
 
 /**
  * Get the vertical resolution of a display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          the vertical resolution of the display
  */
-int32_t lv_display_get_vertical_resolution(const lv_display_t * disp);
+lv_coord_t lv_display_get_vertical_resolution(const lv_display_t * disp);
 
 /**
  * Get the physical horizontal resolution of a display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return the      physical horizontal resolution of the display
  */
-int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp);
+lv_coord_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp);
 
 /**
  * Get the physical vertical resolution of a display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          the physical vertical resolution of the display
  */
-int32_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp);
+lv_coord_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp);
 
 /**
  * Get the horizontal offset from the full / physical display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          the horizontal offset from the physical display
  */
-int32_t lv_display_get_offset_x(const lv_display_t * disp);
+lv_coord_t lv_display_get_offset_x(const lv_display_t * disp);
 
 /**
  * Get the vertical offset from the full / physical display
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          the horizontal offset from the physical display
  */
-int32_t lv_display_get_offset_y(const lv_display_t * disp);
+lv_coord_t lv_display_get_offset_y(const lv_display_t * disp);
 
 /**
  * Get the current rotation of this display.
@@ -226,7 +227,7 @@ lv_display_rotation_t lv_display_get_rotation(lv_display_t * disp);
  * @param disp      pointer to a display (NULL to use the default display)
  * @return          dpi of the display
  */
-int32_t lv_display_get_dpi(const lv_display_t * disp);
+lv_coord_t lv_display_get_dpi(const lv_display_t * disp);
 
 /*---------------------
  * BUFFERING
@@ -248,17 +249,6 @@ void lv_display_set_draw_buffers(lv_display_t * disp, void * buf1, void * buf2, 
  * @param flush_cb  the flush callback (`px_map` contains the rendered image as raw pixel map and it should be copied to `area` on the display)
  */
 void lv_display_set_flush_cb(lv_display_t * disp, lv_display_flush_cb_t flush_cb);
-
-/**
- * Set a callback to be used while LVGL is waiting flushing to be finished.
- * It can do any complex logic to wait, including semaphores, mutexes, polling flags, etc.
- * If not set the `disp->flushing` flag is used which can be cleared with `lv_display_flush_ready()`
- * @param disp      pointer to a display
- * @param wait_cb   a callback to call while LVGL is waiting for flush ready.
- *                  If NULL `lv_display_flush_ready()` can be used to signal that flushing is ready.
- */
-void lv_display_set_flush_wait_cb(lv_display_t * disp, lv_display_flush_wait_cb_t wait_cb);
-
 /**
  * Set the color format of the display.
  * If set to other than `LV_COLOR_FORMAT_NATIVE` the layer's `buffer_convert` function will be used
@@ -291,6 +281,7 @@ void lv_display_set_antialiasing(lv_display_t * disp, bool en);
  */
 bool lv_display_get_antialiasing(lv_display_t * disp);
 
+
 //! @cond Doxygen_Suppress
 
 /**
@@ -310,6 +301,7 @@ LV_ATTRIBUTE_FLUSH_READY bool lv_display_flush_is_last(lv_display_t * disp);
 
 //! @endcond
 
+
 bool lv_display_is_double_buffered(lv_display_t * disp);
 
 /*---------------------
@@ -322,7 +314,7 @@ bool lv_display_is_double_buffered(lv_display_t * disp);
  *                  (NULL to use the default screen)
  * @return          pointer to the active screen object (loaded by 'lv_screen_load()')
  */
-struct _lv_obj_t * lv_display_get_screen_active(lv_display_t * disp);
+struct _lv_obj_t * lv_display_get_screen_act(lv_display_t * disp);
 
 /**
  * Return with a pointer to the previous screen. Only used during screen transitions.
@@ -352,6 +344,7 @@ struct _lv_obj_t * lv_display_get_layer_top(lv_display_t * disp);
  */
 struct _lv_obj_t * lv_display_get_layer_sys(lv_display_t * disp);
 
+
 /**
  * Return the bottom layer. The bottom layer is the same on all screen and it is under the normal screen layer.
  * It's visible only if the the screen is transparent.
@@ -359,6 +352,7 @@ struct _lv_obj_t * lv_display_get_layer_sys(lv_display_t * disp);
  * @return          pointer to the bottom layer object
  */
 struct _lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp);
+
 
 /**
  * Switch screen with animation
@@ -377,7 +371,7 @@ void lv_screen_load_anim(struct _lv_obj_t * scr, lv_screen_load_anim_t anim_type
  */
 static inline struct _lv_obj_t * lv_screen_active(void)
 {
-    return lv_display_get_screen_active(lv_display_get_default());
+    return lv_display_get_screen_act(lv_display_get_default());
 }
 
 /**
@@ -416,6 +410,7 @@ static inline void lv_screen_load(struct _lv_obj_t * scr)
     lv_display_load_scr(scr);
 }
 
+
 /*---------------------
  * OTHERS
  *--------------------*/
@@ -429,31 +424,14 @@ static inline void lv_screen_load(struct _lv_obj_t * scr)
  */
 void lv_display_add_event(lv_display_t * disp, lv_event_cb_t event_cb, lv_event_code_t filter, void * user_data);
 
-/**
- * Get the number of event attached to a display
- * @param disp          pointer to a display
- * @return              number of events
- */
 uint32_t lv_display_get_event_count(lv_display_t * disp);
 
-/**
- * Get an event descriptor for an event
- * @param disp          pointer to a display
- * @param index         the index of the event
- * @return              the event descriptor
- */
 lv_event_dsc_t * lv_display_get_event_dsc(lv_display_t * disp, uint32_t index);
 
-/**
- * Remove an event
- * @param disp          pointer to a display
- * @param index         the index of the event to remove
- * @return              true: and event was removed; false: no event was removed
- */
-bool lv_display_delete_event(lv_display_t * disp, uint32_t index);
+bool lv_display_remove_event(lv_display_t * disp, uint32_t index);
 
 /**
- * Send an event to a display
+ * Send amn event to a display
  * @param disp          pointer to a display
  * @param code          an event code. LV_EVENT_...
  * @param param         optional param
@@ -538,6 +516,7 @@ void * lv_display_get_driver_data(lv_display_t * disp);
 #define LV_VER_RES lv_display_get_vertical_resolution(lv_display_get_default())
 #endif
 
+
 /**
  * Same as Android's DIP. (Different name is chosen to avoid mistype between LV_DPI and LV_DIP)
  * 1 dip is 1 px on a 160 DPI screen
@@ -555,7 +534,7 @@ void * lv_display_get_driver_data(lv_display_t * disp);
  * @param n     the number of pixels to scale
  * @return      `n x current_dpi/160`
  */
-static inline int32_t lv_dpx(int32_t n)
+static inline lv_coord_t lv_dpx(lv_coord_t n)
 {
     return LV_DPX(n);
 }
@@ -569,10 +548,11 @@ static inline int32_t lv_dpx(int32_t n)
  * @param n     the number of pixels to scale
  * @return      `n x current_dpi/160`
  */
-static inline int32_t lv_display_dpx(const lv_display_t * disp, int32_t n)
+static inline lv_coord_t lv_display_dpx(const lv_display_t * disp, lv_coord_t n)
 {
     return _LV_DPX_CALC(lv_display_get_dpi(disp), n);
 }
+
 
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -196,7 +196,8 @@ const LV_ATTRIBUTE_MEM_ALIGN uint8_t img_lv_demo_music_btn_list_pause_map[] = {
 #endif
 };
 
-const lv_image_dsc_t img_lv_demo_music_btn_list_pause = {
+lv_image_dsc_t img_lv_demo_music_btn_list_pause = {
+    .header.always_zero = 0,
     .header.w = 58,
     .header.h = 60,
     .header.cf = LV_COLOR_FORMAT_ARGB8888,
