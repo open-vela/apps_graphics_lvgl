@@ -767,6 +767,15 @@
     #endif
 #endif
 
+/*Use obj property set/get API*/
+#ifndef LV_USE_OBJ_PROPERTY
+    #ifdef CONFIG_LV_USE_OBJ_PROPERTY
+        #define LV_USE_OBJ_PROPERTY CONFIG_LV_USE_OBJ_PROPERTY
+    #else
+        #define LV_USE_OBJ_PROPERTY 0
+    #endif
+#endif
+
 /*=====================
  *  COMPILER SETTINGS
  *====================*/
@@ -2031,15 +2040,6 @@
         #define LV_USE_GIF CONFIG_LV_USE_GIF
     #else
         #define LV_USE_GIF 0
-    #endif
-#endif
-
-/*Decode bin images to RAM*/
-#ifndef LV_BIN_DECODER_RAM_LOAD
-    #ifdef CONFIG_LV_BIN_DECODER_RAM_LOAD
-        #define LV_BIN_DECODER_RAM_LOAD CONFIG_LV_BIN_DECODER_RAM_LOAD
-    #else
-        #define LV_BIN_DECODER_RAM_LOAD 0
     #endif
 #endif
 
