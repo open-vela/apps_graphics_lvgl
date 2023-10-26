@@ -54,7 +54,7 @@ static void disp_event_cb(lv_event_t * e);
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
+lv_display_t * lv_display_create(lv_coord_t hor_res, lv_coord_t ver_res)
 {
     lv_display_t * disp = _lv_ll_ins_head(disp_ll_p);
     LV_ASSERT_MALLOC(disp);
@@ -72,16 +72,16 @@ lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
     disp->dpi              = LV_DPI_DEF;
     disp->color_format = LV_COLOR_FORMAT_NATIVE;
 
-    disp->layer_head = lv_malloc_zeroed(sizeof(lv_layer_t));
+    disp->layer_head = lv_malloc(sizeof(lv_layer_t));
     LV_ASSERT_MALLOC(disp->layer_head);
     if(disp->layer_head == NULL) return NULL;
+    lv_memzero(disp->layer_head, sizeof(lv_layer_t));
 
     if(disp->layer_init) disp->layer_init(disp, disp->layer_head);
     disp->layer_head->buf_area.x1 = 0;
     disp->layer_head->buf_area.y1 = 0;
     disp->layer_head->buf_area.x2 = hor_res - 1;
     disp->layer_head->buf_area.y2 = ver_res - 1;
-    disp->layer_head->buf_stride = lv_draw_buf_width_to_stride(hor_res, LV_COLOR_FORMAT_NATIVE);
     disp->layer_head->color_format = disp->color_format;
 
     disp->inv_en_cnt = 1;
@@ -128,14 +128,15 @@ lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
     disp_def = disp_def_tmp; /*Revert the default display*/
     if(disp_def == NULL) disp_def = disp; /*Initialize the default display*/
 
-    lv_display_add_event_cb(disp, disp_event_cb, LV_EVENT_REFR_REQUEST, NULL);
+    lv_display_add_event(disp, disp_event_cb, LV_EVENT_REFR_REQUEST, NULL);
 
     lv_timer_ready(disp->refr_timer); /*Be sure the screen will be refreshed immediately on start up*/
 
     return disp;
 }
 
-void lv_display_delete(lv_display_t * disp)
+
+void lv_display_remove(lv_display_t * disp)
 {
     bool was_default = false;
     if(disp == lv_display_get_default()) was_default = true;
@@ -167,9 +168,6 @@ void lv_display_delete(lv_display_t * disp)
         lv_obj_delete(disp->bottom_layer);
         disp->bottom_layer = NULL;
     }
-
-    disp->act_scr = NULL;
-
     while(disp->screen_cnt != 0) {
         /*Delete the screenst*/
         lv_obj_delete(disp->screens[0]);
@@ -209,7 +207,7 @@ lv_display_t * lv_display_get_next(lv_display_t * disp)
  * RESOLUTION
  *--------------------*/
 
-void lv_display_set_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res)
+void lv_display_set_resolution(lv_display_t * disp, lv_coord_t hor_res, lv_coord_t ver_res)
 {
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return;
@@ -222,7 +220,7 @@ void lv_display_set_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver
     update_resolution(disp);
 }
 
-void lv_display_set_physical_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res)
+void lv_display_set_physical_resolution(lv_display_t * disp, lv_coord_t hor_res, lv_coord_t ver_res)
 {
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return;
@@ -234,7 +232,7 @@ void lv_display_set_physical_resolution(lv_display_t * disp, int32_t hor_res, in
 
 }
 
-void lv_display_set_offset(lv_display_t * disp, int32_t x, int32_t y)
+void lv_display_set_offset(lv_display_t * disp, lv_coord_t x, lv_coord_t y)
 {
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return;
@@ -246,7 +244,7 @@ void lv_display_set_offset(lv_display_t * disp, int32_t x, int32_t y)
 
 }
 
-void lv_display_set_dpi(lv_display_t * disp, int32_t dpi)
+void lv_display_set_dpi(lv_display_t * disp, lv_coord_t dpi)
 {
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return;
@@ -254,7 +252,7 @@ void lv_display_set_dpi(lv_display_t * disp, int32_t dpi)
     disp->dpi = dpi;
 }
 
-int32_t lv_display_get_horizontal_resolution(const lv_display_t * disp)
+lv_coord_t lv_display_get_horizontal_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -272,7 +270,7 @@ int32_t lv_display_get_horizontal_resolution(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_vertical_resolution(const lv_display_t * disp)
+lv_coord_t lv_display_get_vertical_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -290,7 +288,7 @@ int32_t lv_display_get_vertical_resolution(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
+lv_coord_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -308,7 +306,7 @@ int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp)
+lv_coord_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -326,7 +324,7 @@ int32_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_offset_x(const lv_display_t * disp)
+lv_coord_t lv_display_get_offset_x(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -347,7 +345,7 @@ int32_t lv_display_get_offset_x(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_offset_y(const lv_display_t * disp)
+lv_coord_t lv_display_get_offset_y(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
 
@@ -368,7 +366,7 @@ int32_t lv_display_get_offset_y(const lv_display_t * disp)
     }
 }
 
-int32_t lv_display_get_dpi(const lv_display_t * disp)
+lv_coord_t lv_display_get_dpi(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
     if(disp == NULL) return LV_DPI_DEF;  /*Do not return 0 because it might be a divider*/
@@ -398,14 +396,6 @@ void lv_display_set_flush_cb(lv_display_t * disp, lv_display_flush_cb_t flush_cb
     if(disp == NULL) return;
 
     disp->flush_cb = flush_cb;
-}
-
-void lv_display_set_flush_wait_cb(lv_display_t * disp, lv_display_flush_wait_cb_t wait_cb)
-{
-    if(disp == NULL) disp = lv_display_get_default();
-    if(disp == NULL) return;
-
-    disp->flush_wait_cb = wait_cb;
 }
 
 void lv_display_set_color_format(lv_display_t * disp, lv_color_format_t color_format)
@@ -441,6 +431,7 @@ bool lv_display_get_antialiasing(lv_display_t * disp)
     return disp->antialiasing;
 }
 
+
 LV_ATTRIBUTE_FLUSH_READY void lv_display_flush_ready(lv_display_t * disp)
 {
     disp->flushing = 0;
@@ -461,7 +452,7 @@ bool lv_display_is_double_buffered(lv_display_t * disp)
   * SCREENS
   *--------------------*/
 
-lv_obj_t * lv_display_get_screen_active(lv_display_t * disp)
+lv_obj_t * lv_display_get_screen_act(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp) {
@@ -564,6 +555,7 @@ void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, ui
     lv_obj_set_pos(lv_screen_active(), 0, 0);
     lv_obj_remove_local_style_prop(new_scr, LV_STYLE_OPA, 0);
     lv_obj_remove_local_style_prop(lv_screen_active(), LV_STYLE_OPA, 0);
+
 
     /*Shortcut for immediate load*/
     if(time == 0 && delay == 0) {
@@ -674,7 +666,7 @@ void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, ui
  * OTHERS
  *--------------------*/
 
-void lv_display_add_event_cb(lv_display_t * disp, lv_event_cb_t event_cb, lv_event_code_t filter, void * user_data)
+void lv_display_add_event(lv_display_t * disp, lv_event_cb_t event_cb, lv_event_code_t filter, void * user_data)
 {
     LV_ASSERT_NULL(disp);
 
@@ -687,6 +679,7 @@ uint32_t lv_display_get_event_count(lv_display_t * disp)
     return lv_event_get_count(&disp->event_list);
 }
 
+
 lv_event_dsc_t * lv_display_get_event_dsc(lv_display_t * disp, uint32_t index)
 {
     LV_ASSERT_NULL(disp);
@@ -694,7 +687,7 @@ lv_event_dsc_t * lv_display_get_event_dsc(lv_display_t * disp, uint32_t index)
 
 }
 
-bool lv_display_delete_event(lv_display_t * disp, uint32_t index)
+bool lv_display_remove_event(lv_display_t * disp, uint32_t index)
 {
     LV_ASSERT_NULL(disp);
 
@@ -748,9 +741,9 @@ void lv_display_set_theme(lv_display_t * disp, lv_theme_t * th)
     disp->theme = th;
 
     if(disp->screen_cnt == 4 &&
-       lv_obj_get_child_count(disp->screens[0]) == 0 &&
-       lv_obj_get_child_count(disp->screens[1]) == 0 &&
-       lv_obj_get_child_count(disp->screens[2]) == 0) {
+       lv_obj_get_child_cnt(disp->screens[0]) == 0 &&
+       lv_obj_get_child_cnt(disp->screens[1]) == 0 &&
+       lv_obj_get_child_cnt(disp->screens[2]) == 0) {
         lv_theme_apply(disp->screens[0]);
     }
 }
@@ -854,8 +847,8 @@ void * lv_display_get_driver_data(lv_display_t * disp)
 
 static void update_resolution(lv_display_t * disp)
 {
-    int32_t hor_res = lv_display_get_horizontal_resolution(disp);
-    int32_t ver_res = lv_display_get_vertical_resolution(disp);
+    lv_coord_t hor_res = lv_display_get_horizontal_resolution(disp);
+    lv_coord_t ver_res = lv_display_get_vertical_resolution(disp);
 
     lv_area_t prev_coords;
     lv_obj_get_coords(disp->sys_layer, &prev_coords);

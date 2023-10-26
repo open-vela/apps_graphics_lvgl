@@ -45,6 +45,7 @@ typedef struct {
 #endif
 } my_theme_styles_t;
 
+
 typedef struct _my_theme_t {
     lv_theme_t base;
     my_theme_styles_t styles;
@@ -80,6 +81,7 @@ static void style_init(struct _my_theme_t * theme)
     lv_style_set_bg_opa(&theme->styles.scr, LV_OPA_COVER);
     lv_style_set_bg_color(&theme->styles.scr, COLOR_SCR);
     lv_style_set_text_color(&theme->styles.scr, COLOR_DIM);
+
 
     style_init_reset(&theme->styles.transp);
     lv_style_set_bg_opa(&theme->styles.transp, LV_OPA_TRANSP);
@@ -133,6 +135,7 @@ static void style_init(struct _my_theme_t * theme)
 #endif
 }
 
+
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
@@ -149,11 +152,20 @@ void lv_theme_basic_deinit(void)
     struct _my_theme_t * theme = theme_def;
     if(theme) {
         if(theme->inited) {
-            lv_style_t * theme_styles = (lv_style_t *)(&(theme->styles));
-            uint32_t i;
-            for(i = 0; i < sizeof(my_theme_styles_t) / sizeof(lv_style_t); i++) {
-                lv_style_reset(theme_styles + i);
-            }
+            lv_style_reset(&theme->styles.scr);
+            lv_style_reset(&theme->styles.transp);
+            lv_style_reset(&theme->styles.white);
+            lv_style_reset(&theme->styles.light);
+            lv_style_reset(&theme->styles.dark);
+            lv_style_reset(&theme->styles.dim);
+            lv_style_reset(&theme->styles.scrollbar);
+#if LV_USE_ARC
+            lv_style_reset(&theme->styles.arc_line);
+            lv_style_reset(&theme->styles.arc_knob);
+#endif
+#if LV_USE_TEXTAREA
+            lv_style_reset(&theme->styles.ta_cursor);
+#endif
         }
         lv_free(theme_def);
         theme_def = NULL;
@@ -166,7 +178,8 @@ lv_theme_t * lv_theme_basic_init(lv_display_t * disp)
      *styles' data if LVGL is used in a binding (e.g. Micropython)
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
     if(!lv_theme_basic_is_inited()) {
-        theme_def  = lv_malloc_zeroed(sizeof(my_theme_t));
+        theme_def  = (my_theme_t *)lv_malloc(sizeof(my_theme_t));
+        lv_memzero(theme_def, sizeof(my_theme_t));
     }
 
     struct _my_theme_t * theme = theme_def;
@@ -298,6 +311,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.white, 0);
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
         lv_obj_add_style(obj, &theme->styles.light, LV_PART_ITEMS);
+        lv_obj_add_style(obj, &theme->styles.dark, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.dark, LV_PART_CURSOR);
     }
 #endif

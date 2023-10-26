@@ -62,9 +62,9 @@ uint32_t lv_snapshot_buf_size_needed(lv_obj_t * obj, lv_color_format_t cf)
     lv_obj_update_layout(obj);
 
     /*Width and height determine snapshot image size.*/
-    int32_t w = lv_obj_get_width(obj);
-    int32_t h = lv_obj_get_height(obj);
-    int32_t ext_size = _lv_obj_get_ext_draw_size(obj);
+    lv_coord_t w = lv_obj_get_width(obj);
+    lv_coord_t h = lv_obj_get_height(obj);
+    lv_coord_t ext_size = _lv_obj_get_ext_draw_size(obj);
     w += ext_size * 2;
     h += ext_size * 2;
 
@@ -100,12 +100,10 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
 
     if(lv_snapshot_buf_size_needed(obj, cf) > buff_size || buff_size == 0) return LV_RESULT_INVALID;
 
-    LV_ASSERT_MSG(buf == lv_draw_buf_align(buf, cf), "Buffer is not aligned");
-
     /*Width and height determine snapshot image size.*/
-    int32_t w = lv_obj_get_width(obj);
-    int32_t h = lv_obj_get_height(obj);
-    int32_t ext_size = _lv_obj_get_ext_draw_size(obj);
+    lv_coord_t w = lv_obj_get_width(obj);
+    lv_coord_t h = lv_obj_get_height(obj);
+    lv_coord_t ext_size = _lv_obj_get_ext_draw_size(obj);
     w += ext_size * 2;
     h += ext_size * 2;
 
@@ -119,17 +117,18 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
     dsc->header.w = w;
     dsc->header.h = h;
     dsc->header.cf = cf;
+    dsc->header.always_zero = 0;
 
     lv_layer_t layer;
     lv_memzero(&layer, sizeof(layer));
 
-    layer.buf = buf;
+    layer.buf = lv_draw_buf_align(buf, cf);
     layer.buf_area.x1 = snapshot_area.x1;
     layer.buf_area.y1 = snapshot_area.y1;
     layer.buf_area.x2 = snapshot_area.x1 + w - 1;
     layer.buf_area.y2 = snapshot_area.y1 + h - 1;
     layer.color_format = cf;
-    layer._clip_area = snapshot_area;
+    layer.clip_area = snapshot_area;
 
     lv_display_t * disp_old = _lv_refr_get_disp_refreshing();
     lv_display_t * disp_new = lv_obj_get_disp(obj);
@@ -162,7 +161,7 @@ lv_image_dsc_t * lv_snapshot_take(lv_obj_t * obj, lv_color_format_t cf)
     uint32_t buff_size = lv_snapshot_buf_size_needed(obj, cf);
     if(buff_size == 0) return NULL;
 
-    void * buf = lv_draw_buf_malloc(buff_size, cf);
+    void * buf = lv_malloc(buff_size);
     LV_ASSERT_MALLOC(buf);
     if(buf == NULL) {
         return NULL;
@@ -171,12 +170,12 @@ lv_image_dsc_t * lv_snapshot_take(lv_obj_t * obj, lv_color_format_t cf)
     lv_image_dsc_t * dsc = lv_malloc(sizeof(lv_image_dsc_t));
     LV_ASSERT_MALLOC(buf);
     if(dsc == NULL) {
-        lv_draw_buf_free(buf);
+        lv_free(buf);
         return NULL;
     }
 
-    if(lv_snapshot_take_to_buf(obj, cf, dsc, buf, buff_size) != LV_RESULT_OK) {
-        lv_draw_buf_free(buf);
+    if(lv_snapshot_take_to_buf(obj, cf, dsc, buf, buff_size) == LV_RESULT_INVALID) {
+        lv_free(buf);
         lv_free(dsc);
         return NULL;
     }
@@ -195,7 +194,7 @@ void lv_snapshot_free(lv_image_dsc_t * dsc)
         return;
 
     if(dsc->data)
-        lv_draw_buf_free((void *)dsc->data);
+        lv_free((void *)dsc->data);
 
     lv_free(dsc);
 }

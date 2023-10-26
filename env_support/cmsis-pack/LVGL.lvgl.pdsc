@@ -782,6 +782,10 @@
 #define LV_USE_GIF         1
               </RTE_Components_h>
 
+/*! \brief enable RLE compressed bin image decoder support */
+#define LV_USE_RLE          1
+              </RTE_Components_h>
+
             </component>
 
             <component Cgroup="lvgl" Csub="Libs RLE"  condition="LVGL-Essential">
@@ -792,9 +796,7 @@
               </files>
 
               <RTE_Components_h>
-/*! \brief enable RLE compressed bin image decoder support */
-#define LV_USE_RLE          1
-              </RTE_Components_h>
+
             </component>
 
             <component Cgroup="lvgl" Csub="Libs sJPG"  condition="LVGL-Essential">
