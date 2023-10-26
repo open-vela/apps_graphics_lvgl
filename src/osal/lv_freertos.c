@@ -96,8 +96,7 @@ lv_result_t lv_thread_delete(lv_thread_t * pxThread)
 
 lv_result_t lv_mutex_init(lv_mutex_t * pxMutex)
 {
-    /* If mutex in uninitialized, perform initialization. */
-    prvCheckMutexInit(pxMutex);
+    prvMutexInit(pxMutex);
 
     return LV_RESULT_OK;
 }
@@ -166,8 +165,7 @@ lv_result_t lv_thread_sync_init(lv_thread_sync_t * pxCond)
     /* Store the handle of the calling task. */
     pxCond->xTaskToNotify = xTaskGetCurrentTaskHandle();
 #else
-    /* If the cond is uninitialized, perform initialization. */
-    prvCheckCondInit(pxCond);
+    prvCondInit(pxCond);
 #endif
 
     return LV_RESULT_OK;

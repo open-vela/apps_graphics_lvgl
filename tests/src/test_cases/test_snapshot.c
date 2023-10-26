@@ -5,6 +5,7 @@
 
 #include "unity/unity.h"
 
+
 #define NUM_SNAPSHOTS 1
 
 void test_snapshot_should_not_leak_memory(void)

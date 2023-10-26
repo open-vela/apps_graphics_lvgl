@@ -3,6 +3,7 @@
  *
  */
 
+
 /*********************
  *      INCLUDES
  *********************/
@@ -243,7 +244,7 @@ static void * fs_dir_open(lv_fs_drv_t * drv, const char * path)
     lv_strcpy(handle->next_fn, "");
     handle->dir_p = FindFirstFileA(buf, &fdata);
     do {
-        if(lv_strcmp(fdata.cFileName, ".") == 0 || lv_strcmp(fdata.cFileName, "..") == 0) {
+        if(strcmp(fdata.cFileName, ".") == 0 || strcmp(fdata.cFileName, "..") == 0) {
             continue;
         }
         else {
@@ -288,7 +289,7 @@ static lv_fs_res_t fs_dir_read(lv_fs_drv_t * drv, void * dir_p, char * fn)
         else {
             lv_strcpy(fn, "");
         }
-    } while(lv_strcmp(fn, "/.") == 0 || lv_strcmp(fn, "/..") == 0);
+    } while(strcmp(fn, "/.") == 0 || strcmp(fn, "/..") == 0);
 #else
     lv_strcpy(fn, handle->next_fn);
 
@@ -297,7 +298,7 @@ static lv_fs_res_t fs_dir_read(lv_fs_drv_t * drv, void * dir_p, char * fn)
 
     if(FindNextFileA(handle->dir_p, &fdata) == false) return LV_FS_RES_OK;
     do {
-        if(lv_strcmp(fdata.cFileName, ".") == 0 || lv_strcmp(fdata.cFileName, "..") == 0) {
+        if(strcmp(fdata.cFileName, ".") == 0 || strcmp(fdata.cFileName, "..") == 0) {
             continue;
         }
         else {
@@ -341,3 +342,4 @@ static lv_fs_res_t fs_dir_close(lv_fs_drv_t * drv, void * dir_p)
 #endif
 
 #endif /*LV_USE_FS_POSIX*/
+

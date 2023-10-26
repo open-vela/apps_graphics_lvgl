@@ -9,6 +9,7 @@
 #include "lv_win.h"
 #if LV_USE_WIN
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -59,7 +60,7 @@ lv_obj_t * lv_win_add_title(lv_obj_t * win, const char * txt)
     return title;
 }
 
-lv_obj_t * lv_win_add_button(lv_obj_t * win, const void * icon, int32_t btn_w)
+lv_obj_t * lv_win_add_button(lv_obj_t * win, const void * icon, lv_coord_t btn_w)
 {
     lv_obj_t * header = lv_win_get_header(win);
     lv_obj_t * btn = lv_button_create(header);
@@ -104,3 +105,4 @@ static void lv_win_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
 }
 
 #endif
+

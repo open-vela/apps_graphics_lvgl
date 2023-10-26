@@ -43,11 +43,11 @@ void lv_draw_image_dsc_init(lv_draw_image_dsc_t * dsc)
     lv_memzero(dsc, sizeof(lv_draw_image_dsc_t));
     dsc->recolor = lv_color_black();
     dsc->opa = LV_OPA_COVER;
-    dsc->scale_x = LV_SCALE_NONE;
-    dsc->scale_y = LV_SCALE_NONE;
+    dsc->zoom_x = LV_SCALE_NONE;
+    dsc->zoom_y = LV_SCALE_NONE;
     dsc->antialias = LV_COLOR_DEPTH > 8 ? 1 : 0;
-    dsc->base.dsc_size = sizeof(lv_draw_image_dsc_t);
 }
+
 
 void lv_draw_layer(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * coords)
 {
@@ -64,6 +64,7 @@ void lv_draw_layer(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
     lv_draw_finalize_task_creation(layer, t);
 }
 
+
 void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * coords)
 {
     if(dsc->src == NULL) {
@@ -71,6 +72,7 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
         return;
     }
     if(dsc->opa <= LV_OPA_MIN) return;
+
 
     LV_PROFILER_BEGIN;
 
@@ -127,3 +129,4 @@ lv_image_src_t lv_image_src_get_type(const void * src)
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+

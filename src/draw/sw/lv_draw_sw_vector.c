@@ -8,12 +8,8 @@
  *********************/
 #include "lv_draw_sw.h"
 
-#if LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_EXTERNAL || LV_USE_THORVG_INTERNAL)
-#if LV_USE_THORVG_EXTERNAL
-    #include <thorvg_capi.h>
-#else
-    #include "../../libs/thorvg/thorvg_capi.h"
-#endif
+#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
+#include <thorvg_capi.h>
 #include "../../stdlib/lv_string.h"
 
 /*********************
@@ -177,7 +173,7 @@ static Tvg_Stroke_Fill _lv_spread_to_tvg(lv_vector_gradient_spread_t sp)
 }
 
 static void _setup_gradient(Tvg_Gradient * gradient, const lv_vector_gradient_t * grad,
-                            const lv_matrix_t * matrix)
+                                const lv_matrix_t * matrix)
 {
     const lv_grad_dsc_t * g = &grad->grad;
     Tvg_Color_Stop * stops = (Tvg_Color_Stop *)lv_malloc(sizeof(Tvg_Color_Stop) * g->stops_count);
@@ -291,7 +287,7 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
                                     const lv_matrix_t * m)
 {
     lv_image_decoder_dsc_t decoder_dsc;
-    lv_result_t res = lv_image_decoder_open(&decoder_dsc, p->src, NULL);
+    lv_result_t res = lv_image_decoder_open(&decoder_dsc, p->src, p->recolor, -1);
     if(res != LV_RESULT_OK) {
         LV_LOG_ERROR("Failed to open image");
         return;

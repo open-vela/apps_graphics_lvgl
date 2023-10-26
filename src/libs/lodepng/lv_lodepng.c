@@ -20,21 +20,16 @@
 /**********************
  *      TYPEDEFS
  **********************/
-typedef struct {
-
-} cache_data_t;
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void * src, lv_image_header_t * header);
-static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc,
-                                const lv_image_decoder_args_t * args);
+static lv_result_t decoder_open(lv_image_decoder_t * dec, lv_image_decoder_dsc_t * dsc);
 static void decoder_close(lv_image_decoder_t * dec, lv_image_decoder_dsc_t * dsc);
 static void convert_color_depth(uint8_t * img_p, uint32_t px_cnt);
 static const void * decode_png_data(const void * png_data, size_t png_data_size);
 static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc);
-static void cache_invalidate_cb(lv_cache_entry_t * entry);
 
 /**********************
  *  STATIC VARIABLES
@@ -57,7 +52,6 @@ void lv_lodepng_init(void)
     lv_image_decoder_set_info_cb(dec, decoder_info);
     lv_image_decoder_set_open_cb(dec, decoder_open);
     lv_image_decoder_set_close_cb(dec, decoder_close);
-    dec->cache_data_type = lv_cache_register_data_type();
 }
 
 void lv_lodepng_deinit(void)
@@ -90,7 +84,7 @@ static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void
     /*If it's a PNG file...*/
     if(src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = src;
-        if(lv_strcmp(lv_fs_get_ext(fn), "png") == 0) {              /*Check the extension*/
+        if(strcmp(lv_fs_get_ext(fn), "png") == 0) {              /*Check the extension*/
 
             /* Read the width and height from the file. They have a constant location:
              * [16..23]: width
@@ -110,10 +104,11 @@ static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void
             if(rn != 8) return LV_RESULT_INVALID;
 
             /*Save the data in the header*/
+            header->always_zero = 0;
             header->cf = LV_COLOR_FORMAT_ARGB8888;
             /*The width and height are stored in Big endian format so convert them to little endian*/
-            header->w = (int32_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
-            header->h = (int32_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
+            header->w = (lv_coord_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
+            header->h = (lv_coord_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
 
             return LV_RESULT_OK;
         }
@@ -126,6 +121,7 @@ static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void
         const uint8_t magic[] = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
         if(data_size < sizeof(magic)) return LV_RESULT_INVALID;
         if(memcmp(magic, img_dsc->data, sizeof(magic))) return LV_RESULT_INVALID;
+        header->always_zero = 0;
 
         header->cf = LV_COLOR_FORMAT_ARGB8888;
 
@@ -133,14 +129,14 @@ static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void
             header->w = img_dsc->header.w;         /*Save the image width*/
         }
         else {
-            header->w = (int32_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
+            header->w = (lv_coord_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
         }
 
         if(img_dsc->header.h) {
             header->h = img_dsc->header.h;         /*Save the color height*/
         }
         else {
-            header->h = (int32_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
+            header->h = (lv_coord_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
         }
 
         return LV_RESULT_OK;
@@ -149,17 +145,16 @@ static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void
     return LV_RESULT_INVALID;         /*If didn't succeeded earlier then it's an error*/
 }
 
+
 /**
  * Open a PNG image and decode it into dsc.img_data
  * @param decoder   pointer to the decoder where this function belongs
  * @param dsc       decoded image descriptor
  * @return          LV_RESULT_OK: no error; LV_RESULT_INVALID: can't open the image
  */
-static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc,
-                                const lv_image_decoder_args_t * args)
+static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
-    LV_UNUSED(decoder);
-    LV_UNUSED(args);
+    (void) decoder; /*Unused*/
 
     /*Check the cache first*/
     if(try_cache(dsc) == LV_RESULT_OK) return LV_RESULT_OK;
@@ -168,7 +163,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     size_t png_data_size = 0;
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = dsc->src;
-        if(lv_strcmp(lv_fs_get_ext(fn), "png") == 0) {              /*Check the extension*/
+        if(strcmp(lv_fs_get_ext(fn), "png") == 0) {              /*Check the extension*/
             unsigned error;
             error = lodepng_load_file((void *)&png_data, &png_data_size, fn);  /*Load the file*/
             if(error) {
@@ -190,7 +185,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     }
 
     lv_cache_lock();
-    lv_cache_entry_t * cache = lv_cache_add(NULL, 0, decoder->cache_data_type, dsc->header.w * dsc->header.h * 4);
+    lv_cache_entry_t * cache = lv_cache_add(dsc->header.w * dsc->header.h * 4);
     if(cache == NULL) {
         lv_cache_unlock();
         return LV_RESULT_INVALID;
@@ -201,14 +196,15 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     t = lv_tick_elaps(t);
     cache->weight = t;
     cache->data = decoded_img;
-    cache->invalidate_cb = cache_invalidate_cb;
+    cache->free_data = 1;
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
         cache->src = lv_strdup(dsc->src);
-        cache->src_type = LV_CACHE_SRC_TYPE_PATH;
+        cache->src_type = LV_CACHE_SRC_TYPE_STR;
+        cache->free_src = 1;
         lv_free((void *)png_data);
     }
     else {
-        cache->src_type = LV_CACHE_SRC_TYPE_POINTER;
+        cache->src_type = LV_CACHE_SRC_TYPE_PTR;
         cache->src = dsc->src;
     }
 
@@ -234,13 +230,14 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
     lv_cache_unlock();
 }
 
+
 static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc)
 {
     lv_cache_lock();
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = dsc->src;
 
-        lv_cache_entry_t * cache = lv_cache_find_by_src(NULL, fn, LV_CACHE_SRC_TYPE_PATH);
+        lv_cache_entry_t * cache = lv_cache_find(fn, LV_CACHE_SRC_TYPE_STR, 0, 0);
         if(cache) {
             dsc->img_data = lv_cache_get_data(cache);
             dsc->cache_entry = cache;     /*Save the cache to release it in decoder_close*/
@@ -252,7 +249,7 @@ static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc)
     else if(dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
         const lv_image_dsc_t * img_dsc = dsc->src;
 
-        lv_cache_entry_t * cache = lv_cache_find_by_src(NULL, img_dsc, LV_CACHE_SRC_TYPE_POINTER);
+        lv_cache_entry_t * cache = lv_cache_find(img_dsc, LV_CACHE_SRC_TYPE_PTR, 0, 0);
         if(cache) {
             dsc->img_data = lv_cache_get_data(cache);
             dsc->cache_entry = cache;     /*Save the cache to release it in decoder_close*/
@@ -285,6 +282,7 @@ static const void * decode_png_data(const void * png_data, size_t png_data_size)
     return img_data;
 }
 
+
 /**
  * If the display is not in 32 bit format (ARGB888) then convert the image to the current color depth
  * @param img the ARGB888 image
@@ -301,10 +299,6 @@ static void convert_color_depth(uint8_t * img_p, uint32_t px_cnt)
     }
 }
 
-static void cache_invalidate_cb(lv_cache_entry_t * entry)
-{
-    if(entry->src_type == LV_CACHE_SRC_TYPE_PATH) lv_free((void *)entry->src);
-    lv_free((void *)entry->data);
-}
-
 #endif /*LV_USE_LODEPNG*/
+
+

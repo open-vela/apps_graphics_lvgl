@@ -36,4 +36,5 @@ void lv_example_bar_3(void)
     lv_anim_start(&a);
 }
 
+
 #endif

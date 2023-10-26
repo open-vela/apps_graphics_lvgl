@@ -47,7 +47,6 @@ LV_ATTRIBUTE_FAST_MEM void lv_draw_mask_rect(struct _lv_layer_t * layer, const l
         LV_LOG_WARN("Only layers with alpha channel can be masked");
         return;
     }
-    LV_PROFILER_BEGIN;
 
     lv_draw_task_t * t = lv_draw_add_task(layer, &layer->buf_area);
 
@@ -66,8 +65,7 @@ LV_ATTRIBUTE_FAST_MEM void lv_draw_mask_rect(struct _lv_layer_t * layer, const l
         lv_obj_add_flag(base_dsc->obj, LV_OBJ_FLAG_SEND_DRAW_TASK_EVENTS);
     }
 
-    lv_draw_finalize_task_creation(layer, t);
-    LV_PROFILER_END;
+    lv_draw_dispatch();
 }
 
 /**********************
