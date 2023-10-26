@@ -276,8 +276,8 @@ open/close the PNG files. It should look like this:
      /*Change the color format if required. For PNG usually 'Raw' is fine*/
      dsc->header.cf = LV_COLOR_FORMAT_...
 
-     /*Call a binary image decoder function if required. It's not required if `my_png_decoder` opened the image in true color format.*/
-     lv_result_t res = lv_bin_decoder_open(decoder, dsc);
+     /*Call a built in decoder function if required. It's not required if `my_png_decoder` opened the image in true color format.*/
+     lv_result_t res = lv_image_decoder_built_in_open(decoder, dsc);
 
      return res;
    }
@@ -306,7 +306,7 @@ open/close the PNG files. It should look like this:
      /*Free all allocated data*/
 
      /*Call the built-in close function if the built-in open/read_line was used*/
-     lv_bin_decoder_close(decoder, dsc);
+     lv_image_decoder_built_in_close(decoder, dsc);
 
    }
 
@@ -343,8 +343,7 @@ to open is an animation.
 
    lv_result_t res;
    lv_image_decoder_dsc_t dsc;
-   lv_image_decoder_args_t args = { 0 }; /*Custom decoder behavior via args*/
-   res = lv_image_decoder_open(&dsc, &my_img_dsc, &args);
+   res = lv_image_decoder_open(&dsc, &my_img_dsc, color, frame_id);
 
    if(res == LV_RESULT_OK) {
      /*Do something with `dsc->img_data`*/
@@ -355,12 +354,12 @@ to open is an animation.
 Image post-processing
 ---------------------
 
-Considering that some hardware has special requirements for image formats,
-such as alpha premultiplication and stride alignment, most image decoders (such as PNG decoders)
-may not directly output image data that meets hardware requirements.
+Considering that some hardware has special requirements for image formats, 
+such as alpha premultiplication and stride alignment, most image decoders (such as PNG decoders) 
+may not directly output image data that meets hardware requirements. 
 
-For this reason, LVGL provides a solution for image post-processing.
-First, call a custom post-processing function after ``lv_image_decoder_open`` to adjust the data in the image cache,
+For this reason, LVGL provides a solution for image post-processing. 
+First, call a custom post-processing function after ``lv_image_decoder_open`` to adjust the data in the image cache, 
 and then mark the processing status in ``cache_entry->process_state`` (to avoid repeated post-processing).
 
 See the detailed code below:
@@ -403,8 +402,8 @@ See the detailed code below:
        }
 
        if(!(entry->process_state & IMAGE_PROCESS_STATE_STRIDE_ALIGNED)) {
-         int32_t image_w = dsc->header.w;
-         int32_t image_h = dsc->header.h;
+         lv_coord_t image_w = dsc->header.w;
+         lv_coord_t image_h = dsc->header.h;
          uint32_t width_byte = image_w * lv_color_format_get_size(color_format);
          uint32_t stride = lv_draw_buf_width_to_stride(image_w, color_format);
 
@@ -427,7 +426,7 @@ See the detailed code below:
 
            /* Copy image data */
            const uint8_t * cur = ori_image;
-           for(int32_t y = 0; y < image_h; y++) {
+           for(lv_coord_t y = 0; y < image_h; y++) {
              lv_memcpy(new_image, cur, width_byte);
              new_image += stride;
              cur += width_byte;
@@ -458,7 +457,7 @@ See the detailed code below:
   {
     ...
     lv_image_decoder_dsc_t decoder_dsc;
-    lv_result_t res = lv_image_decoder_open(&decoder_dsc, draw_dsc->src, NULL);
+    lv_result_t res = lv_image_decoder_open(&decoder_dsc, draw_dsc->src, draw_dsc->recolor, -1);
     if(res != LV_RESULT_OK) {
       LV_LOG_ERROR("Failed to open image");
       return;

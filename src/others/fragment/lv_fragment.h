@@ -17,6 +17,7 @@ extern "C" {
 
 #if LV_USE_FRAGMENT
 
+
 /*********************
  *      DEFINES
  *********************/
@@ -264,6 +265,7 @@ lv_fragment_t * lv_fragment_manager_find_by_container(lv_fragment_manager_t * ma
  */
 lv_fragment_t * lv_fragment_manager_get_parent_fragment(lv_fragment_manager_t * manager);
 
+
 /**
  * Create a fragment instance.
  *
@@ -321,6 +323,7 @@ void lv_fragment_delete_obj(lv_fragment_t * fragment);
  * @param fragment Fragment instance
  */
 void lv_fragment_recreate_obj(lv_fragment_t * fragment);
+
 
 /**********************
  *      MACROS
