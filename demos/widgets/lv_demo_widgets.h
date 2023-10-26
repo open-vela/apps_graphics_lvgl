@@ -27,7 +27,6 @@ extern "C" {
  * GLOBAL PROTOTYPES
  **********************/
 void lv_demo_widgets(void);
-void lv_demo_widgets_start_slideshow(void);
 
 /**********************
  *      MACROS

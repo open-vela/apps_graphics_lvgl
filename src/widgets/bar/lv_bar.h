@@ -40,6 +40,7 @@ typedef _lv_bar_mode_t lv_bar_mode_t;
 typedef uint8_t lv_bar_mode_t;
 #endif /*DOXYGEN*/
 
+
 typedef struct {
     lv_obj_t * bar;
     int32_t anim_start;
@@ -60,7 +61,8 @@ typedef struct {
     lv_bar_mode_t mode : 2;     /**< Type of bar*/
 } lv_bar_t;
 
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_bar_class;
+extern const lv_obj_class_t lv_bar_class;
+
 
 /**********************
  * GLOBAL PROTOTYPES

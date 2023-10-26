@@ -31,7 +31,6 @@ extern "C" {
 #include "../misc/lv_profiler_builtin.h"
 #include "../misc/lv_style.h"
 #include "../misc/lv_timer.h"
-#include "../others/sysmon/lv_sysmon.h"
 #include "../stdlib/builtin/lv_tlsf.h"
 
 #if LV_USE_FONT_COMPRESSED
@@ -67,7 +66,6 @@ struct _lv_freetype_context_t;
 
 typedef struct _lv_global_t {
     bool inited;
-    bool deinit_in_progress;     /**< Can be used e.g. in the LV_EVENT_DELETE to deinit the drivers too */
 
     lv_ll_t disp_ll;
     struct _lv_display_t * disp_refresh;
@@ -177,11 +175,7 @@ typedef struct _lv_global_t {
 #endif
 
 #if LV_USE_SYSMON && LV_USE_PERF_MONITOR
-    lv_sysmon_backend_data_t sysmon_perf;
-#endif
-
-#if LV_USE_SYSMON && LV_USE_MEM_MONITOR
-    lv_sysmon_backend_data_t sysmon_mem;
+    void * sysmon_perf_info;
 #endif
 
 #if LV_USE_IME_PINYIN != 0
@@ -194,6 +188,7 @@ typedef struct _lv_global_t {
 #endif
     void * user_data;
 } lv_global_t;
+
 
 /**********************
  *      MACROS

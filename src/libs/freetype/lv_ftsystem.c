@@ -155,6 +155,7 @@ FT_New_Memory(void)
 {
     FT_Memory  memory;
 
+
     memory = (FT_Memory)lv_malloc(sizeof(*memory));
     if(memory) {
         memory->user    = NULL;

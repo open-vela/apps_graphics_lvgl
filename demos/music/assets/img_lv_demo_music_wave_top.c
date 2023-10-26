@@ -143,7 +143,8 @@ const LV_ATTRIBUTE_MEM_ALIGN uint8_t img_lv_demo_music_wave_top_map[] = {
 #endif
 };
 
-const lv_image_dsc_t img_lv_demo_music_wave_top = {
+lv_image_dsc_t img_lv_demo_music_wave_top = {
+    .header.always_zero = 0,
     .header.w = 272,
     .header.h = 42,
     .data_size = 11424 * LV_COLOR_DEPTH / 8,

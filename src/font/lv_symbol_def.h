@@ -31,6 +31,7 @@ extern "C" {
  * If they are not predefined, they will use the following values
  */
 
+
 #if !defined LV_SYMBOL_AUDIO
 #define LV_SYMBOL_AUDIO           "\xEF\x80\x81" /*61441, 0xF001*/
 #endif
