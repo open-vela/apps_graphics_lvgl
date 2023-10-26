@@ -277,6 +277,9 @@
 /* Use lvgl builtin method for obj ID */
 #define LV_USE_OBJ_ID_BUILTIN   0
 
+/*Use obj property set/get API*/
+#define LV_USE_OBJ_PROPERTY 0
+
 /*=====================
  *  COMPILER SETTINGS
  *====================*/
@@ -609,9 +612,6 @@
 
 /*GIF decoder library*/
 #define LV_USE_GIF 0
-
-/*Decode bin images to RAM*/
-#define LV_BIN_DECODER_RAM_LOAD 0
 
 /*QR code library*/
 #define LV_USE_QRCODE 0

@@ -191,7 +191,6 @@ typedef struct _lv_global_t {
     void * objid_array;
     uint32_t objid_count;
 #endif
-    void * ext_data;
 } lv_global_t;
 
 
