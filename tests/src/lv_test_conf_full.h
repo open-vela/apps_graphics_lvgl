@@ -12,7 +12,7 @@
 #define LV_USE_ASSERT_MEM_INTEGRITY     1
 #define LV_USE_ASSERT_OBJ               1
 #define LV_USE_ASSERT_STYLE             1
-#define LV_USE_FLOAT      1
+#define LV_USE_LARGE_COORD      1
 
 #define LV_FONT_MONTSERRAT_8    1
 #define LV_FONT_MONTSERRAT_10   1
@@ -60,6 +60,7 @@
 #define LV_USE_FS_MEMFS     1
 #define LV_FS_MEMFS_LETTER  'M'
 
+#define LV_USE_RLE          1
 #define LV_USE_LODEPNG      1
 #define LV_USE_LIBPNG       1
 #define LV_USE_BMP          1
@@ -82,11 +83,9 @@
 #define LV_USE_DEMO_STRESS      1
 #define LV_USE_DEMO_TRANSFORM   1
 #define LV_USE_DEMO_MULTILANG   1
-#define LV_USE_DEMO_RENDER      1
-#define LV_USE_DEMO_BENCHMARK   1
 #define LV_USE_DEMO_SCROLL      1
 
 #define LV_USE_OBJ_ID           1
 #define LV_USE_OBJ_ID_BUILTIN   1
-#define LV_USE_OBJ_PROPERTY     1
+
 #define LV_BIN_DECODER_RAM_LOAD 1

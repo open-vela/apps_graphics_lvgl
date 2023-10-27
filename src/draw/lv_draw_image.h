@@ -43,9 +43,9 @@ typedef struct _lv_draw_image_dsc_t {
     lv_image_header_t header;
 
 
-    int32_t rotation;
-    int32_t scale_x;
-    int32_t scale_y;
+    lv_coord_t rotation;
+    lv_coord_t zoom_x;
+    lv_coord_t zoom_y;
     lv_point_t pivot;
 
     lv_color_t recolor;
@@ -69,18 +69,14 @@ void lv_draw_image_dsc_init(lv_draw_image_dsc_t * dsc);
 
 /**
  * Draw an image
- * @param layer         pointer to a layer
+ * @param draw_ctx      pointer to the current draw context
  * @param dsc           pointer to an initialized `lv_draw_image_dsc_t` variable
  * @param coords        the coordinates of the image
+ * @param src           pointer to a lv_color_t array which contains the pixels of the image
  */
 void lv_draw_image(struct _lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * coords);
 
-/**
- * Draw a layer on an other layer
- * @param layer         pointer to a layer
- * @param dsc           pointer to an initialized `lv_draw_image_dsc_t` variable
- * @param coords        the coordinates of the layer
- */
+
 void lv_draw_layer(struct _lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv_area_t * coords);
 
 /**
