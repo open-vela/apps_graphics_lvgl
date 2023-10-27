@@ -318,28 +318,19 @@ Set the point from which the background's gradient color should start. 0 means t
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> No</li>
 </ul>
 
-### bg_main_opa
-Set the opacity of the first gradient color
-<ul>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> 255</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Inherited</strong> No</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Layout</strong> No</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> No</li>
-</ul>
-
-### bg_grad_opa
-Set the opacity of the second gradient color
-<ul>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> 255</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Inherited</strong> No</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Layout</strong> No</li>
-<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> No</li>
-</ul>
-
 ### bg_grad
-Set the gradient definition. The pointed instance must exist while the object is alive. NULL to disable. It wraps `BG_GRAD_COLOR`, `BG_GRAD_DIR`, `BG_MAIN_STOP` and `BG_GRAD_STOP` into one descriptor and allows creating gradients with more colors too. If it's set other gradient related properties will be ignored'
+Set the gradient definition. The pointed instance must exist while the object is alive. NULL to disable. It wraps `BG_GRAD_COLOR`, `BG_GRAD_DIR`, `BG_MAIN_STOP` and `BG_GRAD_STOP` into one descriptor and allows creating gradients with more colors too.
 <ul>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> `NULL`</li>
+<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Inherited</strong> No</li>
+<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Layout</strong> No</li>
+<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> No</li>
+</ul>
+
+### bg_dither_mode
+Set the dithering mode of the gradient of the background. The possible values are `LV_DITHER_NONE/ORDERED/ERR_DIFF`.
+<ul>
+<li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> `LV_DITHER_NONE`</li>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Inherited</strong> No</li>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Layout</strong> No</li>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> No</li>
@@ -489,7 +480,7 @@ Set the width of the shadow in pixels. The value should be >= 0.
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> Yes</li>
 </ul>
 
-### shadow_offset_x
+### shadow_ofs_x
 Set an offset on the shadow in pixels in X direction.
 <ul>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> 0</li>
@@ -498,7 +489,7 @@ Set an offset on the shadow in pixels in X direction.
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Ext. draw</strong> Yes</li>
 </ul>
 
-### shadow_offset_y
+### shadow_ofs_y
 Set an offset on the shadow in pixels in Y direction.
 <ul>
 <li style='display:inline; margin-right: 20px; margin-left: 0px'><strong>Default</strong> 0</li>

@@ -1,3 +1,6 @@
+#ifndef UBUNTU_FONT_H
+#define UBUNTU_FONT_H
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -11968,3 +11971,4 @@ const uint8_t ubuntu_font[] = {
 };
 
 size_t ubuntu_font_size = sizeof(ubuntu_font);
+#endif
