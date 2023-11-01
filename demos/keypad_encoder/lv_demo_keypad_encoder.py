@@ -131,7 +131,7 @@ class KeyboardEncoder:
 
     def ta_event_cb(self,e) :
 
-        indev = lv.indev_active()
+        indev = lv.indev_get_act()
         if indev == None :
             return
         indev_type = indev.get_type()
