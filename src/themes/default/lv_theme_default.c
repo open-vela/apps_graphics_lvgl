@@ -89,7 +89,7 @@ typedef struct {
 #endif
 
 #if LV_USE_CHART
-    lv_style_t chart_series, chart_indic, chart_ticks, chart_bg;
+    lv_style_t chart_series, chart_indic, chart_bg;
 #endif
 
 #if LV_USE_DROPDOWN
@@ -162,7 +162,7 @@ typedef enum {
 typedef struct _my_theme_t {
     lv_theme_t base;
     disp_size_t disp_size;
-    lv_coord_t disp_dpi;
+    int32_t disp_dpi;
     lv_color_t color_scr;
     lv_color_t color_text;
     lv_color_t color_card;
@@ -301,7 +301,7 @@ static void style_init(struct _my_theme_t * theme)
         lv_style_set_shadow_color(&theme->styles.btn, lv_palette_main(LV_PALETTE_GREY));
         lv_style_set_shadow_width(&theme->styles.btn, LV_DPX(3));
         lv_style_set_shadow_opa(&theme->styles.btn, LV_OPA_50);
-        lv_style_set_shadow_ofs_y(&theme->styles.btn, _LV_DPX_CALC(theme->disp_dpi, LV_DPX(4)));
+        lv_style_set_shadow_offset_y(&theme->styles.btn, _LV_DPX_CALC(theme->disp_dpi, LV_DPX(4)));
     }
     lv_style_set_text_color(&theme->styles.btn, theme->color_text);
     lv_style_set_pad_hor(&theme->styles.btn, PAD_DEF);
@@ -458,7 +458,7 @@ static void style_init(struct _my_theme_t * theme)
     lv_style_set_line_width(&theme->styles.chart_series, _LV_DPX_CALC(theme->disp_dpi, 3));
     lv_style_set_radius(&theme->styles.chart_series, _LV_DPX_CALC(theme->disp_dpi, 3));
 
-    lv_coord_t chart_size = _LV_DPX_CALC(theme->disp_dpi, 8);
+    int32_t chart_size = _LV_DPX_CALC(theme->disp_dpi, 8);
     lv_style_set_size(&theme->styles.chart_series, chart_size, chart_size);
     lv_style_set_pad_column(&theme->styles.chart_series, _LV_DPX_CALC(theme->disp_dpi, 2));
 
@@ -467,12 +467,6 @@ static void style_init(struct _my_theme_t * theme)
     lv_style_set_size(&theme->styles.chart_indic, chart_size, chart_size);
     lv_style_set_bg_color(&theme->styles.chart_indic, theme->base.color_primary);
     lv_style_set_bg_opa(&theme->styles.chart_indic, LV_OPA_COVER);
-
-    style_init_reset(&theme->styles.chart_ticks);
-    lv_style_set_line_width(&theme->styles.chart_ticks, _LV_DPX_CALC(theme->disp_dpi, 1));
-    lv_style_set_line_color(&theme->styles.chart_ticks, theme->color_text);
-    lv_style_set_pad_all(&theme->styles.chart_ticks, _LV_DPX_CALC(theme->disp_dpi, 2));
-    lv_style_set_text_color(&theme->styles.chart_ticks, lv_palette_main(LV_PALETTE_GREY));
 #endif
 
 #if LV_USE_MENU
@@ -541,7 +535,7 @@ static void style_init(struct _my_theme_t * theme)
     lv_style_set_line_width(&theme->styles.meter_marker, _LV_DPX_CALC(theme->disp_dpi, 5));
     lv_style_set_line_color(&theme->styles.meter_marker, theme->color_text);
 
-    lv_coord_t meter_size = _LV_DPX_CALC(theme->disp_dpi, 20);
+    int32_t meter_size = _LV_DPX_CALC(theme->disp_dpi, 20);
     lv_style_set_size(&theme->styles.meter_marker, meter_size, meter_size);
 
     meter_size = _LV_DPX_CALC(theme->disp_dpi, 15);
@@ -680,8 +674,8 @@ lv_theme_t * lv_theme_default_init(lv_display_t * disp, lv_color_t color_primary
     struct _my_theme_t * theme = theme_def;
 
     lv_display_t * new_disp = disp == NULL ? lv_display_get_default() : disp;
-    lv_coord_t new_dpi = lv_display_get_dpi(new_disp);
-    lv_coord_t hor_res = lv_display_get_horizontal_resolution(new_disp);
+    int32_t new_dpi = lv_display_get_dpi(new_disp);
+    int32_t hor_res = lv_display_get_horizontal_resolution(new_disp);
     disp_size_t new_size;
 
     if(hor_res <= 320) new_size = DISP_SMALL;
@@ -979,7 +973,6 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.scrollbar_scrolled, LV_PART_SCROLLBAR | LV_STATE_SCROLLED);
         lv_obj_add_style(obj, &theme->styles.chart_series, LV_PART_ITEMS);
         lv_obj_add_style(obj, &theme->styles.chart_indic, LV_PART_INDICATOR);
-        lv_obj_add_style(obj, &theme->styles.chart_ticks, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.chart_series, LV_PART_CURSOR);
     }
 #endif
