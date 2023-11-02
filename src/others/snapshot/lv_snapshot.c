@@ -62,9 +62,9 @@ uint32_t lv_snapshot_buf_size_needed(lv_obj_t * obj, lv_color_format_t cf)
     lv_obj_update_layout(obj);
 
     /*Width and height determine snapshot image size.*/
-    lv_coord_t w = lv_obj_get_width(obj);
-    lv_coord_t h = lv_obj_get_height(obj);
-    lv_coord_t ext_size = _lv_obj_get_ext_draw_size(obj);
+    int32_t w = lv_obj_get_width(obj);
+    int32_t h = lv_obj_get_height(obj);
+    int32_t ext_size = _lv_obj_get_ext_draw_size(obj);
     w += ext_size * 2;
     h += ext_size * 2;
 
@@ -101,9 +101,9 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
     if(lv_snapshot_buf_size_needed(obj, cf) > buff_size || buff_size == 0) return LV_RESULT_INVALID;
 
     /*Width and height determine snapshot image size.*/
-    lv_coord_t w = lv_obj_get_width(obj);
-    lv_coord_t h = lv_obj_get_height(obj);
-    lv_coord_t ext_size = _lv_obj_get_ext_draw_size(obj);
+    int32_t w = lv_obj_get_width(obj);
+    int32_t h = lv_obj_get_height(obj);
+    int32_t ext_size = _lv_obj_get_ext_draw_size(obj);
     w += ext_size * 2;
     h += ext_size * 2;
 
@@ -130,21 +130,12 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
     layer.color_format = cf;
     layer.clip_area = snapshot_area;
 
-    lv_display_t * disp_old = _lv_refr_get_disp_refreshing();
-    lv_display_t * disp_new = lv_obj_get_disp(obj);
-    lv_layer_t * layer_old = disp_new->layer_head;
-    disp_new->layer_head = &layer;
-
-    _lv_refr_set_disp_refreshing(disp_new);
     lv_obj_redraw(&layer, obj);
 
     while(layer.draw_task_head) {
         lv_draw_dispatch_wait_for_request();
         lv_draw_dispatch_layer(NULL, &layer);
     }
-
-    disp_new->layer_head = layer_old;
-    _lv_refr_set_disp_refreshing(disp_old);
 
     return LV_RESULT_OK;
 }

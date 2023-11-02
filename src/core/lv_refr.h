@@ -57,7 +57,7 @@ void lv_refr_now(lv_display_t * disp);
 
 /**
  * Redrawn on object an all its children using the passed draw context
- * @param draw_ctx  pointer to an initialized draw context
+ * @param layer pointer to a layer where to draw.
  * @param obj   the start object from the redraw should start
  */
 void lv_obj_redraw(lv_layer_t * layer, lv_obj_t * obj);
@@ -75,12 +75,6 @@ void _lv_inv_area(lv_display_t * disp, const lv_area_t * area_p);
  * @return the display being refreshed
  */
 lv_display_t * _lv_refr_get_disp_refreshing(void);
-
-/**
- * Set the display which is being refreshed
- * @param disp the display being refreshed
- */
-void _lv_refr_set_disp_refreshing(lv_display_t * disp);
 
 /**
  * Called periodically to handle the refreshing
