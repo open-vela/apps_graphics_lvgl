@@ -39,7 +39,6 @@ extern "C" {
 #define LV_OS_RTTHREAD      4
 #define LV_OS_CUSTOM        255
 
-
 #define LV_STDLIB_BUILTIN           0
 #define LV_STDLIB_CLIB              1
 #define LV_STDLIB_MICROPYTHON       2

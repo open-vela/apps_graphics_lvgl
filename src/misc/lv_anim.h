@@ -174,11 +174,6 @@ typedef struct _lv_anim_t {
 void _lv_anim_core_init(void);
 
 /**
- * Deinit. the animation module
- */
-void _lv_anim_core_deinit(void);
-
-/**
  * Initialize an animation variable.
  * E.g.:
  * lv_anim_t a;

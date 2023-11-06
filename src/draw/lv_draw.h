@@ -48,7 +48,6 @@ typedef enum {
     LV_DRAW_TASK_TYPE_TRIANGLE,
     LV_DRAW_TASK_TYPE_MASK_RECTANGLE,
     LV_DRAW_TASK_TYPE_MASK_BITMAP,
-    LV_DRAW_TASK_TYPE_VECTOR,
 } lv_draw_task_type_t;
 
 typedef enum {
@@ -130,13 +129,6 @@ typedef struct _lv_draw_unit_t {
      * @return
      */
     int32_t (*evaluate_cb)(struct _lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
-
-    /**
-     * Called to delete draw unit.
-     * @param draw_unit
-     * @return
-     */
-    int32_t (*delete_cb)(struct _lv_draw_unit_t * draw_unit);
 } lv_draw_unit_t;
 
 
@@ -198,8 +190,6 @@ typedef struct {
 
 void lv_draw_init(void);
 
-void lv_draw_deinit(void);
-
 /**
  * Allocate a new draw unit with the given size and appends it to the list of draw units
  * @param size      the size to allocate. E.g. `sizeof(my_draw_unit_t)`,
@@ -255,7 +245,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer);
  * @param y                 the target X coordinate
  * @return                  `buf` offset to point to the given X and Y coordinate
  */
-void * lv_draw_layer_go_to_xy(lv_layer_t * layer, lv_coord_t x, lv_coord_t y);
+void * lv_draw_layer_go_to_xy(lv_layer_t * layer, int32_t x, int32_t y);
 
 /**********************
  *  GLOBAL VARIABLES

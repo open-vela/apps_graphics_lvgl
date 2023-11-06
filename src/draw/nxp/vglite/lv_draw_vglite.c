@@ -104,10 +104,6 @@ void lv_draw_vglite_init(void)
 #endif
 }
 
-void lv_draw_vglite_deinit(void)
-{
-}
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/

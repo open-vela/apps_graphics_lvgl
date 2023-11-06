@@ -34,8 +34,6 @@ typedef struct {
 
 void _lv_cache_builtin_init(void);
 
-void _lv_cache_builtin_deinit(void);
-
 /**********************
  *      MACROS
  **********************/
