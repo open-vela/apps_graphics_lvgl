@@ -105,8 +105,8 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, 
         header->always_zero = 0;
         header->cf = LV_COLOR_FORMAT_ARGB8888;
         /*The width and height are stored in Big endian format so convert them to little endian*/
-        header->w = (lv_coord_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
-        header->h = (lv_coord_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
+        header->w = (int32_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
+        header->h = (int32_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
 
         return LV_RESULT_OK;
     }
@@ -155,7 +155,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         }
 
         dsc->img_data = lv_cache_get_data(cache);
-        dsc->user_data = cache;
+        dsc->cache_entry = cache;
 
         lv_cache_unlock();
         return LV_RESULT_OK;     /*The image is fully decoded. Return with its pointer*/
@@ -172,7 +172,7 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
     LV_UNUSED(decoder); /*Unused*/
 
     lv_cache_lock();
-    lv_cache_release(dsc->user_data);
+    lv_cache_release(dsc->cache_entry);
     lv_cache_unlock();
 }
 
@@ -185,7 +185,7 @@ static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc)
         lv_cache_entry_t * cache = lv_cache_find(fn, LV_CACHE_SRC_TYPE_STR, 0, 0);
         if(cache) {
             dsc->img_data = lv_cache_get_data(cache);
-            dsc->user_data = cache;     /*Save the cache to release it in decoder_close*/
+            dsc->cache_entry = cache;     /*Save the cache to release it in decoder_close*/
             lv_cache_unlock();
             return LV_RESULT_OK;
         }
