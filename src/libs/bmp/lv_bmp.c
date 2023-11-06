@@ -59,17 +59,6 @@ void lv_bmp_init(void)
     lv_image_decoder_set_close_cb(dec, decoder_close);
 }
 
-void lv_bmp_deinit(void)
-{
-    lv_image_decoder_t * dec = NULL;
-    while((dec = lv_image_decoder_get_next(dec)) != NULL) {
-        if(dec->info_cb == decoder_info) {
-            lv_image_decoder_delete(dec);
-            break;
-        }
-    }
-}
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -212,7 +201,7 @@ static lv_result_t decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
         return LV_RESULT_INVALID;
     }
     else {
-        lv_coord_t y = (b->px_height - 1) - (decoded_area->y1); /*BMP images are stored upside down*/
+        int32_t y = (b->px_height - 1) - (decoded_area->y1); /*BMP images are stored upside down*/
         uint32_t p = b->px_offset + b->row_size_bytes * y;
         p += (decoded_area->x1) * (b->bpp / 8);
         lv_fs_seek(&b->f, p, LV_FS_SEEK_SET);
