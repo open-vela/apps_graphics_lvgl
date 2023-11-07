@@ -42,9 +42,10 @@ typedef struct {
 
 lv_indev_t * lv_sdl_mouse_create(void)
 {
-    lv_sdl_mouse_t * dsc = lv_malloc_zeroed(sizeof(lv_sdl_mouse_t));
+    lv_sdl_mouse_t * dsc = lv_malloc(sizeof(lv_sdl_mouse_t));
     LV_ASSERT_MALLOC(dsc);
     if(dsc == NULL) return NULL;
+    lv_memzero(dsc, sizeof(lv_sdl_mouse_t));
 
     lv_indev_t * indev = lv_indev_create();
     LV_ASSERT_MALLOC(indev);
@@ -116,8 +117,8 @@ void _lv_sdl_mouse_handler(SDL_Event * event)
     lv_sdl_mouse_t * indev_dev = lv_indev_get_driver_data(indev);
     if(indev_dev == NULL) return;
 
-    int32_t hor_res = lv_display_get_horizontal_resolution(disp);
-    int32_t ver_res = lv_display_get_vertical_resolution(disp);
+    lv_coord_t hor_res = lv_display_get_horizontal_resolution(disp);
+    lv_coord_t ver_res = lv_display_get_vertical_resolution(disp);
     uint8_t zoom = lv_sdl_window_get_zoom(disp);
 
     switch(event->type) {
