@@ -30,6 +30,7 @@ extern "C" {
 #include "src/misc/lv_log.h"
 #include "src/misc/lv_timer.h"
 #include "src/misc/lv_math.h"
+#include "src/misc/lv_array.h"
 #include "src/misc/lv_async.h"
 #include "src/misc/lv_anim_timeline.h"
 #include "src/misc/lv_profiler_builtin.h"
@@ -90,6 +91,7 @@ extern "C" {
 
 #include "src/libs/barcode/lv_barcode.h"
 #include "src/libs/bmp/lv_bmp.h"
+#include "src/libs/rle/lv_rle_decoder.h"
 #include "src/libs/fsdrv/lv_fsdrv.h"
 #include "src/libs/lodepng/lv_lodepng.h"
 #include "src/libs/libpng/lv_libpng.h"

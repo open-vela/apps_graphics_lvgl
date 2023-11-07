@@ -69,7 +69,8 @@ void lv_draw_deinit(void)
 
 void * lv_draw_create_unit(size_t size)
 {
-    lv_draw_unit_t * new_unit = lv_malloc_zeroed(size);
+    lv_draw_unit_t * new_unit = lv_malloc(size);
+    lv_memzero(new_unit, size);
 
     new_unit->next = _draw_info.unit_head;
     _draw_info.unit_head = new_unit;
@@ -80,7 +81,8 @@ void * lv_draw_create_unit(size_t size)
 lv_draw_task_t * lv_draw_add_task(lv_layer_t * layer, const lv_area_t * coords)
 {
     LV_PROFILER_BEGIN;
-    lv_draw_task_t * new_task = lv_malloc_zeroed(sizeof(lv_draw_task_t));
+    lv_draw_task_t * new_task = lv_malloc(sizeof(lv_draw_task_t));
+    lv_memzero(new_task, sizeof(*new_task));
 
     new_task->area = *coords;
     new_task->clip_area = layer->clip_area;
@@ -298,8 +300,8 @@ lv_draw_task_t * lv_draw_get_next_available_task(lv_layer_t * layer, lv_draw_tas
     LV_PROFILER_BEGIN;
     /*If the first task is screen sized, there cannot be independent areas*/
     if(layer->draw_task_head) {
-        int32_t hor_res = lv_display_get_horizontal_resolution(_lv_refr_get_disp_refreshing());
-        int32_t ver_res = lv_display_get_vertical_resolution(_lv_refr_get_disp_refreshing());
+        lv_coord_t hor_res = lv_display_get_horizontal_resolution(_lv_refr_get_disp_refreshing());
+        lv_coord_t ver_res = lv_display_get_vertical_resolution(_lv_refr_get_disp_refreshing());
         lv_draw_task_t * t = layer->draw_task_head;
         if(t->state != LV_DRAW_TASK_STATE_QUEUED &&
            t->area.x1 <= 0 && t->area.x2 >= hor_res - 1 &&
@@ -328,14 +330,14 @@ lv_draw_task_t * lv_draw_get_next_available_task(lv_layer_t * layer, lv_draw_tas
 lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t color_format, const lv_area_t * area)
 {
     lv_display_t * disp = _lv_refr_get_disp_refreshing();
-    lv_layer_t * new_layer = lv_malloc_zeroed(sizeof(lv_layer_t));
+    lv_layer_t * new_layer = lv_malloc(sizeof(lv_layer_t));
     LV_ASSERT_MALLOC(new_layer);
     if(new_layer == NULL) return NULL;
+    lv_memzero(new_layer, sizeof(lv_layer_t));
 
     new_layer->parent = parent_layer;
     new_layer->clip_area = *area;
     new_layer->buf_area = *area;
-    new_layer->buf_stride = lv_draw_buf_width_to_stride(lv_area_get_width(area), color_format);
     new_layer->color_format = color_format;
 
     if(disp->layer_head) {
@@ -352,12 +354,11 @@ lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t c
 
 void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
 {
-    int32_t w = lv_area_get_width(&layer->buf_area);
-    uint32_t stride = lv_draw_buf_width_to_stride(w, layer->color_format);
-
     /*If the buffer of the layer is not allocated yet, allocate it now*/
     if(layer->buf == NULL) {
+        int32_t w = lv_area_get_width(&layer->buf_area);
         int32_t h = lv_area_get_height(&layer->buf_area);
+        int32_t stride = lv_draw_buf_width_to_stride(w, layer->color_format);
         uint32_t layer_size_byte = h * stride;
         layer->buf_unaligned = lv_draw_buf_malloc(layer_size_byte, layer->color_format);
 
@@ -383,16 +384,13 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
         }
     }
 
-    /*Set the stride also for static allocated buffers as well as for new dynamically allocated*/
-    layer->buf_stride = stride;
-
-    /*Make sure the buffer address is aligned in case of already allocated buffers*/
     return lv_draw_buf_align(layer->buf, layer->color_format);
 }
 
-void * lv_draw_layer_go_to_xy(lv_layer_t * layer, int32_t x, int32_t y)
+void * lv_draw_layer_go_to_xy(lv_layer_t * layer, lv_coord_t x, lv_coord_t y)
 {
-    return lv_draw_buf_go_to_xy(layer->buf, layer->buf_stride, layer->color_format, x, y);
+    uint32_t stride = lv_draw_buf_width_to_stride(lv_area_get_width(&layer->buf_area), layer->color_format);
+    return lv_draw_buf_go_to_xy(layer->buf, stride, layer->color_format, x, y);
 
 }
 
