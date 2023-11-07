@@ -48,6 +48,7 @@ typedef enum {
     LV_DRAW_TASK_TYPE_TRIANGLE,
     LV_DRAW_TASK_TYPE_MASK_RECTANGLE,
     LV_DRAW_TASK_TYPE_MASK_BITMAP,
+    LV_DRAW_TASK_TYPE_VECTOR,
 } lv_draw_task_type_t;
 
 typedef enum {
@@ -254,7 +255,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer);
  * @param y                 the target X coordinate
  * @return                  `buf` offset to point to the given X and Y coordinate
  */
-void * lv_draw_layer_go_to_xy(lv_layer_t * layer, int32_t x, int32_t y);
+void * lv_draw_layer_go_to_xy(lv_layer_t * layer, lv_coord_t x, lv_coord_t y);
 
 /**********************
  *  GLOBAL VARIABLES
