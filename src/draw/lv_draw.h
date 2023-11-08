@@ -48,7 +48,6 @@ typedef enum {
     LV_DRAW_TASK_TYPE_TRIANGLE,
     LV_DRAW_TASK_TYPE_MASK_RECTANGLE,
     LV_DRAW_TASK_TYPE_MASK_BITMAP,
-    LV_DRAW_TASK_TYPE_VECTOR,
 } lv_draw_task_type_t;
 
 typedef enum {
@@ -117,10 +116,8 @@ typedef struct _lv_draw_unit_t {
      * A draw task should be assign only if the draw unit can draw it too
      * @param draw_unit     pointer to the draw unit
      * @param layer         pointer to a layer on which the draw task should be drawn
-     * @return              >=0:    The number of taken draw task:
-     *                                  0 means the task has not yet been completed.
-     *                                  1 means a new task has been accepted.
-     *                      -1:     There are no available draw tasks at all.
+     * @return              >=0:    The number of taken draw task
+     *                      -1:     There where no available draw tasks at all.
      *                              Also means to no call the dispatcher of the other draw units as there is no draw task to take
      */
     int32_t (*dispatch_cb)(struct _lv_draw_unit_t * draw_unit, struct _lv_layer_t * layer);
@@ -257,7 +254,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer);
  * @param y                 the target X coordinate
  * @return                  `buf` offset to point to the given X and Y coordinate
  */
-void * lv_draw_layer_go_to_xy(lv_layer_t * layer, lv_coord_t x, lv_coord_t y);
+void * lv_draw_layer_go_to_xy(lv_layer_t * layer, int32_t x, int32_t y);
 
 /**********************
  *  GLOBAL VARIABLES
