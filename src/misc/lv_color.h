@@ -117,6 +117,9 @@ enum _lv_color_format_t {
     LV_COLOR_FORMAT_ARGB8888          = 0x10,
     LV_COLOR_FORMAT_XRGB8888          = 0x11,
 
+    /*Miscellaneous formats*/
+    LV_COLOR_FORMAT_NATIVE_REVERSED   = 0x1A,
+
     /*Formats not supported by software renderer but kept here so GPU can use it*/
     LV_COLOR_FORMAT_A1                = 0x0B,
     LV_COLOR_FORMAT_A2                = 0x0C,
@@ -143,7 +146,6 @@ typedef _lv_color_format_t lv_color_format_t;
 typedef uint8_t lv_color_format_t;
 #endif /*DOXYGEN*/
 
-#define LV_COLOR_FORMAT_IS_ALPHA_ONLY(cf) ((cf) >= LV_COLOR_FORMAT_A1 && (cf) <= LV_COLOR_FORMAT_A8)
 #define LV_COLOR_FORMAT_IS_INDEXED(cf) ((cf) >= LV_COLOR_FORMAT_I1 && (cf) <= LV_COLOR_FORMAT_I8)
 #define LV_COLOR_INDEXED_PALETTE_SIZE(cf) ((cf) == LV_COLOR_FORMAT_I1 ? 2 :\
                                            (cf) == LV_COLOR_FORMAT_I2 ? 4 :\

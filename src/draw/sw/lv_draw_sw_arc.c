@@ -18,8 +18,8 @@
 
 
 static void add_circle(const lv_opa_t * circle_mask, const lv_area_t * blend_area, const lv_area_t * circle_area,
-                       lv_opa_t * mask_buf,  int32_t width);
-static void get_rounded_area(int16_t angle, int32_t radius, uint8_t thickness, lv_area_t * res_area);
+                       lv_opa_t * mask_buf,  lv_coord_t width);
+static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area);
 
 /*********************
  *      DEFINES
@@ -54,7 +54,7 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
     if(dsc->width == 0) return;
     if(dsc->start_angle == dsc->end_angle) return;
 
-    int32_t width = dsc->width;
+    lv_coord_t width = dsc->width;
     if(width > dsc->radius) width = dsc->radius;
 
     lv_area_t area_out = *coords;
@@ -68,7 +68,7 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
         lv_draw_border_dsc_init(&cir_dsc);
         cir_dsc.opa = dsc->opa;
         cir_dsc.color = dsc->color;
-        cir_dsc.width = width;
+        cir_dsc.width = dsc->width;
         cir_dsc.radius = LV_RADIUS_CIRCLE;
         cir_dsc.side = LV_BORDER_SIDE_FULL;
         lv_draw_sw_border(draw_unit, &cir_dsc, &area_out);
@@ -82,8 +82,8 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
     area_in.x2 -= dsc->width;
     area_in.y2 -= dsc->width;
 
-    int32_t start_angle = (int32_t)dsc->start_angle;
-    int32_t end_angle = (int32_t)dsc->end_angle;
+    int32_t start_angle = dsc->start_angle;
+    int32_t end_angle = dsc->end_angle;
     while(start_angle >= 360) start_angle -= 360;
     while(end_angle >= 360) end_angle -= 360;
 
@@ -108,9 +108,9 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
         mask_in_param_valid = true;
     }
 
-    int32_t blend_h = lv_area_get_height(&clipped_area);
-    int32_t blend_w = lv_area_get_width(&clipped_area);
-    int32_t h;
+    lv_coord_t blend_h = lv_area_get_height(&clipped_area);
+    lv_coord_t blend_w = lv_area_get_width(&clipped_area);
+    lv_coord_t h;
     lv_opa_t * mask_buf = lv_malloc(blend_w);
 
     lv_area_t blend_area = clipped_area;
@@ -130,7 +130,7 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
         img_area.y1 = 0;
         img_area.x2 = decoder_dsc.header.w - 1;
         img_area.y2 = decoder_dsc.header.h - 1;
-        int32_t ofs = decoder_dsc.header.w / 2;
+        lv_coord_t ofs = decoder_dsc.header.w / 2;
         lv_area_move(&img_area, dsc->center.x - ofs, dsc->center.y - ofs);
         blend_dsc.src_area = &img_area;
         blend_dsc.src_buf = decoder_dsc.img_data;
@@ -218,7 +218,7 @@ void lv_draw_sw_arc(lv_draw_unit_t * draw_unit, const lv_draw_arc_dsc_t * dsc, c
  **********************/
 
 static void add_circle(const lv_opa_t * circle_mask, const lv_area_t * blend_area, const lv_area_t * circle_area,
-                       lv_opa_t * mask_buf,  int32_t width)
+                       lv_opa_t * mask_buf,  lv_coord_t width)
 {
     lv_area_t circle_common_area;
     if(_lv_area_intersect(&circle_common_area, circle_area, blend_area)) {
@@ -237,7 +237,7 @@ static void add_circle(const lv_opa_t * circle_mask, const lv_area_t * blend_are
 
 }
 
-static void get_rounded_area(int16_t angle, int32_t radius, uint8_t thickness, lv_area_t * res_area)
+static void get_rounded_area(int16_t angle, lv_coord_t radius, uint8_t thickness, lv_area_t * res_area)
 {
     int32_t thick_half = thickness / 2;
     uint8_t thick_corr = (thickness & 0x01) ? 0 : 1;

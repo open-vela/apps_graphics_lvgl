@@ -57,6 +57,11 @@
     #endif
 #endif  /*LV_USE_MALLOC == LV_STDLIB_BUILTIN*/
 
+
+#if LV_USE_STDLIB_SPRINTF == LV_STDLIB_BUILTIN
+    #define LV_SPRINTF_USE_FLOAT 0
+#endif  /*LV_USE_STDLIB_SPRINTF == LV_STDLIB_BUILTIN*/
+
 /*====================
    HAL SETTINGS
  *====================*/
@@ -126,6 +131,9 @@
 /* Use NXP's PXP on iMX RTxxx platforms. */
 #define LV_USE_DRAW_PXP 0
 
+/*Enable Vector Graphic APIs*/
+#define LV_USE_VECTOR_GRAPHIC   0
+
 /*=================
  * OPERATING SYSTEM
  *=================*/
@@ -134,7 +142,6 @@
  * - LV_OS_PTHREAD
  * - LV_OS_FREERTOS
  * - LV_OS_CMSIS_RTOS2
- * - LV_OS_RTTHREAD
  * - LV_OS_CUSTOM */
 #define LV_USE_OS   LV_OS_NONE
 
@@ -263,23 +270,20 @@
 
 /*Number of stops allowed per gradient. Increase this to allow more stops.
  *This adds (sizeof(lv_color_t) + 1) bytes per additional stop*/
-#define LV_GRADIENT_MAX_STOPS   2
+#define LV_GRADIENT_MAX_STOPS 2
 
 /* Adjust color mix functions rounding. GPUs might calculate color mix (blending) differently.
  * 0: round down, 64: round up from x.75, 128: round up from half, 192: round up from x.25, 254: round up */
-#define LV_COLOR_MIX_ROUND_OFS  0
+#define LV_COLOR_MIX_ROUND_OFS 0
 
 /* Add 2 x 32 bit variables to each lv_obj_t to speed up getting style properties */
-#define LV_OBJ_STYLE_CACHE      0
+#define LV_OBJ_STYLE_CACHE 0
 
 /* Add `id` field to `lv_obj_t` */
-#define LV_USE_OBJ_ID           0
+#define LV_USE_OBJ_ID 0
 
 /* Use lvgl builtin method for obj ID */
-#define LV_USE_OBJ_ID_BUILTIN   0
-
-/*Use obj property set/get API*/
-#define LV_USE_OBJ_PROPERTY 0
+#define LV_USE_OBJ_ID_BUILTIN 0
 
 /*=====================
  *  COMPILER SETTINGS
@@ -317,11 +321,8 @@
  *should also appear on LVGL binding API such as Micropython.*/
 #define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning /*The default value just prevents GCC warning*/
 
-/*Prefix all global extern data with this*/
-#define LV_ATTRIBUTE_EXTERN_DATA
-
-/* Use `float` as `lv_value_precise_t` */
-#define LV_USE_FLOAT            0
+/*Extend the default -32k..32k coordinate range to -4M..4M by using int32_t for coordinates instead of int16_t*/
+#define LV_USE_LARGE_COORD 0
 
 /*==================
  *   FONT USAGE
@@ -617,6 +618,9 @@
 /*Decode bin images to RAM*/
 #define LV_BIN_DECODER_RAM_LOAD 0
 
+/*RLE decoder library*/
+#define LV_USE_RLE 0
+
 /*QR code library*/
 #define LV_USE_QRCODE 0
 
@@ -653,6 +657,9 @@
 /*Rlottie library*/
 #define LV_USE_RLOTTIE 0
 
+/*ThorVG library*/
+#define LV_USE_THORVG 0
+
 /*FFmpeg library for image decoding and playing videos
  *Supports all major image formats so do not enable other image decoder with it*/
 #define LV_USE_FFMPEG 0
@@ -685,16 +692,10 @@
     #define LV_PROFILER_INCLUDE "lvgl/src/misc/lv_profiler_builtin.h"
 
     /*Profiler start point function*/
-    #define LV_PROFILER_BEGIN    LV_PROFILER_BUILTIN_BEGIN
+    #define LV_PROFILER_BEGIN   LV_PROFILER_BUILTIN_BEGIN
 
     /*Profiler end point function*/
-    #define LV_PROFILER_END      LV_PROFILER_BUILTIN_END
-
-    /*Profiler start point function with custom tag*/
-    #define LV_PROFILER_BEGIN_TAG LV_PROFILER_BUILTIN_BEGIN_TAG
-
-    /*Profiler end point function with custom tag*/
-    #define LV_PROFILER_END_TAG   LV_PROFILER_BUILTIN_END_TAG
+    #define LV_PROFILER_END     LV_PROFILER_BUILTIN_END
 #endif
 
 /*1: Enable Monkey test*/
@@ -823,9 +824,10 @@
 
 /*Benchmark your system*/
 #define LV_USE_DEMO_BENCHMARK 0
-
-/*Render test for each primitives. Requires at least 480x272 display*/
-#define LV_USE_DEMO_RENDER 0
+#if LV_USE_DEMO_BENCHMARK
+    /*Use RGB565A8 images with 16 bit color depth instead of ARGB8565*/
+    #define LV_DEMO_BENCHMARK_RGB565A8 0
+#endif
 
 /*Stress test for LVGL*/
 #define LV_USE_DEMO_STRESS 0
@@ -851,6 +853,9 @@
 
 /*Demonstrate scroll settings*/
 #define LV_USE_DEMO_SCROLL          0
+
+/*Vector graphic demo*/
+#define LV_USE_DEMO_VECTOR_GRAPHIC  0
 /*--END OF LV_CONF_H--*/
 
 #endif /*LV_CONF_H*/

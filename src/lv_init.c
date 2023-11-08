@@ -68,7 +68,7 @@ static inline void lv_global_init(lv_global_t * global)
         return;
     }
 
-    lv_memzero(global, sizeof(lv_global_t));
+    lv_memset(global, 0, sizeof(lv_global_t));
 
     _lv_ll_init(&(global->disp_ll), sizeof(lv_display_t));
     _lv_ll_init(&(global->indev_ll), sizeof(lv_indev_t));
@@ -247,6 +247,10 @@ void lv_init(void)
     lv_bmp_init();
 #endif
 
+#if LV_USE_RLE
+    lv_rle_decoder_init();
+#endif
+
     /*Make FFMPEG last because the last converter will be checked first and
      *it's superior to any other */
 #if LV_USE_FFMPEG
@@ -276,14 +280,10 @@ void lv_deinit(void)
     }
 #if LV_ENABLE_GLOBAL_CUSTOM || LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
 
-#if LV_USE_SYSMON
-    _lv_sysmon_builtin_deinit();
-#endif
-
     lv_display_set_default(NULL);
 
-#if LV_USE_SPAN != 0
-    lv_span_stack_deinit();
+#if LV_USE_DRAW_SW
+    lv_draw_sw_deinit();
 #endif
 
 #if LV_USE_FREETYPE
@@ -307,6 +307,10 @@ void lv_deinit(void)
     _lv_cache_deinit();
 
     _lv_image_decoder_deinit();
+
+#if LV_USE_SYSMON
+    _lv_sysmon_builtin_deinit();
+#endif
 
     _lv_refr_deinit();
 
@@ -340,17 +344,20 @@ void lv_deinit(void)
     lv_profiler_builtin_uninit();
 #endif
 
-#if LV_USE_OBJ_ID_BUILTIN
-    lv_objid_builtin_destroy();
+#if LV_USE_SPAN != 0
+    lv_span_stack_deinit();
 #endif
-
-    lv_mem_deinit();
 
 #if LV_USE_LOG
     lv_log_register_print_cb(NULL);
 #endif
 
+#if LV_USE_OBJ_ID_BUILTIN
+    lv_objid_builtin_destroy();
 #endif
+#endif
+
+    lv_mem_deinit();
 
     lv_initialized = false;
 

@@ -149,6 +149,17 @@
     #endif
 #endif  /*LV_USE_MALLOC == LV_STDLIB_BUILTIN*/
 
+
+#if LV_USE_STDLIB_SPRINTF == LV_STDLIB_BUILTIN
+    #ifndef LV_SPRINTF_USE_FLOAT
+        #ifdef CONFIG_LV_SPRINTF_USE_FLOAT
+            #define LV_SPRINTF_USE_FLOAT CONFIG_LV_SPRINTF_USE_FLOAT
+        #else
+            #define LV_SPRINTF_USE_FLOAT 0
+        #endif
+    #endif
+#endif  /*LV_USE_STDLIB_SPRINTF == LV_STDLIB_BUILTIN*/
+
 /*====================
    HAL SETTINGS
  *====================*/
@@ -324,6 +335,14 @@
     #endif
 #endif
 
+/*Enable Vector Graphic APIs*/
+#ifndef LV_USE_VECTOR_GRAPHIC
+    #ifdef CONFIG_LV_USE_VECTOR_GRAPHIC
+        #define LV_USE_VECTOR_GRAPHIC CONFIG_LV_USE_VECTOR_GRAPHIC
+    #else
+        #define LV_USE_VECTOR_GRAPHIC   0
+    #endif
+#endif
 /*=================
  * OPERATING SYSTEM
  *=================*/
@@ -332,7 +351,6 @@
  * - LV_OS_PTHREAD
  * - LV_OS_FREERTOS
  * - LV_OS_CMSIS_RTOS2
- * - LV_OS_RTTHREAD
  * - LV_OS_CUSTOM */
 #ifndef LV_USE_OS
     #ifdef CONFIG_LV_USE_OS
@@ -727,7 +745,7 @@
     #ifdef CONFIG_LV_GRADIENT_MAX_STOPS
         #define LV_GRADIENT_MAX_STOPS CONFIG_LV_GRADIENT_MAX_STOPS
     #else
-        #define LV_GRADIENT_MAX_STOPS   2
+        #define LV_GRADIENT_MAX_STOPS 2
     #endif
 #endif
 
@@ -737,7 +755,7 @@
     #ifdef CONFIG_LV_COLOR_MIX_ROUND_OFS
         #define LV_COLOR_MIX_ROUND_OFS CONFIG_LV_COLOR_MIX_ROUND_OFS
     #else
-        #define LV_COLOR_MIX_ROUND_OFS  0
+        #define LV_COLOR_MIX_ROUND_OFS 0
     #endif
 #endif
 
@@ -746,7 +764,7 @@
     #ifdef CONFIG_LV_OBJ_STYLE_CACHE
         #define LV_OBJ_STYLE_CACHE CONFIG_LV_OBJ_STYLE_CACHE
     #else
-        #define LV_OBJ_STYLE_CACHE      0
+        #define LV_OBJ_STYLE_CACHE 0
     #endif
 #endif
 
@@ -755,7 +773,7 @@
     #ifdef CONFIG_LV_USE_OBJ_ID
         #define LV_USE_OBJ_ID CONFIG_LV_USE_OBJ_ID
     #else
-        #define LV_USE_OBJ_ID           0
+        #define LV_USE_OBJ_ID 0
     #endif
 #endif
 
@@ -764,16 +782,7 @@
     #ifdef CONFIG_LV_USE_OBJ_ID_BUILTIN
         #define LV_USE_OBJ_ID_BUILTIN CONFIG_LV_USE_OBJ_ID_BUILTIN
     #else
-        #define LV_USE_OBJ_ID_BUILTIN   0
-    #endif
-#endif
-
-/*Use obj property set/get API*/
-#ifndef LV_USE_OBJ_PROPERTY
-    #ifdef CONFIG_LV_USE_OBJ_PROPERTY
-        #define LV_USE_OBJ_PROPERTY CONFIG_LV_USE_OBJ_PROPERTY
-    #else
-        #define LV_USE_OBJ_PROPERTY 0
+        #define LV_USE_OBJ_ID_BUILTIN 0
     #endif
 #endif
 
@@ -877,21 +886,12 @@
     #endif
 #endif
 
-/*Prefix all global extern data with this*/
-#ifndef LV_ATTRIBUTE_EXTERN_DATA
-    #ifdef CONFIG_LV_ATTRIBUTE_EXTERN_DATA
-        #define LV_ATTRIBUTE_EXTERN_DATA CONFIG_LV_ATTRIBUTE_EXTERN_DATA
+/*Extend the default -32k..32k coordinate range to -4M..4M by using int32_t for coordinates instead of int16_t*/
+#ifndef LV_USE_LARGE_COORD
+    #ifdef CONFIG_LV_USE_LARGE_COORD
+        #define LV_USE_LARGE_COORD CONFIG_LV_USE_LARGE_COORD
     #else
-        #define LV_ATTRIBUTE_EXTERN_DATA
-    #endif
-#endif
-
-/* Use `float` as `lv_value_precise_t` */
-#ifndef LV_USE_FLOAT
-    #ifdef CONFIG_LV_USE_FLOAT
-        #define LV_USE_FLOAT CONFIG_LV_USE_FLOAT
-    #else
-        #define LV_USE_FLOAT            0
+        #define LV_USE_LARGE_COORD 0
     #endif
 #endif
 
@@ -2053,6 +2053,15 @@
     #endif
 #endif
 
+/*RLE decoder library*/
+#ifndef LV_USE_RLE
+    #ifdef CONFIG_LV_USE_RLE
+        #define LV_USE_RLE CONFIG_LV_USE_RLE
+    #else
+        #define LV_USE_RLE 0
+    #endif
+#endif
+
 /*QR code library*/
 #ifndef LV_USE_QRCODE
     #ifdef CONFIG_LV_USE_QRCODE
@@ -2155,6 +2164,15 @@
     #endif
 #endif
 
+/*ThorVG library*/
+#ifndef LV_USE_THORVG
+    #ifdef CONFIG_LV_USE_THORVG
+        #define LV_USE_THORVG CONFIG_LV_USE_THORVG
+    #else
+        #define LV_USE_THORVG 0
+    #endif
+#endif
+
 /*FFmpeg library for image decoding and playing videos
  *Supports all major image formats so do not enable other image decoder with it*/
 #ifndef LV_USE_FFMPEG
@@ -2243,7 +2261,7 @@
         #ifdef CONFIG_LV_PROFILER_BEGIN
             #define LV_PROFILER_BEGIN CONFIG_LV_PROFILER_BEGIN
         #else
-            #define LV_PROFILER_BEGIN    LV_PROFILER_BUILTIN_BEGIN
+            #define LV_PROFILER_BEGIN   LV_PROFILER_BUILTIN_BEGIN
         #endif
     #endif
 
@@ -2252,25 +2270,7 @@
         #ifdef CONFIG_LV_PROFILER_END
             #define LV_PROFILER_END CONFIG_LV_PROFILER_END
         #else
-            #define LV_PROFILER_END      LV_PROFILER_BUILTIN_END
-        #endif
-    #endif
-
-    /*Profiler start point function with custom tag*/
-    #ifndef LV_PROFILER_BEGIN_TAG
-        #ifdef CONFIG_LV_PROFILER_BEGIN_TAG
-            #define LV_PROFILER_BEGIN_TAG CONFIG_LV_PROFILER_BEGIN_TAG
-        #else
-            #define LV_PROFILER_BEGIN_TAG LV_PROFILER_BUILTIN_BEGIN_TAG
-        #endif
-    #endif
-
-    /*Profiler end point function with custom tag*/
-    #ifndef LV_PROFILER_END_TAG
-        #ifdef CONFIG_LV_PROFILER_END_TAG
-            #define LV_PROFILER_END_TAG CONFIG_LV_PROFILER_END_TAG
-        #else
-            #define LV_PROFILER_END_TAG   LV_PROFILER_BUILTIN_END_TAG
+            #define LV_PROFILER_END     LV_PROFILER_BUILTIN_END
         #endif
     #endif
 #endif
@@ -2671,13 +2671,14 @@
         #define LV_USE_DEMO_BENCHMARK 0
     #endif
 #endif
-
-/*Render test for each primitives. Requires at least 480x272 display*/
-#ifndef LV_USE_DEMO_RENDER
-    #ifdef CONFIG_LV_USE_DEMO_RENDER
-        #define LV_USE_DEMO_RENDER CONFIG_LV_USE_DEMO_RENDER
-    #else
-        #define LV_USE_DEMO_RENDER 0
+#if LV_USE_DEMO_BENCHMARK
+    /*Use RGB565A8 images with 16 bit color depth instead of ARGB8565*/
+    #ifndef LV_DEMO_BENCHMARK_RGB565A8
+        #ifdef CONFIG_LV_DEMO_BENCHMARK_RGB565A8
+            #define LV_DEMO_BENCHMARK_RGB565A8 CONFIG_LV_DEMO_BENCHMARK_RGB565A8
+        #else
+            #define LV_DEMO_BENCHMARK_RGB565A8 0
+        #endif
     #endif
 #endif
 
@@ -2772,6 +2773,16 @@
     #endif
 #endif
 
+/*Vector graphic demo*/
+#ifndef LV_USE_DEMO_VECTOR_GRAPHIC
+    #ifdef CONFIG_LV_USE_DEMO_VECTOR_GRAPHIC
+        #define LV_USE_DEMO_VECTOR_GRAPHIC CONFIG_LV_USE_DEMO_VECTOR_GRAPHIC
+    #else
+        #define LV_USE_DEMO_VECTOR_GRAPHIC          0
+    #endif
+#endif
+
+
 
 /*----------------------------------
  * End of parsing lv_conf_template.h
@@ -2781,11 +2792,6 @@ LV_EXPORT_CONST_INT(LV_DPI_DEF);
 
 #undef _LV_KCONFIG_PRESENT
 
-#if LV_USE_FLOAT
-    typedef float lv_value_precise_t;
-#else
-    typedef int32_t lv_value_precise_t;
-#endif
 
 /*Set some defines if a dependency is disabled*/
 #if LV_USE_LOG == 0

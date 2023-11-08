@@ -198,7 +198,8 @@ lv_theme_t * lv_theme_mono_init(lv_display_t * disp, bool dark_bg, const lv_font
      *styles' data if LVGL is used in a binding (e.g. Micropython)
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
     if(!lv_theme_mono_is_inited()) {
-        theme_def = lv_malloc_zeroed(sizeof(my_theme_t));
+        theme_def = (my_theme_t *)lv_malloc(sizeof(my_theme_t));
+        lv_memzero(theme_def, sizeof(my_theme_t));
     }
 
     struct _my_theme_t * theme = theme_def;
@@ -378,6 +379,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
         lv_obj_add_style(obj, &theme->styles.chart_indic, LV_PART_INDICATOR);
         lv_obj_add_style(obj, &theme->styles.card, LV_PART_ITEMS);
+        lv_obj_add_style(obj, &theme->styles.card, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.card, LV_PART_CURSOR);
         lv_obj_add_style(obj, &theme->styles.focus, LV_STATE_FOCUS_KEY);
     }
