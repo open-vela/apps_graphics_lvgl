@@ -13,10 +13,8 @@
 #include "lv_draw_sw.h"
 #include "../../display/lv_display_private.h"
 #include "../../stdlib/lv_string.h"
+#include "../../core/lv_global.h"
 
-#if LV_USE_THORVG
-    #include <thorvg_capi.h>
-#endif
 /*********************
  *      DEFINES
  *********************/
@@ -39,12 +37,9 @@ static int32_t lv_draw_sw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * laye
 static int32_t lv_draw_sw_delete(lv_draw_unit_t * draw_unit);
 
 /**********************
- *  GLOBAL PROTOTYPES
- **********************/
-
-/**********************
  *  STATIC VARIABLES
  **********************/
+#define _draw_info LV_GLOBAL_DEFAULT()->draw_info
 
 /**********************
  *      MACROS
@@ -72,18 +67,10 @@ void lv_draw_sw_init(void)
         lv_thread_init(&draw_sw_unit->thread, LV_THREAD_PRIO_HIGH, render_thread_cb, 8 * 1024, draw_sw_unit);
 #endif
     }
-
-#if LV_USE_THORVG
-    tvg_engine_init(TVG_ENGINE_SW, 0);
-#endif
 }
 
 void lv_draw_sw_deinit(void)
 {
-#if LV_USE_THORVG
-    tvg_engine_term(TVG_ENGINE_SW);
-#endif
-
 #if LV_DRAW_SW_COMPLEX == 1
     lv_draw_sw_mask_deinit();
 #endif
@@ -126,7 +113,7 @@ static int32_t lv_draw_sw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * laye
 
 #if LV_USE_OS
     /*Let the render thread work*/
-    if(draw_sw_unit->inited) lv_thread_sync_signal(&draw_sw_unit->sync);
+    lv_thread_sync_signal(&draw_sw_unit->sync);
 #else
     execute_drawing(draw_sw_unit);
 
@@ -146,7 +133,6 @@ static void render_thread_cb(void * ptr)
     lv_draw_sw_unit_t * u = ptr;
 
     lv_thread_sync_init(&u->sync);
-    u->inited = true;
 
     while(1) {
         while(u->task_act == NULL) {
@@ -162,8 +148,6 @@ static void render_thread_cb(void * ptr)
         /*The draw unit is free now. Request a new dispatching as it can get a new task*/
         lv_draw_dispatch_request();
     }
-    u->inited = false;
-    lv_thread_sync_delete(&u->sync);
 }
 #endif
 
@@ -205,11 +189,6 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
         case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
             lv_draw_sw_mask_rect((lv_draw_unit_t *)u, t->draw_dsc, &t->area);
             break;
-#if LV_USE_VECTOR_GRAPHIC
-        case LV_DRAW_TASK_TYPE_VECTOR:
-            lv_draw_sw_vector((lv_draw_unit_t *)u, t->draw_dsc);
-            break;
-#endif
         default:
             break;
     }
@@ -221,8 +200,7 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
         if(!_lv_area_intersect(&draw_area, &t->area, u->base_unit.clip_area)) return;
 
         int32_t idx = 0;
-        lv_display_t * disp = _lv_refr_get_disp_refreshing();
-        lv_draw_unit_t * draw_unit_tmp = disp->draw_unit_head;
+        lv_draw_unit_t * draw_unit_tmp = _draw_info.unit_head;
         while(draw_unit_tmp != (lv_draw_unit_t *)u) {
             draw_unit_tmp = draw_unit_tmp->next;
             idx++;
@@ -259,6 +237,40 @@ static void execute_drawing(lv_draw_sw_unit_t * u)
     }
 #endif
 
+}
+
+
+void lv_draw_sw_rgb565_swap(void * buf, int32_t buf_size_px)
+{
+    uint32_t u32_cnt = buf_size_px / 2;
+    uint16_t * buf16 = buf;
+    uint32_t * buf32 = buf;
+
+    while(u32_cnt >= 8) {
+        buf32[0] = ((uint32_t)(buf32[0] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[0] & 0x00ff00ff) << 8);
+        buf32[1] = ((uint32_t)(buf32[1] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[1] & 0x00ff00ff) << 8);
+        buf32[2] = ((uint32_t)(buf32[2] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[2] & 0x00ff00ff) << 8);
+        buf32[3] = ((uint32_t)(buf32[3] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[3] & 0x00ff00ff) << 8);
+        buf32[4] = ((uint32_t)(buf32[4] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[4] & 0x00ff00ff) << 8);
+        buf32[5] = ((uint32_t)(buf32[5] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[5] & 0x00ff00ff) << 8);
+        buf32[6] = ((uint32_t)(buf32[6] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[6] & 0x00ff00ff) << 8);
+        buf32[7] = ((uint32_t)(buf32[7] & 0xff00ff00) >> 8) + ((uint32_t)(buf32[7] & 0x00ff00ff) << 8);
+        buf32 += 8;
+        u32_cnt -= 8;
+    }
+
+    while(u32_cnt) {
+        *buf32 = ((uint32_t)(*buf32 & 0xff00ff00) >> 8) + ((uint32_t)(*buf32 & 0x00ff00ff) << 8);
+        buf32++;
+        u32_cnt--;
+    }
+
+    if(buf_size_px & 0x1) {
+        uint32_t e = buf_size_px - 1;
+        buf16[e] = ((buf16[e] & 0xff00) >> 8) + ((buf16[e] & 0x00ff) << 8);
+    }
+
+    return;
 }
 
 #endif /*LV_USE_DRAW_SW*/
