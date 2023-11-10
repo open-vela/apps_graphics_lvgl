@@ -188,27 +188,11 @@ void lv_theme_mono_deinit(void)
     struct _my_theme_t * theme = theme_def;
     if(theme) {
         if(theme->inited) {
-            lv_style_reset(&theme->styles.scr);
-            lv_style_reset(&theme->styles.card);
-            lv_style_reset(&theme->styles.scrollbar);
-            lv_style_reset(&theme->styles.pr);
-            lv_style_reset(&theme->styles.inv);
-            lv_style_reset(&theme->styles.disabled);
-            lv_style_reset(&theme->styles.focus);
-            lv_style_reset(&theme->styles.edit);
-            lv_style_reset(&theme->styles.pad_gap);
-            lv_style_reset(&theme->styles.pad_zero);
-            lv_style_reset(&theme->styles.no_radius);
-            lv_style_reset(&theme->styles.radius_circle);
-            lv_style_reset(&theme->styles.large_border);
-            lv_style_reset(&theme->styles.large_line_space);
-            lv_style_reset(&theme->styles.underline);
-#if LV_USE_TEXTAREA
-            lv_style_reset(&theme->styles.ta_cursor);
-#endif
-#if LV_USE_CHART
-            lv_style_reset(&theme->styles.chart_indic);
-#endif
+            lv_style_t * theme_styles = (lv_style_t *)(&(theme->styles));
+            uint32_t i;
+            for(i = 0; i < sizeof(my_theme_styles_t) / sizeof(lv_style_t); i++) {
+                lv_style_reset(theme_styles + i);
+            }
         }
         lv_free(theme_def);
         theme_def = NULL;
