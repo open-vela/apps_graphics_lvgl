@@ -1308,7 +1308,6 @@ img_lv_demo_music_cover_3_map[] = {
 };
 
 const lv_image_dsc_t img_lv_demo_music_cover_3 = {
-    .header.always_zero = 0,
     .header.w = 428,
     .header.h = 428,
     .data_size = 183184 * LV_COLOR_DEPTH / 8,
