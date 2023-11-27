@@ -40,7 +40,6 @@ typedef struct {
     bool res;                   /**< true: `point` can click the object; false: it cannot*/
 } lv_hit_test_info_t;
 
-
 /** Cover check results.*/
 typedef enum {
     LV_COVER_RES_COVER      = 0,
@@ -155,7 +154,7 @@ lv_anim_t * lv_event_get_scroll_anim(lv_event_t * e);
  * @param e     pointer to an event
  * @param size  The new extra draw size
  */
-void lv_event_set_ext_draw_size(lv_event_t * e, lv_coord_t size);
+void lv_event_set_ext_draw_size(lv_event_t * e, int32_t size);
 
 /**
  * Get a pointer to an `lv_point_t` variable in which the self size should be saved (width in `point->x` and height `point->y`).
