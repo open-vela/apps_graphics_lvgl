@@ -7,8 +7,8 @@ static lv_obj_t * obj1 = NULL;
 static lv_obj_t * obj2 = NULL;
 static lv_obj_t * obj3 = NULL;
 
-static const lv_coord_t obj_width = 90;
-static const lv_coord_t obj_height = 70;
+static const int32_t obj_width = 90;
+static const int32_t obj_height = 70;
 
 static void set_width(void * var, int32_t v)
 {
@@ -187,6 +187,18 @@ void lv_example_anim_timeline_1(void)
 
     obj3 = lv_obj_create(par);
     lv_obj_set_size(obj3, obj_width, obj_height);
+
+    anim_timeline_create();
+
+    lv_anim_timeline_set_progress(anim_timeline, 32000);
+    lv_refr_now(NULL);
+    lv_anim_timeline_set_progress(anim_timeline, 65535);
+    lv_refr_now(NULL);
+    lv_anim_timeline_set_progress(anim_timeline, 50000);
+    lv_refr_now(NULL);
+    lv_anim_timeline_set_progress(anim_timeline, 60000);
+    lv_refr_now(NULL);
+
 }
 
 #endif
