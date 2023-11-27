@@ -54,7 +54,6 @@ static void change_event_cb(lv_event_t * e)
     else lv_table_add_cell_ctrl(obj, row, 0, LV_TABLE_CELL_CTRL_CUSTOM_1);
 }
 
-
 /**
  * A very light-weighted list created from table
  */
@@ -72,8 +71,8 @@ void lv_example_table_2(void)
     lv_obj_set_size(table, LV_SIZE_CONTENT, 200);
 
     lv_table_set_col_width(table, 0, 150);
-    lv_table_set_row_cnt(table, ITEM_CNT); /*Not required but avoids a lot of memory reallocation lv_table_set_set_value*/
-    lv_table_set_col_cnt(table, 1);
+    lv_table_set_row_count(table, ITEM_CNT); /*Not required but avoids a lot of memory reallocation lv_table_set_set_value*/
+    lv_table_set_column_count(table, 1);
 
     /*Don't make the cell pressed, we will draw something different in the event*/
     lv_obj_remove_style(table, NULL, LV_PART_ITEMS | LV_STATE_PRESSED);

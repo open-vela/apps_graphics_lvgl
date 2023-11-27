@@ -11,6 +11,7 @@
 #include "display/lv_display_private.h"
 #include "indev/lv_indev_private.h"
 #include "layouts/lv_layout.h"
+#include "libs/bin_decoder/lv_bin_decoder.h"
 #include "libs/bmp/lv_bmp.h"
 #include "libs/ffmpeg/lv_ffmpeg.h"
 #include "libs/freetype/lv_freetype.h"
@@ -31,14 +32,12 @@
 #if LV_USE_DRAW_PXP
     #include "draw/nxp/pxp/lv_draw_pxp.h"
 #endif
-#if LV_USE_DRAW_VG_LITE
-    #include "draw/vg_lite/lv_draw_vg_lite.h"
-#endif
 
 /*********************
  *      DEFINES
  *********************/
 #define lv_initialized  LV_GLOBAL_DEFAULT()->inited
+#define lv_deinit_in_progress  LV_GLOBAL_DEFAULT()->deinit_in_progress
 
 /**********************
  *      TYPEDEFS
@@ -71,7 +70,7 @@ static inline void lv_global_init(lv_global_t * global)
         return;
     }
 
-    lv_memset(global, 0, sizeof(lv_global_t));
+    lv_memzero(global, sizeof(lv_global_t));
 
     _lv_ll_init(&(global->disp_ll), sizeof(lv_display_t));
     _lv_ll_init(&(global->indev_ll), sizeof(lv_indev_t));
@@ -88,6 +87,17 @@ static inline void lv_global_init(lv_global_t * global)
     global->sw_shadow_cache.cache_size = -1;
     global->sw_shadow_cache.cache_r = -1;
 #endif
+}
+
+static inline void _lv_cleanup_devices(lv_global_t * global)
+{
+    LV_ASSERT_NULL(global);
+
+    if(global) {
+        /* cleanup indev and display */
+        _lv_ll_clear_custom(&(global->indev_ll), (void (*)(void *)) lv_indev_delete);
+        _lv_ll_clear_custom(&(global->disp_ll), (void (*)(void *)) lv_display_delete);
+    }
 }
 
 bool lv_is_initialized(void)
@@ -156,6 +166,10 @@ void lv_init(void)
     lv_draw_pxp_init();
 #endif
 
+#if LV_USE_DRAW_SDL
+    lv_draw_sdl_init();
+#endif
+
     _lv_obj_style_init();
 
     /*Initialize the screen refresh system*/
@@ -166,10 +180,7 @@ void lv_init(void)
 #endif
 
     _lv_image_decoder_init();
-
-#if LV_USE_DRAW_VG_LITE
-    lv_draw_vg_lite_init();
-#endif
+    lv_bin_decoder_init();  /*LVGL built-in binary image decoder*/
 
     _lv_cache_init();
     _lv_cache_builtin_init();
@@ -285,9 +296,20 @@ void lv_deinit(void)
         LV_LOG_WARN("lv_deinit: already deinit!");
         return;
     }
-#if LV_ENABLE_GLOBAL_CUSTOM || LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
+
+    lv_deinit_in_progress = true;
+
+#if LV_USE_SYSMON
+    _lv_sysmon_builtin_deinit();
+#endif
 
     lv_display_set_default(NULL);
+
+    _lv_cleanup_devices(LV_GLOBAL_DEFAULT());
+
+#if LV_USE_SPAN != 0
+    lv_span_stack_deinit();
+#endif
 
 #if LV_USE_DRAW_SW
     lv_draw_sw_deinit();
@@ -315,10 +337,6 @@ void lv_deinit(void)
 
     _lv_image_decoder_deinit();
 
-#if LV_USE_SYSMON
-    _lv_sysmon_builtin_deinit();
-#endif
-
     _lv_refr_deinit();
 
     _lv_obj_style_deinit();
@@ -329,10 +347,6 @@ void lv_deinit(void)
 
 #if LV_USE_DRAW_VGLITE
     lv_draw_vglite_deinit();
-#endif
-
-#if LV_USE_DRAW_VG_LITE
-    lv_draw_vg_lite_deinit();
 #endif
 
 #if LV_USE_DRAW_SW
@@ -355,17 +369,8 @@ void lv_deinit(void)
     lv_profiler_builtin_uninit();
 #endif
 
-#if LV_USE_SPAN != 0
-    lv_span_stack_deinit();
-#endif
-
-#if LV_USE_LOG
-    lv_log_register_print_cb(NULL);
-#endif
-
 #if LV_USE_OBJ_ID_BUILTIN
     lv_objid_builtin_destroy();
-#endif
 #endif
 
     lv_mem_deinit();
@@ -373,6 +378,11 @@ void lv_deinit(void)
     lv_initialized = false;
 
     LV_LOG_INFO("lv_deinit done");
+
+#if LV_USE_LOG
+    lv_log_register_print_cb(NULL);
+#endif
+
 }
 
 /**********************

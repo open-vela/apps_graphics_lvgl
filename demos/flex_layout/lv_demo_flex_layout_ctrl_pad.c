@@ -18,13 +18,12 @@
 #define SPINBOX_UPDATE_STYLE_VALUE(item)                                \
     do {                                                                \
         lv_obj_t* sbox = ui->ctrl_pad.tab.layout.spinbox_##item;        \
-        lv_coord_t val = lv_obj_get_style_##item(obj, LV_PART_MAIN);    \
+        int32_t val = lv_obj_get_style_##item(obj, LV_PART_MAIN);    \
         lv_spinbox_set_value(sbox, val);                                \
     } while(0)
 
 #define SPINBOX_EVENT_ATTACH(item)  \
     lv_obj_add_event(ui->ctrl_pad.tab.layout.spinbox_##item, ctrl_pad_spinbox_event_handler, LV_EVENT_VALUE_CHANGED, ui);
-
 
 /**********************
  *      TYPEDEFS
@@ -94,7 +93,7 @@ static void ctrl_pad_btn_remove_event_handler(lv_event_t * e)
 void ctrl_pad_obj_update(lv_obj_t * obj, view_t * ui)
 {
     lv_obj_t * spinbox = ui->ctrl_pad.tab.layout.spinbox_width;
-    lv_coord_t value = lv_obj_get_width(obj);
+    int32_t value = lv_obj_get_width(obj);
     lv_spinbox_set_value(spinbox, value);
 
     spinbox = ui->ctrl_pad.tab.layout.spinbox_height;

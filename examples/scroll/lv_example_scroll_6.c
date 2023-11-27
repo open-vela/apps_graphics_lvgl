@@ -7,23 +7,23 @@ static void scroll_event_cb(lv_event_t * e)
 
     lv_area_t cont_a;
     lv_obj_get_coords(cont, &cont_a);
-    lv_coord_t cont_y_center = cont_a.y1 + lv_area_get_height(&cont_a) / 2;
+    int32_t cont_y_center = cont_a.y1 + lv_area_get_height(&cont_a) / 2;
 
-    lv_coord_t r = lv_obj_get_height(cont) * 7 / 10;
+    int32_t r = lv_obj_get_height(cont) * 7 / 10;
     uint32_t i;
-    uint32_t child_cnt = lv_obj_get_child_cnt(cont);
+    uint32_t child_cnt = lv_obj_get_child_count(cont);
     for(i = 0; i < child_cnt; i++) {
         lv_obj_t * child = lv_obj_get_child(cont, i);
         lv_area_t child_a;
         lv_obj_get_coords(child, &child_a);
 
-        lv_coord_t child_y_center = child_a.y1 + lv_area_get_height(&child_a) / 2;
+        int32_t child_y_center = child_a.y1 + lv_area_get_height(&child_a) / 2;
 
-        lv_coord_t diff_y = child_y_center - cont_y_center;
+        int32_t diff_y = child_y_center - cont_y_center;
         diff_y = LV_ABS(diff_y);
 
         /*Get the x of diff_y on a circle.*/
-        lv_coord_t x;
+        int32_t x;
         /*If diff_y is out of the circle use the last point of the circle (the radius)*/
         if(diff_y >= r) {
             x = r;

@@ -17,7 +17,7 @@ class KeyboardEncoder:
 
             cur_drv = cur_drv.get_next()
 
-        self.tv = lv.tabview(lv.screen_active(), lv.DIR.TOP, lv.DPI_DEF // 3)
+        self.tv = lv.tabview(lv.screen_active())
 
         self.t1 = self.tv.add_tab("Selectors")
         self.t2 = self.tv.add_tab("Text input")
@@ -131,7 +131,7 @@ class KeyboardEncoder:
 
     def ta_event_cb(self,e) :
 
-        indev = lv.indev_get_act()
+        indev = lv.indev_active()
         if indev == None :
             return
         indev_type = indev.get_type()

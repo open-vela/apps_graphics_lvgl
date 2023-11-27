@@ -39,8 +39,8 @@ void lv_demo_scroll(void)
 {
     lv_obj_t * panel = lv_obj_create(lv_screen_active());
     lv_obj_set_style_shadow_width(panel, 16, 0);
-    lv_obj_set_style_shadow_ofs_y(panel, 8, 0);
-    lv_obj_set_style_shadow_ofs_x(panel, 4, 0);
+    lv_obj_set_style_shadow_offset_y(panel, 8, 0);
+    lv_obj_set_style_shadow_offset_x(panel, 4, 0);
     lv_obj_set_style_shadow_opa(panel, LV_OPA_40, 0);
 
     lv_obj_set_size(panel, lv_pct(70), lv_pct(90));
@@ -64,7 +64,6 @@ void lv_demo_scroll(void)
     switch_create(panel, "Scroll chain", LV_OBJ_FLAG_SCROLL_CHAIN, true);
     switch_create(panel, "Elastic scroll", LV_OBJ_FLAG_SCROLL_ELASTIC, true);
     switch_create(panel, "Add scroll momentum", LV_OBJ_FLAG_SCROLL_MOMENTUM, true);
-
 
     /*Show the switches first*/
     lv_obj_move_foreground(list);
