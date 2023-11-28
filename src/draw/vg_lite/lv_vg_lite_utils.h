@@ -143,6 +143,12 @@ vg_lite_color_t lv_vg_lite_color(lv_color_t color, lv_opa_t opa, bool pre_mul);
 
 void lv_vg_lite_rect(vg_lite_rectangle_t * rect, const lv_area_t * area);
 
+#if LV_USE_MATRIX
+
+void lv_vg_lite_matrix(vg_lite_matrix_t * dest, const lv_matrix_t * src);
+
+#endif
+
 /* Param checker */
 
 bool lv_vg_lite_buffer_check(const vg_lite_buffer_t * buffer, bool is_src);
@@ -164,6 +170,8 @@ void lv_vg_lite_matrix_flip_y(vg_lite_matrix_t * matrix);
 bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t * matrix);
 
 lv_point_precise_t lv_vg_lite_matrix_transform_point(const vg_lite_matrix_t * matrix, const lv_point_precise_t * point);
+
+lv_area_t lv_vg_lite_matrix_transform_area(const vg_lite_matrix_t * matrix, const lv_area_t * area);
 
 void lv_vg_lite_set_scissor_area(const lv_area_t * area);
 

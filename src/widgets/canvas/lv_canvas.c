@@ -324,7 +324,9 @@ void lv_canvas_init_layer(lv_obj_t * obj, lv_layer_t * layer)
     lv_image_header_t * header = &canvas->draw_buf->header;
     lv_area_t canvas_area = {0, 0, header->w - 1,  header->h - 1};
     lv_memzero(layer, sizeof(*layer));
-
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    lv_matrix_identity(&layer->matrix);
+#endif
     layer->draw_buf = canvas->draw_buf;
     layer->color_format = header->cf;
     layer->buf_area = canvas_area;
