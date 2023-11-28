@@ -696,6 +696,15 @@ void lv_vg_lite_rect(vg_lite_rectangle_t * rect, const lv_area_t * area)
     rect->height = lv_area_get_height(area);
 }
 
+#if LV_USE_MATRIX
+
+void lv_vg_lite_matrix(vg_lite_matrix_t * dest, const lv_matrix_t * src)
+{
+    lv_memcpy(dest, src, sizeof(lv_matrix_t));
+}
+
+#endif
+
 uint32_t lv_vg_lite_get_palette_size(vg_lite_buffer_format_t format)
 {
     uint32_t size = 0;
@@ -973,7 +982,10 @@ void lv_vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_
 
 void lv_vg_lite_matrix_flip_y(vg_lite_matrix_t * matrix)
 {
-    matrix->m[1][1] = -matrix->m[1][1];
+    vg_lite_matrix_t m ;
+    vg_lite_identity(&m);
+    m.m[1][1] = -m.m[1][1];
+    lv_vg_lite_matrix_multiply(matrix, &m);
 }
 
 bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t * matrix)
@@ -1038,6 +1050,28 @@ lv_point_precise_t lv_vg_lite_matrix_transform_point(const vg_lite_matrix_t * ma
     p.x = (lv_value_precise_t)(point->x * m[0][0] + point->y * m[0][1] + m[0][2]);
     p.y = (lv_value_precise_t)(point->x * m[1][0] + point->y * m[1][1] + m[1][2]);
     return p;
+}
+
+lv_area_t lv_vg_lite_matrix_transform_area(const vg_lite_matrix_t * matrix, const lv_area_t * area)
+{
+    lv_area_t res;
+    lv_point_precise_t p[4] = {
+        {area->x1, area->y1},
+        {area->x1, area->y2},
+        {area->x2, area->y1},
+        {area->x2, area->y2},
+    };
+    p[0] = lv_vg_lite_matrix_transform_point(matrix, &p[0]);
+    p[1] = lv_vg_lite_matrix_transform_point(matrix, &p[1]);
+    p[2] = lv_vg_lite_matrix_transform_point(matrix, &p[2]);
+    p[3] = lv_vg_lite_matrix_transform_point(matrix, &p[3]);
+
+    res.x1 = (int32_t)(LV_MIN4(p[0].x, p[1].x, p[2].x, p[3].x));
+    res.x2 = (int32_t)(LV_MAX4(p[0].x, p[1].x, p[2].x, p[3].x));
+    res.y1 = (int32_t)(LV_MIN4(p[0].y, p[1].y, p[2].y, p[3].y));
+    res.y2 = (int32_t)(LV_MAX4(p[0].y, p[1].y, p[2].y, p[3].y));
+
+    return res;
 }
 
 void lv_vg_lite_set_scissor_area(const lv_area_t * area)
