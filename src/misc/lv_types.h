@@ -13,7 +13,10 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
+
+#ifndef __ASSEMBLY__
 #include <stdint.h>
+#endif
 
 /*********************
  *      DEFINES
@@ -36,12 +39,14 @@ extern "C" {
 #define LV_OS_PTHREAD       1
 #define LV_OS_FREERTOS      2
 #define LV_OS_CMSIS_RTOS2   3
+#define LV_OS_RTTHREAD      4
+#define LV_OS_WINDOWS       5
 #define LV_OS_CUSTOM        255
-
 
 #define LV_STDLIB_BUILTIN           0
 #define LV_STDLIB_CLIB              1
 #define LV_STDLIB_MICROPYTHON       2
+#define LV_STDLIB_RTTHREAD          3
 #define LV_STDLIB_CUSTOM            255
 
 #define LV_DRAW_SW_ASM_NONE         0
@@ -52,6 +57,9 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
+
+/* Exclude C enum and struct definitions when included by assembly code */
+#ifndef __ASSEMBLY__
 
 /**
  * LVGL error codes.
@@ -67,7 +75,6 @@ typedef _lv_result_t lv_result_t;
 #else
 typedef uint8_t lv_result_t;
 #endif /*DOXYGEN*/
-
 
 #if defined(__cplusplus) || __STDC_VERSION__ >= 199901L
 // If c99 or newer,  use the definition of uintptr_t directly from <stdint.h>
@@ -86,6 +93,8 @@ typedef int32_t lv_intptr_t;
 #endif
 
 #endif
+
+#endif /*__ASSEMBLY__*/
 
 /**********************
  * GLOBAL PROTOTYPES
