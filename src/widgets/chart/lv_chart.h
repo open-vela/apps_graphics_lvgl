@@ -101,9 +101,20 @@ typedef struct {
 } lv_chart_cursor_t;
 
 typedef struct {
+    int32_t major_len;
+    int32_t minor_len;
+    int32_t draw_size;
+    uint32_t minor_cnt : 15;
+    uint32_t major_cnt : 15;
+    uint32_t label_en  : 1;
+} lv_chart_tick_dsc_t;
+
+
+typedef struct {
     lv_obj_t obj;
     lv_ll_t series_ll;     /**< Linked list for the series (stores lv_chart_series_t)*/
     lv_ll_t cursor_ll;     /**< Linked list for the cursors (stores lv_chart_cursor_t)*/
+    lv_chart_tick_dsc_t tick[4];
     int32_t ymin[2];
     int32_t ymax[2];
     int32_t xmin[2];
@@ -112,6 +123,8 @@ typedef struct {
     uint32_t hdiv_cnt;      /**< Number of horizontal division lines*/
     uint32_t vdiv_cnt;      /**< Number of vertical division lines*/
     uint32_t point_cnt;    /**< Point number in a data line*/
+    uint32_t zoom_x;
+    uint32_t zoom_y;
     lv_chart_type_t type  : 3; /**< Line or column chart*/
     lv_chart_update_mode_t update_mode : 1;
 } lv_chart_t;
@@ -165,6 +178,49 @@ void lv_chart_set_update_mode(lv_obj_t * obj, lv_chart_update_mode_t update_mode
  * @param vdiv      number of vertical division lines
  */
 void lv_chart_set_div_line_count(lv_obj_t * obj, uint8_t hdiv, uint8_t vdiv);
+
+/**
+ * Zoom into the chart in X direction
+ * @param obj       pointer to a chart object
+ * @param zoom_x    zoom in x direction. LV_SCALE_NONE or 256 for no zoom, 512 double zoom
+ */
+void lv_chart_set_zoom_x(lv_obj_t * obj, uint32_t zoom_x);
+
+/**
+ * Zoom into the chart in Y direction
+ * @param obj       pointer to a chart object
+ * @param zoom_y    zoom in y direction. LV_SCALE_NONE or 256 for no zoom, 512 double zoom
+ */
+void lv_chart_set_zoom_y(lv_obj_t * obj, uint32_t zoom_y);
+
+/**
+ * Get X zoom of a chart
+ * @param obj       pointer to a chart object
+ * @return          the X zoom value
+ */
+uint32_t lv_chart_get_zoom_x(const lv_obj_t * obj);
+
+/**
+ * Get Y zoom of a chart
+ * @param obj       pointer to a chart object
+ * @return          the Y zoom value
+ */
+uint32_t lv_chart_get_zoom_y(const lv_obj_t * obj);
+
+/**
+ * Set the number of tick lines on an axis
+ * @param obj           pointer to a chart object
+ * @param axis          an axis which ticks count should be set
+ * @param major_len     length of major ticks
+ * @param minor_len     length of minor ticks
+ * @param major_cnt     number of major ticks on the axis
+ * @param minor_cnt     number of minor ticks between two major ticks
+ * @param label_en      true: enable label drawing on major ticks
+ * @param draw_size     extra size required to draw the tick and labels
+ *                      (start with 20 px and increase if the ticks/labels are clipped)
+ */
+void lv_chart_set_axis_tick(lv_obj_t * obj, lv_chart_axis_t axis, int32_t major_len, int32_t minor_len,
+                            int32_t major_cnt, int32_t minor_cnt, bool label_en, int32_t draw_size);
 
 /**
  * Get the type of a chart

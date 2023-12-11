@@ -187,6 +187,17 @@ menu "LVGL configuration"
 				5:LV_OS_WINDOWS
 				255:LV_OS_CUSTOM
 
+			config LV_USE_OS
+				int "Default operating system to use"
+				default 0
+			help
+				"Select an operating system to use. Possible options:"
+				0:LV_OS_NONE
+				1:LV_OS_PTHREAD
+				2:LV_OS_FREERTOS
+				3:LV_OS_CMSIS_RTOS2
+				255:LV_OS_CUSTOM
+
 			config LV_USE_DRAW_SW
 				bool "Enable software rendering"
 				default y
@@ -356,6 +367,9 @@ menu "LVGL configuration"
 
 			config LV_USE_DRAW_PXP
 				bool "Use NXP's PXP on iMX RTxxx platforms."
+
+			config LV_USE_DRAW_VG_LITE
+				bool "Use Common VG-Lite GPU."
 
 			config LV_USE_GPU_SDL
 				bool "Use SDL renderer API"

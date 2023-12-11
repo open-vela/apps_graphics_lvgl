@@ -185,6 +185,10 @@ void lv_init(void)
     _lv_image_decoder_init();
     lv_bin_decoder_init();  /*LVGL built-in binary image decoder*/
 
+#if LV_USE_DRAW_VG_LITE
+    lv_draw_vg_lite_init();
+#endif
+
     _lv_cache_init();
     _lv_cache_builtin_init();
     lv_cache_lock();
@@ -300,10 +304,6 @@ void lv_deinit(void)
 
     lv_deinit_in_progress = true;
 
-#if LV_USE_SYSMON
-    _lv_sysmon_builtin_deinit();
-#endif
-
     lv_display_set_default(NULL);
 
     _lv_cleanup_devices(LV_GLOBAL_DEFAULT());
@@ -373,6 +373,8 @@ void lv_deinit(void)
 #if LV_USE_OBJ_ID_BUILTIN
     lv_objid_builtin_destroy();
 #endif
+
+    lv_mem_deinit();
 
     lv_mem_deinit();
 
