@@ -122,6 +122,9 @@
 /* Use NXP's PXP on iMX RTxxx platforms. */
 #define LV_USE_DRAW_PXP 0
 
+/* Use VG-Lite GPU. */
+#define LV_USE_DRAW_VG_LITE 0
+
 /* Draw using cached SDL textures*/
 #define LV_USE_DRAW_SDL 0
 
@@ -624,6 +627,12 @@
 #define LV_BIN_DECODER_RAM_LOAD 0
 
 /*RLE decompress library*/
+#define LV_USE_RLE 0
+
+/*Decode bin images to RAM*/
+#define LV_BIN_DECODER_RAM_LOAD 0
+
+/*RLE decoder library*/
 #define LV_USE_RLE 0
 
 /*QR code library*/

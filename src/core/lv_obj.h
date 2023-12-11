@@ -48,6 +48,7 @@ enum _lv_state_t {
     LV_STATE_PRESSED     =  0x0020,
     LV_STATE_SCROLLED    =  0x0040,
     LV_STATE_DISABLED    =  0x0080,
+
     LV_STATE_USER_1      =  0x1000,
     LV_STATE_USER_2      =  0x2000,
     LV_STATE_USER_3      =  0x4000,
@@ -77,6 +78,7 @@ enum _lv_part_t {
     LV_PART_SELECTED     = 0x040000,   /**< Indicate the currently selected option or section*/
     LV_PART_ITEMS        = 0x050000,   /**< Used if the widget has multiple similar elements (e.g. table cells)*/
     LV_PART_CURSOR       = 0x060000,   /**< Mark a specific place e.g. for text area's cursor or on a chart*/
+    LV_PART_TICKS        = 0x070000,   /**< Ticks on scale e.g. for a chart or meter*/
 
     LV_PART_CUSTOM_FIRST = 0x080000,    /**< Extension point for custom widgets*/
 
@@ -176,23 +178,6 @@ enum {
     LV_PROPERTY_ID(OBJ, FLAG_USER_4,                LV_PROPERTY_TYPE_INT,       30),
     LV_PROPERTY_ID(OBJ, FLAG_END,                   LV_PROPERTY_TYPE_INT,       30),
 
-    LV_PROPERTY_ID(OBJ, STATE_START,                LV_PROPERTY_TYPE_INT,       31),
-    LV_PROPERTY_ID(OBJ, STATE_CHECKED,              LV_PROPERTY_TYPE_INT,       31),
-    LV_PROPERTY_ID(OBJ, STATE_FOCUSED,              LV_PROPERTY_TYPE_INT,       32),
-    LV_PROPERTY_ID(OBJ, STATE_FOCUS_KEY,            LV_PROPERTY_TYPE_INT,       33),
-    LV_PROPERTY_ID(OBJ, STATE_EDITED,               LV_PROPERTY_TYPE_INT,       34),
-    LV_PROPERTY_ID(OBJ, STATE_HOVERED,              LV_PROPERTY_TYPE_INT,       35),
-    LV_PROPERTY_ID(OBJ, STATE_PRESSED,              LV_PROPERTY_TYPE_INT,       36),
-    LV_PROPERTY_ID(OBJ, STATE_SCROLLED,             LV_PROPERTY_TYPE_INT,       37),
-    LV_PROPERTY_ID(OBJ, STATE_DISABLED,             LV_PROPERTY_TYPE_INT,       38),
-    /*not used bit8-bit11*/
-    LV_PROPERTY_ID(OBJ, STATE_USER_1,               LV_PROPERTY_TYPE_INT,       43),
-    LV_PROPERTY_ID(OBJ, STATE_USER_2,               LV_PROPERTY_TYPE_INT,       44),
-    LV_PROPERTY_ID(OBJ, STATE_USER_3,               LV_PROPERTY_TYPE_INT,       45),
-    LV_PROPERTY_ID(OBJ, STATE_USER_4,               LV_PROPERTY_TYPE_INT,       46),
-    LV_PROPERTY_ID(OBJ, STATE_ANY,                  LV_PROPERTY_TYPE_INT,       47),
-    LV_PROPERTY_ID(OBJ, STATE_END,                  LV_PROPERTY_TYPE_INT,       47),
-
     /*OBJ normal properties*/
     LV_PROPERTY_ID(OBJ, PARENT,                     LV_PROPERTY_TYPE_POINTER,   31),
 
@@ -219,21 +204,21 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_obj_class;
  * They are allocated automatically if any elements is set.
  */
 typedef struct {
-    struct _lv_obj_t ** children;   /**< Store the pointer of the children in an array.*/
+    struct _lv_obj_t ** children;       /**< Store the pointer of the children in an array.*/
     lv_group_t * group_p;
     lv_event_list_t event_list;
 
-    lv_point_t scroll;              /**< The current X/Y scroll offset*/
+    lv_point_t scroll;                  /**< The current X/Y scroll offset*/
 
-    int32_t ext_click_pad;          /**< Extra click padding in all direction*/
-    int32_t ext_draw_size;          /**< EXTend the size in every direction for drawing.*/
+    int32_t ext_click_pad;           /**< Extra click padding in all direction*/
+    int32_t ext_draw_size;           /**< EXTend the size in every direction for drawing.*/
 
-    uint16_t child_cnt;             /**< Number of children*/
-    uint16_t scrollbar_mode : 2;    /**< How to display scrollbars, see `lv_scrollbar_mode_t`*/
-    uint16_t scroll_snap_x : 2;     /**< Where to align the snappable children horizontally, see `lv_scroll_snap_t`*/
-    uint16_t scroll_snap_y : 2;     /**< Where to align the snappable children vertically*/
-    uint16_t scroll_dir : 4;        /**< The allowed scroll direction(s), see `lv_dir_t`*/
-    uint16_t layer_type : 2;        /**< Cache the layer type here. Element of @lv_intermediate_layer_type_t */
+    uint16_t child_cnt;                 /**< Number of children*/
+    lv_scrollbar_mode_t scrollbar_mode : 2; /**< How to display scrollbars*/
+    lv_scroll_snap_t scroll_snap_x : 2;     /**< Where to align the snappable children horizontally*/
+    lv_scroll_snap_t scroll_snap_y : 2;     /**< Where to align the snappable children vertically*/
+    lv_dir_t scroll_dir : 4;                /**< The allowed scroll direction(s)*/
+    uint8_t layer_type : 2;    /**< Cache the layer type here. Element of @lv_intermediate_layer_type_t */
 } _lv_obj_spec_attr_t;
 
 typedef struct _lv_obj_t {

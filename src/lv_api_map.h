@@ -88,6 +88,15 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
     lv_obj_move_to_index(obj, 0);
 }
 
+static inline lv_cache_entry_t * lv_cache_find_unused(const void * src_ptr, lv_cache_src_type_t src_type, uint32_t param1, uint32_t param2)
+{
+    LV_UNUSED(src_ptr);
+    LV_UNUSED(src_type);
+    LV_UNUSED(param1);
+    LV_UNUSED(param2);
+    return NULL;
+}
+
 /**********************
  *      MACROS
  **********************/
@@ -211,8 +220,6 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_tabview_set_act                   lv_tabview_set_active
 
 #define lv_tileview_get_tile_act             lv_tileview_get_tile_active
-#define lv_obj_set_tile_id                   lv_obj_set_tile_by_index
-#define lv_obj_set_tile                      lv_obj_set_tile
 
 #define lv_msgbox_get_btns                   lv_msgbox_get_buttons
 
@@ -254,6 +261,9 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 
 #define lv_image_decoder_built_in_open      lv_bin_decoder_open
 #define lv_image_decoder_built_in_close     lv_bin_decoder_close
+
+#define lv_obj_add_event                    lv_obj_add_event_cb
+#define lv_cache_find                       lv_cache_find_unused
 
 /**********************
  *      MACROS
