@@ -1,5 +1,5 @@
 /**
- * @file lv_theme_simple.c
+ * @file lv_theme_basic.c
  *
  */
 
@@ -8,15 +8,15 @@
  *********************/
 #include "../../../lvgl.h" /*To see all the widgets*/
 
-#if LV_USE_THEME_SIMPLE
+#if LV_USE_THEME_BASIC
 
-#include "lv_theme_simple.h"
+#include "lv_theme_basic.h"
 #include "../../core/lv_global.h"
 
 /*********************
  *      DEFINES
  *********************/
-#define theme_def (LV_GLOBAL_DEFAULT()->theme_simple)
+#define theme_def (LV_GLOBAL_DEFAULT()->theme_basic)
 
 #define COLOR_SCR     lv_palette_lighten(LV_PALETTE_GREY, 4)
 #define COLOR_WHITE   lv_color_white()
@@ -137,23 +137,14 @@ static void style_init(struct _my_theme_t * theme)
  *   GLOBAL FUNCTIONS
  **********************/
 
-bool lv_theme_simple_is_inited(void)
+bool lv_theme_basic_is_inited(void)
 {
     struct _my_theme_t * theme = theme_def;
     if(theme == NULL) return false;
     return theme->inited;
 }
 
-lv_theme_t * lv_theme_simple_get(void)
-{
-    if(!lv_theme_simple_is_inited()) {
-        return NULL;
-    }
-
-    return (lv_theme_t *)theme_def;
-}
-
-void lv_theme_simple_deinit(void)
+void lv_theme_basic_deinit(void)
 {
     struct _my_theme_t * theme = theme_def;
     if(theme) {
@@ -169,12 +160,12 @@ void lv_theme_simple_deinit(void)
     }
 }
 
-lv_theme_t * lv_theme_simple_init(lv_display_t * disp)
+lv_theme_t * lv_theme_basic_init(lv_display_t * disp)
 {
     /*This trick is required only to avoid the garbage collection of
      *styles' data if LVGL is used in a binding (e.g. Micropython)
      *In a general case styles could be in simple `static lv_style_t my_style...` variables*/
-    if(!lv_theme_simple_is_inited()) {
+    if(!lv_theme_basic_is_inited()) {
         theme_def  = lv_malloc_zeroed(sizeof(my_theme_t));
     }
 
@@ -241,13 +232,13 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.white, 0);
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
     }
-#if LV_USE_BUTTON
+#if LV_USE_BTN
     else if(lv_obj_check_type(obj, &lv_button_class)) {
         lv_obj_add_style(obj, &theme->styles.dark, 0);
     }
 #endif
 
-#if LV_USE_BUTTONMATRIX
+#if LV_USE_BTNMATRIX
     else if(lv_obj_check_type(obj, &lv_buttonmatrix_class)) {
 #if LV_USE_MSGBOX
         if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_msgbox_class)) {
@@ -307,6 +298,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.white, 0);
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
         lv_obj_add_style(obj, &theme->styles.light, LV_PART_ITEMS);
+        lv_obj_add_style(obj, &theme->styles.dark, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.dark, LV_PART_CURSOR);
     }
 #endif
@@ -428,7 +420,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 
 static void style_init_reset(lv_style_t * style)
 {
-    if(lv_theme_simple_is_inited()) {
+    if(lv_theme_basic_is_inited()) {
         lv_style_reset(style);
     }
     else {
