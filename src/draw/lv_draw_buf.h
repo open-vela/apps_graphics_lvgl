@@ -32,37 +32,6 @@ typedef struct {
     void * _unaligned;      /*Unaligned address of data*/
 } lv_draw_buf_t;
 
-/**
- * Stride alignment for draw buffers.
- * It may vary between different color formats and hardware.
- * Refine it to suit your needs.
- */
-
-#define _LV_DRAW_BUF_STRIDE(w, cf) \
-    (((w) * LV_COLOR_FORMAT_GET_BPP(cf) + 7) / 8 + (LV_DRAW_BUF_STRIDE_ALIGN) - 1)
-
-#define _LV_DRAW_BUF_SIZE(w, h, cf) \
-    (_LV_DRAW_BUF_STRIDE(w, cf) * (h))
-
-/**
- * Define a static draw buffer with the given width, height, and color format.
- * Stride alignment is set to LV_DRAW_BUF_STRIDE_ALIGN.
- */
-#define LV_DRAW_BUF_DEFINE(name, _w, _h, _cf) \
-    static uint8_t buf_##name[_LV_DRAW_BUF_SIZE(_w, _h, _cf)]; \
-    static lv_draw_buf_t name = { \
-                                  .header = { \
-                                              .w = (_w), \
-                                              .h = (_h), \
-                                              .cf = (_cf), \
-                                              .flags = LV_IMAGE_FLAGS_MODIFIABLE, \
-                                              .stride = _LV_DRAW_BUF_STRIDE(_w, _cf), \
-                                            }, \
-                                  .data_size = sizeof(buf_##name), \
-                                  .data = buf_##name, \
-                                  ._unaligned = buf_##name, \
-                                }
-
 typedef void * (*lv_draw_buf_malloc_cb)(size_t size, lv_color_format_t color_format);
 
 typedef void (*lv_draw_buf_free_cb)(void * draw_buf);
@@ -73,6 +42,9 @@ typedef void (*lv_draw_buf_invalidate_cache_cb)(void * buf, uint32_t stride, lv_
                                                 const lv_area_t * area);
 
 typedef uint32_t (*lv_draw_buf_width_to_stride_cb)(uint32_t w, lv_color_format_t color_format);
+
+typedef void * (*lv_draw_buf_go_to_xy_cb)(const void * buf, uint32_t stride, lv_color_format_t color_format,
+                                          int32_t x, int32_t y);
 
 typedef void (*lv_draw_buf_clear_cb)(void * buf, uint32_t w, uint32_t h, lv_color_format_t color_format,
                                      const lv_area_t * a);
@@ -88,6 +60,7 @@ typedef struct {
     lv_draw_buf_align_cb align_pointer_cb;
     lv_draw_buf_invalidate_cache_cb invalidate_cache_cb;
     lv_draw_buf_width_to_stride_cb width_to_stride_cb;
+    lv_draw_buf_go_to_xy_cb go_to_xy_cb;
     lv_draw_buf_clear_cb buf_clear_cb;
     lv_draw_buf_copy_cb buf_copy_cb;
 } lv_draw_buf_handlers_t;
@@ -150,6 +123,18 @@ void lv_draw_buf_invalidate_cache(void * buf, uint32_t stride, lv_color_format_t
 uint32_t lv_draw_buf_width_to_stride(uint32_t w, lv_color_format_t color_format);
 
 /**
+ * Got to a pixel at X and Y coordinate in a buffer
+ * @param buf               pointer to a buffer
+ * @param stride            stride of the buffer
+ * @param color_format      color format of the buffer
+ * @param x                 the target X coordinate
+ * @param y                 the target X coordinate
+ * @return                  `buf` offset to point to the given X and Y coordinate
+ */
+void * lv_draw_buf_go_to_xy(const void * buf, uint32_t stride, lv_color_format_t color_format, int32_t x,
+                            int32_t y);
+
+/**
  * Clear an area on the buffer
  * @param draw_buf          pointer to draw buffer
  * @param w                 width of the buffer
@@ -198,6 +183,7 @@ lv_draw_buf_t * lv_draw_buf_create(uint32_t w, uint32_t h, lv_color_format_t cf,
 void lv_draw_buf_destroy(lv_draw_buf_t * buf);
 
 /**
+ * @todo, need to replace lv_draw_buf_go_to_xy.
  * Return pointer to the buffer at the given coordinates
  */
 void * lv_draw_buf_goto_xy(lv_draw_buf_t * buf, uint32_t x, uint32_t y);

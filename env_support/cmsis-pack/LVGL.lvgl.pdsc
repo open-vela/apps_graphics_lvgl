@@ -1092,6 +1092,21 @@
 #define LV_USE_GIF         1
               </RTE_Components_h>
 
+/*! \brief enable RLE compressed bin image decoder support */
+#define LV_USE_RLE          1
+              </RTE_Components_h>
+
+            </component>
+
+            <component Cgroup="lvgl" Csub="Libs RLE"  condition="LVGL-Essential">
+              <description>Add RLE compressed bin image decoder support</description>
+              <files>
+                <!-- src/libs/rle -->
+                <file category="sourceC"    name="src/libs/rle/lv_rle_decoder.c" />
+              </files>
+
+              <RTE_Components_h>
+
             </component>
 
             <component Cgroup="Libraries and Others" Csub="Libs libjpeg-turbo decoder"  condition="LVGL-Essential">
