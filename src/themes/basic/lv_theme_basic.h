@@ -1,10 +1,10 @@
 /**
- * @file lv_theme_simple.h
+ * @file lv_theme_basic.h
  *
  */
 
-#ifndef LV_THEME_SIMPLE_H
-#define LV_THEME_SIMPLE_H
+#ifndef LV_THEME_BASIC_H
+#define LV_THEME_BASIC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,7 +16,7 @@ extern "C" {
 #include "../lv_theme.h"
 #include "../../display/lv_display.h"
 
-#if LV_USE_THEME_SIMPLE
+#if LV_USE_THEME_BASIC
 
 /*********************
  *      DEFINES
@@ -35,24 +35,18 @@ extern "C" {
  * @param disp pointer to display to attach the theme
  * @return a pointer to reference this theme later
  */
-lv_theme_t * lv_theme_simple_init(lv_display_t * disp);
+lv_theme_t * lv_theme_basic_init(lv_display_t * disp);
 
 /**
 * Check if the theme is initialized
 * @return true if default theme is initialized, false otherwise
 */
-bool lv_theme_simple_is_inited(void);
+bool lv_theme_basic_is_inited(void);
 
 /**
- * Get simple theme
- * @return a pointer to simple theme, or NULL if this is not initialized
+ * Deinitialize the basic theme
  */
-lv_theme_t * lv_theme_simple_get(void);
-
-/**
- * Deinitialize the simple theme
- */
-void lv_theme_simple_deinit(void);
+void lv_theme_basic_deinit(void);
 
 /**********************
  *      MACROS
@@ -64,4 +58,4 @@ void lv_theme_simple_deinit(void);
 } /*extern "C"*/
 #endif
 
-#endif /*LV_THEME_SIMPLE_H*/
+#endif /*LV_THEME_BASIC_H*/

@@ -76,6 +76,11 @@ const lv_obj_class_t lv_roller_label_class  = {
  *   GLOBAL FUNCTIONS
  **********************/
 
+/**
+ * Create a roller object
+ * @param parent pointer to an object, it will be the parent of the new roller
+ * @return pointer to the created roller
+ */
 lv_obj_t * lv_roller_create(lv_obj_t * parent)
 {
     LV_LOG_INFO("begin");
@@ -88,6 +93,12 @@ lv_obj_t * lv_roller_create(lv_obj_t * parent)
  * Setter functions
  *====================*/
 
+/**
+ * Set the options on a roller
+ * @param roller pointer to roller object
+ * @param options a string with '\n' separated options. E.g. "One\nTwo\nThree"
+ * @param mode `LV_ROLLER_MODE_NORMAL` or `LV_ROLLER_MODE_INFINITE`
+ */
 void lv_roller_set_options(lv_obj_t * obj, const char * options, lv_roller_mode_t mode)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -144,6 +155,12 @@ void lv_roller_set_options(lv_obj_t * obj, const char * options, lv_roller_mode_
 
 }
 
+/**
+ * Set the selected option
+ * @param roller pointer to a roller object
+ * @param sel_opt id of the selected option (0 ... number of option - 1);
+ * @param anim_en LV_ANIM_ON: set with animation; LV_ANOM_OFF set immediately
+ */
 void lv_roller_set_selected(lv_obj_t * obj, uint32_t sel_opt, lv_anim_enable_t anim)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -178,6 +195,11 @@ void lv_roller_set_selected(lv_obj_t * obj, uint32_t sel_opt, lv_anim_enable_t a
     refr_position(obj, anim);
 }
 
+/**
+ * Set the height to show the given number of rows (options)
+ * @param roller pointer to a roller object
+ * @param row_cnt number of desired visible rows
+ */
 void lv_roller_set_visible_row_count(lv_obj_t * obj, uint32_t row_cnt)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -192,6 +214,11 @@ void lv_roller_set_visible_row_count(lv_obj_t * obj, uint32_t row_cnt)
  * Getter functions
  *====================*/
 
+/**
+ * Get the id of the selected option
+ * @param roller pointer to a roller object
+ * @return id of the selected option (0 ... number of option - 1);
+ */
 uint32_t lv_roller_get_selected(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -206,6 +233,12 @@ uint32_t lv_roller_get_selected(const lv_obj_t * obj)
     }
 }
 
+/**
+ * Get the current selected option as a string
+ * @param ddlist pointer to ddlist object
+ * @param buf pointer to an array to store the string
+ * @param buf_size size of `buf` in bytes. 0: to ignore it.
+ */
 void lv_roller_get_selected_str(const lv_obj_t * obj, char * buf, uint32_t buf_size)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -245,6 +278,11 @@ const char * lv_roller_get_options(const lv_obj_t * obj)
     return lv_label_get_text(get_label(obj));
 }
 
+/**
+ * Get the total number of options
+ * @param roller pointer to a roller object
+ * @return the total number of options
+ */
 uint32_t lv_roller_get_option_count(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -660,7 +698,7 @@ static lv_result_t release_handler(lv_obj_t * obj)
             p.y -= label->coords.y1;
             p.x -= label->coords.x1;
             uint32_t letter_i;
-            letter_i = lv_label_get_letter_on(label, &p, true);
+            letter_i = lv_label_get_letter_on(label, &p);
 
             const char * txt  = lv_label_get_text(label);
             uint32_t i        = 0;

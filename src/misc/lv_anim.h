@@ -150,7 +150,7 @@ typedef struct _lv_anim_t {
     int32_t duration;                /**< Animation time in ms*/
     int32_t act_time;            /**< Current time in animation. Set to negative to make delay.*/
     uint32_t playback_delay;     /**< Wait before play back*/
-    uint32_t playback_duration;      /**< Duration of playback animation*/
+    uint32_t playback_time;      /**< Duration of playback animation*/
     uint32_t repeat_delay;       /**< Wait before repeat*/
     uint16_t repeat_cnt;         /**< Repeat count for the animation*/
     union _lv_anim_path_para_t {
@@ -323,17 +323,9 @@ static inline void lv_anim_set_deleted_cb(lv_anim_t * a, lv_anim_deleted_cb_t de
  * @param a         pointer to an initialized `lv_anim_t` variable
  * @param time      the duration of the playback animation in milliseconds. 0: disable playback
  */
-static inline void lv_anim_set_playback_duration(lv_anim_t * a, uint32_t duration)
+static inline void lv_anim_set_playback_time(lv_anim_t * a, uint32_t time)
 {
-    a->playback_duration = duration;
-}
-
-/**
- * Legacy `lv_anim_set_playback_time` API will be removed soon, use `lv_anim_set_playback_duration` instead.
- */
-static inline void lv_anim_set_playback_time(lv_anim_t * a, uint32_t duration)
-{
-    lv_anim_set_playback_duration(a, duration);
+    a->playback_time = time;
 }
 
 /**
@@ -416,7 +408,7 @@ lv_anim_t * lv_anim_start(const lv_anim_t * a);
  * @param a pointer to an initialized `lv_anim_t` variable
  * @return delay before the animation in milliseconds
  */
-static inline uint32_t lv_anim_get_delay(const lv_anim_t * a)
+static inline uint32_t lv_anim_get_delay(lv_anim_t * a)
 {
     return -a->act_time;
 }
@@ -426,14 +418,14 @@ static inline uint32_t lv_anim_get_delay(const lv_anim_t * a)
  * @param a pointer to an animation.
  * @return the play time in milliseconds.
  */
-uint32_t lv_anim_get_playtime(const lv_anim_t * a);
+uint32_t lv_anim_get_playtime(lv_anim_t * a);
 
 /**
  * Get the duration of an animation
  * @param a         pointer to an initialized `lv_anim_t` variable
  * @return the duration of the animation in milliseconds
  */
-static inline uint32_t lv_anim_get_time(const lv_anim_t * a)
+static inline uint32_t lv_anim_get_time(lv_anim_t * a)
 {
     return a->duration;
 }
@@ -443,7 +435,7 @@ static inline uint32_t lv_anim_get_time(const lv_anim_t * a)
  * @param a         pointer to an initialized `lv_anim_t` variable
  * @return the repeat count or `LV_ANIM_REPEAT_INFINITE` for infinite repetition. 0: disabled repetition.
  */
-static inline uint16_t lv_anim_get_repeat_count(const lv_anim_t * a)
+static inline uint16_t lv_anim_get_repeat_count(lv_anim_t * a)
 {
     return a->repeat_cnt;
 }
@@ -453,7 +445,7 @@ static inline uint16_t lv_anim_get_repeat_count(const lv_anim_t * a)
  * @param   a pointer to an initialized `lv_anim_t` variable
  * @return  the pointer to the custom user_data of the animation
  */
-static inline void * lv_anim_get_user_data(const lv_anim_t * a)
+static inline void * lv_anim_get_user_data(lv_anim_t * a)
 {
     return a->user_data;
 }
@@ -525,7 +517,7 @@ uint16_t lv_anim_count_running(void);
 /**
  * Store the speed as a special value which can be used as time in animations.
  * It will be converted to time internally based on the start and end values
- * @param speed         the speed of the animation in with unit / sec resolution in 0..10k range
+ * @param speed         the speed of the animation in with 10 unit / sec resolution in 0..1023 range
  * @return              a special value which can be used as an animation time
  */
 uint32_t lv_anim_speed(uint32_t speed);
