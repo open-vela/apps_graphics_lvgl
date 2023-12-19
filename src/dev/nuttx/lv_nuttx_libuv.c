@@ -276,7 +276,10 @@ static int lv_nuttx_uv_input_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_input_ctx
         return 0;
     }
 
-    lv_indev_set_mode(indev, LV_INDEV_MODE_EVENT);
+    /* Remove default indev timer. */
+
+    lv_timer_del(indev->read_timer);
+    indev->read_timer = NULL;
 
     input_ctx->input_poll.data = indev;
     uv_poll_init(loop, &input_ctx->input_poll, input_ctx->fd);

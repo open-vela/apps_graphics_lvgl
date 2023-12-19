@@ -15,7 +15,7 @@ extern "C" {
  *********************/
 #include "../../lv_conf_internal.h"
 
-#if LV_USE_BUTTON != 0
+#if LV_USE_BTN != 0
 #include "../../core/lv_obj.h"
 
 /*********************
@@ -47,7 +47,7 @@ lv_obj_t * lv_button_create(lv_obj_t * parent);
  *      MACROS
  **********************/
 
-#endif /*LV_USE_BUTTON*/
+#endif /*LV_USE_BTN*/
 
 #ifdef __cplusplus
 } /*extern "C"*/
