@@ -1346,27 +1346,27 @@
     #endif
 #endif
 
-#ifndef LV_USE_BUTTON
+#ifndef LV_USE_BTN
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_BUTTON
-            #define LV_USE_BUTTON CONFIG_LV_USE_BUTTON
+        #ifdef CONFIG_LV_USE_BTN
+            #define LV_USE_BTN CONFIG_LV_USE_BTN
         #else
-            #define LV_USE_BUTTON 0
+            #define LV_USE_BTN 0
         #endif
     #else
-        #define LV_USE_BUTTON        1
+        #define LV_USE_BTN        1
     #endif
 #endif
 
-#ifndef LV_USE_BUTTONMATRIX
+#ifndef LV_USE_BTNMATRIX
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_BUTTONMATRIX
-            #define LV_USE_BUTTONMATRIX CONFIG_LV_USE_BUTTONMATRIX
+        #ifdef CONFIG_LV_USE_BTNMATRIX
+            #define LV_USE_BTNMATRIX CONFIG_LV_USE_BTNMATRIX
         #else
-            #define LV_USE_BUTTONMATRIX 0
+            #define LV_USE_BTNMATRIX 0
         #endif
     #else
-        #define LV_USE_BUTTONMATRIX  1
+        #define LV_USE_BTNMATRIX  1
     #endif
 #endif
 
@@ -1486,27 +1486,27 @@
     #endif
 #endif
 
-#ifndef LV_USE_IMAGE
+#ifndef LV_USE_IMG
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_IMAGE
-            #define LV_USE_IMAGE CONFIG_LV_USE_IMAGE
+        #ifdef CONFIG_LV_USE_IMG
+            #define LV_USE_IMG CONFIG_LV_USE_IMG
         #else
-            #define LV_USE_IMAGE 0
+            #define LV_USE_IMG 0
         #endif
     #else
-        #define LV_USE_IMAGE      1   /*Requires: lv_label*/
+        #define LV_USE_IMG        1   /*Requires: lv_label*/
     #endif
 #endif
 
-#ifndef LV_USE_IMAGEBUTTON
+#ifndef LV_USE_IMGBTN
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_IMAGEBUTTON
-            #define LV_USE_IMAGEBUTTON CONFIG_LV_USE_IMAGEBUTTON
+        #ifdef CONFIG_LV_USE_IMGBTN
+            #define LV_USE_IMGBTN CONFIG_LV_USE_IMGBTN
         #else
-            #define LV_USE_IMAGEBUTTON 0
+            #define LV_USE_IMGBTN 0
         #endif
     #else
-        #define LV_USE_IMAGEBUTTON     1
+        #define LV_USE_IMGBTN     1
     #endif
 #endif
 
@@ -1851,15 +1851,15 @@
 #endif /*LV_USE_THEME_DEFAULT*/
 
 /*A very simple theme that is a good starting point for a custom theme*/
-#ifndef LV_USE_THEME_SIMPLE
+#ifndef LV_USE_THEME_BASIC
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_THEME_SIMPLE
-            #define LV_USE_THEME_SIMPLE CONFIG_LV_USE_THEME_SIMPLE
+        #ifdef CONFIG_LV_USE_THEME_BASIC
+            #define LV_USE_THEME_BASIC CONFIG_LV_USE_THEME_BASIC
         #else
-            #define LV_USE_THEME_SIMPLE 0
+            #define LV_USE_THEME_BASIC 0
         #endif
     #else
-        #define LV_USE_THEME_SIMPLE 1
+        #define LV_USE_THEME_BASIC 1
     #endif
 #endif
 
@@ -2128,6 +2128,24 @@
 #endif
 
 /*RLE decompress library*/
+#ifndef LV_USE_RLE
+    #ifdef CONFIG_LV_USE_RLE
+        #define LV_USE_RLE CONFIG_LV_USE_RLE
+    #else
+        #define LV_USE_RLE 0
+    #endif
+#endif
+
+/*Decode bin images to RAM*/
+#ifndef LV_BIN_DECODER_RAM_LOAD
+    #ifdef CONFIG_LV_BIN_DECODER_RAM_LOAD
+        #define LV_BIN_DECODER_RAM_LOAD CONFIG_LV_BIN_DECODER_RAM_LOAD
+    #else
+        #define LV_BIN_DECODER_RAM_LOAD 0
+    #endif
+#endif
+
+/*RLE decoder library*/
 #ifndef LV_USE_RLE
     #ifdef CONFIG_LV_USE_RLE
         #define LV_USE_RLE CONFIG_LV_USE_RLE

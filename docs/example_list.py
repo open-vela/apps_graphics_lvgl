@@ -51,7 +51,7 @@ widgets = {
     "colorwheel": "Colorwheel",
     "dropdown": "Dropdown",
     "img": "Image",
-    "imagebutton": "Image button",
+    "imgbtn": "Image button",
     "keyboard": "Keyboard",
     "label": "Label",
     "led": "LED",
