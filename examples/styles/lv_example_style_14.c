@@ -1,5 +1,5 @@
 #include "../lv_examples.h"
-#if LV_BUILD_EXAMPLES && LV_USE_IMAGE
+#if LV_BUILD_EXAMPLES && LV_USE_IMG
 
 static lv_style_t style_btn;
 
