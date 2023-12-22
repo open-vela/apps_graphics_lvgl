@@ -19,13 +19,22 @@ extern "C" {
  *      DEFINES
  *********************/
 
-#define LV_ANIM_TIMELINE_PROGRESS_MAX 0xFFFF
-
 /**********************
  *      TYPEDEFS
  **********************/
 
-typedef struct _lv_anim_timeline_t lv_anim_timeline_t;
+/*Data of anim_timeline_dsc*/
+typedef struct {
+    lv_anim_t anim;
+    uint32_t start_time;
+} lv_anim_timeline_dsc_t;
+
+/*Data of anim_timeline*/
+typedef struct {
+    lv_anim_timeline_dsc_t * anim_dsc;  /**< Dynamically allocated anim dsc array*/
+    uint32_t anim_dsc_cnt;              /**< The length of anim dsc array*/
+    bool reverse;                       /**< Reverse playback*/
+} lv_anim_timeline_t;
 
 /**********************
 * GLOBAL PROTOTYPES
@@ -49,7 +58,7 @@ void lv_anim_timeline_delete(lv_anim_timeline_t * at);
  * @param start_time    the time the animation started on the timeline, note that start_time will override the value of delay.
  * @param a             pointer to an animation.
  */
-void lv_anim_timeline_add(lv_anim_timeline_t * at, uint32_t start_time, const lv_anim_t * a);
+void lv_anim_timeline_add(lv_anim_timeline_t * at, uint32_t start_time, lv_anim_t * a);
 
 /**
  * Start the animation timeline.
@@ -59,10 +68,10 @@ void lv_anim_timeline_add(lv_anim_timeline_t * at, uint32_t start_time, const lv
 uint32_t lv_anim_timeline_start(lv_anim_timeline_t * at);
 
 /**
- * Pause the animation timeline.
+ * Stop the animation timeline.
  * @param at    pointer to the animation timeline.
  */
-void lv_anim_timeline_pause(lv_anim_timeline_t * at);
+void lv_anim_timeline_stop(lv_anim_timeline_t * at);
 
 /**
  * Set the playback direction of the animation timeline.
@@ -91,13 +100,6 @@ uint32_t lv_anim_timeline_get_playtime(lv_anim_timeline_t * at);
  * @return return true if it is reverse playback.
  */
 bool lv_anim_timeline_get_reverse(lv_anim_timeline_t * at);
-
-/**
- * Get the progress of the animation timeline.
- * @param at    pointer to the animation timeline.
- * @return return value 0~65535 to map 0~100% animation progress.
- */
-uint16_t lv_anim_timeline_get_progress(lv_anim_timeline_t * at);
 
 /**********************
  *      MACROS
