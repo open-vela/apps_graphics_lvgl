@@ -271,7 +271,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.card, 0);
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
     }
-#if LV_USE_BUTTON
+#if LV_USE_BTN
     else if(lv_obj_check_type(obj, &lv_button_class)) {
         lv_obj_add_style(obj, &theme->styles.card, 0);
         lv_obj_add_style(obj, &theme->styles.pr, LV_STATE_PRESSED);
@@ -282,7 +282,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
     }
 #endif
 
-#if LV_USE_BUTTONMATRIX
+#if LV_USE_BTNMATRIX
     else if(lv_obj_check_type(obj, &lv_buttonmatrix_class)) {
 #if LV_USE_MSGBOX
         if(lv_obj_check_type(lv_obj_get_parent(obj), &lv_msgbox_class)) {
@@ -385,6 +385,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.scrollbar, LV_PART_SCROLLBAR);
         lv_obj_add_style(obj, &theme->styles.chart_indic, LV_PART_INDICATOR);
         lv_obj_add_style(obj, &theme->styles.card, LV_PART_ITEMS);
+        lv_obj_add_style(obj, &theme->styles.card, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.card, LV_PART_CURSOR);
         lv_obj_add_style(obj, &theme->styles.focus, LV_STATE_FOCUS_KEY);
     }
