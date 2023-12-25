@@ -265,6 +265,8 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_image_decoder_built_in_open      lv_bin_decoder_open
 #define lv_image_decoder_built_in_close     lv_bin_decoder_close
 
+#define lv_obj_add_event                    lv_obj_add_event_cb
+
 /**********************
  *      MACROS
  **********************/

@@ -215,7 +215,6 @@ static void draw_letter_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_
 
     lv_vg_lite_path_t * outline = (lv_vg_lite_path_t *)dsc->bitmap;
     lv_point_t pos = {dsc->letter_coords->x1, dsc->letter_coords->y1};
-
     /* calc convert matrix */
     float scale = FT_F26DOT6_TO_PATH_SCALE(lv_freetype_outline_get_scale(dsc->g->resolved_font));
     vg_lite_matrix_t matrix;
