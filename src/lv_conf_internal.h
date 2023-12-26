@@ -25,7 +25,7 @@
 
 #define LV_DRAW_SW_ASM_NONE         0
 #define LV_DRAW_SW_ASM_NEON         1
-#define LV_DRAW_SW_ASM_HELIUM       2
+#define LV_DRAW_SW_ASM_MVE          2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
 /* Handle special Kconfig options */
@@ -311,15 +311,6 @@
                 #define  LV_DRAW_SW_ASM_CUSTOM_INCLUDE ""
             #endif
         #endif
-    #endif
-#endif
-
-/* Use Arm-2D on Cortex-M based devices. Please only enable it for Helium Powered devices for now */
-#ifndef LV_USE_DRAW_ARM2D
-    #ifdef CONFIG_LV_USE_DRAW_ARM2D
-        #define LV_USE_DRAW_ARM2D CONFIG_LV_USE_DRAW_ARM2D
-    #else
-        #define LV_USE_DRAW_ARM2D 0
     #endif
 #endif
 
@@ -2210,6 +2201,7 @@
 
     /*FreeType cache type:
      * LV_FREETYPE_CACHE_TYPE_IMAGE    - Image cache
+     * LV_FREETYPE_CACHE_TYPE_SBIT     - Sbit cache
      * LV_FREETYPE_CACHE_TYPE_OUTLINE  - Outline cache*/
     #ifndef LV_FREETYPE_CACHE_TYPE
         #ifdef CONFIG_LV_FREETYPE_CACHE_TYPE

@@ -89,13 +89,15 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
 
     lv_layer_t * layer = u->base_unit.target_layer;
 
-    lv_vg_lite_buffer_init(
-        &u->target_buffer,
-        layer->buf,
-        lv_area_get_width(&layer->buf_area),
-        lv_area_get_height(&layer->buf_area),
-        lv_vg_lite_vg_fmt(layer->color_format),
-        false);
+    lv_draw_buf_t draw_buf = { 0 };
+    uint32_t w, h, stride;
+    w = lv_area_get_width(&layer->buf_area);
+    h = lv_area_get_height(&layer->buf_area);
+    stride = lv_draw_buf_width_to_stride(w, layer->color_format);
+
+    lv_image_header_init(&draw_buf.header, w, h, layer->color_format, stride, 0);
+    draw_buf.data = layer->buf;
+    lv_vg_lite_buffer_from_draw_buf(&u->target_buffer, &draw_buf);
 
     vg_lite_identity(&u->global_matrix);
     vg_lite_translate(-layer->buf_area.x1, -layer->buf_area.y1, &u->global_matrix);
@@ -197,7 +199,17 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
     LV_UNUSED(draw_unit);
 
     switch(task->type) {
-        case LV_DRAW_TASK_TYPE_LABEL:
+#if LV_USE_FREETYPE && LV_FREETYPE_CACHE_TYPE == LV_FREETYPE_CACHE_TYPE_OUTLINE
+        case LV_DRAW_TASK_TYPE_LABEL: {
+                const lv_draw_label_dsc_t * label_dsc = task->draw_dsc;
+                if(lv_freetype_is_outline_font(label_dsc->font)) {
+                    task->preference_score = 0;
+                    task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
+                    return 1;
+                }
+                return 0;
+            }
+#endif
         case LV_DRAW_TASK_TYPE_FILL:
         case LV_DRAW_TASK_TYPE_BORDER:
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
