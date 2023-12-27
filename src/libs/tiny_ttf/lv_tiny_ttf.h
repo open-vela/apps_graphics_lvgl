@@ -1,5 +1,5 @@
 /**
- * @file lv_tiny_ttf.h
+ * @file lv_templ.h
  *
  */
 
