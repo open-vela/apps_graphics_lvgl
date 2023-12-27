@@ -440,13 +440,9 @@ the given layout.
 Built-in layout
 ---------------
 
-LVGL comes with two very powerful layouts:
-
-* Flexbox: arrange objects into rows or columns, with support for wrapping and expanding items.
-* Grid: arrange objects into fixed positions in 2D table.
+LVGL comes with two very powerful layouts: - Flexbox - Grid
 
 Both are heavily inspired by the CSS layouts with the same name.
-Layouts are described in detail in their own section of documentation.
 
 Flags
 -----
