@@ -53,6 +53,8 @@ static const uint8_t * freetype_get_glyph_bitmap_cb(const lv_font_t * font, uint
 
 lv_freetype_cache_context_t * lv_freetype_cache_context_create(lv_freetype_context_t * ctx)
 {
+    LV_UNUSED(ctx);
+
     lv_freetype_cache_context_t * cache_ctx = lv_malloc(sizeof(lv_freetype_cache_context_t));
     LV_ASSERT_MALLOC(cache_ctx);
     lv_memzero(cache_ctx, sizeof(lv_freetype_cache_context_t));
