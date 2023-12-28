@@ -317,7 +317,7 @@ menu "LVGL configuration"
 		endmenu
 
 		menu "GPU"
-			config LV_USE_DRAW_ARM2D
+			config LV_USE_GPU_ARM2D
 				bool "Enable Arm's 2D image processing library (Arm-2D) for all Cortex-M processors."
 				default n
 				help
@@ -1139,14 +1139,24 @@ menu "LVGL configuration"
 			config LV_FREETYPE_USE_LVGL_PORT
 				bool "Let FreeType to use LVGL memory and file porting"
 				default n
+			choice
+				prompt "Freetype cache type"
+				default LV_FREETYPE_CACHE_TYPE_IMAGE
+
+				config LV_FREETYPE_CACHE_TYPE_IMAGE
+					bool "IMAGE"
+				config LV_FREETYPE_CACHE_TYPE_OUTLINE
+					bool "OUTLINE"
+			endchoice
 			config LV_FREETYPE_CACHE_FT_FACES
 				int "The maximum number of FT_Face"
 				default 8
 			config LV_FREETYPE_CACHE_FT_SIZES
 				int "The maximum number of FT_Size"
 				default 8
-			config LV_FREETYPE_CACHE_FT_GLYPH_CNT
-				int "The maximum number of Glyph in count"
+			config LV_FREETYPE_CACHE_FT_OUTLINES
+				int "The maximum number of Outline"
+				depends on LV_FREETYPE_CACHE_TYPE_OUTLINE
 				default 256
 			endmenu
 

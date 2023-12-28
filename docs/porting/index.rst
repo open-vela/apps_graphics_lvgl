@@ -9,7 +9,7 @@ Porting
     :maxdepth: 2
 
     project
-    display
+    disp
     indev
     tick
     timer_handler
