@@ -204,8 +204,6 @@ void lv_vg_lite_path_get_bonding_box(lv_vg_lite_path_t * path,
 
 static void path_bounds_iter_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
 {
-    LV_UNUSED(op_code);
-
     if(len == 0) {
         return;
     }
@@ -444,8 +442,8 @@ void lv_vg_lite_path_append_arc(lv_vg_lite_path_t * path,
         return lv_vg_lite_path_append_circle(path, cx, cy, radius, radius);
     }
 
-    start_angle = MATH_RADIANS(start_angle);
-    sweep = MATH_RADIANS(sweep);
+    start_angle = (start_angle * MATH_PI) / 180.0f;
+    sweep = sweep * MATH_PI / 180.0f;
 
     int n_curves = ceil(MATH_FABSF(sweep / MATH_HALF_PI));
     int sweep_sign = (sweep < 0 ? -1 : 1);

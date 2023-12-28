@@ -50,8 +50,7 @@ typedef struct {
     uint8_t bpp: 4;  /**< Bit-per-pixel: 1, 2, 4, 8*/
     uint8_t is_placeholder: 1; /** Glyph is missing. But placeholder will still be displayed */
 
-    uint32_t glyph_index; /**< The index of the glyph in the font file. Used by the font cache*/
-    lv_cache_entry_t * entry; /**< The cache entry of the glyph draw data. Used by the font cache*/
+    lv_cache_entry_t * entry;
 } lv_font_glyph_dsc_t;
 
 /** The bitmaps might be upscaled by 3 to achieve subpixel rendering.*/

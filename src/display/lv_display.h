@@ -453,15 +453,6 @@ lv_event_dsc_t * lv_display_get_event_dsc(lv_display_t * disp, uint32_t index);
 bool lv_display_delete_event(lv_display_t * disp, uint32_t index);
 
 /**
- * Remove an event_cb with user_data
- * @param disp          pointer to a display
- * @param event_cb      the event_cb of the event to remove
- * @param user_data     user_data
- * @return              the count of the event removed
- */
-uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data);
-
-/**
  * Send an event to a display
  * @param disp          pointer to a display
  * @param code          an event code. LV_EVENT_...
@@ -518,6 +509,12 @@ bool lv_display_is_invalidation_enabled(lv_display_t * disp);
  * @return          pointer to the display refresher timer. (NULL on error)
  */
 lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp);
+
+/**
+ * Delete screen refresher timer
+ * @param disp      pointer to a display
+ */
+void _lv_display_delete_refr_timer(lv_display_t * disp);
 
 void lv_display_set_user_data(lv_display_t * disp, void * user_data);
 void lv_display_set_driver_data(lv_display_t * disp, void * driver_data);
