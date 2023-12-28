@@ -116,9 +116,6 @@
     #endif
 #endif
 
-/* Use Arm-2D on Cortex-M based devices. Please only enable it for Helium Powered devices for now */
-#define LV_USE_DRAW_ARM2D 0
-
 /* Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
 #define LV_USE_DRAW_VGLITE 0
 
@@ -643,6 +640,12 @@
 /*RLE decompress library*/
 #define LV_USE_RLE 0
 
+/*Decode bin images to RAM*/
+#define LV_BIN_DECODER_RAM_LOAD 0
+
+/*RLE decoder library*/
+#define LV_USE_RLE 0
+
 /*QR code library*/
 #define LV_USE_QRCODE 0
 
@@ -658,11 +661,16 @@
     /*Let FreeType to use LVGL memory and file porting*/
     #define LV_FREETYPE_USE_LVGL_PORT 0
 
+    /*FreeType cache type:
+     * LV_FREETYPE_CACHE_TYPE_IMAGE    - Image cache
+     * LV_FREETYPE_CACHE_TYPE_OUTLINE  - Outline cache*/
+    #define LV_FREETYPE_CACHE_TYPE LV_FREETYPE_CACHE_TYPE_IMAGE
+
     /* Maximum number of opened FT_Face/FT_Size objects managed by this cache instance. */
     /* (0:use system defaults) */
     #define LV_FREETYPE_CACHE_FT_FACES 8
     #define LV_FREETYPE_CACHE_FT_SIZES 8
-    #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 256
+    #define LV_FREETYPE_CACHE_FT_OUTLINES 256
 #endif
 
 /* Built-in TTF decoder */

@@ -17,11 +17,7 @@
 /*********************
  *      DEFINES
  *********************/
-
-struct _my_theme_t;
-typedef struct _my_theme_t my_theme_t;
-
-#define theme_def (*(my_theme_t **)(&LV_GLOBAL_DEFAULT()->theme_default))
+#define theme_def (LV_GLOBAL_DEFAULT()->theme_default)
 
 #define MODE_DARK 1
 #define RADIUS_DEFAULT _LV_DPX_CALC(theme->disp_dpi, theme->disp_size == DISP_LARGE ? 12 : 8)
@@ -92,7 +88,7 @@ typedef struct {
 #endif
 
 #if LV_USE_CHART
-    lv_style_t chart_series, chart_indic, chart_bg;
+    lv_style_t chart_series, chart_indic, chart_ticks, chart_bg;
 #endif
 
 #if LV_USE_DROPDOWN
@@ -162,7 +158,7 @@ typedef enum {
     DISP_LARGE = 1,
 } disp_size_t;
 
-struct _my_theme_t {
+typedef struct _my_theme_t {
     lv_theme_t base;
     disp_size_t disp_size;
     int32_t disp_dpi;
@@ -180,7 +176,7 @@ struct _my_theme_t {
     lv_style_transition_dsc_t trans_delayed;
     lv_style_transition_dsc_t trans_normal;
 #endif
-};
+} my_theme_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -213,7 +209,7 @@ static lv_color_t grey_filter_cb(const lv_color_filter_dsc_t * f, lv_color_t col
     else return lv_color_mix(lv_palette_lighten(LV_PALETTE_GREY, 2), color, opa);
 }
 
-static void style_init(my_theme_t * theme)
+static void style_init(struct _my_theme_t * theme)
 {
 #if TRANSITION_TIME
     static const lv_style_prop_t trans_props[] = {
@@ -468,6 +464,12 @@ static void style_init(my_theme_t * theme)
     lv_style_set_size(&theme->styles.chart_indic, chart_size, chart_size);
     lv_style_set_bg_color(&theme->styles.chart_indic, theme->base.color_primary);
     lv_style_set_bg_opa(&theme->styles.chart_indic, LV_OPA_COVER);
+
+    style_init_reset(&theme->styles.chart_ticks);
+    lv_style_set_line_width(&theme->styles.chart_ticks, _LV_DPX_CALC(theme->disp_dpi, 1));
+    lv_style_set_line_color(&theme->styles.chart_ticks, theme->color_text);
+    lv_style_set_pad_all(&theme->styles.chart_ticks, _LV_DPX_CALC(theme->disp_dpi, 2));
+    lv_style_set_text_color(&theme->styles.chart_ticks, lv_palette_main(LV_PALETTE_GREY));
 #endif
 
 #if LV_USE_MENU
@@ -664,7 +666,7 @@ lv_theme_t * lv_theme_default_init(lv_display_t * disp, lv_color_t color_primary
         theme_def = lv_malloc_zeroed(sizeof(my_theme_t));
     }
 
-    my_theme_t * theme = theme_def;
+    struct _my_theme_t * theme = theme_def;
 
     lv_display_t * new_disp = disp == NULL ? lv_display_get_default() : disp;
     int32_t new_dpi = lv_display_get_dpi(new_disp);
@@ -680,7 +682,7 @@ lv_theme_t * lv_theme_default_init(lv_display_t * disp, lv_color_t color_primary
        theme->disp_size == new_size &&
        lv_color_eq(theme->base.color_primary, color_primary) &&
        lv_color_eq(theme->base.color_secondary, color_secondary) &&
-       (theme->base.flags == dark ? MODE_DARK : 0) &&
+       theme->base.flags == dark ? MODE_DARK : 0 &&
        theme->base.font_small == font) {
         return (lv_theme_t *) theme;
 
@@ -708,7 +710,7 @@ lv_theme_t * lv_theme_default_init(lv_display_t * disp, lv_color_t color_primary
 
 void lv_theme_default_deinit(void)
 {
-    my_theme_t * theme = theme_def;
+    struct _my_theme_t * theme = theme_def;
     if(theme) {
         if(theme->inited) {
             lv_style_t * theme_styles = (lv_style_t *)(&(theme->styles));
@@ -734,7 +736,7 @@ lv_theme_t * lv_theme_default_get(void)
 
 bool lv_theme_default_is_inited(void)
 {
-    my_theme_t * theme = theme_def;
+    struct _my_theme_t * theme = theme_def;
     if(theme == NULL) return false;
     return theme->inited;
 }
@@ -743,7 +745,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
 {
     LV_UNUSED(th);
 
-    my_theme_t * theme = theme_def;
+    struct _my_theme_t * theme = theme_def;
 
     if(lv_obj_get_parent(obj) == NULL) {
         lv_obj_add_style(obj, &theme->styles.scr, 0);
@@ -967,6 +969,7 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &theme->styles.scrollbar_scrolled, LV_PART_SCROLLBAR | LV_STATE_SCROLLED);
         lv_obj_add_style(obj, &theme->styles.chart_series, LV_PART_ITEMS);
         lv_obj_add_style(obj, &theme->styles.chart_indic, LV_PART_INDICATOR);
+        lv_obj_add_style(obj, &theme->styles.chart_ticks, LV_PART_TICKS);
         lv_obj_add_style(obj, &theme->styles.chart_series, LV_PART_CURSOR);
     }
 #endif

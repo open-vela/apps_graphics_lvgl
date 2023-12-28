@@ -15,7 +15,6 @@ extern "C" {
  *********************/
 #include "../lv_conf_internal.h"
 
-#include "../misc/lv_types.h"
 #include "../misc/lv_style.h"
 #include "../misc/lv_text.h"
 #include "../misc/lv_profiler.h"
@@ -31,6 +30,9 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
+
+struct _lv_draw_image_dsc_t;
+struct _lv_display_t;
 
 typedef enum {
     LV_DRAW_TASK_TYPE_FILL,
@@ -54,8 +56,8 @@ typedef enum {
     LV_DRAW_TASK_STATE_READY,
 } lv_draw_task_state_t;
 
-struct _lv_draw_task_t {
-    lv_draw_task_t * next;
+typedef struct _lv_draw_task_t {
+    struct _lv_draw_task_t * next;
 
     lv_draw_task_type_t type;
 
@@ -91,19 +93,19 @@ struct _lv_draw_task_t {
      */
     uint8_t preference_score;
 
-};
+} lv_draw_task_t;
 
 typedef struct {
     void * user_data;
 } lv_draw_mask_t;
 
-struct _lv_draw_unit_t {
-    lv_draw_unit_t * next;
+typedef struct _lv_draw_unit_t {
+    struct _lv_draw_unit_t * next;
 
     /**
      * The target_layer on which drawing should happen
      */
-    lv_layer_t * target_layer;
+    struct _lv_layer_t * target_layer;
 
     const lv_area_t * clip_area;
 
@@ -121,7 +123,7 @@ struct _lv_draw_unit_t {
      *                              It signals that LVGL should call the dispatcher later again
      *                              to let draw unit try to start the rendering again.
      */
-    int32_t (*dispatch_cb)(lv_draw_unit_t * draw_unit, lv_layer_t * layer);
+    int32_t (*dispatch_cb)(struct _lv_draw_unit_t * draw_unit, struct _lv_layer_t * layer);
 
     /**
      *
@@ -129,17 +131,17 @@ struct _lv_draw_unit_t {
      * @param task
      * @return
      */
-    int32_t (*evaluate_cb)(lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
+    int32_t (*evaluate_cb)(struct _lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
 
     /**
      * Called to delete draw unit.
      * @param draw_unit
      * @return
      */
-    int32_t (*delete_cb)(lv_draw_unit_t * draw_unit);
-};
+    int32_t (*delete_cb)(struct _lv_draw_unit_t * draw_unit);
+} lv_draw_unit_t;
 
-struct _lv_layer_t  {
+typedef struct _lv_layer_t  {
 
     /** The unaligned buffer where drawing will happen*/
     void * buf_unaligned;
@@ -168,14 +170,14 @@ struct _lv_layer_t  {
     /** Linked list of draw tasks */
     lv_draw_task_t * draw_task_head;
 
-    lv_layer_t * parent;
-    lv_layer_t * next;
+    struct _lv_layer_t * parent;
+    struct _lv_layer_t * next;
     bool all_tasks_added;
     void * user_data;
-};
+} lv_layer_t;
 
 typedef struct {
-    lv_obj_t * obj;
+    struct _lv_obj_t * obj;
     uint32_t part;
     uint32_t id1;
     uint32_t id2;
@@ -246,7 +248,7 @@ void lv_draw_dispatch(void);
  * @param layer     pointer to a layer
  * @return          at least one draw task is being rendered (maybe it was taken earlier)
  */
-bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer);
+bool lv_draw_dispatch_layer(struct _lv_display_t * disp, lv_layer_t * layer);
 
 /**
  * Wait for a new dispatch request.

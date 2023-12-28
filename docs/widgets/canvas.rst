@@ -1,25 +1,18 @@
-.. _lv_canvas:
-
-==================
 Canvas (lv_canvas)
 ==================
 
 Overview
 ********
 
-A Canvas inherits from :ref:`Image <lv_image>` where the user can draw
+A Canvas inherits from `Image </widgets/img>`__ where the user can draw
 anything. Rectangles, texts, images, lines, arcs can be drawn here using
 lvgl's drawing engine.
-
-.. _lv_canvas_parts_and_styles:
 
 Parts and Styles
 ****************
 
--  :cpp:enumerator:`LV_PART_MAIN` Uses the typical rectangle style properties and image
+:cpp:enumerator:`LV_PART_MAIN` Uses the typical rectangle style properties and image
 style properties.
-
-.. _lv_canvas_usage:
 
 Usage
 *****
@@ -39,7 +32,8 @@ Or you can use
 
 The canvas supports all the color formats like
 :cpp:enumerator:`LV_COLOR_FORMAT_ARGB8888` or :cpp:enumerator:`LV_COLOR_FORMAT_I2`. See the full
-list in the :ref:`Color formats <overview_image_color_formats>` section.
+list in the `Color formats </overview/image.html#color-formats>`__
+section.
 
 Indexed colors
 --------------
@@ -73,7 +67,6 @@ The draw function can draw to any color format to which LVGL can render. Typical
 :cpp:enumerator:`LV_COLOR_FORMAT_RGB565`, :cpp:enumerator:`LV_COLOR_FORMAT_RGB888`,
 :cpp:enumerator:`LV_COLOR_FORMAT_XRGB888`, and :cpp:enumerator:`LV_COLOR_FORMAT_ARGB8888`.
 
-.. _lv_canvas_events:
 
 Events
 ******
@@ -81,11 +74,9 @@ Events
 No special events are sent by canvas objects. The same events are sent
 as for the
 
-See the events of the :ref:`lv_image` too.
+See the events of the `Images </widgets/img>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_canvas_keys:
 
 Keys
 ****
@@ -94,14 +85,10 @@ No *Keys* are processed by the object type.
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_canvas_example:
-
 Example
 *******
 
 .. include:: ../examples/widgets/canvas/index.rst
-
-.. _lv_canvas_api:
 
 API
 ***

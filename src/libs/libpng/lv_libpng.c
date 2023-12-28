@@ -153,8 +153,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         dsc->decoded = decoded;
 
-        if(dsc->args.no_cache) return LV_RES_OK;
-
 #if LV_CACHE_DEF_SIZE > 0
         lv_image_cache_data_t search_key;
         search_key.src_type = dsc->src_type;
@@ -182,10 +180,11 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
-        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
-    else
-        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#if LV_CACHE_DEF_SIZE > 0
+    lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#else
+    lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+#endif
 }
 
 static uint8_t * alloc_file(const char * filename, uint32_t * size)
@@ -274,7 +273,7 @@ static lv_draw_buf_t * decode_png_file(const char * filename)
     lv_draw_buf_t * decoded;
     decoded = lv_draw_buf_create(image.width, image.height, LV_COLOR_FORMAT_ARGB8888, PNG_IMAGE_ROW_STRIDE(image));
     if(decoded == NULL) {
-        LV_LOG_ERROR("png draw buff alloc %" LV_PRIu32 " failed: %s", PNG_IMAGE_SIZE(image), filename);
+        LV_LOG_ERROR("png draw buff alloc %zu failed: %s", (size_t)PNG_IMAGE_SIZE(image), filename);
         lv_free(data);
         return NULL;
     }
