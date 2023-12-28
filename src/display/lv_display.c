@@ -709,6 +709,25 @@ bool lv_display_delete_event(lv_display_t * disp, uint32_t index)
     return lv_event_remove(&disp->event_list, index);
 }
 
+uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    LV_ASSERT_NULL(disp);
+
+    uint32_t event_cnt = lv_display_get_event_count(disp);
+    uint32_t removed_count = 0;
+    int32_t i;
+
+    for(i = event_cnt - 1; i >= 0; i--) {
+        lv_event_dsc_t * dsc = lv_display_get_event_dsc(disp, i);
+        if(dsc && dsc->cb == event_cb && dsc->user_data == user_data) {
+            lv_display_delete_event(disp, i);
+            removed_count ++;
+        }
+    }
+
+    return removed_count;
+}
+
 lv_result_t lv_display_send_event(lv_display_t * disp, lv_event_code_t code, void * param)
 {
 
@@ -823,15 +842,6 @@ lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp)
     if(!disp) return NULL;
 
     return disp->refr_timer;
-}
-
-void _lv_display_delete_refr_timer(lv_display_t * disp)
-{
-    if(!disp) disp = lv_display_get_default();
-    if(!disp || !disp->refr_timer) return;
-
-    lv_timer_delete(disp->refr_timer);
-    disp->refr_timer = NULL;
 }
 
 void lv_display_set_user_data(lv_display_t * disp, void * user_data)
