@@ -25,7 +25,7 @@
 
 #define LV_DRAW_SW_ASM_NONE         0
 #define LV_DRAW_SW_ASM_NEON         1
-#define LV_DRAW_SW_ASM_HELIUM       2
+#define LV_DRAW_SW_ASM_MVE          2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
 /* Handle special Kconfig options */
@@ -311,15 +311,6 @@
                 #define  LV_DRAW_SW_ASM_CUSTOM_INCLUDE ""
             #endif
         #endif
-    #endif
-#endif
-
-/* Use Arm-2D on Cortex-M based devices. Please only enable it for Helium Powered devices for now */
-#ifndef LV_USE_DRAW_ARM2D
-    #ifdef CONFIG_LV_USE_DRAW_ARM2D
-        #define LV_USE_DRAW_ARM2D CONFIG_LV_USE_DRAW_ARM2D
-    #else
-        #define LV_USE_DRAW_ARM2D 0
     #endif
 #endif
 
@@ -2132,6 +2123,24 @@
     #endif
 #endif
 
+/*Decode bin images to RAM*/
+#ifndef LV_BIN_DECODER_RAM_LOAD
+    #ifdef CONFIG_LV_BIN_DECODER_RAM_LOAD
+        #define LV_BIN_DECODER_RAM_LOAD CONFIG_LV_BIN_DECODER_RAM_LOAD
+    #else
+        #define LV_BIN_DECODER_RAM_LOAD 0
+    #endif
+#endif
+
+/*RLE decoder library*/
+#ifndef LV_USE_RLE
+    #ifdef CONFIG_LV_USE_RLE
+        #define LV_USE_RLE CONFIG_LV_USE_RLE
+    #else
+        #define LV_USE_RLE 0
+    #endif
+#endif
+
 /*QR code library*/
 #ifndef LV_USE_QRCODE
     #ifdef CONFIG_LV_USE_QRCODE
@@ -2177,6 +2186,17 @@
         #endif
     #endif
 
+    /*FreeType cache type:
+     * LV_FREETYPE_CACHE_TYPE_IMAGE    - Image cache
+     * LV_FREETYPE_CACHE_TYPE_OUTLINE  - Outline cache*/
+    #ifndef LV_FREETYPE_CACHE_TYPE
+        #ifdef CONFIG_LV_FREETYPE_CACHE_TYPE
+            #define LV_FREETYPE_CACHE_TYPE CONFIG_LV_FREETYPE_CACHE_TYPE
+        #else
+            #define LV_FREETYPE_CACHE_TYPE LV_FREETYPE_CACHE_TYPE_IMAGE
+        #endif
+    #endif
+
     /* Maximum number of opened FT_Face/FT_Size objects managed by this cache instance. */
     /* (0:use system defaults) */
     #ifndef LV_FREETYPE_CACHE_FT_FACES
@@ -2193,11 +2213,11 @@
             #define LV_FREETYPE_CACHE_FT_SIZES 8
         #endif
     #endif
-    #ifndef LV_FREETYPE_CACHE_FT_GLYPH_CNT
-        #ifdef CONFIG_LV_FREETYPE_CACHE_FT_GLYPH_CNT
-            #define LV_FREETYPE_CACHE_FT_GLYPH_CNT CONFIG_LV_FREETYPE_CACHE_FT_GLYPH_CNT
+    #ifndef LV_FREETYPE_CACHE_FT_OUTLINES
+        #ifdef CONFIG_LV_FREETYPE_CACHE_FT_OUTLINES
+            #define LV_FREETYPE_CACHE_FT_OUTLINES CONFIG_LV_FREETYPE_CACHE_FT_OUTLINES
         #else
-            #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 256
+            #define LV_FREETYPE_CACHE_FT_OUTLINES 256
         #endif
     #endif
 #endif

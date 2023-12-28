@@ -52,11 +52,7 @@ lv_cache_t * lv_cache_create(const lv_cache_class_t * cache_class,
     cache->size = 0;
     cache->ops = ops;
 
-    if(cache->clz->init_cb(cache) == false) {
-        LV_LOG_ERROR("Cache init failed");
-        lv_free(cache);
-        return NULL;
-    }
+    cache->clz->init_cb(cache);
 
     lv_mutex_init(&cache->lock);
 

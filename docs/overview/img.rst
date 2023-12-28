@@ -1,5 +1,3 @@
-.. _overview_image:
-
 ======
 Images
 ======
@@ -15,8 +13,6 @@ You can store images in two places
 - as a variable in internal memory (RAM or ROM)
 - as a file
 
-.. _overview_image_variables:
-
 Variables
 ---------
 
@@ -25,7 +21,7 @@ Images stored internally in a variable are composed mainly of an
 
 - **header**:
 
-  - *cf*: Color format. See :ref:`below <overview_image_color_formats>`
+  - *cf*: Color format. See `below <#color-format>`__
   - *w*: width in pixels (<= 2048)
   - *h*: height in pixels (<= 2048)
   - *always zero*: 3 bits which need to be always zero
@@ -36,8 +32,6 @@ Images stored internally in a variable are composed mainly of an
 These are usually stored within a project as C files. They are linked
 into the resulting executable like any other constant data.
 
-.. _overview_image_files:
-
 Files
 -----
 
@@ -47,14 +41,12 @@ registered in LVGL to make file operations. You can add an interface to
 a standard file system (FAT32 on SD card) or you create your simple file
 system to read data from an SPI Flash memory. In every case, a *Drive*
 is just an abstraction to read and/or write data to memory. See the
-:ref:`File system <overview_file_system>` section to learn more.
+`File system </overview/file-system>`__ section to learn more.
 
 Images stored as files are not linked into the resulting executable, and
 must be read into RAM before being drawn. As a result, they are not as
 resource-friendly as images linked at compile time. However, they are
 easier to replace without needing to rebuild the main program.
-
-.. _overview_image_color_formats:
 
 Color formats
 *************
@@ -87,7 +79,7 @@ The bytes of :cpp:enumerator:`LV_COLOR_FORMAT_NATIVE` images are stored in the f
     - **Byte 2**: Alpha byte (only with :cpp:enumerator:`LV_COLOR_FORMAT_NATIVE_WITH_ALPHA`)
 
 You can store images in a *Raw* format to indicate that it's not encoded
-with one of the built-in color formats and an external :ref:`Image decoder <overview_image_decoder>`
+with one of the built-in color formats and an external `Image decoder <#image-decoder>`__
 needs to be used to decode the image.
 
 - :cpp:enumerator:`LV_COLOR_FORMAT_RAW`: Indicates a basic raw image (e.g. a PNG or JPG image).
@@ -111,9 +103,9 @@ Adding an image to LVGL via the online converter is easy.
 
 1. You need to select a *BMP*, *PNG* or *JPG* image first.
 2. Give the image a name that will be used within LVGL.
-3. Select the :ref:`Color format <overview_image_color_formats>`.
+3. Select the `Color format <#color-formats>`__.
 4. Select the type of image you want. Choosing a binary will generate a
-   ``.bin`` file that must be stored separately and read using the :ref:`file support <overview_image_files>`.
+   ``.bin`` file that must be stored separately and read using the `file support <#files>`__.
    Choosing a variable will generate a standard C file that can be linked into your project.
 5. Hit the *Convert* button. Once the conversion is finished, your
    browser will automatically download the resulting file.
@@ -151,13 +143,13 @@ variable to display it using LVGL. For example:
    };
 
 Another (possibly simpler) option to create and display an image at
-run-time is to use the :ref:`Canvas <lv_canvas>` object.
+run-time is to use the `Canvas </widgets/canvas>`__ object.
 
 Use images
 ----------
 
 The simplest way to use an image in LVGL is to display it with an
-:ref:`lv_image` object:
+`lv_image </widgets/img>`__ object:
 
 .. code:: c
 
@@ -170,15 +162,13 @@ The simplest way to use an image in LVGL is to display it with an
    lv_image_set_src(icon, "S:my_icon.bin");
 
 If the image was converted with the online converter, you should use
-:cpp:expr:`LV_IMAGE_DECLARE(my_icon_dsc)` to declare the image in the file where
+:cpp:expr:`LV_IMG_DECLARE(my_icon_dsc)` to declare the image in the file where
 you want to use it.
-
-.. _overview_image_decoder:
 
 Image decoder
 *************
 
-As you can see in the :ref:`overview_image_color_formats` section, LVGL
+As you can see in the `Color formats <#color-formats>`__ section, LVGL
 supports several built-in image formats. In many cases, these will be
 all you need. LVGL doesn't directly support, however, generic image
 formats like PNG or JPG.
@@ -227,7 +217,7 @@ a fully opaque image, using an alpha channel.
 
 After decoding, the *raw* formats are considered *True color* by the
 library. In other words, the image decoder must decode the *Raw* images
-to *True color* according to the format described in the :ref:`overview_image_color_formats` section.
+to *True color* according to the format described in the `Color formats <#color-formats>`__ section.
 
 
 Register an image decoder
@@ -254,7 +244,7 @@ open/close the PNG files. It should look like this:
     * @param header    image information is set in header parameter
     * @return          LV_RESULT_OK: no error; LV_RESULT_INVALID: can't get the info
     */
-   static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, lv_image_header_t * header)
+   static lv_result_t decoder_info(struct _lv_image_decoder_t * decoder, const void * src, lv_image_header_t * header)
    {
      /*Check whether the type `src` is known by the decoder*/
      if(is_png(src) == false) return LV_RESULT_INVALID;
@@ -268,7 +258,7 @@ open/close the PNG files. It should look like this:
    }
 
    /**
-    * Open a PNG image and decode it into dsc.decoded
+    * Open a PNG image and decode it into dsc.img_data
     * @param decoder   pointer to the decoder where this function belongs
     * @param dsc       image descriptor
     * @return          LV_RESULT_OK: no error; LV_RESULT_INVALID: can't open the image
@@ -280,11 +270,11 @@ open/close the PNG files. It should look like this:
      /*Check whether the type `src` is known by the decoder*/
      if(is_png(dsc->src) == false) return LV_RESULT_INVALID;
 
-     /*Decode and store the image. If `dsc->decoded` is `NULL`, the `read_line` function will be called to get the image data line-by-line*/
-     dsc->decoded = my_png_decoder(dsc->src);
+     /*Decode and store the image. If `dsc->img_data` is `NULL`, the `read_line` function will be called to get the image data line-by-line*/
+     dsc->img_data = my_png_decoder(dsc->src);
 
-     /*Change the color format if decoded image format is different than original format. For PNG it's usually decoded to ARGB8888 format*/
-     dsc->decoded.header.cf = LV_COLOR_FORMAT_...
+     /*Change the color format if required. For PNG usually 'Raw' is fine*/
+     dsc->header.cf = LV_COLOR_FORMAT_...
 
      /*Call a binary image decoder function if required. It's not required if `my_png_decoder` opened the image in true color format.*/
      lv_result_t res = lv_bin_decoder_open(decoder, dsc);
@@ -326,13 +316,13 @@ So in summary:
 - In ``decoder_open``, you should try to open the image source pointed by
   ``dsc->src``. Its type is already in ``dsc->src_type == LV_IMG_SRC_FILE/VARIABLE``.
   If this format/type is not supported by the decoder, return :cpp:enumerator:`LV_RESULT_INVALID`.
-  However, if you can open the image, a pointer to the decoded image should be
-  set in ``dsc->decoded``. If the format is known, but you don't want to
-  decode the entire image (e.g. no memory for it), set ``dsc->decoded = NULL`` and
+  However, if you can open the image, a pointer to the decoded *True color* image should be
+  set in ``dsc->img_data``. If the format is known, but you don't want to
+  decode the entire image (e.g. no memory for it), set ``dsc->img_data = NULL`` and
   use ``decoder_get_area`` to get the image area pixels.
 - In ``decoder_close`` you should free all allocated resources.
 - ``decoder_get_area`` is optional. In this case you should decode the whole image In
-  ``decoder_open`` function and store image data in ``dsc->decoded``.
+  ``decoder_open`` function and store image data in ``dsc->img_data``.
   Decoding the whole image requires extra memory and some computational overhead.
 
 
@@ -356,7 +346,7 @@ images to tell color of the image.
    res = lv_image_decoder_open(&dsc, &my_img_dsc, &args);
 
    if(res == LV_RESULT_OK) {
-     /*Do something with `dsc->decoded`. You can copy out the decoded image by `lv_draw_buf_dup(dsc.decoded)`*/
+     /*Do something with `dsc->img_data`*/
      lv_image_decoder_close(&dsc);
    }
 
@@ -395,26 +385,61 @@ See the detailed code below:
        lv_cache_entry_t * entry = dsc->cache_entry;
 
        if(!(entry->process_state & IMAGE_PROCESS_STATE_PREMULTIPLIED_ALPHA)) {
-         lv_draw_buf_premultiply(dsc->decoded);
+         lv_color32_t * image = (lv_color32_t *)dsc->img_data;
+         uint32_t px_cnt = dsc->header.w * dsc->header.h;
+
+         /* premultiply alpha */
+         while(px_cnt--) {
+           image->red = LV_UDIV255(image->red * image->alpha);
+           image->green = LV_UDIV255(image->green * image->alpha);
+           image->blue = LV_UDIV255(image->blue * image->alpha);
+           image++;
+         }
+
          LV_LOG_USER("premultiplied alpha OK");
 
          entry->process_state |= IMAGE_PROCESS_STATE_PREMULTIPLIED_ALPHA;
        }
 
        if(!(entry->process_state & IMAGE_PROCESS_STATE_STRIDE_ALIGNED)) {
-          uint32_t stride_expect = lv_draw_buf_width_to_stride(decoded->header.w, decoded->header.cf);
-          if(decoded->header.stride != stride_expect) {
-              LV_LOG_WARN("Stride mismatch");
-              lv_draw_buf_t * aligned = lv_draw_buf_adjust_stride(decoded, stride_expect);
-              if(aligned == NULL) {
-                  LV_LOG_ERROR("No memory for Stride adjust.");
-                  return NULL;
-              }
+         int32_t image_w = dsc->header.w;
+         int32_t image_h = dsc->header.h;
+         uint32_t width_byte = image_w * lv_color_format_get_size(color_format);
+         uint32_t stride = lv_draw_buf_width_to_stride(image_w, color_format);
 
-              decoded = aligned;
-          }
+         /* Check stride alignment requirements */
+         if(stride != width_byte) {
+           LV_LOG_USER("need to realign stride: %" LV_PRIu32 " -> %" LV_PRIu32, width_byte, stride);
 
-          entry->process_state |= IMAGE_PROCESS_STATE_STRIDE_ALIGNED;
+           const uint8_t * ori_image = lv_cache_get_data(entry);
+           size_t size_bytes = stride * dsc->header.h;
+           uint8_t * new_image = lv_draw_buf_malloc(size_bytes, color_format);
+           if(!new_image) {
+             LV_LOG_ERROR("alloc failed");
+             res = LV_RESULT_INVALID;
+             goto alloc_failed;
+           }
+
+           /* Replace the image data pointer */
+           entry->data = new_image;
+           dsc->img_data = new_image;
+
+           /* Copy image data */
+           const uint8_t * cur = ori_image;
+           for(int32_t y = 0; y < image_h; y++) {
+             lv_memcpy(new_image, cur, width_byte);
+             new_image += stride;
+             cur += width_byte;
+           }
+
+           /* free memory for old image */
+           lv_draw_buf_free((void *)ori_image);
+         }
+         else {
+           LV_LOG_USER("no need to realign stride: %" LV_PRIu32, stride);
+         }
+
+         entry->process_state |= IMAGE_PROCESS_STATE_STRIDE_ALIGNED;
        }
 
    alloc_failed:
@@ -446,7 +471,7 @@ See the detailed code below:
     ...
   }
 
-.. _overview_image_caching:
+.. _image-caching:
 
 Image caching
 *************
@@ -457,7 +482,7 @@ inefficient and detrimental to the user experience.
 
 Therefore, LVGL caches image data. Caching means some
 images will be left open, hence LVGL can quickly access them from
-``dsc->decoded`` instead of needing to decode them again.
+``dsc->img_data`` instead of needing to decode them again.
 
 Of course, caching images is resource intensive as it uses more RAM to
 store the decoded image. LVGL tries to optimize the process as much as
@@ -585,8 +610,6 @@ following code to replace the LVGL built-in cache manager:
     lv_cache_set_manager(&my_manager);
     lv_cache_unlock();
    }
-
-.. _overview_image_api:
 
 API
 ***
