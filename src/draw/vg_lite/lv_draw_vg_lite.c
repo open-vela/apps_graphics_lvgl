@@ -70,9 +70,8 @@ void lv_draw_vg_lite_init(void)
     unit->base_unit.delete_cb = draw_delete;
 
     lv_vg_lite_path_init(unit);
-#if 0
+
     lv_vg_lite_decoder_init();
-#endif
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -90,15 +89,13 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
 
     lv_layer_t * layer = u->base_unit.target_layer;
 
-    lv_draw_buf_t draw_buf = { 0 };
-    uint32_t w, h, stride;
-    w = lv_area_get_width(&layer->buf_area);
-    h = lv_area_get_height(&layer->buf_area);
-    stride = lv_draw_buf_width_to_stride(w, layer->color_format);
-
-    lv_image_header_init(&draw_buf.header, w, h, layer->color_format, stride, 0);
-    draw_buf.data = layer->buf;
-    lv_vg_lite_buffer_from_draw_buf(&u->target_buffer, &draw_buf);
+    lv_vg_lite_buffer_init(
+        &u->target_buffer,
+        layer->buf,
+        lv_area_get_width(&layer->buf_area),
+        lv_area_get_height(&layer->buf_area),
+        lv_vg_lite_vg_fmt(layer->color_format),
+        false);
 
     vg_lite_identity(&u->global_matrix);
     vg_lite_translate(-layer->buf_area.x1, -layer->buf_area.y1, &u->global_matrix);
@@ -227,9 +224,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 {
     lv_draw_vg_lite_unit_t * unit = (lv_draw_vg_lite_unit_t *)draw_unit;
     lv_vg_lite_path_deinit(unit);
-#if 0
     lv_vg_lite_decoder_deinit();
-#endif
     return 1;
 }
 

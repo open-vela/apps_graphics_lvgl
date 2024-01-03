@@ -98,7 +98,7 @@ struct _lv_obj_t * lv_event_get_target_obj(lv_event_t * e);
  * Used by the user to react on event which happens with the object.
  * An object can have multiple event handler. They will be called in the same order as they were added.
  * @param obj       pointer to an object
- * @param filter    and event code (e.g. `LV_EVENT_CLICKED`) on which the event should be called. `LV_EVENT_ALL` can be sued the receive all the events.
+ * @param filter    an event code (e.g. `LV_EVENT_CLICKED`) on which the event should be called. `LV_EVENT_ALL` can be used to receive all the events.
  * @param event_cb  the new event function
  * @param           user_data custom data data will be available in `event_cb`
  */
@@ -112,6 +112,15 @@ lv_event_dsc_t * lv_obj_get_event_dsc(struct _lv_obj_t * obj, uint32_t index);
 bool lv_obj_remove_event(struct _lv_obj_t * obj, uint32_t index);
 
 bool lv_obj_remove_event_cb(struct _lv_obj_t * obj, lv_event_cb_t event_cb);
+
+/**
+ * Remove an event_cb with user_data
+ * @param obj           pointer to a obj
+ * @param event_cb      the event_cb of the event to remove
+ * @param user_data     user_data
+ * @return              the count of the event removed
+ */
+uint32_t lv_obj_remove_event_cb_with_user_data(struct _lv_obj_t * obj, lv_event_cb_t event_cb, void * user_data);
 
 /**
  * Get the input device passed as parameter to indev related events.
