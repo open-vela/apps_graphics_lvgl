@@ -182,6 +182,14 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     }
 
     lv_draw_buf_t * decoded = decode_png_data(png_data, png_data_size);
+    if(!decoded) {
+        LV_LOG_WARN("Error decoding PNG\n");
+        if(png_data != NULL) {
+            lv_free((void *)png_data);
+        }
+        return LV_RESULT_INVALID;
+    }
+
     /*Stride check and adjustment accordingly*/
     if(args && args->stride_align) {
         uint32_t expected = lv_draw_buf_width_to_stride(decoded->header.w, decoded->header.cf);
@@ -203,6 +211,8 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     }
 
     dsc->decoded = decoded;
+
+    if(dsc->args.no_cache) return LV_RES_OK;
 
 #if LV_CACHE_DEF_SIZE > 0
     lv_image_cache_data_t search_key;
@@ -231,24 +241,22 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder);
 
-#if LV_CACHE_DEF_SIZE > 0
-    lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
-#else
-    lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
-#endif
+    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
+        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+    else
+        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
 }
 
 static lv_draw_buf_t * decode_png_data(const void * png_data, size_t png_data_size)
 {
     unsigned png_width;             /*Not used, just required by the decoder*/
     unsigned png_height;            /*Not used, just required by the decoder*/
-    uint8_t * img_data = NULL;
+    lv_draw_buf_t * decoded = NULL;
 
-    lv_draw_buf_t * decoded;
     /*Decode the image in ARGB8888 */
     unsigned error = lodepng_decode32((unsigned char **)&decoded, &png_width, &png_height, png_data, png_data_size);
     if(error) {
-        if(img_data != NULL)  lv_draw_buf_destroy(decoded);
+        if(decoded != NULL)  lv_draw_buf_destroy(decoded);
         return NULL;
     }
 
