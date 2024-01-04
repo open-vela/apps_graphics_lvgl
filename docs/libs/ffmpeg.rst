@@ -1,12 +1,9 @@
-.. _ffmpeg:
-
 ==============
 FFmpeg support
 ==============
 
-A complete, cross-platform solution to record, convert and stream audio and video.
-
-Detailed introduction: `FFmpeg <https://www.ffmpeg.org/>`__
+`FFmpeg <https://www.ffmpeg.org/>`__ A complete, cross-platform solution
+to record, convert and stream audio and video.
 
 Install FFmpeg
 --------------
@@ -21,8 +18,6 @@ Add FFmpeg to your project
 
 -  Add library: ``FFmpeg`` (for GCC: ``-lavformat -lavcodec -lavutil -lswscale -lm -lz -lpthread``)
 
-.. _ffmpeg_usage:
-
 Usage
 -----
 
@@ -34,14 +29,10 @@ Note that, the FFmpeg extension doesn't use LVGL's file system. You can
 simply pass the path to the image or video as usual on your operating
 system or platform.
 
-.. _ffmpeg_example:
-
 Example
 -------
 
 .. include:: ../examples/libs/ffmpeg/index.rst
-
-.. _ffmpeg_api:
 
 API
 ---

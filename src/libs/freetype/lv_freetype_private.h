@@ -105,10 +105,6 @@ lv_freetype_cache_context_t * lv_freetype_cache_context_create(lv_freetype_conte
 
 void lv_freetype_cache_context_delete(lv_freetype_cache_context_t * cache_ctx);
 
-lv_cache_t * lv_freetype_glyph_cache_create(lv_freetype_font_dsc_t * dsc);
-
-void lv_freetype_glyph_cache_delete(lv_cache_t * cache);
-
 bool lv_freetype_on_font_create(lv_freetype_font_dsc_t * dsc);
 
 void lv_freetype_on_font_delete(lv_freetype_font_dsc_t * dsc);
@@ -116,8 +112,6 @@ void lv_freetype_on_font_delete(lv_freetype_font_dsc_t * dsc);
 void lv_freetype_italic_transform(FT_Face face);
 
 const char * lv_freetype_get_pathname(FTC_FaceID face_id);
-
-lv_cache_t * lv_freetype_get_glyph_cache(const lv_freetype_font_dsc_t * dsc);
 
 /**********************
  *      MACROS
