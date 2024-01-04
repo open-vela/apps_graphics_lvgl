@@ -82,12 +82,6 @@ lv_result_t lv_image_decoder_get_info(const void * src, lv_image_header_t * head
 
     if(src == NULL) return LV_RESULT_INVALID;
 
-    lv_image_src_t src_type = lv_image_src_get_type(src);
-    if(src_type == LV_IMAGE_SRC_VARIABLE) {
-        const lv_image_dsc_t * img_dsc = src;
-        if(img_dsc->data == NULL) return LV_RESULT_INVALID;
-    }
-
     lv_result_t res = LV_RESULT_INVALID;
     lv_image_decoder_t * decoder;
     _LV_LL_READ(img_decoder_ll_p, decoder) {
@@ -172,6 +166,7 @@ lv_result_t lv_image_decoder_open(lv_image_decoder_dsc_t * dsc, const void * src
         lv_memzero(&dsc->header, sizeof(lv_image_header_t));
 
         dsc->error_msg = NULL;
+        dsc->img_data  = NULL;
         dsc->decoded  = NULL;
         dsc->cache_entry = NULL;
         dsc->user_data = NULL;
@@ -291,11 +286,13 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
 {
     if(decoded == NULL) return NULL; /*No need to adjust*/
 
+    if(!LV_COLOR_FORMAT_IS_REGULAR(decoded->header.cf)) return decoded; /*No need to adjust for regular color format*/
+
     lv_image_decoder_args_t * args = &dsc->args;
     if(args->stride_align && decoded->header.cf != LV_COLOR_FORMAT_RGB565A8) {
         uint32_t stride_expect = lv_draw_buf_width_to_stride(decoded->header.w, decoded->header.cf);
         if(decoded->header.stride != stride_expect) {
-            LV_LOG_TRACE("Stride mismatch");
+            LV_LOG_WARN("Stride mismatch");
             lv_draw_buf_t * aligned = lv_draw_buf_adjust_stride(decoded, stride_expect);
             if(aligned == NULL) {
                 LV_LOG_ERROR("No memory for Stride adjust.");

@@ -1,6 +1,3 @@
-.. _lv_switch:
-
-==================
 Switch (lv_switch)
 ==================
 
@@ -9,8 +6,6 @@ Overview
 
 The Switch looks like a little slider and can be used to turn something
 on and off.
-
-.. _lv_switch_parts_and_styles:
 
 Parts and Styles
 ****************
@@ -27,8 +22,6 @@ Parts and Styles
    the slider. The knob can be made larger with the ``padding`` values.
    Padding values can be asymmetric too.
 
-.. _lv_switch_usage:
-
 Usage
 *****
 
@@ -43,8 +36,6 @@ To get the current state of the switch (with ``true`` being on), use
 Call :cpp:expr:`lv_obj_add_state(obj, LV_STATE_CHECKED)` to turn it on, or
 :cpp:expr:`lv_obj_remove_state(obj, LV_STATE_CHECKED)` to turn it off.
 
-.. _lv_switch_events:
-
 Events
 ******
 
@@ -53,8 +44,6 @@ Events
 See the events of the `Base object </widgets/obj>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_switch_keys:
 
 Keys
 ****
@@ -65,14 +54,10 @@ Keys
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_switch_example:
-
 Example
 *******
 
 .. include:: ../examples/widgets/switch/index.rst
-
-.. _lv_switch_api:
 
 API
 ***
