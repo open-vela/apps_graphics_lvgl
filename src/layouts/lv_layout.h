@@ -24,7 +24,9 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-typedef void (*lv_layout_update_cb_t)(lv_obj_t *, void * user_data);
+struct _lv_obj_t;
+
+typedef void (*lv_layout_update_cb_t)(struct _lv_obj_t *, void * user_data);
 typedef struct {
     lv_layout_update_cb_t cb;
     void * user_data;
@@ -64,7 +66,7 @@ uint32_t lv_layout_register(lv_layout_update_cb_t cb, void * user_data);
  * Update the layout of a widget
  * @param obj   pointer to a widget
  */
-void _lv_layout_apply(lv_obj_t * obj);
+void _lv_layout_apply(struct _lv_obj_t * obj);
 
 /**********************
  *      MACROS

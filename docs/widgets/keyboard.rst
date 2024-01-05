@@ -1,17 +1,12 @@
-.. _lv_keyboard:
-
-======================
 Keyboard (lv_keyboard)
 ======================
 
 Overview
 ********
 
-The Keyboard object is a special :ref:`Button matrix <lv_buttonmatrix>`
+The Keyboard object is a special `Button matrix </widgets/buttonmatrix>`__
 with predefined keymaps and other features to realize a virtual keyboard
-to write texts into a :ref:`Text area <lv_textarea>`.
-
-.. _lv_keyboard_parts_and_styles:
+to write texts into a `Text area </widgets/textarea>`__.
 
 Parts and Styles
 ****************
@@ -20,8 +15,6 @@ Similarly to Button matrices Keyboards consist of 2 part:
 
 - :cpp:enumerator:`LV_PART_MAIN` The main part. Uses all the typical background properties
 - :cpp:enumerator:`LV_PART_ITEMS` The buttons. Also uses all typical background properties as well as the *text* properties.
-
-.. _lv_keyboard_usage:
 
 Usage
 *****
@@ -45,7 +38,7 @@ default mode is :cpp:enumerator:`LV_KEYBOARD_MODE_TEXT_UPPER`.
 Assign Text area
 ----------------
 
-You can assign a :ref:`Text area <lv_textarea>` to the Keyboard to
+You can assign a `Text area </widgets/textarea>`__ to the Keyboard to
 automatically put the clicked characters there. To assign the text area,
 use :cpp:expr:`lv_keyboard_set_textarea(kb, ta)`.
 
@@ -72,23 +65,21 @@ New Keymap
 
 You can specify a new map (layout) for the keyboard with
 :cpp:expr:`lv_keyboard_set_map(kb, LV_KEYBOARD_MODE_..., kb_map, kb_ctrl)`. See
-the :ref:`Button matrix <lv_buttonmatrix>` for more information about
+the `Button matrix </widgets/buttonmatrix>`__ for more information about
 creating new maps and ctrls.
 
 Keep in mind that using following keywords will have the same effect as
 with the original map:
 
-- :c:macro:`LV_SYMBOL_OK` Send :cpp:enumerator:`LV_EVENT_READY` to the assigned Text area.
+- :c:macro:`LV_SYMBOL_OK` Send ``LV_EVENT_READY`` to the assigned Text area.
 - :c:macro:`LV_SYMBOL_CLOSE` or :c:macro:`LV_SYMBOL_KEYBOARD` Send :cpp:enumerator:`LV_EVENT_CANCEL` to the assigned Text area.
 - :c:macro:`LV_SYMBOL_BACKSPACE` Delete on the left.
 - :c:macro:`LV_SYMBOL_LEFT` Move the cursor left.
 - :c:macro:`LV_SYMBOL_RIGHT` Move the cursor right.
 - :c:macro:`LV_SYMBOL_NEW_LINE` New line.
-- ``"ABC"`` Load the uppercase map.
-- ``"abc"`` Load the lower case map.
-- ``"1#"`` Load the lower case map.
-
-.. _lv_keyboard_events:
+- *"ABC"* Load the uppercase map.
+- *"abc"* Load the lower case map.
+- *"1#"* Load the lower case map.
 
 Events
 ******
@@ -110,8 +101,6 @@ with a custom event handler if you wish.
 
 Learn more about :ref:`events`.
 
-.. _lv_keyboard_keys:
-
 Keys
 ****
 
@@ -121,14 +110,10 @@ Keys
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_keyboard_example:
-
-Example
-*******
+Examples
+********
 
 .. include:: ../examples/widgets/keyboard/index.rst
-
-.. _lv_keyboard_api:
 
 API
 ***

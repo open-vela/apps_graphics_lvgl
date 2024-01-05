@@ -63,10 +63,6 @@ void lv_draw_layer(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
     t->type = LV_DRAW_TASK_TYPE_LAYER;
     t->state = LV_DRAW_TASK_STATE_WAITING;
 
-    _lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(coords), lv_area_get_height(coords),
-                                       dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
-    lv_area_move(&t->_real_area, coords->x1, coords->y1);
-
     lv_layer_t * layer_to_draw = (lv_layer_t *)dsc->src;
     layer_to_draw->all_tasks_added = true;
 
@@ -95,10 +91,6 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
     lv_draw_task_t * t = lv_draw_add_task(layer, coords);
     t->draw_dsc = new_image_dsc;
     t->type = LV_DRAW_TASK_TYPE_IMAGE;
-
-    _lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(coords), lv_area_get_height(coords),
-                                       dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
-    lv_area_move(&t->_real_area, coords->x1, coords->y1);
 
     lv_draw_finalize_task_creation(layer, t);
     LV_PROFILER_END;
@@ -218,7 +210,7 @@ static void img_decode_and_draw(lv_draw_unit_t * draw_unit, const lv_draw_image_
     sup.palette_size = decoder_dsc->palette_size;
 
     /*The whole image is available, just draw it*/
-    if(decoder_dsc->decoded) {
+    if(decoder_dsc->decoded || decoder_dsc->img_data) {
         draw_core_cb(draw_unit, draw_dsc, decoder_dsc, &sup, img_area, clipped_img_area);
     }
     /*Draw in smaller pieces*/

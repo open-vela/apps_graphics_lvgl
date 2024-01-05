@@ -83,10 +83,15 @@ disp_drv = lv.display_create(WIDTH, HEIGHT)
 disp_drv.set_flush_cb(flush)
 disp_drv.set_color_format(lv.COLOR_FORMAT.RGB888)
 
-buf = lv.draw_buf_create(WIDTH, HEIGHT, lv.COLOR_FORMAT.RGB888, 0)
 color_size = lv.color_format_get_size(disp_drv.get_color_format())
-disp_drv.set_draw_buffers(buf, None)
-disp_drv.set_render_mode(lv.DISPLAY_RENDER_MODE.FULL)
+
+buf = bytearray(WIDTH * HEIGHT * color_size)
+disp_drv.set_draw_buffers(
+    buf,
+    None,
+    WIDTH * HEIGHT * color_size,
+    lv.DISPLAY_RENDER_MODE.FULL
+    )
 
 
 @test_func_wrapper

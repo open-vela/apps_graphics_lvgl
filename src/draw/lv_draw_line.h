@@ -41,6 +41,8 @@ typedef struct {
     uint8_t raw_end     : 1;    /*Do not bother with perpendicular line ending if it's not visible for any reason*/
 } lv_draw_line_dsc_t;
 
+struct _lv_layer_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -56,7 +58,7 @@ void lv_draw_line_dsc_init(lv_draw_line_dsc_t * dsc);
  * @param layer     pointer to a layer
  * @param dsc       pointer to an initialized `lv_draw_line_dsc_t` variable
  */
-void lv_draw_line(lv_layer_t * layer, const lv_draw_line_dsc_t * dsc);
+void lv_draw_line(struct _lv_layer_t * layer, const lv_draw_line_dsc_t * dsc);
 
 /**********************
  *      MACROS

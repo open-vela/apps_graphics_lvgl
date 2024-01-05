@@ -302,6 +302,13 @@ menu "LVGL configuration"
 					Error diffusion dithering gets a much better visual result, but implies more CPU consumption and memory when drawing.
 					The increase in memory consumption is (24 bits * object's width)
 
+			config LV_DISPLAY_ROT_MAX_BUF
+				int "Maximum buffer size to allocate for rotation"
+				default 10240
+				depends on LV_USE_DRAW_SW
+				help
+					Only used if software rotation is enabled in the display driver.
+
 			config LV_USE_VECTOR_GRAPHIC
 				bool "Use Vector Graphic APIs"
 				default n
@@ -310,7 +317,7 @@ menu "LVGL configuration"
 		endmenu
 
 		menu "GPU"
-			config LV_USE_DRAW_ARM2D
+			config LV_USE_GPU_ARM2D
 				bool "Enable Arm's 2D image processing library (Arm-2D) for all Cortex-M processors."
 				default n
 				help
@@ -354,25 +361,6 @@ menu "LVGL configuration"
 				bool "Enable VG-Lite assert."
 				default n
 				depends on LV_USE_DRAW_VG_LITE
-
-			config LV_USE_VG_LITE_THORVG
-				bool "Use ThorVG to simulate VG-Lite hardware."
-				default n
-				depends on LV_USE_DRAW_VG_LITE && LV_USE_THORVG
-				help
-					Use thorvg to simulate VG-Lite hardware behavior, it's useful
-					for debugging and testing on PC simulator. Enable LV_USE_THORVG,
-					Either internal ThorVG or external ThorVG library is required.
-
-			config LV_VG_LITE_THORVG_TRACE_API
-				bool "Enable trace log for VG-Lite ThorVG simulator"
-				default n
-				depends on LV_USE_VG_LITE_THORVG
-
-			config LV_VG_LITE_THORVG_YUV_SUPPORT
-				bool "Enable YUV support for VG-Lite ThorVG simulator"
-				default n
-				depends on LV_USE_VG_LITE_THORVG
 
 			config LV_USE_GPU_SDL
 				bool "Use SDL renderer API"
@@ -986,6 +974,9 @@ menu "LVGL configuration"
 		config LV_USE_MENU
 			bool "Menu."
 			default y if !LV_CONF_MINIMAL
+		config LV_USE_METER
+			bool "Meter."
+			default y if !LV_CONF_MINIMAL
 		config LV_USE_MSGBOX
 			bool "Msgbox."
 			default y if !LV_CONF_MINIMAL
@@ -1172,27 +1163,27 @@ menu "LVGL configuration"
 			bool "Lottie library"
 		config LV_USE_THORVG
 			bool "ThorVG library"
-			choice
-				prompt "Use ThorVG config"
-				depends on LV_USE_THORVG
-				default LV_USE_THORVG_INTERNAL
-				config LV_USE_THORVG_INTERNAL
-					bool "Use ThorVG internal"
-				config LV_USE_THORVG_EXTERNAL
-					bool "Use ThorVG external"
-			endchoice
+            choice
+             prompt "Use ThorVG config"
+             depends on LV_USE_THORVG
+                default LV_USE_THORVG_INTERNAL
+                config LV_USE_THORVG_INTERNAL
+                    bool "Use ThorVG internal"
+                config LV_USE_THORVG_EXTERNAL
+                    bool "Use ThorVG external"
+             endchoice
 
 		config LV_USE_LZ4
 			bool "Enable LZ4 compress/decompress lib"
-			choice
-				prompt "Choose lvgl built-in LZ4 lib or external lib"
-				depends on LV_USE_LZ4
-				default LV_USE_LZ4_INTERNAL
-				config LV_USE_LZ4_INTERNAL
-					bool "Use lvgl built-in LZ4 lib"
-				config LV_USE_LZ4_EXTERNAL
-					bool "Use external LZ4 library"
-			endchoice
+            choice
+             prompt "Choose lvgl built-in LZ4 lib or external lib"
+             depends on LV_USE_LZ4
+                default LV_USE_LZ4_INTERNAL
+                config LV_USE_LZ4_INTERNAL
+                    bool "Use lvgl built-in LZ4 lib"
+                config LV_USE_LZ4_EXTERNAL
+                    bool "Use external LZ4 library"
+             endchoice
 
 		config LV_USE_FFMPEG
 			bool "FFmpeg library"
