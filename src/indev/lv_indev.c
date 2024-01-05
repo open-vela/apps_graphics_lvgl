@@ -335,14 +335,14 @@ lv_group_t * lv_indev_get_group(const lv_indev_t * indev)
     return indev->group;
 }
 
-lv_display_t * lv_indev_get_display(const lv_indev_t * indev)
+lv_display_t * lv_indev_get_disp(const lv_indev_t * indev)
 {
     if(indev == NULL) return NULL;
 
     return indev->disp;
 }
 
-void lv_indev_set_display(lv_indev_t * indev, lv_display_t * disp)
+void lv_indev_set_disp(lv_indev_t * indev, lv_display_t * disp)
 {
     if(indev == NULL) return;
 
@@ -566,25 +566,6 @@ bool lv_indev_remove_event(lv_indev_t * indev, uint32_t index)
     LV_ASSERT_NULL(indev);
 
     return lv_event_remove(&indev->event_list, index);
-}
-
-uint32_t lv_indev_remove_event_cb_with_user_data(lv_indev_t * indev, lv_event_cb_t event_cb, void * user_data)
-{
-    LV_ASSERT_NULL(indev);
-
-    uint32_t event_cnt = lv_indev_get_event_count(indev);
-    uint32_t removed_count = 0;
-    int32_t i;
-
-    for(i = event_cnt - 1; i >= 0; i--) {
-        lv_event_dsc_t * dsc = lv_indev_get_event_dsc(indev, i);
-        if(dsc && dsc->cb == event_cb && dsc->user_data == user_data) {
-            lv_indev_remove_event(indev, i);
-            removed_count ++;
-        }
-    }
-
-    return removed_count;
 }
 
 lv_result_t lv_indev_send_event(lv_indev_t * indev, lv_event_code_t code, void * param)
@@ -843,6 +824,10 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
     if(data->state != LV_INDEV_STATE_RELEASED) {
         data->enc_diff = 0;
     }
+
+    /*Refresh the focused object. It might change due to lv_group_focus_prev/next*/
+    indev_obj_act = lv_group_get_focused(g);
+    if(indev_obj_act == NULL) return;
 
     const bool is_disabled = lv_obj_has_state(indev_obj_act, LV_STATE_DISABLED);
 
