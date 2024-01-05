@@ -149,3 +149,4 @@ void lv_draw_sw_blend(lv_draw_unit_t * draw_unit, const lv_draw_sw_blend_dsc_t *
  **********************/
 
 #endif
+
