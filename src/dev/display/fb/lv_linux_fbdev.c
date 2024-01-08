@@ -26,6 +26,8 @@
     #include <linux/fb.h>
 #endif /* LV_LINUX_FBDEV_BSD */
 
+#include <lvgl/lvgl.h>
+
 /*********************
  *      DEFINES
  *********************/
