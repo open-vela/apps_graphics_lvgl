@@ -1,6 +1,3 @@
-.. _lv_obj:
-
-====================
 Base object (lv_obj)
 ====================
 
@@ -25,16 +22,12 @@ other widgets too. For example :cpp:expr:`lv_obj_set_width(slider, 100)`
 The Base object can be directly used as a simple widget: it's nothing
 more than a rectangle. In HTML terms, think of it as a ``<div>``.
 
-.. _lv_obj_coordinates:
-
 Coordinates
 -----------
 
 Only a small subset of coordinate settings is described here. To see all
 the features of LVGL (padding, coordinates in styles, layouts, etc)
-visit the :ref:`Coordinates <coord>` page.
-
-.. _lv_obj_size:
+visit the `Coordinates </overview/coords>`__ page.
 
 Size
 ^^^^
@@ -44,16 +37,12 @@ The object size can be modified on individual axes with
 :cpp:expr:`lv_obj_set_height(obj, new_height)`, or both axes can be modified at
 the same time with :cpp:expr:`lv_obj_set_size(obj, new_width, new_height)`.
 
-.. _lv_obj_position:
-
 Position
 ^^^^^^^^
 
 You can set the position relative to the parent with
 :cpp:expr:`lv_obj_set_x(obj, new_x)` and :cpp:expr:`lv_obj_set_y(obj, new_y)`, or both
 axes at the same time with :cpp:expr:`lv_obj_set_pos(obj, new_x, new_y)`.
-
-.. _lv_obj_alignment:
 
 Alignment
 ^^^^^^^^^
@@ -78,8 +67,6 @@ For example, to align a text below an image:
 :cpp:expr:`lv_obj_align_to(text, image, LV_ALIGN_OUT_BOTTOM_MID, 0, 10)`.
 
 The following align types exist: |image1|
-
-.. _lv_obj_parents_and_children:
 
 Parents and children
 --------------------
@@ -117,8 +104,6 @@ You can change the index of an object in its parent using
 You can swap the position of two objects with
 :cpp:expr:`lv_obj_swap(obj1, obj2)`.
 
-.. _lv_obj_display_and_screens:
-
 Display and Screens
 -------------------
 
@@ -139,8 +124,6 @@ explicitly selected with :cpp:func:`lv_disp_set_default`.
 
 To get an object's screen use the :cpp:expr:`lv_obj_get_screen(obj)` function.
 
-.. _lv_obj_overview_events:
-
 Events
 ------
 
@@ -150,15 +133,13 @@ To set an event callback for an object, use
 To manually send an event to an object, use
 :cpp:expr:`lv_event_send(obj, LV_EVENT_..., param)`
 
-Read the :ref:`Event overview <events>` to learn more about
+Read the `Event overview </overview/event>`__ to learn more about
 events.
-
-.. _lv_obj_styles:
 
 Styles
 ------
 
-Be sure to read the :ref:`Style overview <styles>`. Here only the
+Be sure to read the `Style overview </overview/style>`__. Here only the
 most essential functions are described.
 
 A new style can be added to an object with the
@@ -168,8 +149,6 @@ is an ORed combination of part and state(s). E.g.
 
 The base objects use :cpp:enumerator:`LV_PART_MAIN` style properties and
 :cpp:enumerator:`LV_PART_SCROLLBAR` with the typical background style properties.
-
-.. _lv_obj_flags:
 
 Flags
 -----
@@ -219,12 +198,10 @@ Some examples:
    /*Make an object non-clickable*/
    lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE);
 
-.. _lv_obj_groups:
-
 Groups
 ------
 
-Read the :ref:`Input devices overview <indev>` to learn more
+Read the `Input devices overview </overview/indev>`__ to learn more
 about *Groups*.
 
 Objects are added to a *group* with :cpp:expr:`lv_group_add_obj(group, obj)`,
@@ -235,8 +212,6 @@ belongs to.
 its group or not. If the object is not added to a group, ``false`` will
 be returned.
 
-.. _lv_obj_extended_click_area:
-
 Extended click area
 -------------------
 
@@ -246,8 +221,6 @@ However, this can be extended with
 
 .. _events-1:
 
-.. _lv_obj_events:
-
 Events
 ******
 
@@ -255,8 +228,6 @@ Events
    enabled and the object clicked (on transition to/from the checked state)
 
 Learn more about :ref:`events`.
-
-.. _lv_obj_keys:
 
 Keys
 ****
@@ -270,21 +241,18 @@ If :cpp:enumerator:`LV_OBJ_FLAG_SCROLLABLE` is enabled, but the object is not ed
 :cpp:enumerator:`LV_KEY_DOWN`, :cpp:enumerator:`LV_KEY_LEFT`, :cpp:enumerator:`LV_KEY_RIGHT`) scroll the object.
 If the object can only scroll vertically, :cpp:enumerator:`LV_KEY_LEFT` and
 :cpp:enumerator:`LV_KEY_RIGHT` will scroll up/down instead, making it compatible with
-an encoder input device. See :ref:`Input devices overview <indev>` for
+an encoder input device. See `Input devices overview </overview/indev>`__ for
 more on encoder behaviors and the edit mode.
 
 Learn more about :ref:`indev_keys`.
 
 .. |image1| image:: /misc/align.png
 
-.. _lv_obj_example:
 
 Example
 *******
 
 .. include:: ../examples/widgets/obj/index.rst
-
-.. _lv_obj_api:
 
 API
 ***
