@@ -317,7 +317,7 @@ menu "LVGL configuration"
 		endmenu
 
 		menu "GPU"
-			config LV_USE_GPU_ARM2D
+			config LV_USE_DRAW_ARM2D
 				bool "Enable Arm's 2D image processing library (Arm-2D) for all Cortex-M processors."
 				default n
 				help
@@ -973,9 +973,6 @@ menu "LVGL configuration"
 			default y if !LV_CONF_MINIMAL
 		config LV_USE_MENU
 			bool "Menu."
-			default y if !LV_CONF_MINIMAL
-		config LV_USE_METER
-			bool "Meter."
 			default y if !LV_CONF_MINIMAL
 		config LV_USE_MSGBOX
 			bool "Msgbox."
