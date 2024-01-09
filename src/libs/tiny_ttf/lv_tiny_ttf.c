@@ -65,15 +65,16 @@ typedef struct _tiny_ttf_cache_data_t {
     lv_font_t * font;
     uint32_t unicode;
     uint32_t size;
-    lv_draw_buf_t * draw_buf;
+
+    uint8_t * buffer;
 } tiny_ttf_cache_data_t;
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 static bool ttf_get_glyph_dsc_cb(const lv_font_t * font, lv_font_glyph_dsc_t * dsc_out, uint32_t unicode_letter,
                                  uint32_t unicode_letter_next);
-static const void * ttf_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                            uint32_t unicode_letter, lv_draw_buf_t * draw_buf);
+static const uint8_t * ttf_get_glyph_bitmap_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc,
+                                               uint32_t unicode_letter, uint8_t * bitmap_buf);
 static void ttf_release_glyph_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc);
 static lv_result_t lv_tiny_ttf_create(lv_font_t * out_font, const char * path, const void * data, size_t data_size,
                                       int32_t font_size,
@@ -234,6 +235,9 @@ static bool ttf_get_glyph_dsc_cb(const lv_font_t * font, lv_font_glyph_dsc_t * d
     int k = stbtt_GetGlyphKernAdvance(&dsc->info, g1, g2);
     dsc_out->adv_w = (uint16_t)floor((((float)advw + (float)k) * dsc->scale) +
                                      0.5f); /*Horizontal space required by the glyph in [px]*/
+
+    dsc_out->adv_w = (uint16_t)floor((((float)advw + (float)k) * dsc->scale) +
+                                     0.5f); /*Horizontal space required by the glyph in [px]*/
     dsc_out->box_w = (x2 - x1 + 1);         /*width of the bitmap in [px]*/
     dsc_out->box_h = (y2 - y1 + 1);         /*height of the bitmap in [px]*/
     dsc_out->ofs_x = x1;                    /*X offset of the bitmap in [pf]*/
@@ -243,11 +247,12 @@ static bool ttf_get_glyph_dsc_cb(const lv_font_t * font, lv_font_glyph_dsc_t * d
     return true; /*true: glyph found; false: glyph was not found*/
 }
 
-static const void * ttf_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                            uint32_t unicode_letter, lv_draw_buf_t * draw_buf)
+static const uint8_t * ttf_get_glyph_bitmap_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc,
+                                               uint32_t unicode_letter, uint8_t * bitmap_buf)
 {
-    LV_UNUSED(draw_buf);
-    const lv_font_t * font = g_dsc->resolved_font;
+    LV_UNUSED(g_dsc);
+    LV_UNUSED(bitmap_buf);
+
     tiny_ttf_cache_data_t search_key = {
         .font = (lv_font_t *)font,
         .unicode = unicode_letter,
@@ -263,7 +268,7 @@ static const void * ttf_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
 
     g_dsc->entry = entry;
     tiny_ttf_cache_data_t * cached_data = lv_cache_entry_get_data(entry);
-    return cached_data->draw_buf;
+    return cached_data->buffer;
 }
 
 static void ttf_release_glyph_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc)
@@ -349,29 +354,27 @@ static bool tiny_ttf_cache_create_cb(tiny_ttf_cache_data_t * node, void * user_d
     int w, h;
     w = x2 - x1 + 1;
     h = y2 - y1 + 1;
-    lv_draw_buf_t * draw_buf = lv_draw_buf_create(w, h, LV_COLOR_FORMAT_A8, 0);
-    if(NULL == draw_buf) {
+    uint32_t stride = lv_draw_buf_width_to_stride(w, LV_COLOR_FORMAT_A8);
+    size_t szb = h * stride;
+
+    uint8_t * buffer = lv_draw_buf_malloc(szb, LV_COLOR_FORMAT_A8);
+    if(NULL == buffer) {
         LV_LOG_ERROR("tiny_ttf: out of memory\n");
         return false;
     }
 
-    lv_image_header_t * header = &draw_buf->header;
-    uint32_t stride = header->stride;
+    memset(buffer, 0, szb);
+    stbtt_MakeGlyphBitmap(info, buffer, w, h, stride, dsc->scale, dsc->scale, g1);
 
-    /**
-     * @todo use `lv_draw_buf_clear` instead.
-     */
-    memset(draw_buf->data, 0, h * stride);
-    stbtt_MakeGlyphBitmap(info, draw_buf->data, w, h, stride, dsc->scale, dsc->scale, g1);
+    node->buffer = buffer;
 
-    node->draw_buf = draw_buf;
     return true;
 }
 static void tiny_ttf_cache_free_cb(tiny_ttf_cache_data_t * node, void * user_data)
 {
     LV_UNUSED(user_data);
 
-    lv_draw_buf_destroy(node->draw_buf);
+    lv_draw_buf_free(node->buffer);
 }
 static lv_cache_compare_res_t tiny_ttf_cache_compare_cb(const tiny_ttf_cache_data_t * lhs,
                                                         const tiny_ttf_cache_data_t * rhs)

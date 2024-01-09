@@ -186,7 +186,7 @@ typedef struct {
  **********************/
 
 extern void lv_color_blend_to_rgb565_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb565_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_rgb565_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -197,11 +197,10 @@ static inline lv_result_t _lv_color_blend_to_rgb565_neon(_lv_draw_sw_blend_fill_
     };
 
     lv_color_blend_to_rgb565_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb565_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb565_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_rgb565_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -212,11 +211,10 @@ static inline lv_result_t _lv_color_blend_to_rgb565_with_opa_neon(_lv_draw_sw_bl
         .src_buf = &dsc->color
     };
     lv_color_blend_to_rgb565_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb565_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb565_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_rgb565_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -228,11 +226,10 @@ static inline lv_result_t _lv_color_blend_to_rgb565_with_mask_neon(_lv_draw_sw_b
         .mask_stride = dsc->mask_stride
     };
     lv_color_blend_to_rgb565_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb565_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -245,11 +242,10 @@ static inline lv_result_t _lv_color_blend_to_rgb565_mix_mask_opa_neon(_lv_draw_s
         .mask_stride = dsc->mask_stride
     };
     lv_color_blend_to_rgb565_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb565_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -260,11 +256,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_neon(_lv_draw_sw_ble
         .src_stride = dsc->src_stride
     };
     lv_rgb565_blend_normal_to_rgb565_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb565_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -276,11 +271,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_opa_neon(_lv_dr
         .src_stride = dsc->src_stride
     };
     lv_rgb565_blend_normal_to_rgb565_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb565_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -293,11 +287,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_mask_neon(_lv_d
         .mask_stride = dsc->mask_stride
     };
     lv_rgb565_blend_normal_to_rgb565_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -311,13 +304,11 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_neon(_l
         .mask_stride = dsc->mask_stride
     };
     lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb565_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb565_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                 uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc, uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -333,13 +324,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_neon(_lv_draw_sw_ble
     else {
         lv_xrgb8888_blend_normal_to_rgb565_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb565_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb565_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                          uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -356,13 +346,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_opa_neon(_lv_dr
     else {
         lv_xrgb8888_blend_normal_to_rgb565_with_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb565_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb565_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                    uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -380,13 +369,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_mask_neon(_lv_d
     else {
         lv_xrgb8888_blend_normal_to_rgb565_with_mask_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb565_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                              uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                       uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -405,11 +393,10 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_neon(_l
     else {
         lv_xrgb8888_blend_normal_to_rgb565_mix_mask_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb565_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_rgb565_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -420,11 +407,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_neon(_lv_draw_sw_b
         .src_stride = dsc->src_stride
     };
     lv_argb8888_blend_normal_to_rgb565_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb565_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_rgb565_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -436,11 +422,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_opa_neon(_lv_
         .src_stride = dsc->src_stride
     };
     lv_argb8888_blend_normal_to_rgb565_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb565_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_rgb565_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -453,11 +438,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_mask_neon(_lv
         .mask_stride = dsc->mask_stride
     };
     lv_argb8888_blend_normal_to_rgb565_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -471,12 +455,11 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_neon(
         .mask_stride = dsc->mask_stride
     };
     lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb888_neon(asm_dsc_t * dsc);
 extern void lv_color_blend_to_xrgb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb888_neon(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
+static inline void _lv_color_blend_to_rgb888_neon(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -491,13 +474,11 @@ static inline lv_result_t _lv_color_blend_to_rgb888_neon(_lv_draw_sw_blend_fill_
     else {
         lv_color_blend_to_xrgb8888_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_color_blend_to_xrgb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb888_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                  uint32_t dst_px_size)
+static inline void _lv_color_blend_to_rgb888_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -513,13 +494,11 @@ static inline lv_result_t _lv_color_blend_to_rgb888_with_opa_neon(_lv_draw_sw_bl
     else {
         lv_color_blend_to_xrgb8888_with_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_color_blend_to_xrgb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb888_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                   uint32_t dst_px_size)
+static inline void _lv_color_blend_to_rgb888_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -536,13 +515,11 @@ static inline lv_result_t _lv_color_blend_to_rgb888_with_mask_neon(_lv_draw_sw_b
     else {
         lv_color_blend_to_xrgb8888_with_mask_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_rgb888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_color_blend_to_xrgb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                      uint32_t dst_px_size)
+static inline void _lv_color_blend_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -560,13 +537,11 @@ static inline lv_result_t _lv_color_blend_to_rgb888_mix_mask_opa_neon(_lv_draw_s
     else {
         lv_color_blend_to_xrgb8888_mix_mask_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb888_neon(asm_dsc_t * dsc);
 extern void lv_rgb565_blend_normal_to_xrgb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                 uint32_t dst_px_size)
+static inline void _lv_rgb565_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -582,13 +557,12 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_neon(_lv_draw_sw_ble
     else {
         lv_rgb565_blend_normal_to_xrgb8888_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_rgb565_blend_normal_to_xrgb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                          uint32_t dst_px_size)
+static inline void _lv_rgb565_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -605,13 +579,12 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_opa_neon(_lv_dr
     else {
         lv_rgb565_blend_normal_to_xrgb8888_with_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_rgb565_blend_normal_to_xrgb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t dst_px_size)
+static inline void _lv_rgb565_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                    uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -629,13 +602,12 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_mask_neon(_lv_d
     else {
         lv_rgb565_blend_normal_to_xrgb8888_with_mask_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_rgb565_blend_normal_to_xrgb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                              uint32_t dst_px_size)
+static inline void _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                       uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -654,16 +626,14 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_neon(_l
     else {
         lv_rgb565_blend_normal_to_xrgb8888_mix_mask_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb888_neon(asm_dsc_t * dsc);
 extern void lv_rgb888_blend_normal_to_xrgb8888_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb888_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_xrgb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                 uint32_t dst_px_size,
-                                                                 uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc, uint32_t dst_px_size,
+                                                          uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -689,15 +659,14 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_neon(_lv_draw_sw_ble
             lv_xrgb8888_blend_normal_to_xrgb8888_neon(&asm_dsc);
         }
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_rgb888_blend_normal_to_xrgb8888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_xrgb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                          uint32_t dst_px_size, uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t dst_px_size, uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -724,15 +693,14 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_opa_neon(_lv_dr
             lv_xrgb8888_blend_normal_to_xrgb8888_with_opa_neon(&asm_dsc);
         }
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_rgb888_blend_normal_to_xrgb8888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_xrgb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t dst_px_size, uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                    uint32_t dst_px_size, uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -760,15 +728,14 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_mask_neon(_lv_d
             lv_xrgb8888_blend_normal_to_xrgb8888_with_mask_neon(&asm_dsc);
         }
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_rgb888_blend_normal_to_xrgb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_rgb888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_xrgb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                              uint32_t dst_px_size, uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                       uint32_t dst_px_size, uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -797,13 +764,11 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_neon(_l
             lv_xrgb8888_blend_normal_to_xrgb8888_mix_mask_opa_neon(&asm_dsc);
         }
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb888_neon(asm_dsc_t * dsc);
 extern void lv_argb8888_blend_normal_to_xrgb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                   uint32_t dst_px_size)
+static inline void _lv_argb8888_blend_normal_to_rgb888_neon(_lv_draw_sw_blend_image_dsc_t * dsc, uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -819,13 +784,12 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_neon(_lv_draw_sw_b
     else {
         lv_argb8888_blend_normal_to_xrgb8888_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_argb8888_blend_normal_to_xrgb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                            uint32_t dst_px_size)
+static inline void _lv_argb8888_blend_normal_to_rgb888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                     uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -842,13 +806,12 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_opa_neon(_lv_
     else {
         lv_argb8888_blend_normal_to_xrgb8888_with_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_argb8888_blend_normal_to_xrgb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                             uint32_t dst_px_size)
+static inline void _lv_argb8888_blend_normal_to_rgb888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                      uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -866,13 +829,12 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_mask_neon(_lv
     else {
         lv_argb8888_blend_normal_to_xrgb8888_with_mask_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_argb8888_blend_normal_to_xrgb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                                uint32_t dst_px_size)
+static inline void _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                         uint32_t dst_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -891,11 +853,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_neon(
     else {
         lv_argb8888_blend_normal_to_xrgb8888_mix_mask_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_argb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_argb8888_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_argb8888_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -906,11 +867,10 @@ static inline lv_result_t _lv_color_blend_to_argb8888_neon(_lv_draw_sw_blend_fil
     };
 
     lv_color_blend_to_argb8888_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_argb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_argb8888_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_argb8888_with_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -921,11 +881,10 @@ static inline lv_result_t _lv_color_blend_to_argb8888_with_opa_neon(_lv_draw_sw_
         .src_buf = &dsc->color
     };
     lv_color_blend_to_argb8888_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_argb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_argb8888_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_argb8888_with_mask_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -937,11 +896,10 @@ static inline lv_result_t _lv_color_blend_to_argb8888_with_mask_neon(_lv_draw_sw
         .mask_stride = dsc->mask_stride
     };
     lv_color_blend_to_argb8888_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_color_blend_to_argb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_color_blend_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline void _lv_color_blend_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -954,11 +912,10 @@ static inline lv_result_t _lv_color_blend_to_argb8888_mix_mask_opa_neon(_lv_draw
         .mask_stride = dsc->mask_stride
     };
     lv_color_blend_to_argb8888_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_argb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -969,11 +926,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_neon(_lv_draw_sw_b
         .src_stride = dsc->src_stride
     };
     lv_rgb565_blend_normal_to_argb8888_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_argb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -985,11 +941,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_opa_neon(_lv_
         .src_stride = dsc->src_stride
     };
     lv_rgb565_blend_normal_to_argb8888_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_argb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -1002,11 +957,10 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_mask_neon(_lv
         .mask_stride = dsc->mask_stride
     };
     lv_rgb565_blend_normal_to_argb8888_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -1020,13 +974,11 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_neon(
         .mask_stride = dsc->mask_stride
     };
     lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_argb8888_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_argb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                   uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc, uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -1042,13 +994,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_neon(_lv_draw_sw_b
     else {
         lv_xrgb8888_blend_normal_to_argb8888_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_argb8888_with_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_argb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                            uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                     uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -1065,13 +1016,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_opa_neon(_lv_
     else {
         lv_xrgb8888_blend_normal_to_argb8888_with_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_argb8888_with_mask_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_argb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                             uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                      uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -1089,13 +1039,12 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_mask_neon(_lv
     else {
         lv_xrgb8888_blend_normal_to_argb8888_with_mask_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
 extern void lv_xrgb8888_blend_normal_to_argb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                                uint32_t src_px_size)
+static inline void _lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                         uint32_t src_px_size)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -1114,11 +1063,10 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_neon(
     else {
         lv_xrgb8888_blend_normal_to_argb8888_mix_mask_opa_neon(&asm_dsc);
     }
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_argb8888_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_argb8888_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -1129,11 +1077,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_neon(_lv_draw_sw
         .src_stride = dsc->src_stride
     };
     lv_argb8888_blend_normal_to_argb8888_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_argb8888_with_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_argb8888_with_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -1145,11 +1092,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_opa_neon(_l
         .src_stride = dsc->src_stride
     };
     lv_argb8888_blend_normal_to_argb8888_with_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_argb8888_with_mask_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_argb8888_with_mask_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .dst_buf = dsc->dest_buf,
@@ -1162,11 +1108,10 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_mask_neon(_
         .mask_stride = dsc->mask_stride
     };
     lv_argb8888_blend_normal_to_argb8888_with_mask_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 extern void lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_neon(asm_dsc_t * dsc);
-static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline void _lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_neon(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     asm_dsc_t asm_dsc = {
         .opa = dsc->opa,
@@ -1180,7 +1125,6 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_neo
         .mask_stride = dsc->mask_stride
     };
     lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_neon(&asm_dsc);
-    return LV_RESULT_OK;
 }
 
 /**********************

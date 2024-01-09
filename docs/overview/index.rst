@@ -16,12 +16,12 @@ Overview
     layer
     event
     indev
-    display
+    disp
     color
     font
-    image
+    img
     fs
-    animations
+    anim
     timer
     draw
     profiler

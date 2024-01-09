@@ -116,9 +116,6 @@
     #endif
 #endif
 
-/* Use Arm-2D on Cortex-M based devices. Please only enable it for Helium Powered devices for now */
-#define LV_USE_DRAW_ARM2D 0
-
 /* Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
 #define LV_USE_DRAW_VGLITE 0
 
@@ -261,6 +258,10 @@
 /*-------------
  * Others
  *-----------*/
+
+/*Maximum buffer size to allocate for rotation.
+ *Only used if software rotation is enabled in the display driver.*/
+#define LV_DISPLAY_ROT_MAX_BUF (10*1024)
 
 #define LV_ENABLE_GLOBAL_CUSTOM 0
 #if LV_ENABLE_GLOBAL_CUSTOM
@@ -496,6 +497,8 @@
 
 #define LV_USE_MENU       1
 
+#define LV_USE_METER      1
+
 #define LV_USE_MSGBOX     1
 
 #define LV_USE_ROLLER     1   /*Requires: lv_label*/
@@ -635,6 +638,12 @@
 #define LV_BIN_DECODER_RAM_LOAD 0
 
 /*RLE decompress library*/
+#define LV_USE_RLE 0
+
+/*Decode bin images to RAM*/
+#define LV_BIN_DECODER_RAM_LOAD 0
+
+/*RLE decoder library*/
 #define LV_USE_RLE 0
 
 /*QR code library*/

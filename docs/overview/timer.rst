@@ -1,5 +1,3 @@
-.. _timer:
-
 ======
 Timers
 ======
@@ -37,7 +35,7 @@ For example:
      /*Do something with LVGL*/
      if(something_happened) {
        something_happened = false;
-       lv_button_create(lv_screen_active(), NULL);
+       lv_btn_create(lv_screen_active(), NULL);
      }
    }
 
@@ -139,8 +137,6 @@ For example:
 If you just want to delete an object and don't need to clean anything up
 in ``my_screen_cleanup`` you could just use :cpp:func:`lv_obj_delete_async` which
 will delete the object on the next call to :cpp:func:`lv_timer_handler`.
-
-.. _timer_api:
 
 API
 ***
