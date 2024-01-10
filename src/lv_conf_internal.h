@@ -25,7 +25,7 @@
 
 #define LV_DRAW_SW_ASM_NONE         0
 #define LV_DRAW_SW_ASM_NEON         1
-#define LV_DRAW_SW_ASM_MVE          2
+#define LV_DRAW_SW_ASM_HELIUM       2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
 /* Handle special Kconfig options */
@@ -311,6 +311,15 @@
                 #define  LV_DRAW_SW_ASM_CUSTOM_INCLUDE ""
             #endif
         #endif
+    #endif
+#endif
+
+/* Use Arm-2D on Cortex-M based devices. Please only enable it for Helium Powered devices for now */
+#ifndef LV_USE_DRAW_ARM2D
+    #ifdef CONFIG_LV_USE_DRAW_ARM2D
+        #define LV_USE_DRAW_ARM2D CONFIG_LV_USE_DRAW_ARM2D
+    #else
+        #define LV_USE_DRAW_ARM2D 0
     #endif
 #endif
 
@@ -737,16 +746,6 @@
  * Others
  *-----------*/
 
-/*Maximum buffer size to allocate for rotation.
- *Only used if software rotation is enabled in the display driver.*/
-#ifndef LV_DISPLAY_ROT_MAX_BUF
-    #ifdef CONFIG_LV_DISPLAY_ROT_MAX_BUF
-        #define LV_DISPLAY_ROT_MAX_BUF CONFIG_LV_DISPLAY_ROT_MAX_BUF
-    #else
-        #define LV_DISPLAY_ROT_MAX_BUF (10*1024)
-    #endif
-#endif
-
 #ifndef LV_ENABLE_GLOBAL_CUSTOM
     #ifdef CONFIG_LV_ENABLE_GLOBAL_CUSTOM
         #define LV_ENABLE_GLOBAL_CUSTOM CONFIG_LV_ENABLE_GLOBAL_CUSTOM
@@ -870,6 +869,19 @@
         #define LV_ATTRIBUTE_FLUSH_READY CONFIG_LV_ATTRIBUTE_FLUSH_READY
     #else
         #define LV_ATTRIBUTE_FLUSH_READY
+    #endif
+#endif
+
+/*Required alignment size for buffers*/
+#ifndef LV_ATTRIBUTE_MEM_ALIGN_SIZE
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_ATTRIBUTE_MEM_ALIGN_SIZE
+            #define LV_ATTRIBUTE_MEM_ALIGN_SIZE CONFIG_LV_ATTRIBUTE_MEM_ALIGN_SIZE
+        #else
+            #define LV_ATTRIBUTE_MEM_ALIGN_SIZE 0
+        #endif
+    #else
+        #define LV_ATTRIBUTE_MEM_ALIGN_SIZE 1
     #endif
 #endif
 
@@ -1600,18 +1612,6 @@
     #endif
 #endif
 
-#ifndef LV_USE_METER
-    #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_METER
-            #define LV_USE_METER CONFIG_LV_USE_METER
-        #else
-            #define LV_USE_METER 0
-        #endif
-    #else
-        #define LV_USE_METER      1
-    #endif
-#endif
-
 #ifndef LV_USE_MSGBOX
     #ifdef _LV_KCONFIG_PRESENT
         #ifdef CONFIG_LV_USE_MSGBOX
@@ -2115,24 +2115,6 @@
 #endif
 
 /*RLE decompress library*/
-#ifndef LV_USE_RLE
-    #ifdef CONFIG_LV_USE_RLE
-        #define LV_USE_RLE CONFIG_LV_USE_RLE
-    #else
-        #define LV_USE_RLE 0
-    #endif
-#endif
-
-/*Decode bin images to RAM*/
-#ifndef LV_BIN_DECODER_RAM_LOAD
-    #ifdef CONFIG_LV_BIN_DECODER_RAM_LOAD
-        #define LV_BIN_DECODER_RAM_LOAD CONFIG_LV_BIN_DECODER_RAM_LOAD
-    #else
-        #define LV_BIN_DECODER_RAM_LOAD 0
-    #endif
-#endif
-
-/*RLE decoder library*/
 #ifndef LV_USE_RLE
     #ifdef CONFIG_LV_USE_RLE
         #define LV_USE_RLE CONFIG_LV_USE_RLE
