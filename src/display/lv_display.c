@@ -154,8 +154,8 @@ void lv_display_delete(lv_display_t * disp)
     lv_indev_t * indev;
     indev = lv_indev_get_next(NULL);
     while(indev) {
-        if(lv_indev_get_disp(indev) == disp) {
-            lv_indev_set_disp(indev, NULL);
+        if(lv_indev_get_display(indev) == disp) {
+            lv_indev_set_display(indev, NULL);
         }
         indev = lv_indev_get_next(indev);
     }
@@ -527,11 +527,6 @@ lv_obj_t * lv_display_get_screen_prev(lv_display_t * disp)
     return disp->prev_scr;
 }
 
-void lv_display_load_scr(lv_obj_t * scr)
-{
-    lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
-}
-
 lv_obj_t * lv_display_get_layer_top(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
@@ -565,10 +560,15 @@ lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp)
     return disp->bottom_layer;
 }
 
+void lv_screen_load(struct _lv_obj_t * scr)
+{
+    lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+}
+
 void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay,
                          bool auto_del)
 {
-    lv_display_t * d = lv_obj_get_disp(new_scr);
+    lv_display_t * d = lv_obj_get_display(new_scr);
     lv_obj_t * act_scr = lv_screen_active();
 
     if(act_scr == new_scr || d->scr_to_load == new_scr) {
@@ -744,6 +744,25 @@ bool lv_display_delete_event(lv_display_t * disp, uint32_t index)
     return lv_event_remove(&disp->event_list, index);
 }
 
+uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    LV_ASSERT_NULL(disp);
+
+    uint32_t event_cnt = lv_display_get_event_count(disp);
+    uint32_t removed_count = 0;
+    int32_t i;
+
+    for(i = event_cnt - 1; i >= 0; i--) {
+        lv_event_dsc_t * dsc = lv_display_get_event_dsc(disp, i);
+        if(dsc && dsc->cb == event_cb && dsc->user_data == user_data) {
+            lv_display_delete_event(disp, i);
+            removed_count ++;
+        }
+    }
+
+    return removed_count;
+}
+
 lv_result_t lv_display_send_event(lv_display_t * disp, lv_event_code_t code, void * param)
 {
 
@@ -819,11 +838,11 @@ uint32_t lv_display_get_inactive_time(const lv_display_t * disp)
     return t;
 }
 
-void lv_display_trig_activity(lv_display_t * disp)
+void lv_display_trigger_activity(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp) {
-        LV_LOG_WARN("lv_display_trig_activity: no display registered");
+        LV_LOG_WARN("lv_display_trigger_activity: no display registered");
         return;
     }
 
@@ -852,7 +871,7 @@ bool lv_display_is_invalidation_enabled(lv_display_t * disp)
     return (disp->inv_en_cnt > 0);
 }
 
-lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp)
+lv_timer_t * lv_display_get_refr_timer(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp) return NULL;
@@ -860,7 +879,7 @@ lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp)
     return disp->refr_timer;
 }
 
-void _lv_display_delete_refr_timer(lv_display_t * disp)
+void lv_display_delete_refr_timer(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp || !disp->refr_timer) return;
@@ -952,7 +971,7 @@ static void scr_load_internal(lv_obj_t * scr)
     LV_ASSERT_NULL(scr);
     if(scr == NULL) return;
 
-    lv_display_t * d = lv_obj_get_disp(scr);
+    lv_display_t * d = lv_obj_get_display(scr);
     if(!d) return;  /*Shouldn't happen, just to be sure*/
 
     lv_obj_t * old_scr = d->act_scr;
@@ -971,7 +990,7 @@ static void scr_load_internal(lv_obj_t * scr)
 
 static void scr_load_anim_start(lv_anim_t * a)
 {
-    lv_display_t * d = lv_obj_get_disp(a->var);
+    lv_display_t * d = lv_obj_get_display(a->var);
 
     d->prev_scr = lv_screen_active();
     d->act_scr = a->var;
@@ -996,7 +1015,7 @@ static void set_y_anim(void * obj, int32_t v)
 
 static void scr_anim_ready(lv_anim_t * a)
 {
-    lv_display_t * d = lv_obj_get_disp(a->var);
+    lv_display_t * d = lv_obj_get_display(a->var);
 
     lv_obj_send_event(d->act_scr, LV_EVENT_SCREEN_LOADED, NULL);
     lv_obj_send_event(d->prev_scr, LV_EVENT_SCREEN_UNLOADED, NULL);

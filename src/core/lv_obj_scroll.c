@@ -239,7 +239,7 @@ int32_t lv_obj_get_scroll_right(lv_obj_t * obj)
     return LV_MAX(child_res, self_w);
 }
 
-void lv_obj_get_scroll_end(struct _lv_obj_t  * obj, lv_point_t * end)
+void lv_obj_get_scroll_end(lv_obj_t * obj, lv_point_t * end)
 {
     lv_anim_t * a;
     a = lv_anim_get(obj, scroll_x_anim);
@@ -305,7 +305,7 @@ void lv_obj_scroll_by(lv_obj_t * obj, int32_t dx, int32_t dy, lv_anim_enable_t a
 {
     if(dx == 0 && dy == 0) return;
     if(anim_en == LV_ANIM_ON) {
-        lv_display_t * d = lv_obj_get_disp(obj);
+        lv_display_t * d = lv_obj_get_display(obj);
         lv_anim_t a;
         lv_anim_init(&a);
         lv_anim_set_var(&a, obj);
