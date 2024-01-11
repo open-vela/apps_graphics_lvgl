@@ -70,9 +70,8 @@ void lv_draw_vg_lite_init(void)
     unit->base_unit.delete_cb = draw_delete;
 
     lv_vg_lite_path_init(unit);
-#if 0
+
     lv_vg_lite_decoder_init();
-#endif
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -204,6 +203,7 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
         case LV_DRAW_TASK_TYPE_FILL:
         case LV_DRAW_TASK_TYPE_BORDER:
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
+        case LV_DRAW_TASK_TYPE_IMAGE:
         case LV_DRAW_TASK_TYPE_LAYER:
         case LV_DRAW_TASK_TYPE_LINE:
         case LV_DRAW_TASK_TYPE_ARC:
@@ -216,17 +216,6 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
             task->preference_score = 80;
             task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
             return 1;
-        case LV_DRAW_TASK_TYPE_IMAGE: {
-            lv_draw_image_dsc_t * dsc = task->draw_dsc;
-            lv_image_header_t header = { 0 };
-            lv_image_decoder_get_info(dsc->src, &header);
-            if(!lv_vg_lite_is_src_cf_supported(header.cf)) {
-                return 0;
-            }
-            task->preference_score = 80;
-            task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
-            return 1;
-        }
         default:
             break;
     }
@@ -237,9 +226,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 {
     lv_draw_vg_lite_unit_t * unit = (lv_draw_vg_lite_unit_t *)draw_unit;
     lv_vg_lite_path_deinit(unit);
-#if 0
     lv_vg_lite_decoder_deinit();
-#endif
     return 1;
 }
 
