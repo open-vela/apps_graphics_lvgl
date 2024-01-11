@@ -270,8 +270,8 @@ static lv_result_t decoder_open_file(lv_image_decoder_t * decoder, lv_image_deco
     LV_UNUSED(decoder); /*Unused*/
 
     lv_color_format_t cf = dsc->header.cf;
-    int32_t width = dsc->header.w;
-    int32_t height = dsc->header.h;
+    uint32_t width = dsc->header.w;
+    uint32_t height = dsc->header.h;
     const char * path = dsc->src;
 
     lv_fs_file_t file;
@@ -384,6 +384,8 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
             break;
     }
 
+    if(dsc->args.no_cache) return LV_RES_OK;
+
 #if LV_CACHE_DEF_SIZE > 0
     if(res == LV_RESULT_OK) {
         lv_image_cache_data_t search_key;
@@ -419,11 +421,10 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-#if LV_CACHE_DEF_SIZE > 0
-    lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
-#else
-    decoder_draw_buf_free((lv_draw_buf_t *)dsc->decoded);
-#endif
+    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
+        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+    else
+        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
 }
 
 static void decoder_cache_free(lv_image_cache_data_t * cached_data, void * user_data)

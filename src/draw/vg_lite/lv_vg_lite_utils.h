@@ -19,7 +19,11 @@ extern "C" {
 #if LV_USE_DRAW_VG_LITE
 
 #include <stdbool.h>
+#if LV_USE_VG_LITE_THORVG
+#include "../../dev/vg_lite_tvg/vg_lite.h"
+#else
 #include <vg_lite.h>
+#endif
 
 /*********************
  *      DEFINES
@@ -79,16 +83,6 @@ const char * lv_vg_lite_error_string(vg_lite_error_t error);
 const char * lv_vg_lite_feature_string(vg_lite_feature_t feature);
 
 const char * lv_vg_lite_buffer_format_string(vg_lite_buffer_format_t format);
-
-const char * lv_vg_lite_filter_string(vg_lite_filter_t filter);
-
-const char * lv_vg_lite_blend_string(vg_lite_blend_t blend);
-
-const char * lv_vg_lite_global_alpha_string(vg_lite_global_alpha_t global_alpha);
-
-const char * lv_vg_lite_fill_rule_string(vg_lite_fill_t fill_rule);
-
-const char * lv_vg_lite_image_mode_string(vg_lite_buffer_image_mode_t image_mode);
 
 const char * lv_vg_lite_vlc_op_string(uint8_t vlc_op);
 
