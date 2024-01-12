@@ -221,75 +221,6 @@ const char * lv_vg_lite_buffer_format_string(vg_lite_buffer_format_t format)
     return "UNKNOW_BUFFER_FORMAT";
 }
 
-const char * lv_vg_lite_filter_string(vg_lite_filter_t filter)
-{
-    switch(filter) {
-            VG_LITE_ENUM_TO_STRING(FILTER_POINT);
-            VG_LITE_ENUM_TO_STRING(FILTER_LINEAR);
-            VG_LITE_ENUM_TO_STRING(FILTER_BI_LINEAR);
-        default:
-            break;
-    }
-    return "UNKNOW_FILTER";
-}
-
-const char * lv_vg_lite_blend_string(vg_lite_blend_t blend)
-{
-    switch(blend) {
-            VG_LITE_ENUM_TO_STRING(BLEND_NONE); /*! S, i.e. no blending. */
-            VG_LITE_ENUM_TO_STRING(BLEND_SRC_OVER); /*! S + (1 - Sa) * D */
-            VG_LITE_ENUM_TO_STRING(BLEND_DST_OVER); /*! (1 - Da) * S + D */
-            VG_LITE_ENUM_TO_STRING(BLEND_SRC_IN); /*! Da * S */
-            VG_LITE_ENUM_TO_STRING(BLEND_DST_IN); /*! Sa * D */
-            VG_LITE_ENUM_TO_STRING(BLEND_SCREEN); /*! S + D - S * D */
-            VG_LITE_ENUM_TO_STRING(BLEND_MULTIPLY); /*! S * (1 - Da) + D * (1 - Sa) + S * D */
-            VG_LITE_ENUM_TO_STRING(BLEND_ADDITIVE); /*! S + D */
-            VG_LITE_ENUM_TO_STRING(BLEND_SUBTRACT); /*! D * (1 - S) */
-            VG_LITE_ENUM_TO_STRING(BLEND_SUBTRACT_LVGL); /*! D - S */
-            VG_LITE_ENUM_TO_STRING(BLEND_NORMAL_LVGL); /*! S * Sa + (1 - Sa) * D  */
-            VG_LITE_ENUM_TO_STRING(BLEND_ADDITIVE_LVGL); /*! (S + D) * Sa + D * (1 - Sa) */
-            VG_LITE_ENUM_TO_STRING(BLEND_MULTIPLY_LVGL); /*! (S * D) * Sa + D * (1 - Sa) */
-        default:
-            break;
-    }
-    return "UNKNOW_BLEND";
-}
-
-const char * lv_vg_lite_global_alpha_string(vg_lite_global_alpha_t global_alpha)
-{
-    switch(global_alpha) {
-            VG_LITE_ENUM_TO_STRING(NORMAL);
-            VG_LITE_ENUM_TO_STRING(GLOBAL);
-            VG_LITE_ENUM_TO_STRING(SCALED);
-        default:
-            break;
-    }
-    return "UNKNOW_GLOBAL_ALPHA";
-}
-
-const char * lv_vg_lite_fill_rule_string(vg_lite_fill_t fill_rule)
-{
-    switch(fill_rule) {
-            VG_LITE_ENUM_TO_STRING(FILL_NON_ZERO);
-            VG_LITE_ENUM_TO_STRING(FILL_EVEN_ODD);
-        default:
-            break;
-    }
-    return "UNKNOW_FILL";
-}
-
-const char * lv_vg_lite_image_mode_string(vg_lite_buffer_image_mode_t image_mode)
-{
-    switch(image_mode) {
-            VG_LITE_ENUM_TO_STRING(NORMAL_IMAGE_MODE);
-            VG_LITE_ENUM_TO_STRING(NONE_IMAGE_MODE);
-            VG_LITE_ENUM_TO_STRING(MULTIPLY_IMAGE_MODE);
-        default:
-            break;
-    }
-    return "UNKNOW_IMAGE_MODE";
-}
-
 const char * lv_vg_lite_vlc_op_string(uint8_t vlc_op)
 {
     switch(vlc_op) {
@@ -451,6 +382,7 @@ vg_lite_buffer_format_t lv_vg_lite_vg_fmt(lv_color_format_t cf)
     }
 
     LV_ASSERT(false);
+    return 0;
 }
 
 void lv_vg_lite_buffer_format_bytes(
@@ -610,7 +542,7 @@ void lv_vg_lite_buffer_from_draw_buf(vg_lite_buffer_t * buffer, const lv_draw_bu
     LV_ASSERT_NULL(buffer);
     LV_ASSERT_NULL(draw_buf);
 
-    const void * ptr = draw_buf->data;
+    const uint8_t * ptr = draw_buf->data;
     int32_t width = draw_buf->header.w;
     int32_t height = draw_buf->header.h;
     vg_lite_buffer_format_t format = lv_vg_lite_vg_fmt(draw_buf->header.cf);
@@ -621,6 +553,11 @@ void lv_vg_lite_buffer_from_draw_buf(vg_lite_buffer_t * buffer, const lv_draw_bu
     width = lv_vg_lite_width_align(width);
 
     lv_vg_lite_buffer_init(buffer, ptr, width, height, format, false);
+
+    /* Alpha image need to be multiplied by color */
+    if(LV_COLOR_FORMAT_IS_ALPHA_ONLY(draw_buf->header.cf)) {
+        buffer->image_mode = VG_LITE_MULTIPLY_IMAGE_MODE;
+    }
 }
 
 void lv_vg_lite_image_matrix(vg_lite_matrix_t * matrix, int32_t x, int32_t y, const lv_draw_image_dsc_t * dsc)
@@ -777,7 +714,7 @@ bool lv_vg_lite_buffer_check(const vg_lite_buffer_t * buffer, bool is_src)
     uint32_t mul;
     uint32_t div;
     uint32_t align;
-    uint32_t stride;
+    int32_t stride;
 
     if(!buffer) {
         LV_LOG_ERROR("buffer is NULL");
@@ -815,7 +752,7 @@ bool lv_vg_lite_buffer_check(const vg_lite_buffer_t * buffer, bool is_src)
         return false;
     }
 
-    if(is_src && buffer->width != lv_vg_lite_width_align(buffer->width)) {
+    if(is_src && buffer->width != (vg_lite_int32_t)lv_vg_lite_width_align(buffer->width)) {
         LV_LOG_ERROR("buffer width(%d) is not aligned", (int)buffer->width);
         return false;
     }
@@ -1052,8 +989,8 @@ bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t
 lv_point_precise_t lv_vg_lite_matrix_transform_point(const vg_lite_matrix_t * matrix, const lv_point_precise_t * point)
 {
     lv_point_precise_t p;
-    p.x = point->x * matrix->m[0][0] + point->y * matrix->m[0][1] + matrix->m[0][2];
-    p.y = point->x * matrix->m[1][0] + point->y * matrix->m[1][1] + matrix->m[1][2];
+    p.x = (lv_value_precise_t)(point->x * matrix->m[0][0] + point->y * matrix->m[0][1] + matrix->m[0][2]);
+    p.y = (lv_value_precise_t)(point->x * matrix->m[1][0] + point->y * matrix->m[1][1] + matrix->m[1][2]);
     return p;
 }
 

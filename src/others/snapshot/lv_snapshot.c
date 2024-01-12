@@ -107,7 +107,6 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
     dsc->header.h = h;
     dsc->header.cf = cf;
     dsc->header.magic = LV_IMAGE_HEADER_MAGIC;
-    dsc->header.stride = lv_draw_buf_width_to_stride(w, cf);
 
     lv_layer_t layer;
     lv_memzero(&layer, sizeof(layer));
@@ -121,7 +120,7 @@ lv_result_t lv_snapshot_take_to_buf(lv_obj_t * obj, lv_color_format_t cf, lv_ima
     layer._clip_area = snapshot_area;
 
     lv_display_t * disp_old = _lv_refr_get_disp_refreshing();
-    lv_display_t * disp_new = lv_obj_get_disp(obj);
+    lv_display_t * disp_new = lv_obj_get_display(obj);
     lv_layer_t * layer_old = disp_new->layer_head;
     disp_new->layer_head = &layer;
 
