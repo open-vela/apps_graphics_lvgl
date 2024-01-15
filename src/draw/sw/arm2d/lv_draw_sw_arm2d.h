@@ -1,10 +1,10 @@
 /**
- * @file lv_draw_sw_helium.h
+ * @file lv_draw_sw_arm2d.h
  *
  */
 
-#ifndef LV_DRAW_SW_HELIUM_H
-#define LV_DRAW_SW_HELIUM_H
+#ifndef LV_DRAW_SW_ARM2D_H
+#define LV_DRAW_SW_ARM2D_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,11 +18,7 @@ extern "C" {
 
 #include "../../../lv_conf_internal.h"
 
-#ifdef LV_DRAW_SW_HELIUM_CUSTOM_INCLUDE
-#include LV_DRAW_SW_HELIUM_CUSTOM_INCLUDE
-#endif
-
-#if LV_USE_DRAW_ARM2D
+#if LV_USE_DRAW_ARM2D_SYNC
 
 #define __ARM_2D_IMPL__
 #include "arm_2d.h"
@@ -250,7 +246,7 @@ static inline lv_result_t _lv_draw_sw_image_helium(
 //                                            layer, 
 //                                            blend_area.x1 - layer->buf_area.x1,
 //                                            blend_area.y1 - layer->buf_area.y1);
-        uint8_t *des_buf = (uint8_t *)layer->buf;
+        uint8_t *des_buf = (uint8_t *)lv_draw_layer_go_to_xy(layer, 0, 0);
         uint8_t opa = draw_dsc->opa;
 
         /* ------------- prepare parameters for arm-2d APIs - END ----------- */
@@ -557,7 +553,7 @@ static inline lv_result_t _lv_draw_sw_image_recolor_rgb888(
     return LV_RESULT_OK;
 }
 
-#endif /* LV_USE_DRAW_ARM2D */
+#endif /* LV_USE_DRAW_ARM2D_SYNC */
 
 /* *INDENT-ON* */
 
@@ -565,4 +561,4 @@ static inline lv_result_t _lv_draw_sw_image_recolor_rgb888(
 } /*extern "C"*/
 #endif
 
-#endif /*LV_DRAW_SW_HELIUM_H*/
+#endif /*LV_DRAW_SW_ARM2D_H */
