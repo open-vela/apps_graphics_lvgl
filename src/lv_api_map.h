@@ -102,7 +102,6 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_obj_clear_flag                lv_obj_remove_flag
 #define lv_obj_clear_state               lv_obj_remove_state
 
-#define lv_indev_set_disp                lv_indev_set_display
 #define lv_indev_get_act                 lv_indev_active
 #define lv_scr_act                       lv_screen_active
 #define lv_disp_create                   lv_display_create
@@ -133,7 +132,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_disp_is_double_buffered       lv_display_is_double_buffered
 #define lv_disp_get_scr_act              lv_display_get_screen_active
 #define lv_disp_get_scr_prev             lv_display_get_screen_prev
-#define lv_disp_load_scr                 lv_screen_load
+#define lv_disp_load_scr                 lv_display_load_scr
 #define lv_disp_get_layer_top            lv_display_get_layer_top
 #define lv_disp_get_layer_sys            lv_display_get_layer_sys
 #define lv_disp_get_layer_bottom         lv_display_get_layer_bottom
@@ -145,7 +144,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_disp_set_theme                lv_display_set_theme
 #define lv_disp_get_theme                lv_display_get_theme
 #define lv_disp_get_inactive_time        lv_display_get_inactive_time
-#define lv_disp_trig_activity            lv_display_trigger_activity
+#define lv_disp_trig_activity            lv_display_trig_activity
 #define lv_disp_enable_invalidation      lv_display_enable_invalidation
 #define lv_disp_is_invalidation_enabled  lv_display_is_invalidation_enabled
 #define lv_disp_set_user_data            lv_display_set_user_data
@@ -153,7 +152,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_disp_get_user_data            lv_display_get_user_data
 #define lv_disp_get_driver_data          lv_display_get_driver_data
 #define _lv_disp_refr_timer              _lv_display_refr_timer
-#define _lv_disp_get_refr_timer          lv_display_get_refr_timer
+#define _lv_disp_get_refr_timer          _lv_display_get_refr_timer
 #define lv_disp_render_mode_t            lv_display_render_mode_t
 
 #define lv_timer_del                    lv_timer_delete
@@ -234,19 +233,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_dropdown_get_option_cnt          lv_dropdown_get_option_count
 
 #define lv_obj_get_child_cnt                lv_obj_get_child_count
-#define lv_obj_get_disp                     lv_obj_get_display
 
-#define LV_STYLE_ANIM_TIME            LV_STYLE_ANIM_DURATION
-#define LV_STYLE_IMG_OPA              LV_STYLE_IMAGE_OPA
-#define LV_STYLE_IMG_RECOLOR          LV_STYLE_IMAGE_RECOLOR
-#define LV_STYLE_IMG_RECOLOR_FILTERED LV_STYLE_IMAGE_RECOLOR_FILTERED
-#define LV_STYLE_IMG_RECOLOR_OPA      LV_STYLE_IMAGE_RECOLOR_OPA
-#define LV_STYLE_SHADOW_OFS_X         LV_STYLE_SHADOW_OFFSET_X
-#define LV_STYLE_SHADOW_OFS_Y         LV_STYLE_SHADOW_OFFSET_Y
-#define LV_STYLE_TRANSFORM_ZOOM       LV_STYLE_TRANSFORM_SCALE
-#define LV_STYLE_TRANSFORM_ANGLE      LV_STYLE_TRANSFORM_ROTATION
-
-#define lv_obj_get_style_anim_time            lv_obj_get_style_anim_duration
 #define lv_obj_get_style_img_opa              lv_obj_get_style_image_opa
 #define lv_obj_get_style_img_recolor          lv_obj_get_style_image_recolor
 #define lv_obj_get_style_img_recolor_filtered lv_obj_get_style_image_recolor_filtered
@@ -256,7 +243,6 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_obj_get_style_transform_zoom       lv_obj_get_style_transform_scale
 #define lv_obj_get_style_transform_angle      lv_obj_get_style_transform_rotation
 
-#define lv_obj_set_style_anim_time          lv_obj_set_style_anim_duration
 #define lv_obj_set_style_img_opa            lv_obj_set_style_image_opa
 #define lv_obj_set_style_img_recolor        lv_obj_set_style_image_recolor
 #define lv_obj_set_style_img_recolor_opa    lv_obj_set_style_image_recolor_opa
@@ -265,7 +251,6 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_obj_set_style_transform_zoom     lv_obj_set_style_transform_scale
 #define lv_obj_set_style_transform_angle    lv_obj_set_style_transform_rotation
 
-#define lv_style_set_anim_time              lv_style_set_anim_duration
 #define lv_style_set_img_opa                lv_style_set_image_opa
 #define lv_style_set_img_recolor            lv_style_set_image_recolor
 #define lv_style_set_img_recolor_opa        lv_style_set_image_recolor_opa
@@ -278,6 +263,8 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 
 #define lv_image_decoder_built_in_open      lv_bin_decoder_open
 #define lv_image_decoder_built_in_close     lv_bin_decoder_close
+
+#define lv_obj_add_event                    lv_obj_add_event_cb
 
 /**********************
  *      MACROS

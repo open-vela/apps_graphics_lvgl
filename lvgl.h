@@ -16,7 +16,7 @@ extern "C" {
 #define LVGL_VERSION_MAJOR 9
 #define LVGL_VERSION_MINOR 0
 #define LVGL_VERSION_PATCH 0
-#define LVGL_VERSION_INFO  "rc"
+#define LVGL_VERSION_INFO "dev"
 
 /*********************
  *      INCLUDES
@@ -133,13 +133,13 @@ extern "C" {
 
 #include "src/dev/evdev/lv_evdev.h"
 
-#include "src/dev/windows/lv_windows_input.h"
-#include "src/dev/windows/lv_windows_display.h"
-
 #include "src/core/lv_global.h"
 /*********************
  *      DEFINES
  *********************/
+#ifndef LV_USE_DEV_VERSION
+#warning "You are using the development version of LVGL which is not stable at this moment. For production use the release/v8.3 branch. To silence this warning add #define LV_USE_DEV_VERSION to lv_conf.h"
+#endif
 
 /**********************
  *      TYPEDEFS

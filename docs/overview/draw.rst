@@ -37,8 +37,6 @@ finished. The main difference is that with LVGL you don't have to store
 two frame buffers (which usually requires external RAM) but only smaller
 draw buffer(s) that can easily fit into internal RAM.
 
-.. _drawing_screen_refresh:
-
 Mechanism of screen refreshing
 ******************************
 
@@ -81,8 +79,6 @@ is the following:
 2. **Two buffers** - LVGL can immediately draw to the second buffer when the first is sent to ``flush_cb`` because the
    flushing should be done by DMA (or similar hardware) in the background.
 3. **Double buffering** - ``flush_cb`` should only swap the addresses of the frame buffers.
-
-.. _drawing_masking:
 
 Masking
 *******
@@ -171,8 +167,6 @@ to be freed when not required anymore.
 :cpp:func:`lv_draw_mask_add` saves only the pointer of the mask so the parameter
 needs to be valid while in use.
 
-.. _drawing_hooks:
-
 Hook drawing
 ************
 
@@ -183,15 +177,13 @@ that tell what LVGL is about to draw. Some fields of these parameters
 can be modified to draw something else or any custom drawing operations
 can be added manually.
 
-A good use case for this is the :ref:`Button matrix <lv_buttonmatrix>`
+A good use case for this is the `Button matrix </widgets/btnmatrix>`__
 widget. By default, its buttons can be styled in different states, but
 you can't style the buttons one by one. However, an event is sent for
 every button and you can, for example, tell LVGL to use different colors
 on a specific button or to manually draw an image on some buttons.
 
 Each of these events is described in detail below.
-
-.. _drawing_hooks_main:
 
 Main drawing
 ------------
@@ -202,6 +194,8 @@ drawing of buttons, texts, etc. happens here.
 :cpp:expr:`lv_event_get_draw_ctx(event)` can be used to get the current draw ctx
 and in that structure is the clip area. The clip area is required in draw functions to make them draw only
 on a limited area.
+
+
 
 LV_EVENT_DRAW_MAIN_BEGIN
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -224,8 +218,6 @@ LV_EVENT_DRAW_MAIN_END
 Called when the main drawing is finished. You can draw anything here as
 well and it's also a good place to remove any masks created in
 :cpp:enumerator:`LV_EVENT_DRAW_MAIN_BEGIN`.
-
-.. _drawing_hooks_post:
 
 Post drawing
 ------------
@@ -255,8 +247,6 @@ LV_EVENT_DRAW_POST_END
 Called when post drawing has finished. If masks were not removed in
 :cpp:enumerator:`LV_EVENT_DRAW_MAIN_END` they should be removed here.
 
-.. _drawing_hooks_parts:
-
 Part drawing
 ------------
 
@@ -277,7 +267,7 @@ documentation.
 
     typedef struct {
         lv_draw_ctx_t * draw_ctx;           /**< Draw context*/
-        const lv_obj_class_t * class_p;     /**< The class that sent the event */
+        const struct _lv_obj_class_t * class_p;     /**< The class that sent the event */
         uint32_t type;                      /**< The type if part being draw. Element of `lv_<name>_draw_part_type_t` */
         lv_area_t * draw_area;              /**< The area of the part being drawn*/
         lv_draw_rect_dsc_t *
@@ -316,8 +306,6 @@ LV_EVENT_DRAW_PART_END
 
 Finish the drawing of a part. This is a good place to draw extra content
 on the part or remove masks added in :cpp:enumerator:`LV_EVENT_DRAW_PART_BEGIN`.
-
-.. _drawing_hooks_others:
 
 Others
 ------
@@ -370,8 +358,6 @@ required for the text.
 
 You can simply set the required draw area with
 :cpp:expr:`lv_event_set_ext_draw_size(e, size)`.
-
-.. _drawing_api:
 
 API
 ***

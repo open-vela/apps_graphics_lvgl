@@ -54,7 +54,7 @@ Draw buffers
 ------------
 
 The draw buffers can be set with
-:cpp:expr:`lv_display_set_buffers(display, buf1, buf2, buf_size_px, render_mode)`
+:cpp:expr:`lv_display_set_draw_buffers(display, buf1, buf2, buf_size_px, render_mode)`
 
 -  ``buf1`` a buffer where LVGL can render
 -  ``buf2`` a second optional buffer (see more details below)
@@ -86,7 +86,7 @@ Example:
 .. code:: c
 
    static uint16_t buf[LCD_HOR_RES * LCD_VER_RES / 10];
-   lv_display_set_buffers(disp, buf, NULL, sizeof(buf), LV_DISP_RENDER_MODE_PARTIAL);
+   lv_disp_set_draw_buffers(disp, buf, NULL, sizeof(buf), LV_DISP_RENDER_MODE_PARTIAL);
 
 One buffer
 ^^^^^^^^^^
@@ -260,9 +260,9 @@ Further reading
 
 -  `lv_port_disp_template.c <https://github.com/lvgl/lvgl/blob/master/examples/porting/lv_port_disp_template.c>`__
    for a template for your own driver.
--  :ref:`Drawing <drawing>` to learn more about how rendering
+-  `Drawing </overview/drawing>`__ to learn more about how rendering
    works in LVGL.
--  :ref:`display_features` to learn more about higher
+-  `Display features </overview/display>`__ to learn more about higher
    level display features.
 
 API

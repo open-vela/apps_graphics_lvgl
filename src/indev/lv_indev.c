@@ -335,14 +335,14 @@ lv_group_t * lv_indev_get_group(const lv_indev_t * indev)
     return indev->group;
 }
 
-lv_display_t * lv_indev_get_display(const lv_indev_t * indev)
+lv_display_t * lv_indev_get_disp(const lv_indev_t * indev)
 {
     if(indev == NULL) return NULL;
 
     return indev->disp;
 }
 
-void lv_indev_set_display(lv_indev_t * indev, lv_display_t * disp)
+void lv_indev_set_disp(lv_indev_t * indev, lv_display_t * disp)
 {
     if(indev == NULL) return;
 
@@ -485,12 +485,6 @@ lv_timer_t * lv_indev_get_read_timer(lv_indev_t * indev)
     }
 
     return indev->read_timer;
-}
-
-lv_indev_mode_t lv_indev_get_mode(lv_indev_t * indev)
-{
-    if(indev) return indev->mode;
-    return LV_INDEV_MODE_NONE;
 }
 
 void lv_indev_set_mode(lv_indev_t * indev, lv_indev_mode_t mode)
@@ -849,6 +843,10 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
     if(data->state != LV_INDEV_STATE_RELEASED) {
         data->enc_diff = 0;
     }
+
+    /*Refresh the focused object. It might change due to lv_group_focus_prev/next*/
+    indev_obj_act = lv_group_get_focused(g);
+    if(indev_obj_act == NULL) return;
 
     const bool is_disabled = lv_obj_has_state(indev_obj_act, LV_STATE_DISABLED);
 
@@ -1564,8 +1562,9 @@ static void indev_scroll_throw_anim_cb(void * var, int32_t v)
 
     if(indev->pointer.scroll_dir == LV_DIR_NONE || indev->pointer.scroll_obj == NULL) {
         if(indev->scroll_throw_anim) {
+            /*hacky*/
             LV_LOG_INFO("stop animation");
-            lv_anim_delete(indev, indev_scroll_throw_anim_cb);
+            lv_anim_set_duration(indev->scroll_throw_anim, 0);
         }
     }
 }
@@ -1593,3 +1592,4 @@ static void indev_scroll_throw_anim_start(lv_indev_t * indev)
 
     indev->scroll_throw_anim = lv_anim_start(&a);
 }
+

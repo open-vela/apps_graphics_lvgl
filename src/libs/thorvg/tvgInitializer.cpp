@@ -167,6 +167,8 @@ Result Initializer::term(CanvasEngine engine) noexcept
 
     if (--_initCnt > 0) return Result::Success;
 
+    TaskScheduler::term();
+
     if (!LoaderMgr::term()) return Result::Unknown;
 
     return Result::Success;
