@@ -258,9 +258,8 @@ static void bin_image_create(bool rotate, bool recolor, int align, int compress)
     char path[256];
     int stride = stride_align[align];
     for(unsigned i = 0; i < sizeof(color_formats) / sizeof(color_formats[0]); i++) {
-        lv_snprintf(name, sizeof(name), "bin%s", color_formats[i]);
-        lv_snprintf(path, sizeof(path), "A:test_images/stride_align%d/%s/test_%s.bin", stride, compressions[compress],
-                    color_formats[i]);
+        sprintf(name, "bin%s", color_formats[i]);
+        sprintf(path, "A:test_images/stride_align%d/%s/test_%s.bin", stride, compressions[compress], color_formats[i]);
         img_create(name, path, rotate, recolor);
     }
 }
@@ -269,7 +268,7 @@ static void c_array_image_create(bool rotate, bool recolor, int align, int compr
 {
     char name[32];
     for(unsigned i = 0; i < sizeof(color_formats) / sizeof(color_formats[0]); i++) {
-        lv_snprintf(name, sizeof(name), "%s%s", compressions[compress], color_formats[i]);
+        sprintf(name, "%s%s", compressions[compress], color_formats[i]);
         const void * src = c_array_images[align][compress][i];
         img_create(name, src, rotate, recolor);
     }
@@ -286,13 +285,12 @@ void test_image_formats()
             for(unsigned i = 0; i < sizeof(compressions) / sizeof(compressions[0]); i++) {
                 char reference[256];
                 bin_image_create(rotate, recolor, align, i);
-                lv_snprintf(reference, sizeof(reference), "draw/bin_image_stride%d_%s_%s.png", stride, compressions[i], modes[mode]);
+                snprintf(reference, sizeof(reference), "draw/bin_image_stride%d_%s_%s.png", stride, compressions[i], modes[mode]);
                 TEST_ASSERT_EQUAL_SCREENSHOT(reference);
                 lv_obj_clean(lv_screen_active());
 
                 c_array_image_create(rotate, recolor, align, i);
-                lv_snprintf(reference, sizeof(reference), "draw/c_array_image_stride%d_%s_%s.png", stride, compressions[i],
-                            modes[mode]);
+                snprintf(reference, sizeof(reference), "draw/c_array_image_stride%d_%s_%s.png", stride, compressions[i], modes[mode]);
                 TEST_ASSERT_EQUAL_SCREENSHOT(reference);
                 lv_obj_clean(lv_screen_active());
             }

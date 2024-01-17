@@ -364,7 +364,7 @@ static void lv_roller_event(const lv_obj_class_t * class_p, lv_event_t * e)
         }
     }
     else if(code == LV_EVENT_KEY) {
-        uint32_t c = lv_event_get_key(e);
+        char c = *((char *)lv_event_get_param(e));
         if(c == LV_KEY_RIGHT || c == LV_KEY_DOWN) {
             if(roller->sel_opt_id + 1 < roller->option_cnt) {
                 uint32_t ori_id = roller->sel_opt_id_ori; /*lv_roller_set_selected will overwrite this*/
@@ -597,7 +597,7 @@ static void refr_position(lv_obj_t * obj, lv_anim_enable_t anim_en)
     const int32_t line_space = lv_obj_get_style_text_line_space(obj, LV_PART_MAIN);
     const int32_t font_h = lv_font_get_line_height(font);
     const int32_t h = lv_obj_get_content_height(obj);
-    uint32_t anim_time = lv_obj_get_style_anim_duration(obj, LV_PART_MAIN);
+    uint32_t anim_time = lv_obj_get_style_anim_time(obj, LV_PART_MAIN);
 
     /*Normally the animation's `end_cb` sets correct position of the roller if infinite.
      *But without animations we have to do it manually*/
