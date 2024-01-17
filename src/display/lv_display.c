@@ -81,7 +81,6 @@ lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
     disp->layer_head->buf_area.y1 = 0;
     disp->layer_head->buf_area.x2 = hor_res - 1;
     disp->layer_head->buf_area.y2 = ver_res - 1;
-    disp->layer_head->buf_stride = lv_draw_buf_width_to_stride(hor_res, LV_COLOR_FORMAT_NATIVE);
     disp->layer_head->color_format = disp->color_format;
 
     disp->inv_en_cnt = 1;
@@ -154,8 +153,8 @@ void lv_display_delete(lv_display_t * disp)
     lv_indev_t * indev;
     indev = lv_indev_get_next(NULL);
     while(indev) {
-        if(lv_indev_get_disp(indev) == disp) {
-            lv_indev_set_disp(indev, NULL);
+        if(lv_indev_get_display(indev) == disp) {
+            lv_indev_set_display(indev, NULL);
         }
         indev = lv_indev_get_next(indev);
     }
@@ -405,10 +404,19 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
 
     lv_color_format_t cf = lv_display_get_color_format(disp);
     uint32_t stride = lv_draw_buf_width_to_stride(w, cf);
-    if(stride * h > buf_size && render_mode != LV_DISPLAY_RENDER_MODE_PARTIAL) {
+    if(render_mode == LV_DISPLAY_RENDER_MODE_PARTIAL) {
+        /* for partial mode, we calculate the height based on the buf_size and stride */
+        h = buf_size / stride;
+    }
+    else if(stride * h > buf_size) {
         LV_LOG_ERROR("%s mode requires screen sized buffer(s)",
                      render_mode == LV_DISPLAY_RENDER_MODE_FULL ? "FULL" : "DIRECT");
         LV_ASSERT(0);
+        return;
+    }
+
+    if(h == 0) {
+        LV_ASSERT_MSG(h != 0, "the buffer is too small");
         return;
     }
 
@@ -518,11 +526,6 @@ lv_obj_t * lv_display_get_screen_prev(lv_display_t * disp)
     return disp->prev_scr;
 }
 
-void lv_display_load_scr(lv_obj_t * scr)
-{
-    lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
-}
-
 lv_obj_t * lv_display_get_layer_top(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
@@ -556,10 +559,15 @@ lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp)
     return disp->bottom_layer;
 }
 
+void lv_screen_load(struct _lv_obj_t * scr)
+{
+    lv_screen_load_anim(scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+}
+
 void lv_screen_load_anim(lv_obj_t * new_scr, lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay,
                          bool auto_del)
 {
-    lv_display_t * d = lv_obj_get_disp(new_scr);
+    lv_display_t * d = lv_obj_get_display(new_scr);
     lv_obj_t * act_scr = lv_screen_active();
 
     if(act_scr == new_scr || d->scr_to_load == new_scr) {
@@ -829,11 +837,11 @@ uint32_t lv_display_get_inactive_time(const lv_display_t * disp)
     return t;
 }
 
-void lv_display_trig_activity(lv_display_t * disp)
+void lv_display_trigger_activity(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp) {
-        LV_LOG_WARN("lv_display_trig_activity: no display registered");
+        LV_LOG_WARN("lv_display_trigger_activity: no display registered");
         return;
     }
 
@@ -862,7 +870,7 @@ bool lv_display_is_invalidation_enabled(lv_display_t * disp)
     return (disp->inv_en_cnt > 0);
 }
 
-lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp)
+lv_timer_t * lv_display_get_refr_timer(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp) return NULL;
@@ -870,7 +878,7 @@ lv_timer_t * _lv_display_get_refr_timer(lv_display_t * disp)
     return disp->refr_timer;
 }
 
-void _lv_display_delete_refr_timer(lv_display_t * disp)
+void lv_display_delete_refr_timer(lv_display_t * disp)
 {
     if(!disp) disp = lv_display_get_default();
     if(!disp || !disp->refr_timer) return;
@@ -962,7 +970,7 @@ static void scr_load_internal(lv_obj_t * scr)
     LV_ASSERT_NULL(scr);
     if(scr == NULL) return;
 
-    lv_display_t * d = lv_obj_get_disp(scr);
+    lv_display_t * d = lv_obj_get_display(scr);
     if(!d) return;  /*Shouldn't happen, just to be sure*/
 
     lv_obj_t * old_scr = d->act_scr;
@@ -981,7 +989,7 @@ static void scr_load_internal(lv_obj_t * scr)
 
 static void scr_load_anim_start(lv_anim_t * a)
 {
-    lv_display_t * d = lv_obj_get_disp(a->var);
+    lv_display_t * d = lv_obj_get_display(a->var);
 
     d->prev_scr = lv_screen_active();
     d->act_scr = a->var;
@@ -1006,7 +1014,7 @@ static void set_y_anim(void * obj, int32_t v)
 
 static void scr_anim_ready(lv_anim_t * a)
 {
-    lv_display_t * d = lv_obj_get_disp(a->var);
+    lv_display_t * d = lv_obj_get_display(a->var);
 
     lv_obj_send_event(d->act_scr, LV_EVENT_SCREEN_LOADED, NULL);
     lv_obj_send_event(d->prev_scr, LV_EVENT_SCREEN_UNLOADED, NULL);

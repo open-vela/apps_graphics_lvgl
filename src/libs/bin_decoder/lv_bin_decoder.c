@@ -400,7 +400,7 @@ lv_result_t lv_bin_decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
             /*Use existing one directly*/
         }
         else {
-            decoded = lv_draw_buf_create(w_px, 1, cf_decoded, 0);
+            decoded = lv_draw_buf_create(w_px, 1, cf_decoded, LV_STRIDE_AUTO);
             if(decoded == NULL)
                 return LV_RESULT_INVALID;
         }
@@ -640,8 +640,9 @@ static lv_result_t decode_indexed(lv_image_decoder_t * decoder, lv_image_decoder
 exit_with_buf:
     if(dsc->src_type == LV_IMAGE_SRC_FILE && !is_compressed) {
         lv_free((void *)palette);
-        lv_draw_buf_free((void *)indexed_data);
     }
+
+    if(draw_buf_indexed) lv_draw_buf_destroy(draw_buf_indexed);
     return LV_RESULT_INVALID;
 #else
     LV_UNUSED(stride);
@@ -759,7 +760,7 @@ static lv_result_t decode_rgb(lv_image_decoder_t * decoder, lv_image_decoder_dsc
     res = fs_read_file_at(f, sizeof(lv_image_header_t), img_data, len, &rn);
     if(res != LV_FS_RES_OK || rn != len) {
         LV_LOG_WARN("Read rgb file failed: %d", res);
-        lv_draw_buf_free(img_data);
+        lv_draw_buf_destroy(decoded);
         return LV_RESULT_INVALID;
     }
 
@@ -1039,6 +1040,13 @@ static lv_result_t decompress_image(lv_image_decoder_dsc_t * dsc, const lv_image
     uint32_t out_len = compressed->decompressed_size;
     uint32_t input_len = compressed->compressed_size;
     LV_UNUSED(input_len);
+
+    /**
+     * @todo
+     * FIXME, RLE compressed image needs extra memory because decompression operates on
+     * pixel unit not byte unit. Should optimize RLE decompress to not write to extra memory.
+     */
+    dsc->header.h += 1;
     lv_draw_buf_t * decompressed = lv_draw_buf_create(dsc->header.w, dsc->header.h, dsc->header.cf,
                                                       dsc->header.stride);
     if(decompressed == NULL) {
@@ -1046,6 +1054,7 @@ static lv_result_t decompress_image(lv_image_decoder_dsc_t * dsc, const lv_image
         return LV_RESULT_INVALID;
     }
 
+    dsc->header.h -= 1; /*Change it back*/
     if(decompressed->data_size < out_len) {
         LV_LOG_WARN("decompressed size mismatch: %" LV_PRIu32 ", %" LV_PRIu32, decompressed->data_size, out_len);
         lv_draw_buf_destroy(decompressed);
