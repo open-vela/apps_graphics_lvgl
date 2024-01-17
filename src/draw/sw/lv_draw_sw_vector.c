@@ -298,13 +298,13 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
         return;
     }
 
-    if(!decoder_dsc.decoded) {
+    if(!decoder_dsc.decoded && !decoder_dsc.img_data) {
         lv_image_decoder_close(&decoder_dsc);
         LV_LOG_ERROR("Image not ready");
         return;
     }
 
-    const uint8_t * src_buf = decoder_dsc.decoded->data;
+    const uint8_t * src_buf = _lv_image_decoder_get_data(&decoder_dsc);
     const lv_image_header_t * header = &decoder_dsc.header;
     lv_color_format_t cf = header->cf;
 
@@ -318,7 +318,6 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
     tvg_picture_load_raw(img, (uint32_t *)src_buf, header->w, header->h, true);
     Tvg_Paint * clip_path = tvg_paint_duplicate(obj);
     tvg_paint_set_composite_method(img, clip_path, TVG_COMPOSITE_METHOD_CLIP_PATH);
-    tvg_paint_set_opacity(img, p->opa);
 
     Tvg_Matrix mtx;
     _lv_matrix_to_tvg(&mtx, m);
@@ -428,24 +427,14 @@ void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc
         return;
 
     lv_layer_t * layer = dsc->base.layer;
-    lv_draw_buf_t * draw_buf = layer->draw_buf;
-    if(draw_buf == NULL)
+    if(layer->buf == NULL)
         return;
 
-    lv_color_format_t cf = draw_buf->header.cf;
-
-    if(cf != LV_COLOR_FORMAT_ARGB8888 && \
-       cf != LV_COLOR_FORMAT_XRGB8888) {
-        LV_LOG_ERROR("unsupported layer color: %d", cf);
-        return;
-    }
-
-    void * buf = draw_buf->data;
+    void * buf = layer->buf;
     int32_t width = lv_area_get_width(&layer->buf_area);
     int32_t height = lv_area_get_height(&layer->buf_area);
-    uint32_t stride = draw_buf->header.stride;
     Tvg_Canvas * canvas = tvg_swcanvas_create();
-    tvg_swcanvas_set_target(canvas, buf, stride / 4, width, height, TVG_COLORSPACE_ARGB8888);
+    tvg_swcanvas_set_target(canvas, buf, width, width, height, TVG_COLORSPACE_ARGB8888);
 
     lv_ll_t * task_list = dsc->task_list;
     _lv_vector_for_each_destroy_tasks(task_list, _task_draw_cb, canvas);
