@@ -200,7 +200,6 @@ static lv_result_t decoder_open_variable(lv_image_decoder_t * decoder, lv_image_
     /*In case of uncompressed formats the image stored in the ROM/RAM.
      *So simply give its pointer*/
     const uint8_t * image_data = ((lv_image_dsc_t *)dsc->src)->data;
-    uint32_t image_data_size = ((lv_image_dsc_t *)dsc->src)->data_size;
 
     bool has_alpha = lv_color_format_has_alpha(cf);
     bool is_indexed = LV_COLOR_FORMAT_IS_INDEXED(cf);
@@ -220,7 +219,7 @@ static lv_result_t decoder_open_variable(lv_image_decoder_t * decoder, lv_image_
 
         lv_draw_buf_t * draw_buf = lv_malloc_zeroed(sizeof(lv_draw_buf_t));
         LV_ASSERT_MALLOC(draw_buf);
-        lv_draw_buf_init(draw_buf, width, height, cf, stride, (void *)image_data, image_data_size);
+        lv_draw_buf_init(draw_buf, width, height, cf, stride, (void *)image_data, LV_VG_LITE_IMAGE_NO_CACHE);
         dsc->decoded = draw_buf;
         return LV_RESULT_OK;
     }
@@ -231,7 +230,7 @@ static lv_result_t decoder_open_variable(lv_image_decoder_t * decoder, lv_image_
     /* Since the palette and index image are next to each other,
      * the palette size needs to be aligned to ensure that the image is aligned.
      */
-    uint32_t palette_size_bytes_aligned = LV_VG_LITE_ALIGN(palette_size_bytes, LV_DRAW_BUF_ALIGN);
+    uint32_t palette_size_bytes_aligned = LV_VG_LITE_ALIGN(palette_size_bytes, LV_VG_LITE_BUF_ALIGN);
 
     lv_draw_buf_t * draw_buf = lv_draw_buf_create(width, height, cf, stride);
     if(draw_buf == NULL) {
@@ -271,8 +270,8 @@ static lv_result_t decoder_open_file(lv_image_decoder_t * decoder, lv_image_deco
     LV_UNUSED(decoder); /*Unused*/
 
     lv_color_format_t cf = dsc->header.cf;
-    uint32_t width = dsc->header.w;
-    uint32_t height = dsc->header.h;
+    int32_t width = dsc->header.w;
+    int32_t height = dsc->header.h;
     const char * path = dsc->src;
 
     lv_fs_file_t file;
@@ -305,7 +304,7 @@ static lv_result_t decoder_open_file(lv_image_decoder_t * decoder, lv_image_deco
     /* Since the palette and index image are next to each other,
      * the palette size needs to be aligned to ensure that the image is aligned.
      */
-    uint32_t palette_size_bytes_aligned = LV_VG_LITE_ALIGN(palette_size_bytes, LV_DRAW_BUF_ALIGN);
+    uint32_t palette_size_bytes_aligned = LV_VG_LITE_ALIGN(palette_size_bytes, LV_VG_LITE_BUF_ALIGN);
 
     lv_draw_buf_t * draw_buf = lv_draw_buf_create(width, height, cf, stride);
     if(draw_buf == NULL) {
@@ -385,8 +384,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
             break;
     }
 
-    if(dsc->args.no_cache) return LV_RES_OK;
-
 #if LV_CACHE_DEF_SIZE > 0
     if(res == LV_RESULT_OK) {
         lv_image_cache_data_t search_key;
@@ -422,10 +419,11 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
-        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
-    else
-        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#if LV_CACHE_DEF_SIZE > 0
+    lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#else
+    decoder_draw_buf_free((lv_draw_buf_t *)dsc->decoded);
+#endif
 }
 
 static void decoder_cache_free(lv_image_cache_data_t * cached_data, void * user_data)

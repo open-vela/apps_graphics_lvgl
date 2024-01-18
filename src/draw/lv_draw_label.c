@@ -355,8 +355,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
 
         if(pos.y > draw_unit->clip_area->y2) break;
     }
-
-    if(draw_letter_dsc._draw_buf) lv_draw_buf_destroy(draw_letter_dsc._draw_buf);
+    lv_draw_buf_free(draw_letter_dsc._bitmap_buf_unaligned);
 
     LV_ASSERT_MEM_INTEGRITY();
 }
@@ -399,40 +398,30 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
         return;
     }
 
+    uint32_t bitmap_size = lv_draw_buf_width_to_stride(g.box_w, LV_COLOR_FORMAT_A8) * g.box_h;
+    /*Round up to avoid many allocations if the next buffer is just slightly larger*/
+    bitmap_size = LV_ALIGN_UP(bitmap_size, 64);
+    if(dsc->_bitmap_buf_size < bitmap_size) {
+        lv_draw_buf_free(dsc->_bitmap_buf_unaligned);
+        dsc->_bitmap_buf_unaligned = lv_draw_buf_malloc(bitmap_size, LV_COLOR_FORMAT_A8);
+        LV_ASSERT_MALLOC(dsc->_bitmap_buf_unaligned);
+        dsc->bitmap_buf = lv_draw_buf_align(dsc->_bitmap_buf_unaligned, LV_COLOR_FORMAT_A8);
+        dsc->_bitmap_buf_size = bitmap_size;
+    }
+
     if(g.resolved_font) {
-        lv_draw_buf_t * draw_buf = NULL;
-        if(g.bpp < LV_IMGFONT_BPP) {
-            /*Only check draw buf for bitmap glyph*/
-            draw_buf = lv_draw_buf_reshape(dsc->_draw_buf, 0, g.box_w, g.box_h, LV_STRIDE_AUTO);
-            if(draw_buf == NULL) {
-                if(dsc->_draw_buf) lv_draw_buf_destroy(dsc->_draw_buf);
-
-                uint32_t h = g.box_h;
-                if(h * g.box_w < 64) h *= 2; /*Alloc a slightly larger buffer*/
-                draw_buf = lv_draw_buf_create(g.box_w, h, LV_COLOR_FORMAT_A8, LV_STRIDE_AUTO);
-                LV_ASSERT_MALLOC(draw_buf);
-                draw_buf->header.h = g.box_h;
-                dsc->_draw_buf = draw_buf;
-            }
-        }
-
-        dsc->glyph_data = (void *)lv_font_get_glyph_bitmap(&g, letter, draw_buf);
-        if(dsc->glyph_data == NULL) {
-            dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_INVALID;
-        }
-        else if(g.bpp == LV_IMGFONT_BPP) {
-            dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_IMAGE;
-        }
-        else {
-            dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_A8;
-        }
+        dsc->bitmap = lv_font_get_glyph_bitmap(g.resolved_font, &g, letter, dsc->bitmap_buf);
     }
     else {
-        dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_INVALID;
+        dsc->bitmap = NULL;
     }
-
     dsc->letter_coords = &letter_coords;
+    if(g.bpp == LV_IMGFONT_BPP) dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_IMAGE;
+    else if(g.bpp == LV_VECFONT_BPP) dsc->format = LV_DRAW_LETTER_VECTOR_FORMAT;
+    else dsc->format = LV_DRAW_LETTER_BITMAP_FORMAT_A8;
+
     dsc->g = &g;
+
     cb(draw_unit, dsc, NULL, NULL);
 
     if(g.resolved_font && font->release_glyph) {

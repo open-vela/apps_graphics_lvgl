@@ -1,6 +1,3 @@
-.. _lv_dropdown:
-
-============================
 Drop-down list (lv_dropdown)
 ============================
 
@@ -17,8 +14,6 @@ selects a new value, the list is deleted again.
 The Drop-down list is added to the default group (if it is set). Besides
 the Drop-down list is an editable object to allow selecting an option
 with encoder navigation too.
-
-.. _lv_dropdown_parts_and_styles:
 
 Parts and Styles
 ****************
@@ -58,12 +53,8 @@ The list is hidden/shown on open/close. To add styles to it use
 
 Alternatively the theme can be extended with the new styles.
 
-.. _lv_dropdown_usage:
-
 Usage
 *****
-
-.. _lv_dropdown_options:
 
 Options
 *******
@@ -130,8 +121,6 @@ Manually open/close
 To manually open or close the drop-down list the
 ``lv_dropdown_open/close(dropdown)`` function can be used.
 
-.. _lv_dropdown_events:
-
 Events
 ******
 
@@ -143,11 +132,9 @@ the drop-down list:
 - :cpp:enumerator:`LV_EVENT_CANCEL` Sent when the list is closed
 - :cpp:enumerator:`LV_EVENT_READY` Sent when the list is opened
 
-See the events of the :ref:`Base object <lv_obj>` too.
+See the events of the `Base object </widgets/obj>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_dropdown_keys:
 
 Keys
 ****
@@ -159,14 +146,10 @@ Keys
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_dropdown_example:
-
 Example
 *******
 
 .. include:: ../examples/widgets/dropdown/index.rst
-
-.. _lv_dropdown_api:
 
 API
 ***

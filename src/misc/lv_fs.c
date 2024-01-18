@@ -411,12 +411,8 @@ lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
     return LV_FS_RES_OK;
 }
 
-lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn, uint32_t fn_len)
+lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn)
 {
-    if(fn_len == 0) {
-        return LV_FS_RES_INV_PARAM;
-    }
-
     if(rddir_p->drv == NULL || rddir_p->dir_d == NULL) {
         fn[0] = '\0';
         return LV_FS_RES_INV_PARAM;
@@ -427,7 +423,7 @@ lv_fs_res_t lv_fs_dir_read(lv_fs_dir_t * rddir_p, char * fn, uint32_t fn_len)
         return LV_FS_RES_NOT_IMP;
     }
 
-    lv_fs_res_t res = rddir_p->drv->dir_read_cb(rddir_p->drv, rddir_p->dir_d, fn, fn_len);
+    lv_fs_res_t res = rddir_p->drv->dir_read_cb(rddir_p->drv, rddir_p->dir_d, fn);
 
     return res;
 }
