@@ -150,25 +150,15 @@ LV_ATTRIBUTE_FAST_MEM void * lv_memmove(void * dst, const void * src, size_t len
     if(dst < src || (char *)dst > ((char *)src + len)) {
         return lv_memcpy(dst, src, len);
     }
-
-    if(dst > src) {
-        char * tmp = (char *)dst + len - 1;
-        char * s   = (char *)src + len - 1;
-
-        while(len--) {
-            *tmp-- = *s--;
-        }
-    }
     else {
-        char * tmp = (char *)dst;
-        char * s   = (char *)src;
+        char * tmp = (char *)dst + len;
+        char * s = (char *) src + len;
 
         while(len--) {
-            *tmp++ = *s++;
+            *--tmp = *--s;
         }
+        return dst;
     }
-
-    return dst;
 }
 
 /* See https://en.cppreference.com/w/c/string/byte/strlen for reference */
@@ -180,10 +170,10 @@ size_t lv_strlen(const char * str)
     return i;
 }
 
-char * lv_strncpy(char * dst, const char * src, size_t dst_size)
+char * lv_strncpy(char * dst, const char * src, size_t dest_size)
 {
     size_t i;
-    for(i = 0; i < dst_size - 1 && src[i]; i++) {
+    for(i = 0; i < dest_size - 1 && src[i]; i++) {
         dst[i] = src[i];
     }
     dst[i] = '\0';
