@@ -17,7 +17,6 @@ extern "C" {
 
 #include <stdbool.h>
 
-#include "../misc/lv_types.h"
 #include "../draw/lv_draw.h"
 #if LV_USE_DRAW_SW
 #include "../draw/sw/lv_draw_sw.h"
@@ -49,6 +48,13 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
+struct _lv_display_t;
+struct _lv_group_t;
+struct _my_theme_t;
+struct _lv_indev_t;
+struct _lv_event_t;
+struct _lv_obj_t;
+
 #if LV_USE_SPAN != 0
 struct _snippet_stack;
 #endif
@@ -62,8 +68,8 @@ typedef struct _lv_global_t {
     bool deinit_in_progress;     /**< Can be used e.g. in the LV_EVENT_DELETE to deinit the drivers too */
 
     lv_ll_t disp_ll;
-    lv_display_t * disp_refresh;
-    lv_display_t * disp_default;
+    struct _lv_display_t * disp_refresh;
+    struct _lv_display_t * disp_default;
 
     lv_ll_t style_trans_ll;
     bool style_refresh;
@@ -72,11 +78,11 @@ typedef struct _lv_global_t {
     uint8_t * style_custom_prop_flag_lookup_table;
 
     lv_ll_t group_ll;
-    lv_group_t * group_default;
+    struct _lv_group_t * group_default;
 
     lv_ll_t indev_ll;
-    lv_indev_t * indev_active;
-    lv_obj_t * indev_obj_active;
+    struct _lv_indev_t * indev_active;
+    struct _lv_obj_t * indev_obj_active;
 
     uint32_t layout_count;
     lv_layout_dsc_t * layout_list;
@@ -86,7 +92,7 @@ typedef struct _lv_global_t {
     uint32_t math_rand_seed;
     lv_area_transform_cache_t area_trans_cache;
 
-    lv_event_t * event_header;
+    struct _lv_event_t * event_header;
     uint32_t event_last_register_id;
 
     lv_timer_state_t timer_state;
@@ -99,6 +105,7 @@ typedef struct _lv_global_t {
 
 #if LV_CACHE_DEF_SIZE > 0
     lv_cache_t * img_cache;
+    size_t cache_builtin_max_size;
 #endif
 
     lv_draw_global_info_t draw_info;
@@ -118,15 +125,15 @@ typedef struct _lv_global_t {
 #endif
 
 #if LV_USE_THEME_SIMPLE
-    void * theme_simple;
+    struct _my_theme_t * theme_simple;
 #endif
 
 #if LV_USE_THEME_DEFAULT
-    void * theme_default;
+    struct _my_theme_t * theme_default;
 #endif
 
 #if LV_USE_THEME_MONO
-    void * theme_mono;
+    struct _my_theme_t * theme_mono;
 #endif
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
@@ -204,7 +211,7 @@ typedef struct _lv_global_t {
 #endif
 #define LV_GLOBAL_DEFAULT() LV_GLOBAL_CUSTOM()
 #else
-LV_ATTRIBUTE_EXTERN_DATA extern lv_global_t lv_global;
+extern lv_global_t lv_global;
 #define LV_GLOBAL_DEFAULT() (&lv_global)
 #endif
 

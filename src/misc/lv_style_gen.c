@@ -68,16 +68,6 @@ void lv_style_set_max_height(lv_style_t * style, int32_t value)
 
 const lv_style_prop_t _lv_style_const_prop_id_MAX_HEIGHT = LV_STYLE_MAX_HEIGHT;
 
-void lv_style_set_length(lv_style_t * style, int32_t value)
-{
-    lv_style_value_t v = {
-        .num = (int32_t)value
-    };
-    lv_style_set_prop(style, LV_STYLE_LENGTH, v);
-}
-
-const lv_style_prop_t _lv_style_const_prop_id_LENGTH = LV_STYLE_LENGTH;
-
 void lv_style_set_x(lv_style_t * style, int32_t value)
 {
     lv_style_value_t v = {
@@ -888,15 +878,15 @@ void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value)
 
 const lv_style_prop_t _lv_style_const_prop_id_ANIM = LV_STYLE_ANIM;
 
-void lv_style_set_anim_duration(lv_style_t * style, uint32_t value)
+void lv_style_set_anim_time(lv_style_t * style, uint32_t value)
 {
     lv_style_value_t v = {
         .num = (int32_t)value
     };
-    lv_style_set_prop(style, LV_STYLE_ANIM_DURATION, v);
+    lv_style_set_prop(style, LV_STYLE_ANIM_TIME, v);
 }
 
-const lv_style_prop_t _lv_style_const_prop_id_ANIM_DURATION = LV_STYLE_ANIM_DURATION;
+const lv_style_prop_t _lv_style_const_prop_id_ANIM_TIME = LV_STYLE_ANIM_TIME;
 
 void lv_style_set_transition(lv_style_t * style, const lv_style_transition_dsc_t * value)
 {
@@ -937,7 +927,6 @@ void lv_style_set_base_dir(lv_style_t * style, lv_base_dir_t value)
 }
 
 const lv_style_prop_t _lv_style_const_prop_id_BASE_DIR = LV_STYLE_BASE_DIR;
-#if LV_USE_FLEX
 
 void lv_style_set_flex_flow(lv_style_t * style, lv_flex_flow_t value)
 {
@@ -988,9 +977,6 @@ void lv_style_set_flex_grow(lv_style_t * style, uint8_t value)
 }
 
 const lv_style_prop_t _lv_style_const_prop_id_FLEX_GROW = LV_STYLE_FLEX_GROW;
-#endif /*LV_USE_FLEX*/
-
-#if LV_USE_GRID
 
 void lv_style_set_grid_column_dsc_array(lv_style_t * style, const int32_t * value)
 {
@@ -1091,4 +1077,3 @@ void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value)
 }
 
 const lv_style_prop_t _lv_style_const_prop_id_GRID_CELL_ROW_SPAN = LV_STYLE_GRID_CELL_ROW_SPAN;
-#endif /*LV_USE_GRID*/

@@ -26,7 +26,6 @@ extern "C" {
  **********************/
 
 struct _lv_observer_t;
-typedef struct _lv_observer_t lv_observer_t;
 
 typedef enum {
     LV_SUBJECT_TYPE_INVALID =   0,   /**< indicates subject not initialized yet*/
@@ -65,19 +64,19 @@ typedef struct {
   * @param observer     pointer to the observer of the callback
   * @param subject      pointer to the subject of the observer
   */
-typedef void (*lv_observer_cb_t)(lv_observer_t * observer, lv_subject_t * subject);
+typedef void (*lv_observer_cb_t)(struct _lv_observer_t * observer, lv_subject_t * subject);
 
 /**
  * The observer object: a descriptor returned when subscribing LVGL widgets to subjects
  */
-struct _lv_observer_t {
+typedef struct _lv_observer_t {
     lv_subject_t * subject;             /**< The observed value */
     lv_observer_cb_t cb;                /**< Callback that should be called when the value changes*/
     void * target;                      /**< A target for the observer, e.g. a widget or style*/
     void * user_data;                   /**< Additional parameter supplied when subscribing*/
     uint32_t auto_free_user_data : 1;   /**< Automatically free user data when the observer is removed */
     uint32_t notified : 1;              /**< Mark if this observer was already notified*/
-};
+} lv_observer_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -329,7 +328,6 @@ lv_observer_t * lv_obj_bind_state_if_eq(lv_obj_t * obj, lv_subject_t * subject, 
 lv_observer_t * lv_obj_bind_state_if_not_eq(lv_obj_t * obj, lv_subject_t * subject, lv_state_t state,
                                             int32_t ref_value);
 
-#if LV_USE_BUTTON
 /**
  * Set an integer subject to 1 when a button is checked and set it 0 when unchecked.
  * @param obj       pointer to a button
@@ -337,9 +335,7 @@ lv_observer_t * lv_obj_bind_state_if_not_eq(lv_obj_t * obj, lv_subject_t * subje
  * @return          pointer to the created observer
  */
 lv_observer_t * lv_button_bind_checked(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
-#if LV_USE_LABEL
 /**
  * Bind an integer, string, or pointer subject to a label.
  * @param obj       pointer to a label
@@ -351,9 +347,7 @@ lv_observer_t * lv_button_bind_checked(lv_obj_t * obj, lv_subject_t * subject);
  * @note            if the subject is a pointer must point to a `\0` terminated string.
  */
 lv_observer_t * lv_label_bind_text(lv_obj_t * obj, lv_subject_t * subject, const char * fmt);
-#endif
 
-#if LV_USE_ARC
 /**
  * Bind an integer subject to an arc's value
  * @param obj       pointer to an arc
@@ -361,9 +355,7 @@ lv_observer_t * lv_label_bind_text(lv_obj_t * obj, lv_subject_t * subject, const
  * @return          pointer to the created observer
  */
 lv_observer_t * lv_arc_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
-#if LV_USE_SLIDER
 /**
  * Bind an integer subject to a slider's value
  * @param obj       pointer to a slider
@@ -371,9 +363,7 @@ lv_observer_t * lv_arc_bind_value(lv_obj_t * obj, lv_subject_t * subject);
  * @return          pointer to the created observer
  */
 lv_observer_t * lv_slider_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
-#if LV_USE_ROLLER
 /**
  * Bind an integer subject to a roller's value
  * @param obj       pointer to a roller
@@ -381,9 +371,7 @@ lv_observer_t * lv_slider_bind_value(lv_obj_t * obj, lv_subject_t * subject);
  * @return          pointer to the created observer
  */
 lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
-#if LV_USE_DROPDOWN
 /**
  * Bind an integer subject to a dropdown's value
  * @param obj       pointer to a drop down
@@ -391,7 +379,6 @@ lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject);
  * @return          pointer to the created observer
  */
 lv_observer_t * lv_dropdown_bind_value(lv_obj_t * obj, lv_subject_t * subject);
-#endif
 
 /**********************
  *      MACROS

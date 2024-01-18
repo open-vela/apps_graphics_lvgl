@@ -30,10 +30,6 @@ props = [
  'style_type': 'num',   'var_type': 'int32_t' , 'default':'LV_COORD_MAX', 'inherited': 0, 'layout': 1, 'ext_draw': 0,
  'dsc': "Sets a maximal height. Pixel and percentage values can be used. Percentage values are relative to the height of the parent's content area."},
 
-{'name': 'LENGTH',
- 'style_type': 'num',   'var_type': 'int32_t' , 'default':'0', 'inherited': 0, 'layout': 0, 'ext_draw': 1,
- 'dsc': "Its meaning depends on the type of the widget. For example in case of lv_scale it means the length of the ticks."},
-
 {'name': 'X',
  'style_type': 'num',   'var_type': 'int32_t' , 'default':0, 'inherited': 0, 'layout': 1, 'ext_draw': 0,
  'dsc': "Set the X coordinate of the object considering the set `align`. Pixel and percentage values can be used. Percentage values are relative to the width of the parent's content area."},
@@ -369,9 +365,9 @@ props = [
  'style_type': 'ptr',   'var_type': 'const lv_anim_t *',  'default':'`NULL`', 'inherited': 0, 'layout': 0, 'ext_draw': 0,
  'dsc': "The animation template for the object's animation. Should be a pointer to `lv_anim_t`. The animation parameters are widget specific, e.g. animation time could be the E.g. blink time of the cursor on the text area or scroll time of a roller. See the widgets' documentation to learn more."},
 
-{'name': 'ANIM_DURATION',
+{'name': 'ANIM_TIME',
  'style_type': 'num',   'var_type': 'uint32_t' ,  'default':0, 'inherited': 0, 'layout': 0, 'ext_draw': 0,
- 'dsc': "The animation duration in milliseconds. Its meaning is widget specific. E.g. blink time of the cursor on the text area or scroll time of a roller. See the widgets' documentation to learn more."},
+ 'dsc': "The animation time in milliseconds. Its meaning is widget specific. E.g. blink time of the cursor on the text area or scroll time of a roller. See the widgets' documentation to learn more."},
 
 {'name': 'TRANSITION',
  'style_type': 'ptr',   'var_type': 'const lv_style_transition_dsc_t *' ,  'default':'`NULL`', 'inherited': 0, 'layout': 0, 'ext_draw': 0,
@@ -390,7 +386,8 @@ props = [
  'dsc': "Set the base direction of the object. The possible values are `LV_BIDI_DIR_LTR/RTL/AUTO`."},
 
 
-{'section': 'Flex', 'dsc':'Flex layout properties.',  'guard':'LV_USE_FLEX'},
+
+{'section': 'Flex', 'dsc':'Flex layout properties.' },
 
 
 {'name': 'FLEX_FLOW',
@@ -418,7 +415,7 @@ props = [
 
 
 
-{'section': 'Grid', 'dsc':'Grid layout properties.', 'guard':'LV_USE_GRID'},
+{'section': 'Grid', 'dsc':'Grid layout properties.' },
 
 
 {'name': 'GRID_COLUMN_DSC_ARRAY',
@@ -475,7 +472,7 @@ def obj_style_get(p):
   if 'section' in p: return
 
   cast = style_get_cast(p['style_type'], p['var_type'])
-  print("static inline " + p['var_type'] + " lv_obj_get_style_" + p['name'].lower() +"(const lv_obj_t * obj, uint32_t part)")
+  print("static inline " + p['var_type'] + " lv_obj_get_style_" + p['name'].lower() +"(const struct _lv_obj_t * obj, uint32_t part)")
   print("{")
   print("    lv_style_value_t v = lv_obj_get_style_prop(obj, part, LV_STYLE_" + p['name'] + ");")
   print("    return " + cast + "v." + p['style_type'] + ";")
@@ -483,7 +480,7 @@ def obj_style_get(p):
   print("")
 
   if 'filtered' in p and p['filtered']:
-    print("static inline " + p['var_type'] + " lv_obj_get_style_" + p['name'].lower() +"_filtered(const lv_obj_t * obj, uint32_t part)")
+    print("static inline " + p['var_type'] + " lv_obj_get_style_" + p['name'].lower() +"_filtered(const struct _lv_obj_t * obj, uint32_t part)")
     print("{")
     print("    lv_style_value_t v = _lv_obj_style_apply_color_filter(obj, part, lv_obj_get_style_prop(obj, part, LV_STYLE_" + p['name'] + "));")
     print("    return " + cast + "v." + p['style_type'] + ";")
@@ -519,7 +516,7 @@ def style_set_h(p):
   if 'section' in p: return
 
   print("void lv_style_set_" + p['name'].lower() +"(lv_style_t * style, "+ p['var_type'] +" value);")
-  print("LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_" + p['name'] + ";")
+  print("extern const lv_style_prop_t _lv_style_const_prop_id_" + p['name'] + ";")
 
 
 def local_style_set_c(p):
@@ -527,7 +524,7 @@ def local_style_set_c(p):
 
   cast = style_set_cast(p['style_type'])
   print("")
-  print("void lv_obj_set_style_" + p['name'].lower() + "(lv_obj_t * obj, " + p['var_type'] +" value, lv_style_selector_t selector)")
+  print("void lv_obj_set_style_" + p['name'].lower() + "(struct _lv_obj_t * obj, " + p['var_type'] +" value, lv_style_selector_t selector)")
   print("{")
   print("    lv_style_value_t v = {")
   print("        ." + p['style_type'] +" = " + cast + "value")
@@ -538,7 +535,7 @@ def local_style_set_c(p):
 
 def local_style_set_h(p):
   if 'section' in p: return
-  print("void lv_obj_set_style_" + p['name'].lower() + "(lv_obj_t * obj, " + p['var_type'] +" value, lv_style_selector_t selector);")
+  print("void lv_obj_set_style_" + p['name'].lower() + "(struct _lv_obj_t * obj, " + p['var_type'] +" value, lv_style_selector_t selector);")
 
 
 def style_const_set(p):
@@ -587,20 +584,6 @@ def docs(p):
   print("<li " + li_style + "'><strong>Ext. draw</strong> " + e + "</li>")
   print("</ul>")
 
-def guard_proc(p):
-  global guard
-  if 'section' in p:
-    if guard:
-      guard_close()
-    if 'guard' in p:
-      guard = p['guard']
-      print(f"#if {guard}\n")
-
-def guard_close():
-  global guard
-  if guard:
-    print(f"#endif /*{guard}*/\n")
-  guard = ""
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 sys.stdout = open(base_dir + '/../src/core/lv_obj_style_gen.h', 'w')
@@ -624,17 +607,11 @@ print("#include \"../misc/lv_area.h\"")
 print("#include \"../misc/lv_style.h\"")
 print("#include \"../core/lv_obj_style.h\"")
 print()
-
-guard = ""
 for p in props:
-  guard_proc(p)
   obj_style_get(p)
-guard_close()
 
 for p in props:
-  guard_proc(p)
   local_style_set_h(p)
-guard_close()
 
 print()
 print('#endif /* LV_OBJ_STYLE_GEN_H */')
@@ -644,22 +621,16 @@ sys.stdout = open(base_dir + '/../src/core/lv_obj_style_gen.c', 'w')
 print(HEADING)
 print("#include \"lv_obj.h\"")
 print()
-
 for p in props:
-  guard_proc(p)
   local_style_set_c(p)
-guard_close()
 
 sys.stdout = open(base_dir + '/../src/misc/lv_style_gen.c', 'w')
 
 print(HEADING)
 print("#include \"lv_style.h\"")
 print()
-
 for p in props:
-  guard_proc(p)
   style_set_c(p)
-guard_close()
 
 sys.stdout = open(base_dir + '/../src/misc/lv_style_gen.h', 'w')
 
@@ -667,19 +638,14 @@ print(HEADING)
 print('#ifndef LV_STYLE_GEN_H')
 print('#define LV_STYLE_GEN_H')
 print()
-
 for p in props:
-  guard_proc(p)
   style_set_h(p)
-guard_close()
 
 for p in props:
-  guard_proc(p)
   style_const_set(p)
-guard_close()
-
 print()
 print('#endif /* LV_STYLE_GEN_H */')
+
 
 sys.stdout = open(base_dir + '/../docs/overview/style-props.md', 'w')
 

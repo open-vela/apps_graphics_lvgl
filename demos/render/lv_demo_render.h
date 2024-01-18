@@ -17,10 +17,6 @@ extern "C" {
 
 #if LV_USE_DEMO_RENDER
 
-#if LV_USE_GRID == 0
-#error "LV_USE_GRID needs to be enabled"
-#endif
-
 /*********************
  *      DEFINES
  *********************/

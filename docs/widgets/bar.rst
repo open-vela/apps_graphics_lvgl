@@ -1,6 +1,3 @@
-.. _lv_bar:
-
-============
 Bar (lv_bar)
 ============
 
@@ -16,8 +13,6 @@ its height.
 Not only the end, but also the start value of the bar can be set, which
 changes the start position of the indicator.
 
-.. _lv_bar_parts_and_styles:
-
 Parts and Styles
 ****************
 
@@ -27,8 +22,6 @@ Parts and Styles
    animation time if the values set with :cpp:enumerator:`LV_ANIM_ON`.
 -  :cpp:enumerator:`LV_PART_INDICATOR` The indicator itself; also uses all the typical
    background properties.
-
-.. _lv_bar_usage:
 
 Usage
 *****
@@ -59,15 +52,11 @@ The bar can be one of the following modes:
   ``lv_bar_set_start_value(bar, new_value, LV_ANIM_ON/OFF)``. The start
   value always has to be smaller than the end value.
 
-.. _lv_bar_events:
-
 Events
 ******
-See the events of the :ref:`Base object <lv_obj>` too.
+See the events of the `Base object </widgets/obj>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_bar_keys:
 
 Keys
 ****
@@ -76,14 +65,12 @@ No *Keys* are processed by the object type.
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_bar_example:
-
 Example
 *******
 
 .. include:: ../examples/widgets/bar/index.rst
 
-.. _lv_bar_api:
-
 API
 ***
+
+:ref:`lv_bar`

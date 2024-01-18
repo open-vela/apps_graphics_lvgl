@@ -70,10 +70,6 @@ static void lv_mem_walker(void * ptr, size_t size, int used, void * user);
 
 void lv_mem_init(void)
 {
-#if LV_USE_OS
-    lv_mutex_init(&state.mutex);
-#endif
-
 #if LV_MEM_ADR == 0
 #ifdef LV_MEM_POOL_ALLOC
     state.tlsf = lv_tlsf_create_with_pool((void *)LV_MEM_POOL_ALLOC(LV_MEM_SIZE), LV_MEM_SIZE);
@@ -84,6 +80,10 @@ void lv_mem_init(void)
 #endif
 #else
     state.tlsf = lv_tlsf_create_with_pool((void *)LV_MEM_ADR, LV_MEM_SIZE);
+#endif
+
+#if LV_USE_OS
+    lv_mutex_init(&state.mutex);
 #endif
 
     _lv_ll_init(&state.pool_ll, sizeof(lv_pool_t));

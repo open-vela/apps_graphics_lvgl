@@ -162,8 +162,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         dsc->decoded = decoded;
 
-        if(dsc->args.no_cache) return LV_RES_OK;
-
 #if LV_CACHE_DEF_SIZE > 0
         lv_image_cache_data_t search_key;
         search_key.src_type = dsc->src_type;
@@ -191,10 +189,11 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
-        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
-    else
-        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#if LV_CACHE_DEF_SIZE > 0
+    lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+#else
+    lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+#endif
 }
 
 static uint8_t * alloc_file(const char * filename, uint32_t * size)
@@ -268,7 +267,7 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
     JSAMPARRAY buffer;  /* Output row buffer */
     int row_stride;     /* physical row width in output buffer */
 
-    lv_draw_buf_t * decoded = NULL;
+    uint8_t * output_buffer = NULL;
 
     /* In this example we want to open the input file before doing anything else,
      * so that the setjmp() error recovery below can assume the file is open.
@@ -293,8 +292,8 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
 
         LV_LOG_WARN("decoding error");
 
-        if(decoded) {
-            lv_draw_buf_destroy(decoded);
+        if(output_buffer) {
+            lv_draw_buf_free(output_buffer);
         }
 
         /* If we get here, the JPEG code has signaled an error.
@@ -344,12 +343,13 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
      * In this example, we need to make an output work buffer of the right size.
      */
     /* JSAMPLEs per row in output buffer */
+    lv_draw_buf_t * decoded;
     row_stride = cinfo.output_width * cinfo.output_components;
     /* Make a one-row-high sample array that will go away when done with image */
     buffer = (*cinfo.mem->alloc_sarray)
              ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
 
-    decoded = lv_draw_buf_create(cinfo.output_width, cinfo.output_height, LV_COLOR_FORMAT_RGB888, LV_STRIDE_AUTO);
+    decoded = lv_draw_buf_create(cinfo.output_width, cinfo.output_height, LV_COLOR_FORMAT_RGB888, 0);
     if(decoded != NULL) {
         uint8_t * cur_pos = decoded->data;
         size_t stride = cinfo.output_width * JPEG_PIXEL_SIZE;

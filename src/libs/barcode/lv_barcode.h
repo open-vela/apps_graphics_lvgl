@@ -33,7 +33,7 @@ typedef struct {
     lv_dir_t direction;
 } lv_barcode_t;
 
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_barcode_class;
+extern const lv_obj_class_t lv_barcode_class;
 
 /**********************
  * GLOBAL PROTOTYPES

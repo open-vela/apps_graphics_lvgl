@@ -34,34 +34,21 @@ static lv_observer_t * bind_to_bitfield(lv_subject_t * subject, lv_obj_t * obj, 
                                         int32_t ref_value, bool inv);
 static void obj_flag_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void obj_state_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void btn_value_changed_event_cb(lv_event_t * e);
 
-#if LV_USE_BUTTON
-    static void btn_value_changed_event_cb(lv_event_t * e);
-#endif
+static void label_text_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 
-#if LV_USE_LABEL
-    static void label_text_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
-#endif
+static void arc_value_changed_event_cb(lv_event_t * e);
+static void arc_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 
-#if LV_USE_ARC
-    static void arc_value_changed_event_cb(lv_event_t * e);
-    static void arc_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
-#endif
+static void slider_value_changed_event_cb(lv_event_t * e);
+static void slider_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 
-#if LV_USE_SLIDER
-    static void slider_value_changed_event_cb(lv_event_t * e);
-    static void slider_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
-#endif
+static void roller_value_changed_event_cb(lv_event_t * e);
+static void roller_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 
-#if LV_USE_ROLLER
-    static void roller_value_changed_event_cb(lv_event_t * e);
-    static void roller_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
-#endif
-
-#if LV_USE_DROPDOWN
-    static void dropdown_value_changed_event_cb(lv_event_t * e);
-    static void dropdown_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
-#endif
+static void dropdown_value_changed_event_cb(lv_event_t * e);
+static void dropdown_value_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
 
 /**********************
  *  STATIC VARIABLES
@@ -361,13 +348,8 @@ void lv_subject_remove_all_obj(lv_subject_t * subject, lv_obj_t * obj)
     while(lv_obj_remove_event_cb(obj, unsubscribe_on_delete_cb));
     while(lv_obj_remove_event_cb(obj, btn_value_changed_event_cb));
     while(lv_obj_remove_event_cb(obj, arc_value_changed_event_cb));
-#if LV_USE_ROLLER
     while(lv_obj_remove_event_cb(obj, roller_value_changed_event_cb));
-#endif
-
-#if LV_USE_DROPDOWN
     while(lv_obj_remove_event_cb(obj, dropdown_value_changed_event_cb));
-#endif
 
     lv_observer_t * observer = _lv_ll_get_head(&subject->subs_ll);
     while(observer) {
@@ -432,16 +414,12 @@ lv_observer_t * lv_obj_bind_state_if_not_eq(lv_obj_t * obj, lv_subject_t * subje
     return observable;
 }
 
-#if LV_USE_BUTTON
 lv_observer_t * lv_button_bind_checked(lv_obj_t * obj, lv_subject_t * subject)
 {
     lv_observer_t * observable = bind_to_bitfield(subject, obj, obj_state_observer_cb, LV_STATE_CHECKED, 1, false);
     lv_obj_add_event_cb(obj, btn_value_changed_event_cb, LV_EVENT_VALUE_CHANGED, subject);
     return observable;
 }
-#endif /*LV_USE_BUTTON*/
-
-#if LV_USE_LABEL
 lv_observer_t * lv_label_bind_text(lv_obj_t * obj, lv_subject_t * subject, const char * fmt)
 {
     if(fmt == NULL) {
@@ -461,9 +439,7 @@ lv_observer_t * lv_label_bind_text(lv_obj_t * obj, lv_subject_t * subject, const
     lv_observer_t * observer = lv_subject_add_observer_obj(subject, label_text_observer_cb, obj, (void *)fmt);
     return observer;
 }
-#endif /*LV_USE_LABEL*/
 
-#if LV_USE_ARC
 lv_observer_t * lv_arc_bind_value(lv_obj_t * obj, lv_subject_t * subject)
 {
     if(subject->type != LV_SUBJECT_TYPE_INT) {
@@ -476,9 +452,7 @@ lv_observer_t * lv_arc_bind_value(lv_obj_t * obj, lv_subject_t * subject)
     lv_observer_t * observer = lv_subject_add_observer_obj(subject, arc_value_observer_cb, obj, NULL);
     return observer;
 }
-#endif /*LV_USE_ARC*/
 
-#if LV_USE_SLIDER
 lv_observer_t * lv_slider_bind_value(lv_obj_t * obj, lv_subject_t * subject)
 {
     if(subject->type != LV_SUBJECT_TYPE_INT) {
@@ -491,9 +465,6 @@ lv_observer_t * lv_slider_bind_value(lv_obj_t * obj, lv_subject_t * subject)
     lv_observer_t * observer = lv_subject_add_observer_obj(subject, slider_value_observer_cb, obj, NULL);
     return observer;
 }
-#endif /*LV_USE_SLIDER*/
-
-#if LV_USE_ROLLER
 
 lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject)
 {
@@ -508,9 +479,6 @@ lv_observer_t * lv_roller_bind_value(lv_obj_t * obj, lv_subject_t * subject)
     return observer;
 
 }
-#endif /*LV_USE_ROLLER*/
-
-#if LV_USE_DROPDOWN
 
 lv_observer_t * lv_dropdown_bind_value(lv_obj_t * obj, lv_subject_t * subject)
 {
@@ -525,8 +493,6 @@ lv_observer_t * lv_dropdown_bind_value(lv_obj_t * obj, lv_subject_t * subject)
     return observer;
 
 }
-
-#endif /*LV_USE_DROPDOWN*/
 
 /**********************
  *   STATIC FUNCTIONS
@@ -598,8 +564,6 @@ static void obj_state_observer_cb(lv_observer_t * observer, lv_subject_t * subje
     }
 }
 
-#if LV_USE_BUTTON
-
 static void btn_value_changed_event_cb(lv_event_t * e)
 {
     lv_obj_t * obj = lv_event_get_current_target(e);
@@ -607,10 +571,6 @@ static void btn_value_changed_event_cb(lv_event_t * e)
 
     lv_subject_set_int(subject, lv_obj_has_state(obj, LV_STATE_CHECKED));
 }
-
-#endif /*LV_USE_BUTTON*/
-
-#if LV_USE_LABEL
 
 static void label_text_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
@@ -634,10 +594,6 @@ static void label_text_observer_cb(lv_observer_t * observer, lv_subject_t * subj
     }
 }
 
-#endif /*LV_USE_LABEL*/
-
-#if LV_USE_ARC
-
 static void arc_value_changed_event_cb(lv_event_t * e)
 {
     lv_obj_t * arc = lv_event_get_current_target(e);
@@ -651,10 +607,6 @@ static void arc_value_observer_cb(lv_observer_t * observer, lv_subject_t * subje
     lv_arc_set_value(observer->target, subject->value.num);
 }
 
-#endif /*LV_USE_ARC*/
-
-#if LV_USE_SLIDER
-
 static void slider_value_changed_event_cb(lv_event_t * e)
 {
     lv_obj_t * slider = lv_event_get_current_target(e);
@@ -667,10 +619,6 @@ static void slider_value_observer_cb(lv_observer_t * observer, lv_subject_t * su
 {
     lv_slider_set_value(observer->target, subject->value.num, LV_ANIM_OFF);
 }
-
-#endif /*LV_USE_SLIDER*/
-
-#if LV_USE_ROLLER
 
 static void roller_value_changed_event_cb(lv_event_t * e)
 {
@@ -687,10 +635,6 @@ static void roller_value_observer_cb(lv_observer_t * observer, lv_subject_t * su
     }
 }
 
-#endif /*LV_USE_ROLLER*/
-
-#if LV_USE_DROPDOWN
-
 static void dropdown_value_changed_event_cb(lv_event_t * e)
 {
     lv_obj_t * dropdown = lv_event_get_current_target(e);
@@ -703,7 +647,5 @@ static void dropdown_value_observer_cb(lv_observer_t * observer, lv_subject_t * 
 {
     lv_dropdown_set_selected(observer->target, subject->value.num);
 }
-
-#endif /*LV_USE_DROPDOWN*/
 
 #endif /*LV_USE_OBSERVER*/
