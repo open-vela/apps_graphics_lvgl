@@ -29,9 +29,9 @@ typedef struct _lv_freetype_image_cache_data_t {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf);
+static const uint8_t * freetype_get_glyph_bitmap_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc,
+                                                    uint32_t unicode_letter,
+                                                    uint8_t * bitmap_out);
 
 static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void * user_data);
 static void freetype_image_free_cb(lv_freetype_image_cache_data_t * node, void * user_data);
@@ -76,13 +76,13 @@ void lv_freetype_set_cbs_image_font(lv_freetype_font_dsc_t * dsc)
  *   STATIC FUNCTIONS
  **********************/
 
-static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
-                                                 uint32_t unicode_letter,
-                                                 lv_draw_buf_t * draw_buf)
+static const uint8_t * freetype_get_glyph_bitmap_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc,
+                                                    uint32_t unicode_letter,
+                                                    uint8_t * bitmap_out)
 {
     LV_UNUSED(unicode_letter);
-    LV_UNUSED(draw_buf);
-    const lv_font_t * font = g_dsc->resolved_font;
+    LV_UNUSED(bitmap_out);
+
     lv_freetype_font_dsc_t * dsc = (lv_freetype_font_dsc_t *)font->dsc;
     LV_ASSERT_FREETYPE_FONT_DSC(dsc);
 
@@ -102,7 +102,7 @@ static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
     g_dsc->entry = entry;
     lv_freetype_image_cache_data_t * cache_node = lv_cache_entry_get_data(entry);
 
-    return cache_node->draw_buf;
+    return cache_node->draw_buf->data;
 }
 
 static void freetype_image_release_cb(const lv_font_t * font, lv_font_glyph_dsc_t * g_dsc)
@@ -125,7 +125,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     FT_Face face = dsc->cache_node->face;
     FT_Set_Pixel_Sizes(face, 0, dsc->size);
-    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL);
+    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_DEFAULT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
         return false;

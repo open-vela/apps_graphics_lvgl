@@ -70,8 +70,9 @@ void lv_draw_vg_lite_init(void)
     unit->base_unit.delete_cb = draw_delete;
 
     lv_vg_lite_path_init(unit);
-
+#if 0
     lv_vg_lite_decoder_init();
+#endif
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -89,7 +90,15 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
 
     lv_layer_t * layer = u->base_unit.target_layer;
 
-    lv_vg_lite_buffer_from_draw_buf(&u->target_buffer, layer->draw_buf);
+    lv_draw_buf_t draw_buf = { 0 };
+    uint32_t w, h, stride;
+    w = lv_area_get_width(&layer->buf_area);
+    h = lv_area_get_height(&layer->buf_area);
+    stride = lv_draw_buf_width_to_stride(w, layer->color_format);
+
+    lv_image_header_init(&draw_buf.header, w, h, layer->color_format, stride, 0);
+    draw_buf.data = layer->buf;
+    lv_vg_lite_buffer_from_draw_buf(&u->target_buffer, &draw_buf);
 
     vg_lite_identity(&u->global_matrix);
     vg_lite_translate(-layer->buf_area.x1, -layer->buf_area.y1, &u->global_matrix);
@@ -108,7 +117,7 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
             lv_draw_vg_lite_box_shadow(draw_unit, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_IMAGE:
-            lv_draw_vg_lite_img(draw_unit, t->draw_dsc, &t->area, false);
+            lv_draw_vg_lite_img(draw_unit, t->draw_dsc, &t->area);
             break;
         case LV_DRAW_TASK_TYPE_ARC:
             lv_draw_vg_lite_arc(draw_unit, t->draw_dsc, &t->area);
@@ -152,6 +161,11 @@ static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
         return 0;
     }
 
+    /* Return if target buffer format is not supported. */
+    if(!lv_vg_lite_is_dest_cf_supported(layer->color_format)) {
+        return -1;
+    }
+
     /* Try to get an ready to draw. */
     lv_draw_task_t * t = lv_draw_get_next_available_task(layer, NULL, VG_LITE_DRAW_UNIT_ID);
 
@@ -162,11 +176,6 @@ static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 
     void * buf = lv_draw_layer_alloc_buf(layer);
     if(!buf) {
-        return -1;
-    }
-
-    /* Return if target buffer format is not supported. */
-    if(!lv_vg_lite_is_dest_cf_supported(layer->draw_buf->header.cf)) {
         return -1;
     }
 
@@ -195,12 +204,11 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
         case LV_DRAW_TASK_TYPE_FILL:
         case LV_DRAW_TASK_TYPE_BORDER:
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
-        case LV_DRAW_TASK_TYPE_IMAGE:
         case LV_DRAW_TASK_TYPE_LAYER:
         case LV_DRAW_TASK_TYPE_LINE:
         case LV_DRAW_TASK_TYPE_ARC:
         case LV_DRAW_TASK_TYPE_TRIANGLE:
-        case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
+            // case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
             // case LV_DRAW_TASK_TYPE_MASK_BITMAP:
 #if LV_USE_VECTOR_GRAPHIC
         case LV_DRAW_TASK_TYPE_VECTOR:
@@ -208,6 +216,17 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
             task->preference_score = 80;
             task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
             return 1;
+        case LV_DRAW_TASK_TYPE_IMAGE: {
+                lv_draw_image_dsc_t * dsc = task->draw_dsc;
+                lv_image_header_t header = { 0 };
+                lv_image_decoder_get_info(dsc->src, &header);
+                if(!lv_vg_lite_is_src_cf_supported(header.cf)) {
+                    return 0;
+                }
+                task->preference_score = 80;
+                task->preferred_draw_unit_id = VG_LITE_DRAW_UNIT_ID;
+                return 1;
+            }
         default:
             break;
     }
@@ -218,7 +237,9 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 {
     lv_draw_vg_lite_unit_t * unit = (lv_draw_vg_lite_unit_t *)draw_unit;
     lv_vg_lite_path_deinit(unit);
+#if 0
     lv_vg_lite_decoder_deinit();
+#endif
     return 1;
 }
 

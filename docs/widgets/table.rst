@@ -1,6 +1,3 @@
-.. _lv_table:
-
-================
 Table (lv_table)
 ================
 
@@ -18,8 +15,6 @@ The Table is added to the default group (if it is set). Besides the
 Table is an editable object to allow selecting a cell with encoder
 navigation too.
 
-.. _lv_table_parts_and_styles:
-
 Parts and Styles
 ****************
 
@@ -27,8 +22,6 @@ Parts and Styles
    background style properties.
 -  :cpp:enumerator:`LV_PART_ITEMS` The cells of the table also use all the typical
    background style properties and the text properties.
-
-.. _lv_table_usage:
 
 Usage
 *****
@@ -81,19 +74,15 @@ automatically sets the table size to show all the columns and rows.
 If the width or height is set to a smaller number than the "intrinsic"
 size then the table becomes scrollable.
 
-.. _lv_table_events:
-
 Events
 ******
 
 -  :cpp:enumerator:`LV_EVENT_VALUE_CHANGED` Sent when a new cell is selected with
    keys.
 
-See the events of the :ref:`Base object <lv_obj>` too.
+See the events of the `Base object </widgets/obj>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_table_keys:
 
 Keys
 ****
@@ -110,8 +99,6 @@ currently selected cell. Row and column will be set to
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_table_example:
-
 Example
 *******
 
@@ -121,8 +108,6 @@ MicroPython
 -----------
 
 No examples yet.
-
-.. _lv_table_api:
 
 API
 ***

@@ -1,6 +1,3 @@
-.. _lv_arc:
-
-============
 Arc (lv_arc)
 ============
 
@@ -9,8 +6,6 @@ Overview
 
 The Arc consists of a background and a foreground arc. The foreground
 (indicator) can be touch-adjusted.
-
-.. _lv_arc_parts_and_styles:
 
 Parts and Styles
 ****************
@@ -25,8 +20,6 @@ Parts and Styles
    background properties and padding values. With zero padding the knob
    size is the same as the indicator's width. Larger padding makes it
    larger, smaller padding makes it smaller.
-
-.. _lv_arc_usage:
 
 Usage
 *****
@@ -127,8 +120,6 @@ used to rotate the object to the current value of the arc.
 It's a typical use case to call these functions in the ``VALUE_CHANGED``
 event of the arc.
 
-.. _lv_arc_events:
-
 Events
 ******
 
@@ -157,11 +148,9 @@ Events
       -  ``draw_area``: the area of the knob
       -  ``rect_dsc``:
 
-See the events of the :ref:`Base object <lv_obj>` too.
+See the events of the `Base object </widgets/obj>`__ too.
 
 Learn more about :ref:`events`.
-
-.. _lv_arc_keys:
 
 Keys
 ****
@@ -171,14 +160,12 @@ Keys
 
 Learn more about :ref:`indev_keys`.
 
-.. _lv_arc_example:
-
 Example
 *******
 
 .. include:: ../examples/widgets/arc/index.rst
 
-.. _lv_arc_api:
-
 API
 ***
+
+:ref:`lv_arc`

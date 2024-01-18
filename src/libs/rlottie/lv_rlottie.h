@@ -48,7 +48,7 @@ typedef struct {
     size_t dest_frame;
 } lv_rlottie_t;
 
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_rlottie_class;
+extern const lv_obj_class_t lv_rlottie_class;
 
 /**********************
  * GLOBAL PROTOTYPES
