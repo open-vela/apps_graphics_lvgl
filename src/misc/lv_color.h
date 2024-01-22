@@ -155,8 +155,6 @@ enum _lv_color_format_t {
 
     LV_COLOR_FORMAT_YUV_END           = LV_COLOR_FORMAT_UYVY,
 
-    LV_COLOR_FORMAT_ETC2_EAC          = 0x30,
-
     /*Color formats in which LVGL can render*/
 #if LV_COLOR_DEPTH == 8
     LV_COLOR_FORMAT_NATIVE            = LV_COLOR_FORMAT_L8,
@@ -181,7 +179,6 @@ typedef uint8_t lv_color_format_t;
 #define LV_COLOR_FORMAT_IS_ALPHA_ONLY(cf) ((cf) >= LV_COLOR_FORMAT_A1 && (cf) <= LV_COLOR_FORMAT_A8)
 #define LV_COLOR_FORMAT_IS_INDEXED(cf) ((cf) >= LV_COLOR_FORMAT_I1 && (cf) <= LV_COLOR_FORMAT_I8)
 #define LV_COLOR_FORMAT_IS_YUV(cf)  ((cf) >= LV_COLOR_FORMAT_YUV_START && (cf) <= LV_COLOR_FORMAT_YUV_END)
-#define LV_COLOR_FORMAT_IS_REGULAR(cf) ((cf) >= LV_COLOR_FORMAT_L8 && (cf) <= LV_COLOR_FORMAT_RGB565A8)
 #define LV_COLOR_INDEXED_PALETTE_SIZE(cf) ((cf) == LV_COLOR_FORMAT_I1 ? 2 :\
                                            (cf) == LV_COLOR_FORMAT_I2 ? 4 :\
                                            (cf) == LV_COLOR_FORMAT_I4 ? 16 :\
@@ -448,7 +445,7 @@ static inline void lv_color16_premultiply(lv_color16_t * c, lv_opa_t a)
 #include "lv_palette.h"
 #include "lv_color_op.h"
 
-extern const lv_color_filter_dsc_t lv_color_filter_shade;
+LV_ATTRIBUTE_EXTERN_DATA extern const lv_color_filter_dsc_t lv_color_filter_shade;
 
 #ifdef __cplusplus
 } /*extern "C"*/
