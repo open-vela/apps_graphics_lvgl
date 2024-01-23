@@ -118,6 +118,10 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_disp_get_offset_y             lv_display_get_offset_y
 #define lv_disp_get_rotation             lv_display_get_rotation
 #define lv_disp_get_dpi                  lv_display_get_dpi
+#define lv_disp_set_flush_cb             lv_display_set_flush_cb
+#define lv_disp_set_color_format         lv_display_set_color_format
+#define lv_disp_get_color_format         lv_display_get_color_format
+#define lv_disp_set_antialiasing         lv_display_set_antialiasing
 #define lv_disp_get_antialiasing         lv_display_get_antialiasing
 #define lv_disp_flush_ready              lv_display_flush_ready
 #define lv_disp_flush_is_last            lv_display_flush_is_last
@@ -248,6 +252,8 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 
 #define lv_image_decoder_built_in_open      lv_bin_decoder_open
 #define lv_image_decoder_built_in_close     lv_bin_decoder_close
+
+#define lv_obj_add_event                    lv_obj_add_event_cb
 
 /**********************
  *      MACROS
