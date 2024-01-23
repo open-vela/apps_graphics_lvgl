@@ -80,7 +80,7 @@ Display API
    lv_display_set_flush_cb(disp, flush_cb);
    lv_display_set_buffers(disp, buf1, buf2, buf_size_in_bytes, mode);
 
--  Note that now **buf size is in bytes and not pixels**
+-  Note that now **draw buffer can be malloced by `lv_draw_buf_create` or initialized by `lv_draw_buf_init`**
 -  ``mode`` can be:
 
    -  ``LV_DISPLAY_RENDER_MODE_PARTIAL`` This way the buffers can be
