@@ -151,6 +151,9 @@ static void draw_letter_bitmap(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_d
     lv_draw_buf_t * draw_buf = dsc->glyph_data;
     lv_vg_lite_buffer_from_draw_buf(&src_buf, draw_buf);
 
+    /* Alpha pictures need to be multiplied by color */
+    src_buf.image_mode = VG_LITE_MULTIPLY_IMAGE_MODE;
+
     vg_lite_color_t color;
     color = lv_vg_lite_color(dsc->color, dsc->opa, true);
 
@@ -230,7 +233,6 @@ static void draw_letter_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_
 
     lv_vg_lite_path_t * outline = (lv_vg_lite_path_t *)dsc->glyph_data;
     lv_point_t pos = {dsc->letter_coords->x1, dsc->letter_coords->y1};
-
     /* calc convert matrix */
     float scale = FT_F26DOT6_TO_PATH_SCALE(lv_freetype_outline_get_scale(dsc->g->resolved_font));
     vg_lite_matrix_t matrix;
