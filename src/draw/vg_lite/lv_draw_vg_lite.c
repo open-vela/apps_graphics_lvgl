@@ -70,6 +70,7 @@ void lv_draw_vg_lite_init(void)
     unit->base_unit.dispatch_cb = draw_dispatch;
     unit->base_unit.evaluate_cb = draw_evaluate;
     unit->base_unit.delete_cb = draw_delete;
+    lv_array_init(&unit->img_dsc_pending, 4, sizeof(lv_image_decoder_dsc_t));
 
     lv_vg_lite_image_dsc_init(unit);
     lv_vg_lite_grad_init(unit);
@@ -166,7 +167,7 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
             break;
     }
 
-    lv_vg_lite_flush(u);
+    lv_vg_lite_flush(draw_unit);
 }
 
 static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
@@ -183,7 +184,7 @@ static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 
     /* Return 0 is no selection, some tasks can be supported by other units. */
     if(!t || t->preferred_draw_unit_id != VG_LITE_DRAW_UNIT_ID) {
-        lv_vg_lite_finish(u);
+        lv_vg_lite_finish(draw_unit);
         return -1;
     }
 
