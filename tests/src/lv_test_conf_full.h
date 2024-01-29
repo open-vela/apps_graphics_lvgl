@@ -81,6 +81,8 @@
 #define LV_USE_VECTOR_GRAPHIC   1
 #define LV_USE_SVG              1
 #define LV_USE_SVG_DEBUG        1
+#define LV_USE_PROFILER         1
+#define LV_PROFILER_INCLUDE     "lv_profiler_builtin.h"
 
 #define LV_BUILD_EXAMPLES       1
 #define LV_USE_DEMO_WIDGETS     1
