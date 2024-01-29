@@ -254,6 +254,14 @@ include_directories(${PNG_INCLUDE_DIR})
 find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
 
+# libinput is required for the libinput device driver test case
+find_package(Libinput REQUIRED)
+include_directories(${LIBINPUT_INCLUDE_DIRS})
+
+# libxkbcommon is required for the libinput device driver test case
+find_package(PkgConfig)
+pkg_check_modules(xkbcommon REQUIRED xkbcommon)
+
 # disable test targets for build only tests
 if (ENABLE_TESTS)
     file( GLOB_RECURSE TEST_CASE_FILES src/test_cases/*.c )
@@ -289,6 +297,7 @@ foreach( test_case_fname ${TEST_CASE_FILES} )
             lvgl_thorvg
             ${PNG_LIBRARIES}
             ${FREETYPE_LIBRARIES}
+            ${LIBINPUT_LIBRARIES}
             ${JPEG_LIBRARIES}
             m
             ${TEST_LIBS})
