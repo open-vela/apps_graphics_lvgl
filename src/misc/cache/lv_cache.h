@@ -125,6 +125,7 @@ void lv_cache_drop(lv_cache_t * cache, const void * key, void * user_data);
  * @param user_data     A user data pointer that will be passed to the free callback.
  */
 void lv_cache_drop_all(lv_cache_t * cache, void * user_data);
+bool lv_cache_evict_one(lv_cache_t * cache, void * user_data);
 
 /**
  * Evict one entry from the cache. The eviction policy will be used to select the entry to evict.
@@ -150,6 +151,7 @@ void   lv_cache_set_max_size(lv_cache_t * cache, size_t max_size, void * user_da
  * @param user_data     A user data pointer that will be passed to the free callback.
  * @return              Returns the maximum size of the cache.
  */
+
 size_t lv_cache_get_max_size(lv_cache_t * cache, void * user_data);
 
 /**
