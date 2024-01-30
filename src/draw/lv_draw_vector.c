@@ -18,16 +18,9 @@
 
 #define MATH_PI  3.14159265358979323846f
 #define MATH_HALF_PI 1.57079632679489661923f
-#define MATH_TWO_PI 6.28318530717958647692f
+
 #define DEG_TO_RAD 0.017453292519943295769236907684886f
 #define RAD_TO_DEG 57.295779513082320876798154814105f
-
-#define MATH_TANF(x) tanf(x)
-#define MATH_SINF(x) sinf(x)
-#define MATH_COSF(x) cosf(x)
-#define MATH_ASINF(x) asinf(x)
-#define MATH_FABSF(x) fabsf(x)
-#define MATH_SQRTF(x) sqrtf(x)
 
 #define MATH_RADIANS(deg) ((deg) * DEG_TO_RAD)
 #define MATH_DEGRESS(rad) ((rad) * RAD_TO_DEG)
@@ -519,15 +512,15 @@ void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, f
     start_angle = MATH_RADIANS(start_angle);
     sweep = MATH_RADIANS(sweep);
 
-    int n_curves = (int)ceil(MATH_FABSF(sweep / MATH_HALF_PI));
-    float sweep_sign = sweep < FLT_EPSILON ? -1.f : 1.f;
+    int n_curves = (int)ceil(fabsf(sweep / MATH_HALF_PI));
+    float sweep_sign = sweep < 0 ? -1.f : 1.f;
     float fract = fmodf(sweep, MATH_HALF_PI);
-    fract = (MATH_FABSF(fract) < FLT_EPSILON) ? MATH_HALF_PI * sweep_sign : fract;
+    fract = (fabsf(fract) < FLT_EPSILON) ? MATH_HALF_PI * sweep_sign : fract;
 
     /* Start from here */
     lv_fpoint_t start = {
-        .x = radius * MATH_COSF(start_angle),
-        .y = radius * MATH_SINF(start_angle),
+        .x = radius * cosf(start_angle),
+        .y = radius * sinf(start_angle),
     };
 
     if(pie) {
@@ -538,11 +531,16 @@ void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, f
             start.x + cx, start.y + cy
         });
     }
+    else {
+        lv_vector_path_move_to(path, &(lv_fpoint_t) {
+            start.x + cx, start.y + cy
+        });
+    }
 
     for(int i = 0; i < n_curves; ++i) {
         float end_angle = start_angle + ((i != n_curves - 1) ? MATH_HALF_PI * sweep_sign : fract);
-        float end_x = radius * MATH_COSF(end_angle);
-        float end_y = radius * MATH_SINF(end_angle);
+        float end_x = radius * cosf(end_angle);
+        float end_y = radius * sinf(end_angle);
 
         /* variables needed to calculate bezier control points */
 
@@ -555,7 +553,7 @@ void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, f
         float by = end_y;
         float q1 = ax * ax + ay * ay;
         float q2 = ax * bx + ay * by + q1;
-        float k2 = (4.0f / 3.0f) * ((MATH_SQRTF(2 * q1 * q2) - q2) / (ax * by - ay * bx));
+        float k2 = (4.0f / 3.0f) * ((sqrtf(2 * q1 * q2) - q2) / (ax * by - ay * bx));
 
         /* Next start point is the current end point */
         start.x = end_x;
