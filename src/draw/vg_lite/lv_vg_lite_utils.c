@@ -1010,6 +1010,10 @@ void lv_vg_lite_draw_linear_grad(
         vg_lite_scale(lv_area_get_width(area) / 256.0f, 1, grad_matrix);
     }
 
+    LV_VG_LITE_ASSERT_DEST_BUFFER(buffer);
+    LV_VG_LITE_ASSERT_SRC_BUFFER(&gradient.image);
+    LV_VG_LITE_ASSERT_PATH(path);
+
     LV_PROFILER_BEGIN_TAG("vg_lite_draw_grad");
     LV_VG_LITE_CHECK_ERROR(vg_lite_draw_grad(
                                buffer,
