@@ -167,7 +167,7 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
             break;
     }
 
-    lv_vg_lite_flush(draw_unit);
+    lv_vg_lite_flush(u);
 }
 
 static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
@@ -184,7 +184,7 @@ static int32_t draw_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 
     /* Return 0 is no selection, some tasks can be supported by other units. */
     if(!t || t->preferred_draw_unit_id != VG_LITE_DRAW_UNIT_ID) {
-        lv_vg_lite_finish(draw_unit);
+        lv_vg_lite_finish(u);
         return -1;
     }
 
