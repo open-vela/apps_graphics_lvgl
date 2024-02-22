@@ -198,6 +198,8 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         return LV_RESULT_INVALID;
     }
 
+    decoded = lv_draw_buf_expand(decoded, LV_DECODER_IMG_SIZE_EXPAND);
+
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
