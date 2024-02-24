@@ -127,22 +127,9 @@ void lv_vg_lite_draw_linear_grad(
         return;
     }
 
-    vg_lite_matrix_t * grad_matrix = vg_lite_get_grad_matrix(gradient);
-    vg_lite_identity(grad_matrix);
-    vg_lite_translate(area->x1, area->y1, grad_matrix);
-
-    if(grad->dir == LV_GRAD_DIR_VER) {
-        vg_lite_scale(1, lv_area_get_height(area) / 256.0f, grad_matrix);
-        vg_lite_rotate(90, grad_matrix);
-    }
-    else if(grad->dir == LV_GRAD_DIR_HOR) {
-        vg_lite_scale(lv_area_get_width(area) / 256.0f, 1, grad_matrix);
-    }
-    else {
-        LV_LOG_ERROR("Unknown gradient direction: %d", (int)grad->dir);
-        LV_PROFILER_END;
-        return;
-    }
+    vg_lite_matrix_t * grad_mat_p = vg_lite_get_grad_matrix(gradient);
+    LV_ASSERT_NULL(grad_mat_p);
+    *grad_mat_p = *grad_matrix;
 
     LV_VG_LITE_ASSERT_DEST_BUFFER(buffer);
     LV_VG_LITE_ASSERT_SRC_BUFFER(&gradient->image);
