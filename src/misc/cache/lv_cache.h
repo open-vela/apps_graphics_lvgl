@@ -125,6 +125,13 @@ void lv_cache_drop(lv_cache_t * cache, const void * key, void * user_data);
  * @param user_data     A user data pointer that will be passed to the free callback.
  */
 void lv_cache_drop_all(lv_cache_t * cache, void * user_data);
+
+/**
+ * Evict one entry from the cache. The eviction policy will be used to select the entry to evict.
+ * @param cache         The cache object pointer to evict an entry.
+ * @param user_data     A user data pointer that will be passed to the free callback.
+ * @return              Returns true if an entry is evicted, false if no entry is evicted.
+ */
 bool lv_cache_evict_one(lv_cache_t * cache, void * user_data);
 
 /**
