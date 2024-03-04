@@ -18,8 +18,6 @@
  *      DEFINES
  *********************/
 
-#define LV_VG_LITE_GRAD_CACHE_SIZE 16
-
 /**********************
  *      TYPEDEFS
  **********************/
