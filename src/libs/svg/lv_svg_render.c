@@ -920,21 +920,19 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
     int32_t w = bounds.x2 - bounds.x1;
     int32_t h = bounds.y2 - bounds.y1;
     if(grad->dsc.style == LV_VECTOR_GRADIENT_STYLE_RADIAL) {
-        grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
-        grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
-        grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
-
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
+            grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
+            grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
     else {   // LV_VECTOR_GRADIENT_STYLE_LINEAR
-        grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
-        grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
-        grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
-        grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
-
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
+            grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
+            grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
+            grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
@@ -2012,7 +2010,9 @@ static void _lv_svg_doc_walk_after_cb(const lv_tree_node_t * node, void * data)
         uint32_t count = LV_TREE_NODE(node)->child_cnt;
         for(uint32_t i = 0; i < count; i++) {
             lv_svg_node_t * child = LV_SVG_NODE_CHILD(node, i);
-            lv_array_push_back(&group->items, (uint8_t *)(&child->render_obj));
+            if(child->render_obj) { // not defs
+                lv_array_push_back(&group->items, (uint8_t *)(&child->render_obj));
+            }
         }
 
         state->in_group_deps--;
