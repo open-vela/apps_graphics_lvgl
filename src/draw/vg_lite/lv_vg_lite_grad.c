@@ -148,24 +148,6 @@ void lv_vg_lite_draw_linear_grad(
     LV_PROFILER_END;
 }
 
-void lv_vg_lite_linear_grad_release_all(struct _lv_draw_vg_lite_unit_t * u)
-{
-    LV_ASSERT_NULL(u);
-    lv_array_t * arr = &u->grad_pending;
-    uint32_t size = lv_array_size(arr);
-    if(size == 0) {
-        return;
-    }
-
-    /* release all pending cache entries */
-    lv_cache_entry_t ** entry_p = lv_array_front(arr);
-    for(uint32_t i = 0; i < size; i++) {
-        lv_cache_release(u->grad_cache, *entry_p, NULL);
-        entry_p++;
-    }
-    lv_array_clear(arr);
-}
-
 /**********************
  *   STATIC FUNCTIONS
  **********************/
