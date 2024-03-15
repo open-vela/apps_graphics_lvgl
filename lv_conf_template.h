@@ -666,6 +666,9 @@
 /*LODEPNG decoder library*/
 #define LV_USE_LODEPNG 0
 
+/*Use external zlib for LODEPNG decoder*/
+#define LV_USE_LODEPNG_ZLIB_EXTERNAL 0
+
 /*PNG decoder(libpng) library*/
 #define LV_USE_LIBPNG 0
 
