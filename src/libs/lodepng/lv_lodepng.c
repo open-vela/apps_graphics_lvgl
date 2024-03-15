@@ -13,6 +13,10 @@
 #include "lodepng.h"
 #include <stdlib.h>
 
+#if LV_USE_LODEPNG_ZLIB_EXTERNAL
+#include <zlib.h>
+#endif
+
 /*********************
  *      DEFINES
  *********************/
@@ -245,6 +249,19 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
         lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
 }
 
+#if LV_USE_LODEPNG_ZLIB_EXTERNAL
+static  unsigned lv_custom_zlib(unsigned char ** out, size_t * outsize,
+                                const unsigned char * in, size_t insize, const LodePNGDecompressSettings * settings)
+{
+    uLongf destlen = *outsize;
+
+    int ret = uncompress((Bytef *)*out, &destlen, (Bytef *)in, insize);
+    *outsize = destlen;
+
+    return ret;
+}
+#endif
+
 static lv_draw_buf_t * decode_png8_data(const void * png_data, size_t png_data_size)
 {
     LodePNGState state;
@@ -269,6 +286,10 @@ static lv_draw_buf_t * decode_png8_data(const void * png_data, size_t png_data_s
     }
 
     state.decoder.color_convert = 0; /* Do not convert color */
+    state.decoder.ignore_crc = 1; /* Ignore CRC to improve speed a bit*/
+#if LV_USE_LODEPNG_ZLIB_EXTERNAL
+    state.decoder.zlibsettings.custom_zlib = lv_custom_zlib;
+#endif
     error = lodepng_decode((unsigned char **)&decoded, &png_width, &png_height, &state, png_data, png_data_size);
 
     if(color->palette == NULL || color->palettesize == 0) {
