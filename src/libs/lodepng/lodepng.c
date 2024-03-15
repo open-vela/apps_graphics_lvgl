@@ -5300,6 +5300,10 @@ static void decodeGeneric(unsigned char ** out, unsigned * w, unsigned * h,
             expected_size += lodepng_get_raw_size_idat((*w + 0), (*h + 0) >> 1, bpp);
         }
 
+#if LV_USE_LODEPNG_ZLIB_EXTERNAL
+        scanlines = lodepng_malloc(expected_size);
+        scanlines_size = expected_size;
+#endif
         state->error = zlib_decompress(&scanlines, &scanlines_size, expected_size, idat, idatsize,
                                        &state->decoder.zlibsettings);
     }

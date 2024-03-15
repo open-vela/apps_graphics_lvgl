@@ -1139,6 +1139,10 @@ menu "LVGL configuration"
 		config LV_USE_LODEPNG
 			bool "PNG decoder library"
 
+		config LV_USE_LODEPNG_ZLIB_EXTERNAL
+			bool "Use external zlib for lodepng"
+			depends on LV_USE_LODEPNG
+
 		config LV_USE_LIBPNG
 			bool "PNG decoder(libpng) library"
 

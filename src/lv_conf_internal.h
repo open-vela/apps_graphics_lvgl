@@ -2187,6 +2187,15 @@
     #endif
 #endif
 
+/*Use external zlib for LODEPNG decoder*/
+#ifndef LV_USE_LODEPNG_ZLIB_EXTERNAL
+    #ifdef CONFIG_LV_USE_LODEPNG_ZLIB_EXTERNAL
+        #define LV_USE_LODEPNG_ZLIB_EXTERNAL CONFIG_LV_USE_LODEPNG_ZLIB_EXTERNAL
+    #else
+        #define LV_USE_LODEPNG_ZLIB_EXTERNAL 0
+    #endif
+#endif
+
 /*PNG decoder(libpng) library*/
 #ifndef LV_USE_LIBPNG
     #ifdef CONFIG_LV_USE_LIBPNG
