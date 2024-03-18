@@ -273,7 +273,7 @@ static void _g2d_execute_drawing(lv_draw_g2d_unit_t * u)
     lv_area_t draw_area;
     if(!_lv_area_intersect(&draw_area, &t->area, draw_unit->clip_area))
         return; /*Fully clipped, nothing to do*/
-    lv_draw_buf_invalidate_cache(draw_buf->data, draw_buf->header.stride, draw_buf->header.cf, &draw_area);
+    lv_draw_buf_invalidate_cache(draw_buf, &draw_area);
 
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL:
