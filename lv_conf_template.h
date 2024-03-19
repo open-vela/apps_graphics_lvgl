@@ -136,6 +136,9 @@
     #endif
 #endif
 
+/* Set stacksize of drawing thread. */
+#define LV_DRAW_THREAD_STACKSIZE 32768
+
 /* Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
 #define LV_USE_DRAW_VGLITE 0
 
@@ -190,6 +193,9 @@
 #define LV_VG_LITE_GRAD_CACHE_SIZE 32
 
 #endif
+
+/* Use G2D GPU. */
+#define LV_USE_DRAW_G2D 0
 
 /*=======================
  * FEATURE CONFIGURATION
