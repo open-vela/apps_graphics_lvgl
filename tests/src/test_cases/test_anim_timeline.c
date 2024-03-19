@@ -5,18 +5,18 @@
 #include "unity/unity.h"
 #include "lv_test_helpers.h"
 
-static lv_anim_timeline_t * anim_timeline;
+static lv_anim_timeline_t * test_anim_timeline;
 
 void setUp(void)
 {
     /* Function run before every test */
-    anim_timeline = NULL;
+    test_anim_timeline = NULL;
 }
 
 void tearDown(void)
 {
     /* Function run after every test */
-    if(anim_timeline) lv_anim_timeline_delete(anim_timeline);
+    if(test_anim_timeline) lv_anim_timeline_delete(test_anim_timeline);
     lv_obj_clean(lv_screen_active());
 
 }
@@ -34,48 +34,48 @@ void test_anim_timeline_progress_1(void)
     lv_anim_set_values(&a1, 0, 700);
     lv_anim_set_duration(&a1, 1000);
 
-    anim_timeline = lv_anim_timeline_create();
-    TEST_ASSERT_NOT_NULL(anim_timeline);
+    test_anim_timeline = lv_anim_timeline_create();
+    TEST_ASSERT_NOT_NULL(test_anim_timeline);
 
-    lv_anim_timeline_add(anim_timeline, 0, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 0, &a1);
 
-    lv_anim_timeline_set_progress(anim_timeline, 0);
+    lv_anim_timeline_set_progress(test_anim_timeline, 0);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(0, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 65535);
+    lv_anim_timeline_set_progress(test_anim_timeline, 65535);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 10000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 10000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(105, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 20000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 20000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(213, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 30000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 30000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(319, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 40000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 40000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(426, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 50000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 50000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(533, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 60000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 60000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(639, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 32768);
+    lv_anim_timeline_set_progress(test_anim_timeline, 32768);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(350, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 65535);
+    lv_anim_timeline_set_progress(test_anim_timeline, 65535);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));
 
@@ -106,40 +106,40 @@ void test_anim_timeline_progress_2(void)
      *   0     21845  43690  65535 progress
      */
 
-    anim_timeline = lv_anim_timeline_create();
-    lv_anim_timeline_add(anim_timeline, 0, &a1);
-    lv_anim_timeline_add(anim_timeline, 500, &a2);
+    test_anim_timeline = lv_anim_timeline_create();
+    lv_anim_timeline_add(test_anim_timeline, 0, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 500, &a2);
 
-    lv_anim_timeline_set_progress(anim_timeline, 0);
+    lv_anim_timeline_set_progress(test_anim_timeline, 0);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(0, lv_obj_get_x(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 65535);
+    lv_anim_timeline_set_progress(test_anim_timeline, 65535);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(300, lv_obj_get_y(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 10000);
+    lv_anim_timeline_set_progress(test_anim_timeline, 10000);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(159, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(0, lv_obj_get_y(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 21845);
+    lv_anim_timeline_set_progress(test_anim_timeline, 21845);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(350, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(0, lv_obj_get_y(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 32768);
+    lv_anim_timeline_set_progress(test_anim_timeline, 32768);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(525, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(75, lv_obj_get_y(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 43690);
+    lv_anim_timeline_set_progress(test_anim_timeline, 43690);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(150, lv_obj_get_y(obj));
 
-    lv_anim_timeline_set_progress(anim_timeline, 65535);
+    lv_anim_timeline_set_progress(test_anim_timeline, 65535);
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));
     TEST_ASSERT_EQUAL(300, lv_obj_get_y(obj));
@@ -160,7 +160,7 @@ void test_anim_timeline_start(void)
      *   ?  50            100     200   400               700     value (px)
      */
 
-    anim_timeline = lv_anim_timeline_create();
+    test_anim_timeline = lv_anim_timeline_create();
 
     lv_anim_t a1;
     lv_anim_init(&a1);
@@ -169,18 +169,18 @@ void test_anim_timeline_start(void)
     lv_anim_set_values(&a1, 50, 100);
     lv_anim_set_duration(&a1, 800);
     lv_anim_set_early_apply(&a1, false);
-    lv_anim_timeline_add(anim_timeline, 200, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 200, &a1);
 
     lv_anim_set_values(&a1, 200, 300);
     lv_anim_set_duration(&a1, 1000);
-    lv_anim_timeline_add(anim_timeline, 1500, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 1500, &a1);
 
     /*Overlap with the previous*/
     lv_anim_set_values(&a1, 400, 700);
     lv_anim_set_duration(&a1, 1500);
-    lv_anim_timeline_add(anim_timeline, 2000, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 2000, &a1);
 
-    lv_anim_timeline_start(anim_timeline);
+    lv_anim_timeline_start(test_anim_timeline);
 
     /*As doesn't start at the beginning keep the original value*/
     lv_refr_now(NULL);
@@ -251,8 +251,8 @@ void test_anim_timeline_reverse(void)
      *   ?  50            100     200         300         700     value (px)
      */
 
-    anim_timeline = lv_anim_timeline_create();
-    lv_anim_timeline_set_reverse(anim_timeline, true);
+    test_anim_timeline = lv_anim_timeline_create();
+    lv_anim_timeline_set_reverse(test_anim_timeline, true);
 
     lv_anim_t a1;
     lv_anim_init(&a1);
@@ -261,19 +261,19 @@ void test_anim_timeline_reverse(void)
     lv_anim_set_values(&a1, 50, 100);
     lv_anim_set_duration(&a1, 800);
     lv_anim_set_early_apply(&a1, false);
-    lv_anim_timeline_add(anim_timeline, 200, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 200, &a1);
 
     lv_anim_set_values(&a1, 200, 300);
     lv_anim_set_duration(&a1, 1000);
-    lv_anim_timeline_add(anim_timeline, 1500, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 1500, &a1);
 
     /*Overlap with the previous*/
     lv_anim_set_values(&a1, 400, 700);
     lv_anim_set_duration(&a1, 1500);
-    lv_anim_timeline_add(anim_timeline, 2000, &a1);
+    lv_anim_timeline_add(test_anim_timeline, 2000, &a1);
 
-    lv_anim_timeline_set_progress(anim_timeline, LV_ANIM_TIMELINE_PROGRESS_MAX);
-    lv_anim_timeline_start(anim_timeline);    /*0 (3500)*/
+    lv_anim_timeline_set_progress(test_anim_timeline, LV_ANIM_TIMELINE_PROGRESS_MAX);
+    lv_anim_timeline_start(test_anim_timeline);    /*0 (3500)*/
 
     lv_refr_now(NULL);
     TEST_ASSERT_EQUAL(700, lv_obj_get_x(obj));

@@ -15,7 +15,7 @@ void tearDown(void)
     lv_obj_clean(active_screen);
 }
 
-lv_obj_t * obj_create(lv_obj_t * parent, lv_color_t color)
+static lv_obj_t * obj_create(lv_obj_t * parent, lv_color_t color)
 {
     lv_obj_t * obj = lv_obj_create(parent);
     lv_obj_set_style_bg_color(obj, color, LV_PART_MAIN);

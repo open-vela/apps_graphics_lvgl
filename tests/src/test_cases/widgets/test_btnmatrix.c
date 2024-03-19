@@ -3,15 +3,15 @@
 #include "lv_test_indev.h"
 #include "unity/unity.h"
 
-static lv_obj_t * active_screen = NULL;
+static lv_obj_t * test_btnmatrix_active_screen = NULL;
 static lv_obj_t * btnm;
 static bool event_triggered = false;
 lv_event_code_t exp_evt_code;
 
 void setUp(void)
 {
-    active_screen = lv_screen_active();
-    btnm = lv_buttonmatrix_create(active_screen);
+    test_btnmatrix_active_screen = lv_screen_active();
+    btnm = lv_buttonmatrix_create(test_btnmatrix_active_screen);
     TEST_ASSERT_NOT_NULL(btnm);
     event_triggered = false;
     exp_evt_code = 0;
@@ -19,7 +19,7 @@ void setUp(void)
 
 void tearDown(void)
 {
-    lv_obj_clean(active_screen);
+    lv_obj_clean(test_btnmatrix_active_screen);
 }
 
 void test_button_matrix_creation(void)
@@ -64,7 +64,7 @@ void test_button_matrix_render_2(void)
     lv_obj_set_pos(btnm, 10, 10);
 
     static const char * btn_map2[] = {"A", "\n", "B", "\n", "C", "\n", "D", ""};
-    btnm = lv_buttonmatrix_create(active_screen);
+    btnm = lv_buttonmatrix_create(test_btnmatrix_active_screen);
     TEST_ASSERT_NOT_NULL(btnm);
     lv_obj_set_width(btnm, 150);
     lv_obj_set_height(btnm, 250);
@@ -76,7 +76,7 @@ void test_button_matrix_render_2(void)
     lv_obj_set_pos(btnm, 10, 160);
 
     static const char * btn_map3[] = {"A", "B", "C", "\n", "D", "E", "F", ""};
-    btnm = lv_buttonmatrix_create(active_screen);
+    btnm = lv_buttonmatrix_create(test_btnmatrix_active_screen);
     TEST_ASSERT_NOT_NULL(btnm);
     lv_buttonmatrix_set_map(btnm, btn_map3);
     lv_obj_set_width(btnm, 400);
@@ -94,7 +94,7 @@ void test_button_matrix_render_2(void)
     static const char * btn_map4[] = {"A", "B", "C", "D", "E", "F", "G", "\n",
                                       "G", "F", "E", "D", "C", "B", "A", ""
                                      };
-    btnm = lv_buttonmatrix_create(active_screen);
+    btnm = lv_buttonmatrix_create(test_btnmatrix_active_screen);
     lv_buttonmatrix_set_map(btnm, btn_map4);
     lv_obj_set_width(btnm, 600);
     lv_obj_set_height(btnm, 150);

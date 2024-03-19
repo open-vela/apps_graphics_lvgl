@@ -131,7 +131,7 @@ const lv_svg_render_hal_t hal = {
     .get_font_path = get_font_path,
 };
 
-void test_draw_shapes(void)
+void test_draw_shape(void)
 {
     lv_svg_render_init(&hal);
     const char * svg_shapes_1 = \

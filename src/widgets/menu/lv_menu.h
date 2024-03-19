@@ -69,7 +69,7 @@ typedef struct {
 typedef struct {
     lv_obj_t obj;
     lv_obj_t * storage; /* a pointer to obj that is the parent of all pages not displayed */
-    lv_obj_t * main;
+    lv_obj_t * main_obj;
     lv_obj_t * main_page;
     lv_obj_t * main_header;
     lv_obj_t *
