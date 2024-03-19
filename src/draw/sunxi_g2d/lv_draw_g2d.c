@@ -77,7 +77,8 @@ void lv_draw_g2d_init(void)
     lv_g2d_init();
 
 #if LV_USE_OS
-    lv_thread_init(&draw_g2d_unit->thread, LV_THREAD_PRIO_HIGH, _g2d_render_thread_cb, 8 * 1024, draw_g2d_unit);
+    lv_thread_init(&draw_g2d_unit->thread, LV_THREAD_PRIO_HIGH, _g2d_render_thread_cb, LV_DRAW_THREAD_STACKSIZE,
+                   draw_g2d_unit);
 #endif
 }
 
