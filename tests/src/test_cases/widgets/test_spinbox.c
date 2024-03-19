@@ -4,29 +4,29 @@
 #include "unity/unity.h"
 #include "lv_test_indev.h"
 
-static lv_obj_t * active_screen = NULL;
+static lv_obj_t * test_spinbox_active_screen = NULL;
 static lv_obj_t * spinbox_negative_min_range = NULL;
 static lv_obj_t * spinbox_zero_min_range = NULL;
 static lv_obj_t * spinbox_events = NULL;
-static lv_group_t * g = NULL;
 
 static const int32_t SPINBOX_NEGATIVE_MIN_RANGE_VALUE = -11;
 static const int32_t SPINBOX_ZERO_MIN_RANGE_VALUE = 0;
 static const int32_t SPINBOX_NEGATIVE_MAX_RANGE_VALUE = 12;
 static const uint8_t SPINBOX_DECIMAL_POSITION = 1U;
+static lv_group_t * gr = NULL;
 
 void setUp(void)
 {
-    active_screen = lv_screen_active();
-    spinbox_negative_min_range = lv_spinbox_create(active_screen);
-    spinbox_zero_min_range = lv_spinbox_create(active_screen);
-    spinbox_events = lv_spinbox_create(active_screen);
+    test_spinbox_active_screen = lv_screen_active();
+    spinbox_negative_min_range = lv_spinbox_create(test_spinbox_active_screen);
+    spinbox_zero_min_range = lv_spinbox_create(test_spinbox_active_screen);
+    spinbox_events = lv_spinbox_create(test_spinbox_active_screen);
 
     lv_spinbox_set_range(spinbox_negative_min_range, SPINBOX_NEGATIVE_MIN_RANGE_VALUE, SPINBOX_NEGATIVE_MAX_RANGE_VALUE);
     lv_spinbox_set_range(spinbox_zero_min_range, SPINBOX_ZERO_MIN_RANGE_VALUE, SPINBOX_NEGATIVE_MAX_RANGE_VALUE);
 
-    g = lv_group_create();
-    lv_indev_set_group(lv_test_encoder_indev, g);
+    gr = lv_group_create();
+    lv_indev_set_group(lv_test_encoder_indev, gr);
 }
 
 void tearDown(void)
@@ -37,7 +37,7 @@ void tearDown(void)
     lv_obj_delete(spinbox_zero_min_range);
     lv_obj_delete(spinbox_events);
 
-    lv_obj_clean(active_screen);
+    lv_obj_clean(test_spinbox_active_screen);
 }
 
 /* See issue #3559 for more info */
@@ -87,7 +87,7 @@ void test_spinbox_position_selection(void)
 
     /* When not possible to select the indicated position */
     lv_obj_t * tmp;
-    tmp = lv_spinbox_create(active_screen);
+    tmp = lv_spinbox_create(test_spinbox_active_screen);
     lv_spinbox_set_range(tmp, 0, 10);
     lv_spinbox_set_cursor_pos(tmp, 2);
     TEST_ASSERT_EQUAL(1, lv_spinbox_get_step(tmp));
@@ -100,7 +100,7 @@ void test_spinbox_set_range(void)
     int32_t range_min = 20;
 
     lv_obj_t * tmp;
-    tmp = lv_spinbox_create(active_screen);
+    tmp = lv_spinbox_create(test_spinbox_active_screen);
     lv_spinbox_set_range(tmp, 0, 100);
     lv_spinbox_set_value(tmp, 50);
 
@@ -120,7 +120,7 @@ void test_spinbox_set_range(void)
 
 void test_spinbox_step_prev(void)
 {
-    lv_obj_t * tmp = lv_spinbox_create(active_screen);
+    lv_obj_t * tmp = lv_spinbox_create(test_spinbox_active_screen);
 
     /* When next step is bigger than biggest range */
     lv_spinbox_set_range(tmp, 0, 5);
@@ -144,7 +144,7 @@ void test_spinbox_step_prev(void)
 
 void test_spinbox_rollover(void)
 {
-    lv_obj_t * tmp = lv_spinbox_create(active_screen);
+    lv_obj_t * tmp = lv_spinbox_create(test_spinbox_active_screen);
 
     lv_spinbox_set_rollover(tmp, true);
     TEST_ASSERT_TRUE(lv_spinbox_get_rollover(tmp));
@@ -188,7 +188,7 @@ void test_spinbox_event_key(void)
 void test_spinbox_event_key_encoder_indev_turn_right(void)
 {
     /* Setup group and encoder indev */
-    lv_group_add_obj(g, spinbox_events);
+    lv_group_add_obj(gr, spinbox_events);
 
     /* Spinbox should increment it's value by one step after receiving the LV_KEY_UP event */
     lv_spinbox_set_value(spinbox_events, 0);
@@ -203,7 +203,7 @@ void test_spinbox_event_key_encoder_indev_turn_left(void)
 {
     int32_t value = 10;
     /* Setup group and encoder indev */
-    lv_group_add_obj(g, spinbox_events);
+    lv_group_add_obj(gr, spinbox_events);
 
     /* Spinbox should decrement it's value by one step after receiving the LV_KEY_UP event */
     lv_spinbox_set_value(spinbox_events, value);
@@ -219,8 +219,8 @@ void test_spinbox_event_key_encoder_indev_editing_group(void)
     int32_t value = 10;
     /* Setup group and encoder indev */
     lv_spinbox_set_range(spinbox_events, 0, 20);
-    lv_group_add_obj(g, spinbox_events);
-    lv_group_set_editing(g, true);
+    lv_group_add_obj(gr, spinbox_events);
+    lv_group_set_editing(gr, true);
 
     lv_spinbox_set_value(spinbox_events, value);
     lv_spinbox_set_cursor_pos(spinbox_events, 0);
@@ -248,8 +248,8 @@ void test_spinbox_event_key_encoder_indev_editing_group_left_step_direction(void
     /* Setup group and encoder indev */
     lv_spinbox_set_digit_step_direction(spinbox_events, LV_DIR_LEFT);
     lv_spinbox_set_range(spinbox_events, 0, 20);
-    lv_group_add_obj(g, spinbox_events);
-    lv_group_set_editing(g, true);
+    lv_group_add_obj(gr, spinbox_events);
+    lv_group_set_editing(gr, true);
 
     lv_spinbox_set_value(spinbox_events, value);
     lv_spinbox_set_cursor_pos(spinbox_events, 0);
@@ -289,7 +289,7 @@ void test_spinbox_zero_crossing(void)
     /* Setup group and encoder indev */
     lv_spinbox_set_digit_step_direction(spinbox_events, LV_DIR_LEFT);
     lv_spinbox_set_range(spinbox_events, -20, 20);
-    lv_group_add_obj(g, spinbox_events);
+    lv_group_add_obj(gr, spinbox_events);
 
     lv_spinbox_set_value(spinbox_events, value);
     lv_spinbox_set_cursor_pos(spinbox_events, 1);

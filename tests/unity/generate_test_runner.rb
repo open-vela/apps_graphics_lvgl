@@ -204,7 +204,9 @@ class UnityTestRunnerGenerator
 
   def find_setup_and_teardown(source)
     @options[:has_setup] = source =~ /void\s+#{@options[:setup_name]}\s*\(/
+    @options[:rename_setup] = source =~ /void\s+setUp\s*\(/
     @options[:has_teardown] = source =~ /void\s+#{@options[:teardown_name]}\s*\(/
+    @options[:rename_teardown] = source =~ /void\s+tearDown\s*\(/
     @options[:has_suite_setup] ||= (source =~ /void\s+suiteSetUp\s*\(/)
     @options[:has_suite_teardown] ||= (source =~ /int\s+suiteTearDown\s*\(int\s+([a-zA-Z0-9_])+\s*\)/)
   end
@@ -288,14 +290,14 @@ class UnityTestRunnerGenerator
   end
 
   def create_setup(output)
-    return if @options[:has_setup]
+    return if @options[:has_setup] or @options[:rename_setup]
 
     output.puts("\n/*=======Setup (stub)=====*/")
     output.puts("void #{@options[:setup_name]}(void) {}")
   end
 
   def create_teardown(output)
-    return if @options[:has_teardown]
+    return if @options[:has_teardown] or @options[:rename_teardown]
 
     output.puts("\n/*=======Teardown (stub)=====*/")
     output.puts("void #{@options[:teardown_name]}(void) {}")
@@ -305,7 +307,8 @@ class UnityTestRunnerGenerator
     return if @options[:suite_setup].nil?
 
     output.puts("\n/*=======Suite Setup=====*/")
-    output.puts('void suiteSetUp(void)')
+    if @options[:suite_setup_static] then output.puts('static ') end
+    output.puts("void #{@options[:suite_prefix]}suiteSetUp(void)")
     output.puts('{')
     output.puts(@options[:suite_setup])
     output.puts('}')
@@ -315,7 +318,8 @@ class UnityTestRunnerGenerator
     return if @options[:suite_teardown].nil?
 
     output.puts("\n/*=======Suite Teardown=====*/")
-    output.puts('int suiteTearDown(int num_failures)')
+    if @options[:suite_teardown_static] then output.puts('static ') end
+    output.puts("int #{@options[:suite_prefix]}suiteTearDown(int num_failures)")
     output.puts('{')
     output.puts(@options[:suite_teardown])
     output.puts('}')
@@ -400,7 +404,7 @@ class UnityTestRunnerGenerator
       output.puts("#{main_return} #{main_name}(void)")
       output.puts('{')
     end
-    output.puts('  suiteSetUp();') if @options[:has_suite_setup]
+    output.puts("  #{@options[:suite_prefix]}suiteSetUp();") if @options[:has_suite_setup]
     if @options[:omit_begin_end]
       output.puts("  UnitySetTestFile(\"#{filename.gsub(/\\/, '\\\\\\')}\");")
     else
@@ -423,7 +427,7 @@ class UnityTestRunnerGenerator
       if @options[:omit_begin_end]
         output.puts('  (void) suite_teardown(0);')
       else
-        output.puts('  return suiteTearDown(UnityEnd());')
+        output.puts("  return #{@options[:suite_prefix]}suiteTearDown(UnityEnd());")
       end
     else
       output.puts('  return UnityEnd();') unless @options[:omit_begin_end]
