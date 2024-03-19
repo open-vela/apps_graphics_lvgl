@@ -1870,4 +1870,22 @@ menu "LVGL configuration"
 			depends on LV_USE_VECTOR_GRAPHIC
 	endmenu
 
+	menuconfig LVGL_UNITTESTS
+		bool "LVGL unittest"
+		default n
+		depends on LIB_PNG
+		---help---
+			Enable unittest for LVGL
+
+if LVGL_UNITTESTS
+	config LVGL_UNITTESTS_PRIORITY
+		int "lvgldemo task priority"
+		default 100
+
+	config LVGL_UNITTESTS_STACKSIZE
+		int "lvgldemo stack size"
+		default 131072
+
+source "$APPSDIR/graphics/lvgl/lvgl/tests/Kconfig"
+endif # LVGL_UNITTESTS
 endmenu

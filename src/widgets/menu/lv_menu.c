@@ -210,7 +210,7 @@ void lv_menu_set_page(lv_obj_t * obj, lv_obj_t * page)
         menu->cur_depth++;
 
         /* Place page in main */
-        lv_obj_set_parent(page, menu->main);
+        lv_obj_set_parent(page, menu->main_obj);
     }
     else {
         /* Empty page, clear history */
@@ -549,7 +549,7 @@ static void lv_menu_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     lv_obj_set_flex_flow(main_cont, LV_FLEX_FLOW_COLUMN);
     lv_obj_add_flag(main_cont, LV_OBJ_FLAG_EVENT_BUBBLE);
     lv_obj_remove_flag(main_cont, LV_OBJ_FLAG_CLICKABLE);
-    menu->main = main_cont;
+    menu->main_obj = main_cont;
 
     lv_obj_t * main_header = lv_obj_class_create_obj(&lv_menu_main_header_cont_class, main_cont);
     lv_obj_class_init_obj(main_header);

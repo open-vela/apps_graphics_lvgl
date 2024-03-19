@@ -1,0 +1,5 @@
+
+config LV_TEST_COVERAGE
+    bool "Enable unittest coverage"
+    default n
+

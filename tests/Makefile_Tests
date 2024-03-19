@@ -1,0 +1,19 @@
+
+TEST_CASE_NAME := $(notdir ${TEST_CASE_FILE})
+TEST_APP_NAME := $(basename ${TEST_CASE_NAME})
+
+ifneq (${TEST_APP_NAME}, _test_template)
+
+TEST_APP_RUNNER := ${LVGL_PATH}/tests/build_test_nuttx/${TEST_APP_NAME}_Runner.c
+
+HAVE_TEST_FILE := $(shell test -f ${LVGL_PATH}/tests/build_test_nuttx/test_entries.lock && echo yes)
+ifneq ($(HAVE_TEST_FILE), yes)
+$(shell echo "extern void ${TEST_APP_NAME}_main(void);" >> ${LVGL_PATH}/tests/build_test_nuttx/test_entries.h)
+$(shell echo "${TEST_APP_NAME}_main();" >> ${LVGL_PATH}/tests/build_test_nuttx/test_entries_list.h)
+
+$(shell sed -e 's/setUp/${TEST_APP_NAME}_setUp/g' -e 's/tearDown/${TEST_APP_NAME}_tearDown/g' ${TEST_CASE_FILE} > ${LVGL_PATH}/tests/build_test_nuttx/${TEST_CASE_NAME})
+
+$(shell ruby ${LVGL_PATH}/tests/unity/generate_test_runner.rb ${LVGL_PATH}/tests/build_test_nuttx/config.yml --main_name=${TEST_APP_NAME}_main --test_reset_name=${TEST_APP_NAME}_resetTest --test_verify_name=${TEST_APP_NAME}_verifyTest --setup_name=${TEST_APP_NAME}_setUp --teardown_name=${TEST_APP_NAME}_tearDown ${TEST_CASE_FILE} ${TEST_APP_RUNNER})
+
+endif
+endif

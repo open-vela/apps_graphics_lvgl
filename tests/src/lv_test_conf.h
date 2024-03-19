@@ -57,8 +57,10 @@ extern "C" {
 #endif
 
 #ifndef __ASSEMBLY__
+#ifndef LV_ASSERT_HANDLER
 void lv_test_assert_fail(void);
 #define LV_ASSERT_HANDLER lv_test_assert_fail();
+#endif
 
 typedef void * lv_user_data_t;
 #endif

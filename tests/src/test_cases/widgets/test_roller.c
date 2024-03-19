@@ -8,11 +8,10 @@
 #define OPTION_BUFFER_SZ        (20U)
 #define OPTION_SMALL_BUFFER_SZ  (3U)
 
-static lv_obj_t * active_screen = NULL;
-static lv_obj_t * roller = NULL;
+static lv_obj_t * test_roller_active_screen = NULL;
+static lv_obj_t * _test_roller = NULL;
 static lv_obj_t * roller_infinite = NULL;
 static lv_obj_t * roller_mouse = NULL;
-static lv_group_t * g = NULL;
 static lv_group_t * encoder_g = NULL;
 static lv_group_t * mouse_g = NULL;
 
@@ -21,16 +20,16 @@ static const char * default_infinite_roller_options = "One\nTwo\nThree\nFour\nFi
 
 void setUp(void)
 {
-    active_screen = lv_screen_active();
-    roller = lv_roller_create(active_screen);
-    roller_infinite = lv_roller_create(active_screen);
-    roller_mouse = lv_roller_create(active_screen);
+    test_roller_active_screen = lv_screen_active();
+    _test_roller = lv_roller_create(test_roller_active_screen);
+    roller_infinite = lv_roller_create(test_roller_active_screen);
+    roller_mouse = lv_roller_create(test_roller_active_screen);
 
-    lv_roller_set_options(roller, default_roller_options, LV_ROLLER_MODE_NORMAL);
+    lv_roller_set_options(_test_roller, default_roller_options, LV_ROLLER_MODE_NORMAL);
     lv_roller_set_options(roller_infinite, default_infinite_roller_options, LV_ROLLER_MODE_INFINITE);
     lv_roller_set_options(roller_mouse, default_roller_options, LV_ROLLER_MODE_NORMAL);
 
-    g = lv_group_create();
+    lv_group_t * g = lv_group_create();
     lv_indev_set_group(lv_test_keypad_indev, g);
 
     encoder_g = lv_group_create();
@@ -39,22 +38,22 @@ void setUp(void)
     mouse_g = lv_group_create();
     lv_indev_set_group(lv_test_mouse_indev, mouse_g);
 
-    lv_group_add_obj(g, roller);
+    lv_group_add_obj(g, _test_roller);
     lv_group_add_obj(encoder_g, roller_infinite);
     lv_group_add_obj(mouse_g, roller_mouse);
 }
 
 void tearDown(void)
 {
-    lv_group_remove_obj(roller);
+    lv_group_remove_obj(_test_roller);
     lv_group_remove_obj(roller_infinite);
     lv_group_remove_obj(roller_mouse);
-    lv_obj_clean(active_screen);
+    lv_obj_clean(test_roller_active_screen);
 }
 
 void test_roller_get_options(void)
 {
-    TEST_ASSERT_EQUAL_STRING(default_roller_options, lv_roller_get_options(roller));
+    TEST_ASSERT_EQUAL_STRING(default_roller_options, lv_roller_get_options(_test_roller));
 }
 
 void test_roller_get_selected_option(void)
@@ -65,14 +64,14 @@ void test_roller_get_selected_option(void)
     char * expected_index_str = "Three";
 
     /* Select the last option, index starts at 0 */
-    uint16_t option_count = lv_roller_get_option_count(roller);
-    lv_roller_set_selected(roller, option_count - 1, LV_ANIM_OFF);
+    uint16_t option_count = lv_roller_get_option_count(_test_roller);
+    lv_roller_set_selected(_test_roller, option_count - 1, LV_ANIM_OFF);
 
-    actual_index = lv_roller_get_selected(roller);
+    actual_index = lv_roller_get_selected(_test_roller);
     TEST_ASSERT_EQUAL(expected_index, actual_index);
 
     /* Get the index string */
-    lv_roller_get_selected_str(roller, actual_str, OPTION_BUFFER_SZ);
+    lv_roller_get_selected_str(_test_roller, actual_str, OPTION_BUFFER_SZ);
 
     TEST_ASSERT_EQUAL_STRING(expected_index_str, actual_str);
 }
@@ -83,11 +82,11 @@ void test_roller_get_selected_option_truncated_buffer(void)
     char * expected_index_str = "Th";
 
     /* Select the last option, index starts at 0 */
-    uint16_t option_count = lv_roller_get_option_count(roller);
-    lv_roller_set_selected(roller, option_count - 1, LV_ANIM_OFF);
+    uint16_t option_count = lv_roller_get_option_count(_test_roller);
+    lv_roller_set_selected(_test_roller, option_count - 1, LV_ANIM_OFF);
 
     /* Get the index string */
-    lv_roller_get_selected_str(roller, actual_str, OPTION_SMALL_BUFFER_SZ);
+    lv_roller_get_selected_str(_test_roller, actual_str, OPTION_SMALL_BUFFER_SZ);
 
     TEST_ASSERT_EQUAL_STRING(expected_index_str, actual_str);
 }
@@ -134,37 +133,37 @@ void test_roller_keypad_events(void)
     return;
 
     /* Select option index 1 with LV_KEY_RIGHT event */
-    lv_roller_set_selected(roller, 0, LV_ANIM_OFF);
+    lv_roller_set_selected(_test_roller, 0, LV_ANIM_OFF);
     lv_test_key_hit(LV_KEY_RIGHT);
 
-    actual_index = lv_roller_get_selected(roller);
+    actual_index = lv_roller_get_selected(_test_roller);
     TEST_ASSERT_EQUAL(expected_index, actual_index);
 
     /* Select next option with LV_KEY_DOWN */
     expected_index = 2;
     lv_test_key_hit(LV_KEY_DOWN);
 
-    actual_index = lv_roller_get_selected(roller);
+    actual_index = lv_roller_get_selected(_test_roller);
     TEST_ASSERT_EQUAL(expected_index, actual_index);
 
     /* Select previous option with LV_KEY_LEFT */
     expected_index = 1;
     lv_test_key_hit(LV_KEY_LEFT);
 
-    actual_index = lv_roller_get_selected(roller);
+    actual_index = lv_roller_get_selected(_test_roller);
     TEST_ASSERT_EQUAL(expected_index, actual_index);
 
     /* Select previous option with LV_KEY_UP */
     expected_index = 0;
     lv_test_key_hit(LV_KEY_UP);
 
-    actual_index = lv_roller_get_selected(roller);
+    actual_index = lv_roller_get_selected(_test_roller);
     TEST_ASSERT_EQUAL(expected_index, actual_index);
 }
 
 void test_roller_with_overlay_and_bubble_events_enabled(void)
 {
-    lv_obj_t * overlay = lv_obj_create(roller);
+    lv_obj_t * overlay = lv_obj_create(_test_roller);
     lv_obj_add_flag(overlay, LV_OBJ_FLAG_EVENT_BUBBLE);
 
     lv_obj_send_event(overlay, LV_EVENT_PRESSED, NULL);
@@ -174,7 +173,7 @@ void test_roller_with_overlay_and_bubble_events_enabled(void)
 //{
 //    char actual_str[OPTION_BUFFER_SZ] = {0x00};
 //
-//    lv_group_remove_obj(roller);
+//    lv_group_remove_obj(_test_roller);
 //    lv_group_add_obj(g, roller_infinite);
 //
 //    /* Select the last option of page 2 */
@@ -207,11 +206,11 @@ void test_roller_with_overlay_and_bubble_events_enabled(void)
 //    lv_style_set_border_width(&style_sel, 2);
 //    lv_style_set_border_color(&style_sel, lv_color_hex3(0xf00));
 //
-//    lv_obj_add_style(roller, &style_sel, LV_PART_SELECTED);
-//    lv_obj_set_style_text_align(roller, LV_TEXT_ALIGN_RIGHT, 0);
-//    lv_roller_set_options(roller, "One\nTwo\nThree\nFour\nFive", LV_ROLLER_MODE_NORMAL);
-//    lv_roller_set_selected(roller, 1, LV_ANIM_OFF);
-//    lv_obj_center(roller);
+//    lv_obj_add_style(_test_roller, &style_sel, LV_PART_SELECTED);
+//    lv_obj_set_style_text_align(_test_roller, LV_TEXT_ALIGN_RIGHT, 0);
+//    lv_roller_set_options(_test_roller, "One\nTwo\nThree\nFour\nFive", LV_ROLLER_MODE_NORMAL);
+//    lv_roller_set_selected(_test_roller, 1, LV_ANIM_OFF);
+//    lv_obj_center(_test_roller);
 //
 //    TEST_ASSERT_EQUAL_SCREENSHOT("widgets/roller_1.png");
 //#else
@@ -240,7 +239,7 @@ void test_roller_with_overlay_and_bubble_events_enabled(void)
 //    /* Check which is the selected option */
 //    TEST_ASSERT_EQUAL(0, lv_roller_get_selected(roller_mouse));
 //
-//    /* Clic further down the roller */
+//    /* Clic further down the _test_roller */
 //    lv_test_mouse_click_at(roller_mouse->coords.x1 + 5, roller_mouse->coords.y1 + 100);
 //    /* Check which is the selected option */
 //    TEST_ASSERT_NOT_EQUAL(0, lv_roller_get_selected(roller_mouse));
