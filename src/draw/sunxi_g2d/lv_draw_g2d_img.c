@@ -109,9 +109,10 @@ void lv_draw_g2d_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * dsc
     uint32_t dest_stride = lv_draw_buf_width_to_stride(lv_area_get_width(&layer->buf_area), layer->color_format);
     lv_color_format_t dest_cf = layer->color_format;
 
-    if(has_transform)
+    if(has_transform) {
         _g2d_blit_transform(dest_buf, &blend_area, dest_stride, dest_cf,
                             src_buf, &src_area, src_stride, src_cf, dsc, draw_unit->clip_area, &layer->buf_area);
+    }
     else {
         lv_area_move(&blend_area, -layer->buf_area.x1, -layer->buf_area.y1);
         _g2d_blit(dest_buf, &blend_area, dest_stride, dest_cf,
@@ -191,10 +192,11 @@ static void _g2d_blit_transform(uint8_t * dest_buf, const lv_area_t * dest_area,
             return;
         }
         lv_area_t src_area_clip, dest_area_clip;
-        lv_area_copy(&src_area_clip, clip_area);
+        lv_area_copy(&dest_area_clip, dest_area);
+        if(!_lv_area_intersect(&dest_area_clip, &dest_area_clip, clip_area))
+            return;
+        lv_area_copy(&src_area_clip, &dest_area_clip);
         lv_area_move(&src_area_clip, -dest_area->x1, -dest_area->y1);
-        lv_area_copy(&dest_area_clip, clip_area);
-        lv_area_move(&dest_area_clip, -buf_area->x1, -buf_area->y1);
         _g2d_blit(dest_buf, &dest_area_clip, dest_stride, dest_cf,
                   scale_buf_aligned, &src_area_clip, zoom_w * src_px_size, src_cf, dsc->opa);
         lv_free(scale_buf);
