@@ -13,7 +13,11 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_cache_private.h"
+
+#include "../../lv_conf_internal.h"
+#include "../lv_types.h"
+
+#if LV_CACHE_DEF_SIZE > 0
 
 /*********************
  *      DEFINES
