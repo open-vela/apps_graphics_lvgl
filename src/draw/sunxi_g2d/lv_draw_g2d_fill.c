@@ -83,7 +83,8 @@ static void _g2d_fill(uint8_t * dest_buf, const lv_area_t * dest_area, uint32_t 
     int32_t dest_h = lv_area_get_height(dest_area);
 
     uint8_t px_size = lv_color_format_get_size(dest_cf);
-
+    if(px_size == 0)
+        return;
     unsigned long vaddr_start = (unsigned long)dest_buf + dest_stride * dest_area->y1 + px_size * dest_area->x1;
     hal_dcache_clean_invalidate(vaddr_start, dest_stride * dest_h);
 
