@@ -280,7 +280,7 @@ static lv_draw_buf_t * decode_png_file(lv_image_decoder_dsc_t * dsc, const char 
 
     /*Alloc image buffer*/
     lv_draw_buf_t * decoded;
-    decoded = lv_draw_buf_create(image.width, image.height, cf, LV_STRIDE_AUTO);
+    decoded = lv_draw_buf_create(image.width, image.height, LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
     if(decoded == NULL) {
         LV_LOG_ERROR("alloc PNG_IMAGE_SIZE(%" LV_PRIu32 ") failed: %s", (uint32_t)PNG_IMAGE_SIZE(image), filename);
         lv_free(data);
@@ -291,7 +291,7 @@ static lv_draw_buf_t * decode_png_file(lv_image_decoder_dsc_t * dsc, const char 
     void * map = decoded->data + LV_COLOR_INDEXED_PALETTE_SIZE(cf) * sizeof(lv_color32_t);
 
     /*Start decoding*/
-    ret = png_image_finish_read(&image, NULL, map, decoded->header.stride, palette);
+    ret = png_image_finish_read(&image, NULL, decoded->data, decoded->header.stride, NULL);
     png_image_free(&image);
     lv_free(data);
     if(!ret) {
