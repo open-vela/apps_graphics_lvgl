@@ -154,7 +154,8 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
 {
     LV_UNUSED(u);
     lv_area_t img_area;
-    _lv_area_intersect(&img_area, &t->area, &t->clip_area);
+    if(!_lv_area_intersect(&img_area, &t->area, &t->clip_area))
+        return 0;
     int32_t size = lv_area_get_width(&img_area) * lv_area_get_height(&img_area);
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL: {
