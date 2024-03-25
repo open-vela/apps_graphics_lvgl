@@ -1428,8 +1428,8 @@
 
 #ifndef LV_USE_ANIMIMG
     #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_ANIMIMG
-            #define LV_USE_ANIMIMG CONFIG_LV_USE_ANIMIMG
+        #ifdef CONFIG_LV_USE_ANIMIMAGE
+            #define LV_USE_ANIMIMG CONFIG_LV_USE_ANIMIMAGE
         #else
             #define LV_USE_ANIMIMG 0
         #endif
