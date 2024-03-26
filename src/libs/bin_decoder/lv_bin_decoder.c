@@ -596,7 +596,8 @@ static lv_result_t decode_indexed(lv_image_decoder_t * decoder, lv_image_decoder
 
         uint32_t data_len = 0;
         if(lv_fs_seek(f, 0, LV_FS_SEEK_END) != LV_FS_RES_OK ||
-           lv_fs_tell(f, &data_len) != LV_FS_RES_OK) {
+           lv_fs_tell(f, &data_len) != LV_FS_RES_OK ||
+           data_len < draw_buf_indexed->data_size) {
             LV_LOG_WARN("Failed to get file to size");
             goto exit_with_buf;
         }
@@ -733,7 +734,8 @@ static lv_result_t load_indexed(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         uint32_t data_len = 0;
         if(lv_fs_seek(f, 0, LV_FS_SEEK_END) != LV_FS_RES_OK ||
-           lv_fs_tell(f, &data_len) != LV_FS_RES_OK) {
+           lv_fs_tell(f, &data_len) != LV_FS_RES_OK ||
+           data_len < decoded->data_size) {
             LV_LOG_WARN("Failed to get file to size");
             lv_draw_buf_destroy(decoded);
             return LV_RESULT_INVALID;
