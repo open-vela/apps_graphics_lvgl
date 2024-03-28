@@ -152,6 +152,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, 
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
     LV_UNUSED(decoder);
+    LV_PROFILER_BEGIN_TAG("lv_lodepng_decoder_open");
 
     const uint8_t * png_data = NULL;
     size_t png_data_size = 0;
@@ -165,6 +166,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
                     lv_free((void *)png_data);
                 }
                 LV_LOG_WARN("error %u: %s\n", error, lodepng_error_text(error));
+                LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
                 return LV_RESULT_INVALID;
             }
         }
@@ -175,6 +177,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         png_data_size = img_dsc->data_size;
     }
     else {
+        LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
@@ -184,12 +187,14 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     if(!decoded) {
         LV_LOG_WARN("Error decoding PNG\n");
+        LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
         lv_draw_buf_destroy(decoded);
+        LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
@@ -201,7 +206,10 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     dsc->decoded = decoded;
 
-    if(dsc->args.no_cache) return LV_RES_OK;
+    if(dsc->args.no_cache) {
+        LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
+        return LV_RES_OK;
+    }
 
 #if LV_CACHE_DEF_SIZE > 0
     lv_image_cache_data_t search_key;
@@ -212,11 +220,13 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     lv_cache_entry_t * entry = lv_image_decoder_add_to_cache(decoder, &search_key, decoded, NULL);
 
     if(entry == NULL) {
+        LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
         return LV_RESULT_INVALID;
     }
     dsc->cache_entry = entry;
 #endif
 
+    LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
     return LV_RESULT_OK;    /*If not returned earlier then it failed*/
 }
 

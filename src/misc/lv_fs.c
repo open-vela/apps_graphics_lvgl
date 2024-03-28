@@ -96,7 +96,9 @@ lv_fs_res_t lv_fs_open(lv_fs_file_t * file_p, const char * path, lv_fs_mode_t mo
     }
     else {
         const char * real_path = lv_fs_get_real_path(path);
+        LV_PROFILER_BEGIN_TAG("lv_fs_open");
         void * file_d = drv->open_cb(drv, real_path, mode);
+        LV_PROFILER_END_TAG("lv_fs_open");
         if(file_d == NULL || file_d == (void *)(-1)) {
             return LV_FS_RES_UNKNOWN;
         }
@@ -253,6 +255,8 @@ lv_fs_res_t lv_fs_read(lv_fs_file_t * file_p, void * buf, uint32_t btr, uint32_t
     if(file_p->drv == NULL) return LV_FS_RES_INV_PARAM;
     if(file_p->drv->read_cb == NULL) return LV_FS_RES_NOT_IMP;
 
+    LV_PROFILER_BEGIN_TAG("lv_fs_read");
+
     uint32_t br_tmp = 0;
     lv_fs_res_t res;
 
@@ -264,6 +268,8 @@ lv_fs_res_t lv_fs_read(lv_fs_file_t * file_p, void * buf, uint32_t btr, uint32_t
     }
 
     if(br != NULL) *br = br_tmp;
+
+    LV_PROFILER_END_TAG("lv_fs_read");
 
     return res;
 }
@@ -280,12 +286,18 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
         return LV_FS_RES_NOT_IMP;
     }
 
+    LV_PROFILER_BEGIN_TAG("lv_fs_write");
+
     lv_fs_res_t res = LV_FS_RES_OK;
 
     /*Need to do FS seek before writing data to FS*/
     if(file_p->drv->cache_size) {
         res = file_p->drv->seek_cb(file_p->drv, file_p->file_d, file_p->cache->file_position, LV_FS_SEEK_SET);
-        if(res != LV_FS_RES_OK) return res;
+        if(res != LV_FS_RES_OK)
+        {
+            LV_PROFILER_END_TAG("lv_fs_write");
+            return res;
+        }
     }
 
     uint32_t bw_tmp = 0;
@@ -295,6 +307,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
     if(file_p->drv->cache_size && res == LV_FS_RES_OK)
         file_p->cache->file_position += bw_tmp;
 
+    LV_PROFILER_END_TAG("lv_fs_write");
     return res;
 }
 
