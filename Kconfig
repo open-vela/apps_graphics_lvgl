@@ -1229,7 +1229,7 @@ menu "LVGL configuration"
 
 		config LV_USE_RLOTTIE
 			bool "Lottie library"
-
+	
 		config LV_USE_THORVG
 			bool "ThorVG library"
 			choice
