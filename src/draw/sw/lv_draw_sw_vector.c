@@ -102,6 +102,7 @@ static void _set_paint_shape(Tvg_Paint * obj, const lv_vector_path_t * p)
                 }
                 break;
             case LV_VECTOR_PATH_OP_QUAD_TO: {
+                    LV_ASSERT(pidx > 0);
                     lv_fpoint_t * pt1 = lv_array_at(&p->points, pidx);
                     lv_fpoint_t * pt2 = lv_array_at(&p->points, pidx + 1);
 
