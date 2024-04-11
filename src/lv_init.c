@@ -387,8 +387,8 @@ void lv_deinit(void)
     lv_etc2_deinit();
 #endif
 
-#if LV_USE_DRAW_SW
-    lv_draw_sw_deinit();
+#if LV_USE_DRAW_G2D
+    lv_draw_g2d_deinit();
 #endif
 
     lv_draw_deinit();
