@@ -3282,4 +3282,12 @@ LV_EXPORT_CONST_INT(LV_DRAW_BUF_ALIGN);
     #endif
 #endif  /*defined(LV_CONF_SKIP)*/
 
+#ifndef LV_USE_DRAW_G2D
+    #ifdef CONFIG_LV_USE_DRAW_G2D
+        #define LV_USE_DRAW_G2D CONFIG_LV_USE_DRAW_G2D
+    #else
+        #define LV_USE_DRAW_G2D          0
+    #endif
+#endif
+
 #endif  /*LV_CONF_INTERNAL_H*/
