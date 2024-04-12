@@ -579,7 +579,7 @@ extern "C" {
         return VG_LITE_SUCCESS;
     }
 
-    vg_lite_error_t vg_lite_init(int32_t tessellation_width, int32_t tessellation_height)
+    vg_lite_error_t vg_lite_init(vg_lite_int32_t tessellation_width, vg_lite_int32_t tessellation_height)
     {
         LV_UNUSED(tessellation_width);
         LV_UNUSED(tessellation_height);
@@ -1753,7 +1753,7 @@ Empty_sequence_handler:
         return VG_LITE_NOT_SUPPORT;
     }
 
-    vg_lite_error_t vg_lite_set_scissor(int32_t x, int32_t y, int32_t right, int32_t bottom)
+    vg_lite_error_t vg_lite_set_scissor(vg_lite_int32_t x, vg_lite_int32_t y, vg_lite_int32_t right, vg_lite_int32_t bottom)
     {
         LV_UNUSED(x);
         LV_UNUSED(y);
