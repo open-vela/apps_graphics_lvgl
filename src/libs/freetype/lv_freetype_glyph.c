@@ -156,7 +156,6 @@ static bool freetype_glyph_create_cb(lv_freetype_glyph_cache_data_t * data, void
                 dsc_out->box_w, dsc_out->box_h
             });
         }
-        dsc_out->bpp = LV_VECFONT_BPP; /*Bit per pixel: 1/2/4/8*/
     }
     else if(dsc->render_mode == LV_FREETYPE_FONT_RENDER_MODE_BITMAP) {
         FT_Bitmap * glyph_bitmap = &face->glyph->bitmap;

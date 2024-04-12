@@ -329,7 +329,6 @@ bool lv_vg_lite_is_src_cf_supported(lv_color_format_t cf)
     switch(cf) {
         case LV_COLOR_FORMAT_A4:
         /* case LV_COLOR_FORMAT_A8: */
-        case LV_COLOR_FORMAT_I8:
         case LV_COLOR_FORMAT_RGB565:
         case LV_COLOR_FORMAT_ARGB8888:
         case LV_COLOR_FORMAT_XRGB8888:
@@ -1077,50 +1076,6 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
 
     /* Clear all gradient caches reference */
     lv_vg_lite_pending_remove_all(u->grad_pending);
-
-    /* Clear image decoder dsc reference */
-    lv_vg_lite_pending_remove_all(u->image_dsc_pending);
-    u->flush_count = 0;
-    LV_PROFILER_END;
-}
-
-void lv_vg_lite_flush(lv_draw_unit_t * draw_unit)
-{
-    LV_ASSERT_NULL(u);
-    LV_PROFILER_BEGIN;
-
-    u->flush_count++;
-
-#if LV_VG_LITE_FLUSH_MAX_COUNT
-    if(u->flush_count < LV_VG_LITE_FLUSH_MAX_COUNT) {
-        /* Do not flush too often */
-        LV_PROFILER_END;
-        return;
-    }
-#else
-    vg_lite_uint32_t is_gpu_idle = 0;
-    LV_VG_LITE_CHECK_ERROR(vg_lite_get_parameter(VG_LITE_GPU_IDLE_STATE, 1, (vg_lite_pointer)&is_gpu_idle));
-    if(!is_gpu_idle) {
-        /* Do not flush if GPU is busy */
-        LV_PROFILER_END;
-        return;
-    }
-#endif
-
-    LV_VG_LITE_CHECK_ERROR(vg_lite_flush());
-    u->flush_count = 0;
-    LV_PROFILER_END;
-}
-
-void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
-{
-    LV_ASSERT_NULL(u);
-    LV_PROFILER_BEGIN;
-
-    LV_VG_LITE_CHECK_ERROR(vg_lite_finish());
-
-    /* Clear all gradient caches */
-    lv_vg_lite_linear_grad_release_all(u);
 
     /* Clear image decoder dsc reference */
     lv_vg_lite_pending_remove_all(u->image_dsc_pending);
