@@ -318,6 +318,7 @@ lv_fs_res_t lv_fs_write(lv_fs_file_t * file_p, const void * buf, uint32_t btw, u
         file_p->cache->file_position += bw_tmp;
 
     LV_PROFILER_END;
+
     return res;
 }
 
