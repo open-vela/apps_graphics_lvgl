@@ -334,12 +334,21 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
         }
     }
 
+    if(src_type == LV_IMAGE_SRC_FILE) {
+        lv_fs_res_t fs_res = lv_fs_open(&dsc->file, src, LV_FS_MODE_RD);
+        if(fs_res != LV_FS_RES_OK) {
+            LV_LOG_ERROR("File open failed: %" LV_PRIu32, (uint32_t)fs_res);
+            return NULL;
+        }
+    }
+
     /*Search the decoders*/
     lv_image_decoder_t * decoder_prev = NULL;
     _LV_LL_READ(img_decoder_ll_p, decoder) {
         /*Info and Open callbacks are required*/
         if(decoder->info_cb && decoder->open_cb) {
-            lv_result_t res = decoder->info_cb(decoder, src, header);
+            lv_fs_seek(&dsc->file, 0, LV_FS_SEEK_SET);
+            lv_result_t res = decoder->info_cb(decoder, dsc, header);
 
             if(decoder_prev) LV_LOG_INFO("Can't open image with decoder %s. Trying next decoder.", decoder_prev->name);
 
@@ -357,6 +366,10 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
 
     if(decoder == NULL) LV_LOG_INFO("No decoder found");
     else LV_LOG_INFO("Found decoder %s", decoder->name);
+
+    if(src_type == LV_IMAGE_SRC_FILE) {
+        lv_fs_close(&dsc->file);
+    }
 
     if(is_header_cache_enabled && src_type == LV_IMAGE_SRC_FILE && decoder) {
         lv_cache_entry_t * entry;
