@@ -33,11 +33,11 @@ static uint32_t img_width_to_stride(lv_image_header_t * header);
 
 /**
  * Get the header info of an image source, and return the a pointer to the decoder that can open it.
- * @param src       The image source (e.g. a filename or a pointer to a C array)
+ * @param dsc       The image source (e.g. a filename or a pointer to a C array)
  * @param header    The header of the image
  * @return The decoder that can open the image source or NULL if not found (or can't open it).
  */
-static lv_image_decoder_t * image_decoder_get_info(const void * src, lv_image_header_t * header);
+static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc, lv_image_header_t * header);
 
 static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc);
 
@@ -78,7 +78,12 @@ void _lv_image_decoder_deinit(void)
 
 lv_result_t lv_image_decoder_get_info(const void * src, lv_image_header_t * header)
 {
-    lv_image_decoder_t * decoder = image_decoder_get_info(src, header);
+    lv_image_decoder_dsc_t dsc;
+    lv_memzero(&dsc, sizeof(lv_image_decoder_dsc_t));
+    dsc.src = src;
+    dsc.src_type = lv_image_src_get_type(src);
+
+    lv_image_decoder_t * decoder = image_decoder_get_info(&dsc, header);
     if(decoder == NULL) return LV_RESULT_INVALID;
 
     return LV_RESULT_OK;
@@ -104,7 +109,7 @@ lv_result_t lv_image_decoder_open(lv_image_decoder_dsc_t * dsc, const void * src
     }
 
     /*Find the decoder that can open the image source, and get the header info in the same time.*/
-    dsc->decoder = image_decoder_get_info(src, &dsc->header);
+    dsc->decoder = image_decoder_get_info(dsc, &dsc->header);
     if(dsc->decoder == NULL) return LV_RESULT_INVALID;
 
     /*Make a copy of args*/
@@ -287,11 +292,12 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
  *   STATIC FUNCTIONS
  **********************/
 
-static lv_image_decoder_t * image_decoder_get_info(const void * src, lv_image_header_t * header)
+static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc, lv_image_header_t * header)
 {
     lv_memzero(header, sizeof(lv_image_header_t));
 
-    if(src == NULL) return NULL;
+    const void * src = dsc->src;
+    lv_image_src_t src_type = dsc->src_type;
 
     lv_image_src_t src_type = lv_image_src_get_type(src);
     /* miwear could set NULL data variable type of image */
