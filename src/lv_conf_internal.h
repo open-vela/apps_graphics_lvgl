@@ -28,8 +28,6 @@
 #define LV_DRAW_SW_ASM_HELIUM       2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
-#define LV_ARRAY_DEFAULT_CAPACITY   8
-
 /* Handle special Kconfig options */
 #ifndef LV_KCONFIG_IGNORE
     #include "lv_conf_kconfig.h"
@@ -2359,6 +2357,24 @@
         #define LV_GIF_CACHE_DECODE_DATA CONFIG_LV_GIF_CACHE_DECODE_DATA
     #else
         #define LV_GIF_CACHE_DECODE_DATA 0
+    #endif
+#endif
+
+#ifndef LV_USE_CUSTOM_GIF
+    #ifdef CONFIG_LV_USE_CUSTOM_GIF
+        #define LV_USE_CUSTOM_GIF CONFIG_LV_USE_CUSTOM_GIF
+    #else
+        #define LV_USE_CUSTOM_GIF 0
+    #endif
+#endif
+
+#if LV_USE_CUSTOM_GIF
+    #ifndef LV_CUSTOM_GIF_INCLUDE
+        #ifdef CONFIG_LV_CUSTOM_GIF_INCLUDE
+            #define LV_CUSTOM_GIF_INCLUDE CONFIG_LV_CUSTOM_GIF_INCLUDE
+        #else
+            #define LV_CUSTOM_GIF_INCLUDE ""
+        #endif
     #endif
 #endif
 #endif
