@@ -1201,15 +1201,21 @@ menu "LVGL configuration"
 
 		config LV_USE_GIF
 			bool "GIF decoder library"
-		
+
 		if LV_USE_GIF
+			config LV_USE_CUSTOM_GIF
+				bool "Implement the GIF functions externally"
+				default n
+
 			config LV_GIF_CACHE_DECODE_DATA
 				bool "Use extra 16KB RAM to cache decoded data to accerlate"
-		endif
+				depends on !LV_USE_CUSTOM_GIF
 
-		config LV_GIF_CACHE_DECODE_DATA
-			bool "Use extra 16KB RAM to cache decoded data to accerlate"
-			depends on LV_USE_GIF
+			config LV_CUSTOM_GIF_INCLUDE
+				string "Set the custom GIF functions include file"
+				default ""
+				depends on LV_USE_CUSTOM_GIF
+		endif
 
 		config LV_BIN_DECODER_RAM_LOAD
 			bool "Decode whole image to RAM for bin decoder"

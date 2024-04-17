@@ -9,6 +9,7 @@ extern "C" {
 #include "../../misc/lv_fs.h"
 
 #if LV_USE_GIF
+#if !LV_USE_CUSTOM_GIF
 
 typedef struct _gd_Palette {
     int size;
@@ -62,6 +63,7 @@ int gd_get_frame(gd_GIF * gif);
 void gd_rewind(gd_GIF * gif);
 void gd_close_gif(gd_GIF * gif);
 
+#endif /*!LV_USE_CUSTOM_GIF*/
 #endif /*LV_USE_GIF*/
 
 #ifdef __cplusplus

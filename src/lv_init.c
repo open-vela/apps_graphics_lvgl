@@ -6,8 +6,10 @@
 /*********************
  *      INCLUDES
  *********************/
+#include "lv_init.h"
 #include "core/lv_global.h"
 #include "core/lv_obj.h"
+#include "core/lv_refr.h"
 #include "display/lv_display_private.h"
 #include "indev/lv_indev_private.h"
 #include "layouts/lv_layout.h"
@@ -21,10 +23,14 @@
 #include "libs/libjpeg_turbo/lv_libjpeg_turbo.h"
 #include "libs/lodepng/lv_lodepng.h"
 #include "libs/libpng/lv_libpng.h"
+#include "libs/tiny_ttf/lv_tiny_ttf.h"
 #include "libs/etc2/lv_etc2.h"
 #include "libs/webp/lv_libwebp.h"
 #include "draw/lv_draw.h"
 #include "misc/lv_async.h"
+#include "widgets/span/lv_span.h"
+#include "themes/simple/lv_theme_simple.h"
+#include "themes/default/lv_theme_default.h"
 #include "misc/lv_fs.h"
 #if LV_USE_DRAW_VGLITE
     #include "draw/nxp/vglite/lv_draw_vglite.h"
