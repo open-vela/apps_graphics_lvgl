@@ -3,6 +3,7 @@
 #include "../../stdlib/lv_mem.h"
 #include "../../misc/lv_color.h"
 #if LV_USE_GIF
+#if !LV_USE_CUSTOM_GIF
 
 #include <stdlib.h>
 #include <string.h>
@@ -793,4 +794,5 @@ static void f_gif_close(gd_GIF * gif)
     }
 }
 
+#endif /*!LV_USE_CUSTOM_GIF*/
 #endif /*LV_USE_GIF*/
