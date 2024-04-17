@@ -13,11 +13,12 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-
 #include "../../../lvgl.h"
+
 #if LV_USE_GIF
 
-#include "gifdec.h"
+#include "lv_gif_decoder.h"
+#include "../../widgets/image/lv_image.h"
 
 /*********************
  *      DEFINES
@@ -29,10 +30,7 @@ extern "C" {
 
 typedef struct {
     lv_image_t img;
-    gd_GIF * gif;
-    lv_timer_t * timer;
-    lv_draw_buf_t imgdsc;
-    uint32_t last_call;
+    void * decoder_ctx;
 } lv_gif_t;
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_gif_class;
@@ -74,6 +72,21 @@ void lv_gif_pause(lv_obj_t * obj);
  */
 void lv_gif_resume(lv_obj_t * obj);
 
+/**
+ * Init Gif library
+ */
+void lv_gif_init(void);
+
+/*
+ * Register a GIF decoder
+ * @param decoder pointer to a GIF decoder struct
+ */
+void lv_gif_decoder_register(lv_gif_decoder_t * decoder);
+
+/**
+ * Deinit Gif library
+ */
+void lv_gif_deinit(void);
 /**********************
  *      MACROS
  **********************/
