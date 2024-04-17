@@ -715,6 +715,12 @@
 #if LV_USE_GIF
 /*GIF decoder accelerate*/
 #define LV_GIF_CACHE_DECODE_DATA 0
+
+#define LV_USE_CUSTOM_GIF 0
+
+#if LV_USE_CUSTOM_GIF
+    #define LV_CUSTOM_GIF_INCLUDE ""
+#endif
 #endif
 
 #define LV_USE_LIBWEBP 0
