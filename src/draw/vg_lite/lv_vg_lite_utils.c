@@ -313,7 +313,6 @@ bool lv_vg_lite_is_dest_cf_supported(lv_color_format_t cf)
         case LV_COLOR_FORMAT_XRGB8888:
             return true;
 
-        case LV_COLOR_FORMAT_ARGB8565:
         case LV_COLOR_FORMAT_RGB888:
             return vg_lite_query_feature(gcFEATURE_BIT_VG_24BIT) ? true : false;
 
@@ -329,19 +328,13 @@ bool lv_vg_lite_is_src_cf_supported(lv_color_format_t cf)
     switch(cf) {
         case LV_COLOR_FORMAT_A4:
         /* case LV_COLOR_FORMAT_A8: */
+        case LV_COLOR_FORMAT_I8:
         case LV_COLOR_FORMAT_RGB565:
         case LV_COLOR_FORMAT_ARGB8888:
         case LV_COLOR_FORMAT_XRGB8888:
         case LV_COLOR_FORMAT_ETC2_EAC:
             return true;
 
-        case LV_COLOR_FORMAT_I1:
-        case LV_COLOR_FORMAT_I2:
-        case LV_COLOR_FORMAT_I4:
-        case LV_COLOR_FORMAT_I8:
-            return vg_lite_query_feature(gcFEATURE_BIT_VG_IM_INDEX_FORMAT) ? true : false;
-
-        case LV_COLOR_FORMAT_ARGB8565:
         case LV_COLOR_FORMAT_RGB888:
             return vg_lite_query_feature(gcFEATURE_BIT_VG_24BIT) ? true : false;
 
@@ -381,9 +374,6 @@ vg_lite_buffer_format_t lv_vg_lite_vg_fmt(lv_color_format_t cf)
 
         case LV_COLOR_FORMAT_RGB565:
             return VG_LITE_BGR565;
-
-        case LV_COLOR_FORMAT_ARGB8565:
-            return VG_LITE_BGRA5658;
 
         case LV_COLOR_FORMAT_RGB888:
             return VG_LITE_BGR888;
@@ -580,12 +570,8 @@ void lv_vg_lite_buffer_from_draw_buf(vg_lite_buffer_t * buffer, const lv_draw_bu
     uint32_t stride = draw_buf->header.stride;
     vg_lite_buffer_format_t format = lv_vg_lite_vg_fmt(draw_buf->header.cf);
 
-    if(LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
-        uint32_t palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(uint32_t);
-
-        /* Skip palette */
-        ptr += LV_VG_LITE_ALIGN(palette_size_bytes, LV_DRAW_BUF_ALIGN);
-    }
+    if(LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf))
+        ptr += LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * 4;
 
     width = lv_vg_lite_width_align(width);
 
@@ -938,16 +924,15 @@ void lv_vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_
 {
     vg_lite_matrix_t temp;
     int row, column;
-    vg_lite_float_t (*m)[3] = matrix->m;
 
     /* Process all rows. */
     for(row = 0; row < 3; row++) {
         /* Process all columns. */
         for(column = 0; column < 3; column++) {
             /* Compute matrix entry. */
-            temp.m[row][column] = (m[row][0] * mult->m[0][column])
-                                  + (m[row][1] * mult->m[1][column])
-                                  + (m[row][2] * mult->m[2][column]);
+            temp.m[row][column] = (matrix->m[row][0] * mult->m[0][column])
+                                  + (matrix->m[row][1] * mult->m[1][column])
+                                  + (matrix->m[row][2] * mult->m[2][column]);
         }
     }
 
@@ -982,14 +967,12 @@ bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t
         return true;
     }
 
-    const vg_lite_float_t (*m)[3] = matrix->m;
-
-    det00 = m[1][1] * m[2][2] - m[2][1] * m[1][2];
-    det01 = m[2][0] * m[1][2] - m[1][0] * m[2][2];
-    det02 = m[1][0] * m[2][1] - m[2][0] * m[1][1];
+    det00 = (matrix->m[1][1] * matrix->m[2][2]) - (matrix->m[2][1] * matrix->m[1][2]);
+    det01 = (matrix->m[2][0] * matrix->m[1][2]) - (matrix->m[1][0] * matrix->m[2][2]);
+    det02 = (matrix->m[1][0] * matrix->m[2][1]) - (matrix->m[2][0] * matrix->m[1][1]);
 
     /* Compute determinant. */
-    d = m[0][0] * det00 + m[0][1] * det01 + m[0][2] * det02;
+    d = (matrix->m[0][0] * det00) + (matrix->m[0][1] * det01) + (matrix->m[0][2] * det02);
 
     /* Return 0 if there is no inverse matrix. */
     if(d == 0.0f)
@@ -999,17 +982,17 @@ bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t
     d = 1.0f / d;
 
     /* Determine if the matrix is affine. */
-    is_affine = (m[2][0] == 0.0f) && (m[2][1] == 0.0f) && (m[2][2] == 1.0f);
+    is_affine = (matrix->m[2][0] == 0.0f) && (matrix->m[2][1] == 0.0f) && (matrix->m[2][2] == 1.0f);
 
     result->m[0][0] = d * det00;
-    result->m[0][1] = d * ((m[2][1] * m[0][2]) - (m[0][1] * m[2][2]));
-    result->m[0][2] = d * ((m[0][1] * m[1][2]) - (m[1][1] * m[0][2]));
+    result->m[0][1] = d * ((matrix->m[2][1] * matrix->m[0][2]) - (matrix->m[0][1] * matrix->m[2][2]));
+    result->m[0][2] = d * ((matrix->m[0][1] * matrix->m[1][2]) - (matrix->m[1][1] * matrix->m[0][2]));
     result->m[1][0] = d * det01;
-    result->m[1][1] = d * ((m[0][0] * m[2][2]) - (m[2][0] * m[0][2]));
-    result->m[1][2] = d * ((m[1][0] * m[0][2]) - (m[0][0] * m[1][2]));
+    result->m[1][1] = d * ((matrix->m[0][0] * matrix->m[2][2]) - (matrix->m[2][0] * matrix->m[0][2]));
+    result->m[1][2] = d * ((matrix->m[1][0] * matrix->m[0][2]) - (matrix->m[0][0] * matrix->m[1][2]));
     result->m[2][0] = is_affine ? 0.0f : d * det02;
-    result->m[2][1] = is_affine ? 0.0f : d * ((m[2][0] * m[0][1]) - (m[0][0] * m[2][1]));
-    result->m[2][2] = is_affine ? 1.0f : d * ((m[0][0] * m[1][1]) - (m[1][0] * m[0][1]));
+    result->m[2][1] = is_affine ? 0.0f : d * ((matrix->m[2][0] * matrix->m[0][1]) - (matrix->m[0][0] * matrix->m[2][1]));
+    result->m[2][2] = is_affine ? 1.0f : d * ((matrix->m[0][0] * matrix->m[1][1]) - (matrix->m[1][0] * matrix->m[0][1]));
 
     /* Success. */
     return true;
@@ -1018,9 +1001,8 @@ bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t
 lv_point_precise_t lv_vg_lite_matrix_transform_point(const vg_lite_matrix_t * matrix, const lv_point_precise_t * point)
 {
     lv_point_precise_t p;
-    const vg_lite_float_t (*m)[3] = matrix->m;
-    p.x = (lv_value_precise_t)(point->x * m[0][0] + point->y * m[0][1] + m[0][2]);
-    p.y = (lv_value_precise_t)(point->x * m[1][0] + point->y * m[1][1] + m[1][2]);
+    p.x = (lv_value_precise_t)(point->x * matrix->m[0][0] + point->y * matrix->m[0][1] + matrix->m[0][2]);
+    p.y = (lv_value_precise_t)(point->x * matrix->m[1][0] + point->y * matrix->m[1][1] + matrix->m[1][2]);
     return p;
 }
 

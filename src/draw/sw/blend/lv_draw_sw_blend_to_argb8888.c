@@ -19,7 +19,7 @@
 #if LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_NEON
     #include "neon/lv_blend_neon.h"
 #elif LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_HELIUM
-    #include "helium/lv_blend_helium.h"
+    #include "arm2d/lv_blend_helium.h"
 #elif LV_USE_DRAW_SW_ASM == LV_DRAW_SW_ASM_CUSTOM
     #include LV_DRAW_SW_ASM_CUSTOM_INCLUDE
 #endif
@@ -44,21 +44,20 @@ typedef struct {
  *  STATIC PROTOTYPES
  **********************/
 
-static void /* LV_ATTRIBUTE_FAST_MEM */ rgb565_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc);
+LV_ATTRIBUTE_FAST_MEM static void rgb565_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc);
 
-static void /* LV_ATTRIBUTE_FAST_MEM */ rgb888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                           const uint8_t src_px_size);
+LV_ATTRIBUTE_FAST_MEM static void rgb888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc, const uint8_t src_px_size);
 
-static void /* LV_ATTRIBUTE_FAST_MEM */ argb8888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc);
+LV_ATTRIBUTE_FAST_MEM static void argb8888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc);
 
-static inline lv_color32_t /* LV_ATTRIBUTE_FAST_MEM */ lv_color_32_32_mix(lv_color32_t fg, lv_color32_t bg,
-                                                                          lv_color_mix_alpha_cache_t * cache);
+LV_ATTRIBUTE_FAST_MEM static inline lv_color32_t lv_color_32_32_mix(lv_color32_t fg, lv_color32_t bg,
+                                                                    lv_color_mix_alpha_cache_t * cache);
 
 static void lv_color_mix_with_alpha_cache_init(lv_color_mix_alpha_cache_t * cache);
 
-static inline void /* LV_ATTRIBUTE_FAST_MEM */ blend_non_normal_pixel(lv_color32_t * dest, lv_color32_t src,
-                                                                      lv_blend_mode_t mode, lv_color_mix_alpha_cache_t * cache);
-static inline void * /* LV_ATTRIBUTE_FAST_MEM */ drawbuf_next_row(const void * buf, uint32_t stride);
+LV_ATTRIBUTE_FAST_MEM static inline void blend_non_normal_pixel(lv_color32_t * dest, lv_color32_t src,
+                                                                lv_blend_mode_t mode, lv_color_mix_alpha_cache_t * cache);
+LV_ATTRIBUTE_FAST_MEM static inline void * drawbuf_next_row(const void * buf, uint32_t stride);
 
 /**********************
  *  STATIC VARIABLES
@@ -136,7 +135,7 @@ static inline void * /* LV_ATTRIBUTE_FAST_MEM */ drawbuf_next_row(const void * b
  *   GLOBAL FUNCTIONS
  **********************/
 
-void LV_ATTRIBUTE_FAST_MEM lv_draw_sw_blend_color_to_argb8888(_lv_draw_sw_blend_fill_dsc_t * dsc)
+LV_ATTRIBUTE_FAST_MEM void lv_draw_sw_blend_color_to_argb8888(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     int32_t w = dsc->dest_w;
     int32_t h = dsc->dest_h;
@@ -245,7 +244,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_sw_blend_color_to_argb8888(_lv_draw_sw_blend_
     }
 }
 
-void LV_ATTRIBUTE_FAST_MEM lv_draw_sw_blend_image_to_argb8888(_lv_draw_sw_blend_image_dsc_t * dsc)
+LV_ATTRIBUTE_FAST_MEM void lv_draw_sw_blend_image_to_argb8888(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     switch(dsc->src_color_format) {
         case LV_COLOR_FORMAT_RGB565:
@@ -270,7 +269,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_sw_blend_image_to_argb8888(_lv_draw_sw_blend_
  *   STATIC FUNCTIONS
  **********************/
 
-static void LV_ATTRIBUTE_FAST_MEM rgb565_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc)
+LV_ATTRIBUTE_FAST_MEM static void rgb565_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     int32_t w = dsc->dest_w;
     int32_t h = dsc->dest_h;
@@ -365,7 +364,7 @@ static void LV_ATTRIBUTE_FAST_MEM rgb565_image_blend(_lv_draw_sw_blend_image_dsc
     }
 }
 
-static void LV_ATTRIBUTE_FAST_MEM rgb888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc, const uint8_t src_px_size)
+LV_ATTRIBUTE_FAST_MEM static void rgb888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc, const uint8_t src_px_size)
 {
 
     int32_t w = dsc->dest_w;
@@ -483,7 +482,7 @@ static void LV_ATTRIBUTE_FAST_MEM rgb888_image_blend(_lv_draw_sw_blend_image_dsc
     }
 }
 
-static void LV_ATTRIBUTE_FAST_MEM argb8888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc)
+LV_ATTRIBUTE_FAST_MEM static void argb8888_image_blend(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     int32_t w = dsc->dest_w;
     int32_t h = dsc->dest_h;
@@ -571,7 +570,7 @@ static void LV_ATTRIBUTE_FAST_MEM argb8888_image_blend(_lv_draw_sw_blend_image_d
     }
 }
 
-static inline lv_color32_t LV_ATTRIBUTE_FAST_MEM lv_color_32_32_mix(lv_color32_t fg, lv_color32_t bg,
+LV_ATTRIBUTE_FAST_MEM static inline lv_color32_t lv_color_32_32_mix(lv_color32_t fg, lv_color32_t bg,
                                                                     lv_color_mix_alpha_cache_t * cache)
 {
     /*Pick the foreground if it's fully opaque or the Background is fully transparent*/
@@ -620,7 +619,7 @@ void lv_color_mix_with_alpha_cache_init(lv_color_mix_alpha_cache_t * cache)
     cache->ratio_saved = 255;
 }
 
-static inline void LV_ATTRIBUTE_FAST_MEM blend_non_normal_pixel(lv_color32_t * dest, lv_color32_t src,
+LV_ATTRIBUTE_FAST_MEM static inline void blend_non_normal_pixel(lv_color32_t * dest, lv_color32_t src,
                                                                 lv_blend_mode_t mode, lv_color_mix_alpha_cache_t * cache)
 {
     lv_color32_t res;
@@ -648,7 +647,7 @@ static inline void LV_ATTRIBUTE_FAST_MEM blend_non_normal_pixel(lv_color32_t * d
     *dest = lv_color_32_32_mix(res, *dest, cache);
 }
 
-static inline void * LV_ATTRIBUTE_FAST_MEM drawbuf_next_row(const void * buf, uint32_t stride)
+LV_ATTRIBUTE_FAST_MEM static inline void * drawbuf_next_row(const void * buf, uint32_t stride)
 {
     return (void *)((uint8_t *)buf + stride);
 }

@@ -22,6 +22,7 @@
 #include "libs/lodepng/lv_lodepng.h"
 #include "libs/libpng/lv_libpng.h"
 #include "libs/etc2/lv_etc2.h"
+#include "libs/webp/lv_libwebp.h"
 #include "draw/lv_draw.h"
 #include "misc/lv_async.h"
 #include "misc/lv_fs.h"
@@ -97,6 +98,7 @@ static inline void lv_global_init(lv_global_t * global)
     global->style_refresh = true;
     global->layout_count = _LV_LAYOUT_LAST;
     global->style_last_custom_prop_id = (uint32_t)_LV_STYLE_LAST_BUILT_IN_PROP;
+    global->area_trans_cache.angle_prev = INT32_MIN;
     global->event_last_register_id = _LV_EVENT_LAST;
     lv_rand_set_seed(0x1234ABCD);
 
@@ -272,10 +274,6 @@ void lv_init(void)
     lv_fs_memfs_init();
 #endif
 
-#if LV_USE_FS_LITTLEFS
-    lv_fs_littlefs_init();
-#endif
-
 #if LV_USE_LODEPNG
     lv_lodepng_init();
 #endif
@@ -300,6 +298,10 @@ void lv_init(void)
     lv_etc2_init();
 #endif
 
+#if LV_USE_LIBWEBP
+    lv_libwebp_init();
+#endif
+
     /*Make FFMPEG last because the last converter will be checked first and
      *it's superior to any other */
 #if LV_USE_FFMPEG
@@ -308,7 +310,11 @@ void lv_init(void)
 
 #if LV_USE_FREETYPE
     /*Init freetype library*/
-    lv_freetype_init(LV_FREETYPE_CACHE_FT_GLYPH_CNT);
+#  if LV_FREETYPE_CACHE_SIZE >= 0
+    lv_freetype_init(LV_FREETYPE_CACHE_FT_FACES, LV_FREETYPE_CACHE_FT_SIZES, LV_FREETYPE_CACHE_SIZE);
+#  else
+    lv_freetype_init(0, 0, 0);
+#  endif
 #endif
 
 #if LV_USE_TINY_TTF
@@ -384,6 +390,10 @@ void lv_deinit(void)
 
 #if LV_USE_ETC2
     lv_etc2_deinit();
+#endif
+
+#if LV_USE_LIBWEBP
+    lv_libwebp_deinit();
 #endif
 
 #if LV_USE_DRAW_G2D

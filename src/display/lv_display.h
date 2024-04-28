@@ -562,7 +562,6 @@ void lv_display_set_user_data(lv_display_t * disp, void * user_data);
 void lv_display_set_driver_data(lv_display_t * disp, void * driver_data);
 void * lv_display_get_user_data(lv_display_t * disp);
 void * lv_display_get_driver_data(lv_display_t * disp);
-lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp);
 
 /**********************
  *      MACROS
