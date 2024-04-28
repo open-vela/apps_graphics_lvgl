@@ -193,13 +193,6 @@ LV_EXPORT_CONST_INT(LV_DRAW_BUF_ALIGN);
     #define LV_USE_MEM_MONITOR      0
     #define LV_USE_PERF_MONITOR     0
 #endif /*LV_USE_SYSMON*/
-#ifndef LV_USE_LZ4
-    #define LV_USE_LZ4  (LV_USE_LZ4_INTERNAL || LV_USE_LZ4_EXTERNAL)
-#endif
-
-#ifndef LV_USE_THORVG
-    #define LV_USE_THORVG  (LV_USE_THORVG_INTERNAL || LV_USE_THORVG_EXTERNAL)
-#endif
 
 /*If running without lv_conf.h add typedefs with default value*/
 #ifdef LV_CONF_SKIP
