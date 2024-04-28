@@ -205,13 +205,13 @@ static bool init_cnt_cb(lv_cache_t * cache)
 
     /*add void* to store the ll node pointer*/
     if(!lv_rb_init(&lru->rb, lru->cache.ops.compare_cb, lv_cache_entry_get_size(lru->cache.node_size) + sizeof(void *))) {
-        return false;
+        return NULL;
     }
     _lv_ll_init(&lru->ll, sizeof(void *));
 
     lru->get_data_size_cb = cnt_get_data_size_cb;
 
-    return true;
+    return lru;
 }
 
 static bool init_size_cb(lv_cache_t * cache)
@@ -229,13 +229,13 @@ static bool init_size_cb(lv_cache_t * cache)
 
     /*add void* to store the ll node pointer*/
     if(!lv_rb_init(&lru->rb, lru->cache.ops.compare_cb, lv_cache_entry_get_size(lru->cache.node_size) + sizeof(void *))) {
-        return false;
+        return NULL;
     }
     _lv_ll_init(&lru->ll, sizeof(void *));
 
     lru->get_data_size_cb = size_get_data_size_cb;
 
-    return true;
+    return lru;
 }
 
 static void destroy_cb(lv_cache_t * cache, void * user_data)
@@ -393,7 +393,7 @@ static void drop_all_cb(lv_cache_t * cache, void * user_data)
             lru->cache.ops.free_cb(search_key, user_data);
         }
         else {
-            LV_LOG_WARN("entry (%p) is still referenced (%" LV_PRId32 ")", (void *)entry, lv_cache_entry_get_ref(entry));
+            LV_LOG_WARN("entry (%p) is still referenced (%" LV_PRId32 ")", entry, lv_cache_entry_get_ref(entry));
             used_cnt++;
         }
     }
