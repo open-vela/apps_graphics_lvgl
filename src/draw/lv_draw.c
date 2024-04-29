@@ -213,12 +213,10 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
                     lv_free(layer_drawn);
                 }
             }
-            if(t->type == LV_DRAW_TASK_TYPE_LABEL) {
-                lv_draw_label_dsc_t * draw_label_dsc = t->draw_dsc;
-                if(draw_label_dsc->text_local) {
-                    lv_free((void *)draw_label_dsc->text);
-                    draw_label_dsc->text = NULL;
-                }
+            lv_draw_label_dsc_t * draw_label_dsc = lv_draw_task_get_label_dsc(t);
+            if(draw_label_dsc && draw_label_dsc->text_local) {
+                lv_free((void *)draw_label_dsc->text);
+                draw_label_dsc->text = NULL;
             }
 
             if(t->type == LV_DRAW_TASK_TYPE_IMAGE) {
@@ -378,6 +376,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
     /*If the buffer of the layer is not allocated yet, allocate it now*/
     int32_t w = lv_area_get_width(&layer->buf_area);
     int32_t h = lv_area_get_height(&layer->buf_area);
+    uint32_t layer_size_byte = h * lv_draw_buf_width_to_stride(w, layer->color_format);
 
     layer->draw_buf = lv_draw_buf_create(w, h, layer->color_format, 0);
 
@@ -385,6 +384,9 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
         LV_LOG_WARN("Allocating layer buffer failed. Try later");
         return NULL;
     }
+
+    _draw_info.used_memory_for_layers_kb += get_layer_size_kb(layer_size_byte);
+    LV_LOG_INFO("Layer memory used: %" LV_PRIu32 " kB\n", _draw_info.used_memory_for_layers_kb);
 
     if(lv_color_format_has_alpha(layer->color_format)) {
         lv_draw_buf_clear(layer->draw_buf, NULL);
