@@ -16,6 +16,7 @@
  *********************/
 #define default_handlers LV_GLOBAL_DEFAULT()->draw_buf_handlers
 #define font_draw_buf_handlers LV_GLOBAL_DEFAULT()->font_draw_buf_handlers
+#define image_cache_draw_buf_handlers LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers
 
 /**********************
  *      TYPEDEFS
@@ -50,6 +51,7 @@ void _lv_draw_buf_init_handlers(void)
 {
     lv_draw_buf_init_with_default_handlers(&default_handlers);
     lv_draw_buf_init_with_default_handlers(&font_draw_buf_handlers);
+    lv_draw_buf_init_with_default_handlers(&image_cache_draw_buf_handlers);
 }
 
 void lv_draw_buf_init_with_default_handlers(lv_draw_buf_handlers_t * handlers)
