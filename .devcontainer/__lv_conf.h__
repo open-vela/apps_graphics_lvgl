@@ -12,7 +12,7 @@
  */
 
 /* clang-format off */
-#if 0 /*Set it to "1" to enable content*/
+#if 1 /*Set it to "1" to enable content*/
 
 #ifndef LV_CONF_H
 #define LV_CONF_H
@@ -667,16 +667,11 @@
 /*FreeType library*/
 #define LV_USE_FREETYPE 0
 #if LV_USE_FREETYPE
-    /*Memory used by FreeType to cache characters in kilobytes*/
-    #define LV_FREETYPE_CACHE_SIZE 768
-
     /*Let FreeType to use LVGL memory and file porting*/
     #define LV_FREETYPE_USE_LVGL_PORT 0
 
-    /* Maximum number of opened FT_Face/FT_Size objects managed by this cache instance. */
-    /* (0:use system defaults) */
-    #define LV_FREETYPE_CACHE_FT_FACES 8
-    #define LV_FREETYPE_CACHE_FT_SIZES 8
+    /*Cache count of the glyphs in FreeType. It means the number of glyphs that can be cached.
+     *The higher the value, the more memory will be used.*/
     #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 256
 #endif
 
@@ -906,9 +901,6 @@
 
 /*Show some widget. It might be required to increase `LV_MEM_SIZE` */
 #define LV_USE_DEMO_WIDGETS 1
-#if LV_USE_DEMO_WIDGETS
-    #define LV_DEMO_WIDGETS_SLIDESHOW 1
-#endif
 
 /*Demonstrate the usage of encoder and keyboard*/
 #define LV_USE_DEMO_KEYPAD_AND_ENCODER 1
