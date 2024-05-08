@@ -27,7 +27,6 @@ extern "C" {
 #include "../misc/lv_color_op.h"
 #include "../misc/lv_ll.h"
 #include "../misc/lv_log.h"
-#include "../misc/lv_profiler_builtin.h"
 #include "../misc/lv_style.h"
 #include "../misc/lv_timer.h"
 #include "../others/sysmon/lv_sysmon.h"
@@ -61,6 +60,14 @@ struct _lv_freetype_context_t;
 struct _lv_nuttx_ctx_t;
 #endif
 
+#if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
+struct _lv_profiler_builtin_ctx_t;
+#endif
+
+#if LV_USE_NUTTX
+struct _lv_nuttx_ctx_t;
+#endif
+
 typedef struct _lv_global_t {
     bool inited;
     bool deinit_in_progress;     /**< Can be used e.g. in the LV_EVENT_DELETE to deinit the drivers too */
@@ -88,7 +95,6 @@ typedef struct _lv_global_t {
 
     uint32_t memory_zero;
     uint32_t math_rand_seed;
-    lv_area_transform_cache_t area_trans_cache;
 
     lv_event_t * event_header;
     uint32_t event_last_register_id;
@@ -157,6 +163,10 @@ typedef struct _lv_global_t {
     lv_fs_drv_t win32_fs_drv;
 #endif
 
+#if LV_USE_FS_LITTLEFS
+    lv_fs_drv_t littlefs_fs_drv;
+#endif
+
 #if LV_USE_FREETYPE
     struct _lv_freetype_context_t * ft_context;
 #endif
@@ -174,7 +184,7 @@ typedef struct _lv_global_t {
 #endif
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
-    lv_profiler_builtin_ctx_t profiler_context;
+    struct _lv_profiler_builtin_ctx_t * profiler_context;
 #endif
 
 #if LV_USE_FILE_EXPLORER != 0

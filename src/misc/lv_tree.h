@@ -62,8 +62,7 @@ typedef bool (*traverse_cb)(const lv_tree_node_t * node, void * user_data);
 typedef bool (*before_cb)(const lv_tree_node_t * node, void * user_data);
 typedef void (*after_cb)(const lv_tree_node_t * node, void * user_data);
 
-bool lv_tree_walk(const lv_tree_node_t * node, lv_tree_walk_mode_t mode, traverse_cb cb, before_cb bcb, after_cb acb,
-                  void * data);
+bool lv_tree_walk(const lv_tree_node_t * node, lv_tree_walk_mode_t mode, traverse_cb cb, before_cb bcb, after_cb acb, void * data);
 
 /**********************
  *      MACROS
