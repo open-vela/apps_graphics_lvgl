@@ -87,13 +87,13 @@ void lv_draw_vg_lite_border(lv_draw_unit_t * draw_unit, const lv_draw_border_dsc
     int32_t h_inner = h;
 
     if(dsc->side & LV_BORDER_SIDE_TOP) {
-        x_offset += border_w;
-        w_inner -= border_w;
+        y_offset += border_w;
+        h_inner -= border_w;
     }
 
     if(dsc->side & LV_BORDER_SIDE_LEFT) {
-        y_offset += border_w;
-        h_inner -= border_w;
+        x_offset += border_w;
+        w_inner -= border_w;
     }
 
     if(dsc->side & LV_BORDER_SIDE_BOTTOM) {
