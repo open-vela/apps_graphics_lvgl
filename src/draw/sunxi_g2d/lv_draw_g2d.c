@@ -164,10 +164,6 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
                 /* Most simple case: just a plain rectangle (no radius, no gradient). */
                 if((draw_dsc->radius != 0) || (draw_dsc->grad.dir != (lv_grad_dir_t)LV_GRAD_DIR_NONE))
                     return 0;
-
-                if((draw_dsc->opa >= LV_OPA_MAX) && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_FILL))) {
-                    return 0;
-                }
                 if((draw_dsc->opa > LV_OPA_MIN) && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_OPA_FILL))) {
                     return 0;
                 }
