@@ -70,7 +70,7 @@ widgets = {
     "table": "Table",
     "tabview": "Tabview",
     "textarea": "Textarea",
-    "tileview": "Tileview",
+    "tileview": "Tabview",
     "win": "Window",
 }
 

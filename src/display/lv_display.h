@@ -532,6 +532,8 @@ void lv_display_delete_refr_timer(lv_display_t * disp);
 
 /**
  * Register vsync event of a display. `LV_EVENT_VSYNC` event will be sent periodically.
+ * Please don't use it in display event listeners.
+ *
  * @param disp      pointer to a display
  * @param event_cb      an event callback
  * @param user_data     optional user_data
@@ -540,6 +542,8 @@ bool lv_display_register_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb
 
 /**
  * Unregister vsync event of a display. `LV_EVENT_VSYNC` event won't be sent periodically.
+ * Please don't use it in display event listeners.
+ *
  * @param disp      pointer to a display
  * @param event_cb      an event callback
  * @param user_data     optional user_data
@@ -558,7 +562,6 @@ void lv_display_set_user_data(lv_display_t * disp, void * user_data);
 void lv_display_set_driver_data(lv_display_t * disp, void * driver_data);
 void * lv_display_get_user_data(lv_display_t * disp);
 void * lv_display_get_driver_data(lv_display_t * disp);
-lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp);
 
 /**********************
  *      MACROS
