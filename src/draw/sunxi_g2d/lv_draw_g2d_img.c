@@ -32,15 +32,15 @@
  **********************/
 
 /* Blit w/ transformation for images w/o opa and alpha channel */
-static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
-                                const lv_draw_buf_t * src_buf, const lv_area_t * src_area,
-                                const lv_draw_image_dsc_t * dsc, const lv_area_t * clip_area,
+static void _g2d_blit_transform(uint8_t * dest_buf, const lv_area_t * dest_area, uint32_t dest_stride,
+                                lv_color_format_t dest_cf, const uint8_t * src_buf, const lv_area_t * src_area,
+                                uint32_t src_stride, lv_color_format_t src_cf, const lv_draw_image_dsc_t * dsc, const lv_area_t * clip_area,
                                 const lv_area_t * buf_area);
 
 /* Blit simple w/ opa and alpha channel */
-static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
-                      const lv_draw_buf_t * src_buf, const lv_area_t * src_area,
-                      lv_opa_t opa);
+static void _g2d_blit(uint8_t * dest_buf, const lv_area_t * dest_area, uint32_t dest_stride,
+                      lv_color_format_t dest_cf, const uint8_t * src_buf, const lv_area_t * src_area,
+                      uint32_t src_stride, lv_color_format_t src_cf, lv_opa_t opa);
 
 /**********************
  *  STATIC VARIABLES
@@ -101,16 +101,22 @@ void lv_draw_g2d_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * dsc
         LV_LOG_ERROR("Failed to open image");
         return;
     }
+    uint32_t src_stride = decoder_dsc.decoded->header.stride;
+    lv_color_format_t src_cf = decoder_dsc.decoded->header.cf;
+
+    const uint8_t * src_buf = decoder_dsc.decoded->data;
+    uint8_t * dest_buf = layer->draw_buf->data;
+    uint32_t dest_stride = lv_draw_buf_width_to_stride(lv_area_get_width(&layer->buf_area), layer->color_format);
+    lv_color_format_t dest_cf = layer->color_format;
 
     if(has_transform) {
-        _g2d_blit_transform(layer->draw_buf, &blend_area,
-                            decoder_dsc.decoded, &src_area,
-                            dsc, draw_unit->clip_area, &layer->buf_area);
+        _g2d_blit_transform(dest_buf, &blend_area, dest_stride, dest_cf,
+                            src_buf, &src_area, src_stride, src_cf, dsc, draw_unit->clip_area, &layer->buf_area);
     }
     else {
         lv_area_move(&blend_area, -layer->buf_area.x1, -layer->buf_area.y1);
-        _g2d_blit(layer->draw_buf, &blend_area,
-                  decoder_dsc.decoded, &src_area, dsc->opa);
+        _g2d_blit(dest_buf, &blend_area, dest_stride, dest_cf,
+                  src_buf, &src_area, src_stride, src_cf, dsc->opa);
     }
     lv_image_decoder_close(&decoder_dsc);
 }
@@ -119,25 +125,24 @@ void lv_draw_g2d_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * dsc
  *   STATIC FUNCTIONS
  **********************/
 
-static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
-                                const lv_draw_buf_t * src_buf, const lv_area_t * src_area,
-                                const lv_draw_image_dsc_t * dsc, const lv_area_t * clip_area,
+static void _g2d_blit_transform(uint8_t * dest_buf, const lv_area_t * dest_area, uint32_t dest_stride,
+                                lv_color_format_t dest_cf, const uint8_t * src_buf, const lv_area_t * src_area,
+                                uint32_t src_stride, lv_color_format_t src_cf, const lv_draw_image_dsc_t * dsc, const lv_area_t * clip_area,
                                 const lv_area_t * buf_area)
 {
-    lv_color_format_t src_cf = src_buf->header.cf;
-    uint32_t src_stride = src_buf->header.stride;
     int32_t src_w = lv_area_get_width(src_area);
     int32_t src_h = lv_area_get_height(src_area);
 
     bool has_scale = (dsc->scale_x != LV_SCALE_NONE) || (dsc->scale_y != LV_SCALE_NONE);
     uint8_t src_px_size = lv_color_format_get_size(src_cf);
     if(has_scale) {
+
         int32_t zoom_w = lv_area_get_width(dest_area);
         int32_t zoom_h = lv_area_get_height(dest_area);
-        lv_draw_buf_t * scale_buf = lv_draw_buf_create(zoom_w, zoom_h, src_cf, LV_STRIDE_AUTO);
+        lv_color_t * scale_buf = lv_malloc(zoom_w * zoom_h * src_px_size);
+        uint8_t * scale_buf_aligned = lv_draw_buf_align(scale_buf, dest_cf);
         if(NULL == scale_buf)
             return ;
-
         g2d_blt_h info;
         memset(&info, 0, sizeof(g2d_blt_h));
         info.flag_h = G2D_BLT_NONE_H;
@@ -146,7 +151,7 @@ static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest
         info.src_image_h.clip_rect.y = 0;
         info.src_image_h.clip_rect.w = src_w;
         info.src_image_h.clip_rect.h = src_h;
-        info.src_image_h.width = src_buf->header.w;
+        info.src_image_h.width = src_stride / src_px_size;
         info.src_image_h.height = src_h;
         info.src_image_h.mode = G2D_PIXEL_ALPHA;
         info.src_image_h.alpha = 255;
@@ -154,7 +159,7 @@ static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest
         info.src_image_h.align[0] = 0;
         info.src_image_h.align[1] = info.src_image_h.align[0];
         info.src_image_h.align[2] = info.src_image_h.align[0];
-        info.src_image_h.laddr[0] = (uintptr_t)(src_buf->data);
+        info.src_image_h.laddr[0] = (uintptr_t)(src_buf);
         info.src_image_h.laddr[1] = (uintptr_t) 0;
         info.src_image_h.laddr[2] = (uintptr_t) 0;
         info.src_image_h.use_phy_addr = 1;
@@ -172,18 +177,18 @@ static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest
         info.dst_image_h.align[0] = 0;
         info.dst_image_h.align[1] = info.dst_image_h.align[0];
         info.dst_image_h.align[2] = info.dst_image_h.align[0];
-        info.dst_image_h.laddr[0] = (uintptr_t)(scale_buf->data);
+        info.dst_image_h.laddr[0] = (uintptr_t)(scale_buf_aligned);
         info.dst_image_h.laddr[1] = (uintptr_t) 0;
         info.dst_image_h.laddr[2] = (uintptr_t) 0;
         info.dst_image_h.use_phy_addr = 1;
 
-        unsigned long src_vaddr_start = (unsigned long)src_buf->data;
-        unsigned long dest_vaddr_start = (unsigned long)scale_buf->data;
+        unsigned long src_vaddr_start = (unsigned long)src_buf;
+        unsigned long dest_vaddr_start = (unsigned long)scale_buf_aligned;
 
         hal_dcache_clean_invalidate(src_vaddr_start, src_stride * src_h);
         hal_dcache_clean_invalidate(dest_vaddr_start, zoom_w * zoom_h * src_px_size);
         if(sunxi_g2d_control(G2D_CMD_BITBLT_H, &info) < 0) {
-            lv_draw_buf_destroy(scale_buf);
+            lv_free(scale_buf);
             return;
         }
         lv_area_t src_area_clip, dest_area_clip;
@@ -192,21 +197,17 @@ static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest
             return;
         lv_area_copy(&src_area_clip, &dest_area_clip);
         lv_area_move(&src_area_clip, -dest_area->x1, -dest_area->y1);
-        _g2d_blit(dest_buf, &dest_area_clip,
-                  scale_buf, &src_area_clip, dsc->opa);
-        lv_draw_buf_destroy(scale_buf);
+        _g2d_blit(dest_buf, &dest_area_clip, dest_stride, dest_cf,
+                  scale_buf_aligned, &src_area_clip, zoom_w * src_px_size, src_cf, dsc->opa);
+        lv_free(scale_buf);
     }
 
 }
 
-static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
-                      const lv_draw_buf_t * src_buf, const lv_area_t * src_area,
-                      lv_opa_t opa)
+static void _g2d_blit(uint8_t * dest_buf, const lv_area_t * dest_area, uint32_t dest_stride,
+                      lv_color_format_t dest_cf, const uint8_t * src_buf, const lv_area_t * src_area,
+                      uint32_t src_stride, lv_color_format_t src_cf, lv_opa_t opa)
 {
-    lv_color_format_t src_cf = src_buf->header.cf;
-    lv_color_format_t dest_cf = dest_buf->header.cf;
-    uint32_t src_stride = src_buf->header.stride;
-    uint32_t dest_stride = dest_buf->header.stride;
     int32_t dest_w = lv_area_get_width(dest_area);
     int32_t dest_h = lv_area_get_height(dest_area);
     int32_t src_w = lv_area_get_width(src_area);
@@ -216,10 +217,10 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
     uint8_t src_px_size = lv_color_format_get_size(src_cf);
     uint8_t dest_px_size = lv_color_format_get_size(dest_cf);
 
-    lv_draw_buf_invalidate_cache((lv_draw_buf_t *)src_buf, src_area);
+    lv_draw_buf_invalidate_cache((uint8_t *)src_buf, src_w, src_cf, (const lv_area_t *)src_area);
 
-    unsigned long src_vaddr_start = (unsigned long)src_buf->data + src_stride * src_area->y1 + src_px_size * src_area->x1;
-    unsigned long dest_vaddr_start = (unsigned long)dest_buf->data + dest_stride * dest_area->y1 + dest_px_size * dest_area->x1;
+    unsigned long src_vaddr_start = (unsigned long)src_buf + src_stride * src_area->y1 + src_px_size * src_area->x1;
+    unsigned long dest_vaddr_start = (unsigned long)dest_buf + dest_stride * dest_area->y1 + dest_px_size * dest_area->x1;
 
     hal_dcache_clean_invalidate(src_vaddr_start, src_stride * src_h);
     hal_dcache_clean_invalidate(dest_vaddr_start, dest_stride * dest_h);
@@ -236,13 +237,13 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
         info.src_image_h.clip_rect.y = 0;
         info.src_image_h.clip_rect.w = src_w;
         info.src_image_h.clip_rect.h = src_h;
-        info.src_image_h.width = src_buf->header.w;
-        info.src_image_h.height = src_buf->header.h;
+        info.src_image_h.width = src_stride / src_px_size;
+        info.src_image_h.height = src_h;
         info.src_image_h.color = 0xee8899;
         info.src_image_h.align[0] = 0;
         info.src_image_h.align[1] = info.src_image_h.align[0];
         info.src_image_h.align[2] = info.src_image_h.align[0];
-        info.src_image_h.laddr[0] = (uintptr_t)(src_buf->data + src_stride * src_area->y1 + src_px_size * src_area->x1);
+        info.src_image_h.laddr[0] = (uintptr_t)(src_buf + src_stride * src_area->y1 + src_px_size * src_area->x1);
         info.src_image_h.laddr[1] = (uintptr_t) 0;
         info.src_image_h.laddr[2] = (uintptr_t) 0;
         info.src_image_h.use_phy_addr = 1;
@@ -252,15 +253,15 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
         info.dst_image_h.clip_rect.y = 0;
         info.dst_image_h.clip_rect.w = dest_w;
         info.dst_image_h.clip_rect.h = dest_h;
-        info.dst_image_h.width = dest_buf->header.w;
-        info.dst_image_h.height = dest_buf->header.h;
+        info.dst_image_h.width = dest_stride / dest_px_size;
+        info.dst_image_h.height = dest_h;
         info.dst_image_h.mode = G2D_GLOBAL_ALPHA;
         info.dst_image_h.alpha = 255;
         info.dst_image_h.color = 0xee8899;
         info.dst_image_h.align[0] = 0;
         info.dst_image_h.align[1] = info.dst_image_h.align[0];
         info.dst_image_h.align[2] = info.dst_image_h.align[0];
-        info.dst_image_h.laddr[0] = (uintptr_t)(dest_buf->data + dest_stride * dest_area->y1 + dest_px_size * dest_area->x1);
+        info.dst_image_h.laddr[0] = (uintptr_t)(dest_buf + dest_stride * dest_area->y1 + dest_px_size * dest_area->x1);
         info.dst_image_h.laddr[1] = (uintptr_t) 0;
         info.dst_image_h.laddr[2] = (uintptr_t) 0;
         info.dst_image_h.use_phy_addr = 1;
@@ -303,13 +304,13 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
         info.src_image[1].clip_rect.y = src_area->y1;
         info.src_image[1].clip_rect.w = src_w;
         info.src_image[1].clip_rect.h = src_h;
-        info.src_image[1].width = src_buf->header.w;
-        info.src_image[1].height = src_buf->header.h;
+        info.src_image[1].width = src_stride / src_px_size;
+        info.src_image[1].height = src_area->y2 + 1;
         info.src_image[1].color = 0xee8899;
         info.src_image[1].align[0] = 0;
         info.src_image[1].align[1] = info.src_image[0].align[0];
         info.src_image[1].align[2] = info.src_image[0].align[0];
-        info.src_image[1].laddr[0] = (uintptr_t)(src_buf->data);
+        info.src_image[1].laddr[0] = (uintptr_t)(src_buf);
         info.src_image[1].laddr[1] = (uintptr_t) 0;
         info.src_image[1].laddr[2] = (uintptr_t) 0;
         info.src_image[1].use_phy_addr = 1;
@@ -319,15 +320,15 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
         info.dst_image.clip_rect.y = dest_area->y1;
         info.dst_image.clip_rect.w = dest_w;
         info.dst_image.clip_rect.h = dest_h;
-        info.dst_image.width = dest_buf->header.w;
-        info.dst_image.height = dest_buf->header.h;
+        info.dst_image.width = dest_stride / dest_px_size;
+        info.dst_image.height = dest_area->y2 + 1;
         info.dst_image.mode = G2D_PIXEL_ALPHA;
         info.dst_image.alpha = 255;
         info.dst_image.color = 0xee8899;
         info.dst_image.align[0] = 0;
         info.dst_image.align[1] = info.dst_image.align[0];
         info.dst_image.align[2] = info.dst_image.align[0];
-        info.dst_image.laddr[0] = (uintptr_t)(dest_buf->data);
+        info.dst_image.laddr[0] = (uintptr_t)(dest_buf);
         info.dst_image.laddr[1] = (uintptr_t) 0;
         info.dst_image.laddr[2] = (uintptr_t) 0;
         info.dst_image.use_phy_addr = 1;

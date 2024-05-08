@@ -5,7 +5,7 @@ Integration and Drivers
 .. toctree::
     :maxdepth: 2
 
-    building/index
+    build/index
     chip/index
     driver/index
     framework/index

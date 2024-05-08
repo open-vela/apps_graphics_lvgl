@@ -252,7 +252,7 @@ static int fbdev_get_pinfo(int fd, FAR struct fb_planeinfo_s * pinfo)
      */
 
     if(pinfo->bpp != 32 && pinfo->bpp != 16 &&
-       pinfo->bpp != 8  && pinfo->bpp != 1) {
+       pinfo->bpp != 24 && pinfo->bpp != 8) {
         LV_LOG_ERROR("bpp = %u not supported", pinfo->bpp);
         return -EINVAL;
     }
