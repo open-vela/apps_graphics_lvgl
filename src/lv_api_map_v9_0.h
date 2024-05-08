@@ -48,6 +48,8 @@ extern "C" {
 #define lv_draw_buf_flush_cache_user(handlers, drawbuf, area)       lv_draw_buf_flush_cache(drawbuf, area)
 #define lv_draw_buf_destroy_user(handlers, drawbuf)                 lv_draw_buf_destroy(drawbuf)
 
+#define LV_DRAW_BUF_DEFINE               LV_DRAW_BUF_DEFINE_STATIC
+
 /**********************
  *      MACROS
  **********************/

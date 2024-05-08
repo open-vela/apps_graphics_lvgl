@@ -34,16 +34,18 @@ LV_EXPORT_CONST_INT(LV_STRIDE_AUTO);
  */
 
 #define _LV_DRAW_BUF_STRIDE(w, cf) \
-    ((((w) * LV_COLOR_FORMAT_GET_BPP(cf) + 7) / 8 + (LV_DRAW_BUF_STRIDE_ALIGN) - 1) & ~((LV_DRAW_BUF_STRIDE_ALIGN) - 1))
+    LV_ROUND_UP(((w) * LV_COLOR_FORMAT_GET_BPP(cf) + 7) / 8, LV_DRAW_BUF_STRIDE_ALIGN)
 
-#define _LV_DRAW_BUF_SIZE(w, h, cf) \
-    (_LV_DRAW_BUF_STRIDE(w, cf) * (h))
+/* Allocate a slightly larger buffer, so we can adjust the start address to meet alignment */
+#define _LV_DRAW_BUF_SIZE(w, h, cf) (_LV_DRAW_BUF_STRIDE(w, cf) * (h) + LV_DRAW_BUF_ALIGN)
 
 /**
  * Define a static draw buffer with the given width, height, and color format.
  * Stride alignment is set to LV_DRAW_BUF_STRIDE_ALIGN.
+ *
+ * For platform that needs special buffer alignment, call LV_DRAW_BUF_INIT_STATIC.
  */
-#define LV_DRAW_BUF_DEFINE(name, _w, _h, _cf) \
+#define LV_DRAW_BUF_DEFINE_STATIC(name, _w, _h, _cf) \
     static uint8_t buf_##name[_LV_DRAW_BUF_SIZE(_w, _h, _cf)]; \
     static lv_draw_buf_t name = { \
                                   .header = { \
@@ -60,9 +62,12 @@ LV_EXPORT_CONST_INT(LV_STRIDE_AUTO);
                                   .unaligned_data = buf_##name, \
                                 }
 
-/**********************
- *      TYPEDEFS
- **********************/
+#define LV_DRAW_BUF_INIT_STATIC(name) \
+    do { \
+        lv_image_header_t * header = &name.header; \
+        lv_draw_buf_init(&name, header->w, header->h, header->cf, header->stride, buf_##name, sizeof(buf_##name)); \
+        lv_draw_buf_set_flag(&name, LV_IMAGE_FLAGS_MODIFIABLE); \
+    } while(0)
 
 typedef void * (*lv_draw_buf_malloc_cb)(size_t size, lv_color_format_t color_format);
 
@@ -251,7 +256,7 @@ lv_draw_buf_t * lv_draw_buf_dup(const lv_draw_buf_t * draw_buf);
 lv_draw_buf_t * lv_draw_buf_dup_ex(const lv_draw_buf_handlers_t * handlers, const lv_draw_buf_t * draw_buf);
 
 /**
- * Initialize a draw buf with the given buffer and parameters.
+ * Initialize a draw buf with the given buffer and parameters. Clear draw buffer flag to zero.
  * @param draw_buf  the draw buf to initialize
  * @param w         the buffer width in pixels
  * @param h         the buffer height in pixels
