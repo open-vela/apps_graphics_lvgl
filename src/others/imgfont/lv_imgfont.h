@@ -13,8 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lv_conf_internal.h"
-#include "../../font/lv_font.h"
+#include "../../../lvgl.h"
 
 #if LV_USE_IMGFONT
 
