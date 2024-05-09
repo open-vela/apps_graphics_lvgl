@@ -204,7 +204,7 @@ void testSvgElement(void)
     lv_svg_node_delete(svg_node_ar);
 
     const char * svg_ar10 = \
-                           "<svg preserveAspectRatio=\"unknown\"></svg>";
+                            "<svg preserveAspectRatio=\"unknown\"></svg>";
     svg_node_ar = lv_svg_load_data(svg_ar10, lv_strlen(svg_ar10));
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node_ar->attrs), 1);
     lv_svg_node_delete(svg_node_ar);
@@ -328,21 +328,21 @@ void testPathElement(void)
 void testTransform(void)
 {
     const char * svg_tr1 = \
-                             "<svg><g transform=\" \"/></svg>";
+                           "<svg><g transform=\" \"/></svg>";
     lv_svg_node_t * svg_node_root = lv_svg_load_data(svg_tr1, lv_strlen(svg_tr1));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 0);
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_tr2 = \
-                             "<svg><g transform=\"none\"/></svg>";
+                           "<svg><g transform=\"none\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr2, lv_strlen(svg_tr2));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 1);
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_tr3 = \
-                             "<svg><g transform=\"matrix()\"/></svg>";
+                           "<svg><g transform=\"matrix()\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr3, lv_strlen(svg_tr3));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     lv_svg_matrix_t * matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -354,7 +354,7 @@ void testTransform(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_tr4 = \
-                             "<svg><g transform=\"matrix(1.5, 0, 2.0, 2, 10, 20)\"/></svg>";
+                           "<svg><g transform=\"matrix(1.5, 0, 2.0, 2, 10, 20)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr4, lv_strlen(svg_tr4));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -370,7 +370,7 @@ void testTransform(void)
 
 
     const char * svg_tr5 = \
-                             "<svg><g transform=\"translate(1, 2) translate(2.0, 2)\"/></svg>";
+                           "<svg><g transform=\"translate(1, 2) translate(2.0, 2)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr5, lv_strlen(svg_tr5));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -382,7 +382,7 @@ void testTransform(void)
 
 
     const char * svg_tr6 = \
-                             "<svg><g transform=\" scale(0.5) scale(0.5 0.5)\"/></svg>";
+                           "<svg><g transform=\" scale(0.5) scale(0.5 0.5)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr6, lv_strlen(svg_tr6));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -394,7 +394,7 @@ void testTransform(void)
 
 
     const char * svg_tr7 = \
-                             "<svg><g transform=\" translate(10 ) scale( 0.5  0.5) scale(0.5 ) \"/></svg>";
+                           "<svg><g transform=\" translate(10 ) scale( 0.5  0.5) scale(0.5 ) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr7, lv_strlen(svg_tr7));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -407,7 +407,7 @@ void testTransform(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_tr8 = \
-                             "<svg><g transform=\" rotate(90 10 10) \"/></svg>";
+                           "<svg><g transform=\" rotate(90 10 10) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr8, lv_strlen(svg_tr8));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -419,7 +419,7 @@ void testTransform(void)
 
 
     const char * svg_tr9 = \
-                             "<svg><g transform=\" rotate(90 ) \"/></svg>";
+                           "<svg><g transform=\" rotate(90 ) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr9, lv_strlen(svg_tr9));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -430,7 +430,7 @@ void testTransform(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_tr10 = \
-                             "<svg><g transform=\" skewX(10) skewY(10) \"/></svg>";
+                            "<svg><g transform=\" skewX(10) skewY(10) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr10, lv_strlen(svg_tr10));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -444,21 +444,21 @@ void testTransform(void)
 void testStrokeFill(void)
 {
     const char * svg_sf1 = \
-                             "<svg><g fill=\" \"/></svg>";
+                           "<svg><g fill=\" \"/></svg>";
     lv_svg_node_t * svg_node_root = lv_svg_load_data(svg_sf1, lv_strlen(svg_sf1));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 0);
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf2 = \
-                             "<svg><g fill=\"none\" stroke=\"inherit\"/></svg>";
+                           "<svg><g fill=\"none\" stroke=\"inherit\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf2, lv_strlen(svg_sf2));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 2);
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf3 = \
-                             "<svg><g fill=\" url(#grad1) \"/></svg>";
+                           "<svg><g fill=\" url(#grad1) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf3, lv_strlen(svg_sf3));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     const char * str = (const char *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.sval;
@@ -466,7 +466,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf4 = \
-                             "<svg><g fill=\" url( # grad2 ) \"/></svg>";
+                           "<svg><g fill=\" url( # grad2 ) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf4, lv_strlen(svg_sf4));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     str = (const char *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.sval;
@@ -474,7 +474,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf5 = \
-                             "<svg><g fill=\" url( #grad2 ) \"/></svg>";
+                           "<svg><g fill=\" url( #grad2 ) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf5, lv_strlen(svg_sf5));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     str = (const char *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.sval;
@@ -482,7 +482,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf6 = \
-                             "<svg><g fill=\" url (#grad2) \"/></svg>";
+                           "<svg><g fill=\" url (#grad2) \"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf6, lv_strlen(svg_sf6));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     uint32_t c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -490,7 +490,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf7 = \
-                             "<svg><g fill=\"rgb(255, 255, 255)\"/></svg>";
+                           "<svg><g fill=\"rgb(255, 255, 255)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf7, lv_strlen(svg_sf7));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -498,7 +498,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf8 = \
-                             "<svg><g fill=\"rgb(50%, 50%, 50%)\"/></svg>";
+                           "<svg><g fill=\"rgb(50%, 50%, 50%)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf8, lv_strlen(svg_sf8));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -506,7 +506,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf9 = \
-                             "<svg><g fill=\"#F00\"/></svg>";
+                           "<svg><g fill=\"#F00\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf9, lv_strlen(svg_sf9));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -514,7 +514,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf10 = \
-                             "<svg><g fill=\"#FF8000\"/></svg>";
+                            "<svg><g fill=\"#FF8000\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf10, lv_strlen(svg_sf10));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -522,7 +522,7 @@ void testStrokeFill(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf11 = \
-                             "<svg><g fill=\"red\"/></svg>";
+                            "<svg><g fill=\"red\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf11, lv_strlen(svg_sf11));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     c = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.uval;
@@ -533,14 +533,14 @@ void testStrokeFill(void)
 void testStrokeFillAttrs(void)
 {
     const char * svg_sf0 = \
-                             "<svg><g fill-rule=\'\'/></svg>";
+                           "<svg><g fill-rule=\'\'/></svg>";
     lv_svg_node_t * svg_node_root = lv_svg_load_data(svg_sf0, lv_strlen(svg_sf0));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 0);
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf1 = \
-                             "<svg><g stroke-width=1 stroke-miterlimit=3 fill-rule=\'inherit\' /></svg>";
+                           "<svg><g stroke-width=1 stroke-miterlimit=3 fill-rule=\'inherit\' /></svg>";
     svg_node_root = lv_svg_load_data(svg_sf1, lv_strlen(svg_sf1));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     float f1 = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.fval;
@@ -551,7 +551,7 @@ void testStrokeFillAttrs(void)
 
 
     const char * svg_sf2 = \
-                             "<svg><g fill-rule=\"evenodd\" stroke-width=\'-1\' stroke-miterlimit=\'-5.0\'/></svg>";
+                           "<svg><g fill-rule=\"evenodd\" stroke-width=\'-1\' stroke-miterlimit=\'-5.0\'/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf2, lv_strlen(svg_sf2));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     uint32_t r1 = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.ival;
@@ -563,7 +563,7 @@ void testStrokeFillAttrs(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf3 = \
-                             "<svg><g stroke-linecap=\"round\" stroke-linejoin=\' bevel\' fill-rule=nonzero/></svg>";
+                           "<svg><g stroke-linecap=\"round\" stroke-linejoin=\' bevel\' fill-rule=nonzero/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf3, lv_strlen(svg_sf3));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     uint32_t c1 = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.ival;
@@ -575,7 +575,7 @@ void testStrokeFillAttrs(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf4 = \
-                             "<svg><g stroke-linecap=\" square \" stroke-linejoin=round/></svg>";
+                           "<svg><g stroke-linecap=\" square \" stroke-linejoin=round/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf4, lv_strlen(svg_sf4));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     uint32_t c3 = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.ival;
@@ -585,7 +585,7 @@ void testStrokeFillAttrs(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf5 = \
-                             "<svg><g stroke-linecap=\"a\" stroke-linejoin=\'b\' stroke-dasharray=\"none\" stroke-opacity=\"inherit\"/></svg>";
+                           "<svg><g stroke-linecap=\"a\" stroke-linejoin=\'b\' stroke-dasharray=\"none\" stroke-opacity=\"inherit\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf5, lv_strlen(svg_sf5));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     uint32_t c5 = (LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.ival;
@@ -595,8 +595,8 @@ void testStrokeFillAttrs(void)
     lv_svg_node_delete(svg_node_root);
 
     const char * svg_sf6 = \
-                             "<svg><g stroke-dasharray=\"1,2,3, 2.5, 3 \" stroke-dashoffset=1.2"
-                             " fill-opacity=\"2.0\" stroke-dasharray=\"inherit\" /></svg>";
+                           "<svg><g stroke-dasharray=\"1,2,3, 2.5, 3 \" stroke-dashoffset=1.2"
+                           " fill-opacity=\"2.0\" stroke-dasharray=\"inherit\" /></svg>";
     svg_node_root = lv_svg_load_data(svg_sf6, lv_strlen(svg_sf6));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     lv_svg_attr_values_list_t * list = (lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0,
@@ -616,7 +616,7 @@ void testStrokeFillAttrs(void)
 void testTextAttrs(void)
 {
     const char * svg_sf0 = \
-                             "<svg><text font-size=\'16\' font-family=\"arial\" font-variant=inherit>hello world!</text></svg>";
+                           "<svg><text font-size=\'16\' font-family=\"arial\" font-variant=inherit>hello world!</text></svg>";
     lv_svg_node_t * svg_node_root = lv_svg_load_data(svg_sf0, lv_strlen(svg_sf0));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
 
@@ -631,7 +631,7 @@ void testTextAttrs(void)
 
 
     const char * svg_sf1 = \
-                             "<svg><text font-size=\'16em\' font=\'user\' font-style=\" italic \" >hello<tspan>my\n</tspan>world!</text></svg>";
+                           "<svg><text font-size=\'16em\' font=\'user\' font-style=\" italic \" >hello<tspan>my\n</tspan>world!</text></svg>";
     svg_node_root = lv_svg_load_data(svg_sf1, lv_strlen(svg_sf1));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
 
@@ -655,10 +655,10 @@ void testTextAttrs(void)
 void testGradient(void)
 {
     const char * svg_gt1 = \
-                             "<svg><linearGradient id=\"gt1\" gradientUnits= objectBoundingBox>"
-                             "<stop stop-color='red' offset=0.1/>"
-                             "<stop stop-color=\'black\' stop-opacity=\"0.5\" offset=1.0/>"
-                             "</linearGradient></svg>";
+                           "<svg><linearGradient id=\"gt1\" gradientUnits= objectBoundingBox>"
+                           "<stop stop-color='red' offset=0.1/>"
+                           "<stop stop-color=\'black\' stop-opacity=\"0.5\" offset=1.0/>"
+                           "</linearGradient></svg>";
     lv_svg_node_t * svg_node_root = lv_svg_load_data(svg_gt1, lv_strlen(svg_gt1));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0);
     TEST_ASSERT_EQUAL_STRING(svg_node->xml_id, "gt1");
@@ -673,12 +673,12 @@ void testGradient(void)
 
 
     const char * svg_gt2 = \
-                        "<svg><defs><radialGradient xml:id=\"gt2\" gradientUnits=\"userSpaceOnUse\""
-                        "cx=\"400\" cy=\"200\" r=\"300\">"
-                        "<stop offset=\"0\" stop-color=\"red\"/>"
-                        "<stop offset=\"0.5\" stop-color=\"blue\"/>"
-                        "<stop offset=\"1\" stop-color=\"red\"/>"
-                        "</radialGradient></defs></svg>";
+                           "<svg><defs><radialGradient xml:id=\"gt2\" gradientUnits=\"userSpaceOnUse\""
+                           "cx=\"400\" cy=\"200\" r=\"300\">"
+                           "<stop offset=\"0\" stop-color=\"red\"/>"
+                           "<stop offset=\"0.5\" stop-color=\"blue\"/>"
+                           "<stop offset=\"1\" stop-color=\"red\"/>"
+                           "</radialGradient></defs></svg>";
     svg_node_root = lv_svg_load_data(svg_gt2, lv_strlen(svg_gt2));
     svg_node = LV_SVG_NODE_CHILD(svg_node_root, 0); //defs
     svg_node1 = LV_SVG_NODE_CHILD(svg_node, 0);
@@ -695,32 +695,32 @@ void testGradient(void)
 void testBadCase(void)
 {
     const char * svg_b1 = \
-                             "<rect x=10 y=10 width=100 height=100/>";
+                          "<rect x=10 y=10 width=100 height=100/>";
     lv_svg_node_t * svg = lv_svg_load_data(svg_b1, lv_strlen(svg_b1));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b2 = \
-                             "<svg><text><rect x=10 y=10 width=200 height=200/></svg>";
+                          "<svg><text><rect x=10 y=10 width=200 height=200/></svg>";
     svg = lv_svg_load_data(svg_b2, lv_strlen(svg_b2));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b3 = \
-                             "<svg><rect x=10 y=10 width=200 height/></svg>";
+                          "<svg><rect x=10 y=10 width=200 height/></svg>";
     svg = lv_svg_load_data(svg_b3, lv_strlen(svg_b3));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b4 = \
-                             "<svg><g fill=\"url( \"/></svg>";
+                          "<svg><g fill=\"url( \"/></svg>";
     svg = lv_svg_load_data(svg_b4, lv_strlen(svg_b4));
     lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(svg, 0);
     TEST_ASSERT_EQUAL(0, LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t)->class_type);
     lv_svg_node_delete(svg);
 
     const char * svg_b5 = \
-                             "<svg><g transform=matrix/></svg>";
+                          "<svg><g transform=matrix/></svg>";
     svg = lv_svg_load_data(svg_b5, lv_strlen(svg_b5));
     svg_node = LV_SVG_NODE_CHILD(svg, 0);
     lv_svg_matrix_t * matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
@@ -731,19 +731,19 @@ void testBadCase(void)
     lv_svg_node_delete(svg);
 
     const char * svg_b6 = \
-                             "<svg><123><123></svg>";
+                          "<svg><123><123></svg>";
     svg = lv_svg_load_data(svg_b6, lv_strlen(svg_b6));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b7 = \
-                             "<svg><my> bad case <you></svg>";
+                          "<svg><my> bad case <you></svg>";
     svg = lv_svg_load_data(svg_b7, lv_strlen(svg_b7));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b8 = \
-                             "<svg><path d=\"M 100  L150 180 L 150 Z\"/></svg>";
+                          "<svg><path d=\"M 100  L150 180 L 150 Z\"/></svg>";
     svg = lv_svg_load_data(svg_b8, lv_strlen(svg_b8));
     svg_node = LV_SVG_NODE_CHILD(svg, 0);
     TEST_ASSERT_EQUAL(((lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val)->length,
@@ -766,7 +766,7 @@ void testBadCase(void)
     lv_svg_node_delete(svg);
 
     const char * svg_b9 = \
-                             "<svg><path d=\"M 100 200 L150 Z\"/></svg>";
+                          "<svg><path d=\"M 100 200 L150 Z\"/></svg>";
     svg = lv_svg_load_data(svg_b9, lv_strlen(svg_b9));
     svg_node = LV_SVG_NODE_CHILD(svg, 0);
     TEST_ASSERT_EQUAL(((lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val)->length,
@@ -782,13 +782,13 @@ void testBadCase(void)
     lv_svg_node_delete(svg);
 
     const char * svg_b10 = \
-                             "<svg></text>bad case</text></svg>";
+                           "<svg></text>bad case</text></svg>";
     svg = lv_svg_load_data(svg_b10, lv_strlen(svg_b10));
     TEST_ASSERT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b11 = \
-                             "<svg><text font-size></text></svg>";
+                           "<svg><text font-size></text></svg>";
     svg = lv_svg_load_data(svg_b11, lv_strlen(svg_b11));
     svg_node = LV_SVG_NODE_CHILD(svg, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 0);
@@ -796,7 +796,7 @@ void testBadCase(void)
     lv_svg_node_delete(svg);
 
     const char * svg_b12 = \
-                             "<svg><text font-size=></text></svg>";
+                           "<svg><text font-size=></text></svg>";
     svg = lv_svg_load_data(svg_b12, lv_strlen(svg_b12));
     svg_node = LV_SVG_NODE_CHILD(svg, 0);
     TEST_ASSERT_EQUAL(lv_array_size(&svg_node->attrs), 0);
@@ -804,19 +804,59 @@ void testBadCase(void)
     lv_svg_node_delete(svg);
 
     const char * svg_b13 = \
-                             "<svg><!-aaaa /></svg>";
+                           "<svg><!-aaaa /></svg>";
     svg = lv_svg_load_data(svg_b13, lv_strlen(svg_b13));
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
     const char * svg_b14 = \
-                             "<svg><rect"
-                             "x=1 y=1 width=10 height=10"
-                             "x=1 y=1 width=10 height=10"
-                             "x=1 y=1 width=10 height=10"
-                             " /></svg>";
+                           "<svg><rect"
+                           "x=1 y=1 width=10 height=10"
+                           "x=1 y=1 width=10 height=10"
+                           "x=1 y=1 width=10 height=10"
+                           " /></svg>";
     svg = lv_svg_load_data(svg_b14, lv_strlen(svg_b14));
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
+    lv_svg_node_delete(svg);
+
+
+    const char * svg_b15 = \
+                           "<svg>"
+                           "<path d=\'m-122.3,84.285s0.1,1.894-0.73,1.875c-0.82-0.019-17.27-48.094-37.8-45.851,0,0,17.78-7.353,38.53,43.976z\'/>"
+                           "</svg>";
+    svg = lv_svg_load_data(svg_b15, lv_strlen(svg_b15));
+    svg_node = LV_SVG_NODE_CHILD(svg, 0);
+
+    TEST_ASSERT_EQUAL(((lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val)->length,
+                      5);
+    seg_size = sizeof(uint32_t) + sizeof(lv_svg_point_t);
+    list = (lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
+
+    path = (lv_svg_attr_path_value_t *)(&list->data);
+    TEST_ASSERT_EQUAL(path->cmd, LV_SVG_PATH_CMD_MOVE_TO);
+
+    TEST_ASSERT_EQUAL_FLOAT(((lv_svg_point_t *)(&path->data))->x, -122.3f);
+    TEST_ASSERT_EQUAL_FLOAT(((lv_svg_point_t *)(&path->data))->y, 84.285f);
+
+    lv_svg_node_delete(svg);
+
+
+    const char * svg_b16 = \
+                           "<svg>"
+                           "<g transform=\'matrix(1.7656463,0,0,1.7656463,324.90716,255.00942)\'>"
+                           "</g>"
+                           "</svg>";
+    svg = lv_svg_load_data(svg_b16, lv_strlen(svg_b16));
+    svg_node = LV_SVG_NODE_CHILD(svg, 0);
+    matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
+
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][0], 1.7656463f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][0], 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][1], 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][1], 1.7656463f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][2], 324.90716f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][2], 255.00942f);
+
     lv_svg_node_delete(svg);
 }
 

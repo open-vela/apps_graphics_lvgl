@@ -13,8 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lv_conf_internal.h"
-#include "../../core/lv_obj.h"
+#include "../../../lvgl.h"
 
 #if LV_USE_SPAN != 0
 
@@ -75,6 +74,9 @@ typedef struct {
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_spangroup_class;
 
+typedef struct {
+    lv_obj_create_info_t base;
+} lv_spangroup_create_info_t;
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -87,7 +89,12 @@ void lv_span_stack_deinit(void);
  * @param parent    pointer to an object, it will be the parent of the new spangroup
  * @return          pointer to the created spangroup
  */
-lv_obj_t * lv_spangroup_create(lv_obj_t * parent);
+lv_obj_t * lv_spangroup_create_ex(lv_obj_t * parent, lv_spangroup_create_info_t * create_info);
+
+static inline lv_obj_t * lv_spangroup_create(lv_obj_t * parent)
+{
+    return lv_spangroup_create_ex(parent, NULL);
+}
 
 /**
  * Create a span string descriptor and add to spangroup.

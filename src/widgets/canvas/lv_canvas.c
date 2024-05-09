@@ -19,7 +19,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS (&lv_canvas_class)
+#define MY_CLASS &lv_canvas_class
 
 /**********************
  *      TYPEDEFS
@@ -152,13 +152,16 @@ void lv_canvas_set_px(lv_obj_t * obj, int32_t x, int32_t y, lv_color_t color, lv
     lv_obj_invalidate(obj);
 }
 
-void lv_canvas_set_palette(lv_obj_t * obj, uint8_t index, lv_color32_t color)
+void lv_canvas_set_palette(lv_obj_t * obj, uint8_t id, lv_color32_t c)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
 
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
 
-    lv_draw_buf_set_palette(canvas->draw_buf, index, color);
+    lv_image_dsc_t dsc;
+    lv_draw_buf_to_image(canvas->draw_buf, &dsc);
+
+    lv_image_buf_set_palette(&dsc, id, c);
     lv_obj_invalidate(obj);
 }
 
@@ -252,7 +255,7 @@ void lv_canvas_copy_buf(lv_obj_t * obj, const lv_area_t * canvas_area, lv_draw_b
     lv_canvas_t * canvas = (lv_canvas_t *)obj;
     if(canvas->draw_buf == NULL) return;
 
-    LV_ASSERT_MSG(canvas->draw_buf->header.cf != dest_buf->header.cf, "Color formats must be the same");
+    LV_ASSERT_MSG(canvas->draw_buf->header.cf == dest_buf->header.cf, "Color formats must be the same");
 
     lv_draw_buf_copy(canvas->draw_buf, canvas_area, dest_buf, dest_area);
 }

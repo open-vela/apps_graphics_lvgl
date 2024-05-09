@@ -89,6 +89,7 @@ typedef int32_t lv_value_precise_t;
 
 struct _lv_obj_t;
 typedef struct _lv_obj_t lv_obj_t;
+typedef struct _lv_obj_create_info_t lv_obj_create_info_t;
 
 #ifdef DOXYGEN
 typedef _lv_state_t lv_state_t;
