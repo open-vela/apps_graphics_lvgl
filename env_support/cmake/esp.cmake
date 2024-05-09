@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SOURCES ${LVGL_ROOT_DIR}/src/*.c ${LVGL_ROOT_DIR}/src/*.cpp)
+file(GLOB_RECURSE SOURCES ${LVGL_ROOT_DIR}/src/*.c)
 
 idf_build_get_property(LV_MICROPYTHON LV_MICROPYTHON)
 

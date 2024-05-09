@@ -257,7 +257,7 @@ void test_draw_shapes(void)
                                 "<stop offset=\"0\" stop-color=\"red\"/>"
                                 "<stop offset=\"0.5\" stop-color=\"blue\"/>"
                                 "</linearGradient></defs>"
-                                "<rect fill=\"url(#MyGradient)\" stroke=\"black\" stroke-width=\"5\"" 
+                                "<rect fill=\"url(#MyGradient)\" stroke=\"black\" stroke-width=\"5\""
                                 " x=\"0\" y=\"0\" width=\"200\" height=\"600\"/></g></svg>";
 
     svg = lv_svg_load_data(svg_shapes_9, lv_strlen(svg_shapes_9));
@@ -267,12 +267,12 @@ void test_draw_shapes(void)
     lv_svg_node_delete(svg);
 
     const char * svg_shapes_10 = \
-                                  "<svg width='144' height='144' viewBox='0 0 144 144'><g>"
-                                  "<rect x='4' y='4' width='136' height='136' fill='url(#paint2_linear_13691_50994)' fill-opacity='1.0'/>"
-                                  "</g><defs><linearGradient id='paint2_linear_13691_50994' x1='4' y1='4' x2='280' y2='280'"
-                                  " gradientUnits='userSpaceOnUse'>"
-                                  "<stop stop-color='white'/><stop offset='1' stop-color='#000000'/></linearGradient>"
-                                  "</defs></svg>";
+                                 "<svg width='144' height='144' viewBox='0 0 144 144'><g>"
+                                 "<rect x='4' y='4' width='136' height='136' fill='url(#paint2_linear_13691_50994)' fill-opacity='1.0'/>"
+                                 "</g><defs><linearGradient id='paint2_linear_13691_50994' x1='4' y1='4' x2='280' y2='280'"
+                                 " gradientUnits='userSpaceOnUse'>"
+                                 "<stop stop-color='white'/><stop offset='1' stop-color='#000000'/></linearGradient>"
+                                 "</defs></svg>";
 
     svg = lv_svg_load_data(svg_shapes_10, lv_strlen(svg_shapes_10));
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
@@ -282,16 +282,16 @@ void test_draw_shapes(void)
 
 
     const char * svg_shapes_11 = \
-                                "<svg width=\'800\' height=\'800\' viewBox=\'0 0 800 800\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'>"
-                                "<rect x=\'10\' y=\'10\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
-                                "<rect x=\'212\' y=\'10\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
-                                "<rect x=\'10\' y=\'212\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
-                                "<rect x=\'212\' y=\'212\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
-                                "<defs><linearGradient id=\'paint0_linear_13691_50971\' x1=\'10\' y1=\'10\' "
-                                "x2=\'400\' y2=\'400\' gradientUnits=\'userSpaceOnUse\' >"
-                                "<stop offset=\'0\' stop-color=\'red\' stop-opacity=\'1\'/>"
-                                "<stop offset=\'1\' stop-color=\'green\' stop-opacity=\'1\'/>"
-                                "</linearGradient></defs></svg>";
+                                 "<svg width=\'800\' height=\'800\' viewBox=\'0 0 800 800\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'>"
+                                 "<rect x=\'10\' y=\'10\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
+                                 "<rect x=\'212\' y=\'10\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
+                                 "<rect x=\'10\' y=\'212\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
+                                 "<rect x=\'212\' y=\'212\' width=\'200\' height=\'200\' fill=\'url(#paint0_linear_13691_50971)\'/>"
+                                 "<defs><linearGradient id=\'paint0_linear_13691_50971\' x1=\'10\' y1=\'10\' "
+                                 "x2=\'400\' y2=\'400\' gradientUnits=\'userSpaceOnUse\' >"
+                                 "<stop offset=\'0\' stop-color=\'red\' stop-opacity=\'1\'/>"
+                                 "<stop offset=\'1\' stop-color=\'green\' stop-opacity=\'1\'/>"
+                                 "</linearGradient></defs></svg>";
 
     svg = lv_svg_load_data(svg_shapes_11, lv_strlen(svg_shapes_11));
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
