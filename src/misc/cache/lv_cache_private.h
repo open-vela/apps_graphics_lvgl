@@ -110,23 +110,6 @@ typedef lv_cache_reserve_cond_res_t (*lv_cache_reserve_cond_cb)(lv_cache_t * cac
                                                                 void * user_data);
 
 /**
- * The cache drop all function, used by the cache class to remove all cache entries from the cache and free the memory.
- */
-typedef void (*lv_cache_drop_all_cb_t)(lv_cache_t * cache, void * user_data);
-
-/**
- * The cache get victim function, used by the cache class to get a victim entry to be evicted.
- */
-typedef lv_cache_entry_t * (*lv_cache_get_victim_cb)(lv_cache_t * cache, void * user_data);
-
-/**
- * The cache reserve condition function, used by the cache class to check if a new entry can be added to the cache without exceeding its maximum size.
- * See @lv_cache_reserve_cond_res_t for the possible results.
- */
-typedef lv_cache_reserve_cond_res_t (*lv_cache_reserve_cond_cb)(lv_cache_t * cache, const void * key, size_t size,
-                                                                void * user_data);
-
-/**
  * The cache operations struct
  */
 struct _lv_cache_ops_t {

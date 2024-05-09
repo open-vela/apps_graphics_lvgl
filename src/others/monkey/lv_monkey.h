@@ -12,8 +12,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lv_conf_internal.h"
-#include "../../indev/lv_indev.h"
+#include "../../../lvgl.h"
 
 #if LV_USE_MONKEY != 0
 

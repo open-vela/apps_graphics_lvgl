@@ -136,7 +136,6 @@ const uint8_t _lv_style_builtin_prop_flag_lookup_table[_LV_STYLE_NUM_BUILT_IN_PR
     [LV_STYLE_BLEND_MODE] =                LV_STYLE_PROP_FLAG_LAYER_UPDATE,
     [LV_STYLE_LAYOUT] =                    LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
     [LV_STYLE_BASE_DIR] =                  LV_STYLE_PROP_FLAG_INHERITABLE | LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
-    [LV_STYLE_BITMAP_MASK_SRC] =           LV_STYLE_PROP_FLAG_LAYER_UPDATE,
 
 #if LV_USE_FLEX
     [LV_STYLE_FLEX_FLOW] =                    LV_STYLE_PROP_FLAG_LAYOUT_UPDATE,
@@ -361,11 +360,7 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
             };
         case LV_STYLE_BG_COLOR:
             return (lv_style_value_t) {
-#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
-                .color = black
-#else
                 .color = white
-#endif
             };
         case LV_STYLE_BG_GRAD_COLOR:
         case LV_STYLE_BORDER_COLOR:
@@ -376,11 +371,7 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
         case LV_STYLE_TEXT_COLOR:
         case LV_STYLE_IMAGE_RECOLOR:
             return (lv_style_value_t) {
-#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
-                .color = white
-#else
                 .color = black
-#endif
             };
         case LV_STYLE_OPA:
         case LV_STYLE_OPA_LAYERED:
@@ -414,13 +405,9 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
             return (lv_style_value_t) {
                 .num = LV_COORD_MAX
             };
-        case LV_STYLE_ROTARY_SENSITIVITY:
-            return (lv_style_value_t) {
-                .num = 256
-            };
         default:
             return (lv_style_value_t) {
-                .ptr = NULL
+                .ptr = 0
             };
     }
 }

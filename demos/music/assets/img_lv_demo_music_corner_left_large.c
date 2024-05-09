@@ -51,7 +51,6 @@ img_lv_demo_music_corner_left_map[] = {
 const lv_image_dsc_t img_lv_demo_music_corner_left = {
     .header.w = 32,
     .header.h = 32,
-    .header.stride = 128,
     .header.cf = LV_COLOR_FORMAT_ARGB8888,
     .data = img_lv_demo_music_corner_left_map,
     .data_size = sizeof(img_lv_demo_music_corner_left_map),

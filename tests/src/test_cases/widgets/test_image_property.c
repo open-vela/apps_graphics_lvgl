@@ -6,7 +6,6 @@
 
 void test_image_property(void)
 {
-#if LV_USE_OBJ_PROPERTY
     lv_obj_t * obj = lv_image_create(lv_screen_active());
     const char * src = LV_SYMBOL_OK;
     lv_image_set_src(obj, src);
@@ -45,7 +44,6 @@ void test_image_property(void)
         TEST_ASSERT_TRUE(LV_PROPERTY_ID_TYPE(prop.id) == LV_PROPERTY_TYPE_INT);
         TEST_ASSERT_EQUAL_INT(prop.num, v);
     }
-#endif
 }
 
 #endif

@@ -6,8 +6,7 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lvgl.h"
-
+#include "lv_tabview.h"
 #if LV_USE_TABVIEW
 
 #include "../../misc/lv_assert.h"
@@ -16,7 +15,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS (&lv_tabview_class)
+#define MY_CLASS    &lv_tabview_class
 
 /**********************
  *      TYPEDEFS

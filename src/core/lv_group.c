@@ -75,7 +75,6 @@ lv_group_t * lv_group_create(void)
 void lv_group_delete(lv_group_t * group)
 {
     /*Defocus the currently focused object*/
-    LV_ASSERT_NULL(group);
     if(group->obj_focus != NULL) {
         lv_obj_send_event(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
         lv_obj_invalidate(*group->obj_focus);
@@ -173,9 +172,8 @@ void lv_group_swap_obj(lv_obj_t * obj1, lv_obj_t * obj2)
         else if((*obj_i) == obj2)(*obj_i) = obj1;
     }
 
-    lv_obj_t * focused = lv_group_get_focused(g1);
-    if(focused == obj1) lv_group_focus_obj(obj2);
-    else if(focused == obj2) lv_group_focus_obj(obj1);
+    if(*g1->obj_focus == obj1) lv_group_focus_obj(obj2);
+    else if(*g1->obj_focus == obj2) lv_group_focus_obj(obj1);
 
 }
 
@@ -222,8 +220,6 @@ void lv_group_remove_obj(lv_obj_t * obj)
 
 void lv_group_remove_all_objs(lv_group_t * group)
 {
-    LV_ASSERT_NULL(group);
-
     /*Defocus the currently focused object*/
     if(group->obj_focus != NULL) {
         lv_obj_send_event(*group->obj_focus, LV_EVENT_DEFOCUSED, get_indev(group));
@@ -275,8 +271,6 @@ void lv_group_focus_obj(lv_obj_t * obj)
 
 void lv_group_focus_next(lv_group_t * group)
 {
-    LV_ASSERT_NULL(group);
-
     bool focus_changed = focus_next_core(group, _lv_ll_get_head, _lv_ll_get_next);
     if(group->edge_cb) {
         if(!focus_changed)
@@ -286,8 +280,6 @@ void lv_group_focus_next(lv_group_t * group)
 
 void lv_group_focus_prev(lv_group_t * group)
 {
-    LV_ASSERT_NULL(group);
-
     bool focus_changed = focus_next_core(group, _lv_ll_get_tail, _lv_ll_get_prev);
     if(group->edge_cb) {
         if(!focus_changed)
@@ -297,16 +289,12 @@ void lv_group_focus_prev(lv_group_t * group)
 
 void lv_group_focus_freeze(lv_group_t * group, bool en)
 {
-    LV_ASSERT_NULL(group);
-
     if(en == false) group->frozen = 0;
     else group->frozen = 1;
 }
 
 lv_result_t lv_group_send_data(lv_group_t * group, uint32_t c)
 {
-    LV_ASSERT_NULL(group);
-
     lv_obj_t * act = lv_group_get_focused(group);
     if(act == NULL) return LV_RESULT_OK;
 
@@ -317,21 +305,17 @@ lv_result_t lv_group_send_data(lv_group_t * group, uint32_t c)
 
 void lv_group_set_focus_cb(lv_group_t * group, lv_group_focus_cb_t focus_cb)
 {
-    if(group == NULL) return;
-
     group->focus_cb = focus_cb;
 }
 
 void lv_group_set_edge_cb(lv_group_t * group, lv_group_edge_cb_t edge_cb)
 {
-    LV_ASSERT_NULL(group);
-
     group->edge_cb = edge_cb;
 }
 
 void lv_group_set_editing(lv_group_t * group, bool edit)
 {
-    LV_ASSERT_NULL(group);
+    if(group == NULL) return;
     uint8_t en_val = edit ? 1 : 0;
 
     if(en_val == group->editing) return; /*Do not set the same mode again*/
@@ -349,13 +333,11 @@ void lv_group_set_editing(lv_group_t * group, bool edit)
 
 void lv_group_set_refocus_policy(lv_group_t * group, lv_group_refocus_policy_t policy)
 {
-    LV_ASSERT_NULL(group);
     group->refocus_policy = policy & 0x01;
 }
 
 void lv_group_set_wrap(lv_group_t * group, bool en)
 {
-    LV_ASSERT_NULL(group);
     group->wrap = en ? 1 : 0;
 }
 
@@ -393,7 +375,6 @@ bool lv_group_get_wrap(lv_group_t * group)
 
 uint32_t lv_group_get_obj_count(lv_group_t * group)
 {
-    LV_ASSERT_NULL(group);
     return _lv_ll_get_len(&group->obj_ll);
 }
 

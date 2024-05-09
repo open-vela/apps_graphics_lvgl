@@ -123,13 +123,10 @@ lv_result_t lv_image_decoder_open(lv_image_decoder_dsc_t * dsc, const void * src
 
 #if LV_CACHE_DEF_SIZE > 0
     dsc->cache = img_cache_p;
-    /*Try cache first, unless we are told to ignore cache.*/
-    if(!(args && args->no_cache)) {
-        /*
-        * Check the cache first
-        * If the image is found in the cache, just return it.*/
-        if(try_cache(dsc) == LV_RESULT_OK) return LV_RESULT_OK;
-    }
+    /*
+     * Check the cache first
+     * If the image is found in the cache, just return it.*/
+    if(try_cache(dsc) == LV_RESULT_OK) return LV_RESULT_OK;
 #endif
 
     /*Find the decoder that can open the image source, and get the header info in the same time.*/
@@ -261,17 +258,13 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
         uint32_t stride_expect = lv_draw_buf_width_to_stride(decoded->header.w, decoded->header.cf);
         if(decoded->header.stride != stride_expect) {
             LV_LOG_TRACE("Stride mismatch");
-            lv_result_t res = lv_draw_buf_adjust_stride(decoded, stride_expect);
-            if(res != LV_RESULT_OK) {
-                lv_draw_buf_t * aligned = lv_draw_buf_create(decoded->header.w, decoded->header.h, decoded->header.cf, stride_expect);
-                if(aligned == NULL) {
-                    LV_LOG_ERROR("No memory for Stride adjust.");
-                    return NULL;
-                }
-
-                lv_draw_buf_copy(aligned, NULL, decoded, NULL);
-                decoded = aligned;
+            lv_draw_buf_t * aligned = lv_draw_buf_adjust_stride(decoded, stride_expect);
+            if(aligned == NULL) {
+                LV_LOG_ERROR("No memory for Stride adjust.");
+                return NULL;
             }
+
+            decoded = aligned;
         }
     }
 
@@ -346,10 +339,7 @@ static lv_image_decoder_t * image_decoder_get_info(const void * src, lv_image_he
         if(decoder->info_cb && decoder->open_cb) {
             lv_result_t res = decoder->info_cb(decoder, src, header);
             if(res == LV_RESULT_OK) {
-                if(header->stride == 0) {
-                    LV_LOG_INFO("Image decoder didn't set stride. Calculate it from width.");
-                    header->stride = img_width_to_stride(header);
-                }
+                if(header->stride == 0) header->stride = img_width_to_stride(header);
                 break;
             }
         }
@@ -435,22 +425,11 @@ static lv_cache_compare_res_t image_decoder_cache_compare_cb(
 
 static void image_decoder_cache_free_cb(lv_image_cache_data_t * entry, void * user_data)
 {
+    LV_UNUSED(user_data); /*Unused*/
+
     const lv_image_decoder_t * decoder = entry->decoder;
-    if(decoder == NULL) return; /* Why ? */
-
-    if(decoder->cache_free_cb) {
-        /* Decoder wants to free the cache by itself. */
+    if(decoder && decoder->cache_free_cb) {
         decoder->cache_free_cb(entry, user_data);
-    }
-    else {
-        /* Destroy the decoded draw buffer if necessary. */
-        lv_draw_buf_t * decoded = (lv_draw_buf_t *)entry->decoded;
-        if(lv_draw_buf_has_flag(decoded, LV_IMAGE_FLAGS_ALLOCATED)) {
-            lv_draw_buf_destroy(decoded);
-        }
-
-        /*Free the duplicated file name*/
-        if(entry->src_type == LV_IMAGE_SRC_FILE) lv_free((void *)entry->src);
     }
 }
 
