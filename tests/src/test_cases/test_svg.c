@@ -818,6 +818,46 @@ void testBadCase(void)
     svg = lv_svg_load_data(svg_b14, lv_strlen(svg_b14));
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
+
+
+    const char * svg_b15 = \
+                           "<svg>"
+                           "<path d=\'m-122.3,84.285s0.1,1.894-0.73,1.875c-0.82-0.019-17.27-48.094-37.8-45.851,0,0,17.78-7.353,38.53,43.976z\'/>"
+                           "</svg>";
+    svg = lv_svg_load_data(svg_b15, lv_strlen(svg_b15));
+    svg_node = LV_SVG_NODE_CHILD(svg, 0);
+
+    TEST_ASSERT_EQUAL(((lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val)->length,
+                      5);
+    seg_size = sizeof(uint32_t) + sizeof(lv_svg_point_t);
+    list = (lv_svg_attr_values_list_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
+
+    path = (lv_svg_attr_path_value_t *)(&list->data);
+    TEST_ASSERT_EQUAL(path->cmd, LV_SVG_PATH_CMD_MOVE_TO);
+
+    TEST_ASSERT_EQUAL_FLOAT(((lv_svg_point_t *)(&path->data))->x, -122.3f);
+    TEST_ASSERT_EQUAL_FLOAT(((lv_svg_point_t *)(&path->data))->y, 84.285f);
+
+    lv_svg_node_delete(svg);
+
+
+    const char * svg_b16 = \
+                           "<svg>"
+                           "<g transform=\'matrix(1.7656463,0,0,1.7656463,324.90716,255.00942)\'>"
+                           "</g>"
+                           "</svg>";
+    svg = lv_svg_load_data(svg_b16, lv_strlen(svg_b16));
+    svg_node = LV_SVG_NODE_CHILD(svg, 0);
+    matrix = (lv_svg_matrix_t *)(LV_ARRAY_GET(&svg_node->attrs, 0, lv_svg_attr_t))->value.val;
+
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][0], 1.7656463f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][0], 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][1], 0.0f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][1], 1.7656463f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[0][2], 324.90716f);
+    TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][2], 255.00942f);
+
+    lv_svg_node_delete(svg);
 }
 
 #endif

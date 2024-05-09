@@ -398,6 +398,19 @@ static const char * _skip_space(const char * str, const char * str_end)
     return str;
 }
 
+static bool _is_separators(char c)
+{
+    return  c == ',' || c == '\t' || c == '\n' || c == '\r';
+}
+
+static const char * _skip_space_and_separators(const char * str, const char * str_end)
+{
+    while((str < str_end) && (isspace(*str) || _is_separators(*str))) {
+        ++str;
+    }
+    return str;
+}
+
 static const char * _parse_number(const char * str, const char * str_end, float * val)
 {
     if(!str) {
@@ -887,7 +900,7 @@ static void _process_path_value(lv_svg_node_t * node, lv_svg_attr_type_t type, c
     uint8_t * data_ptr = (uint8_t *)(&list->data);
 
     while(ptr < val_end) {
-        ptr = _skip_space(ptr, val_end);
+        ptr = _skip_space_and_separators(ptr, val_end);
         if(ptr == val_end) break;
 
         char ch = *ptr;
