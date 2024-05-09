@@ -25,10 +25,6 @@
 /**********************
  *      TYPEDEFS
  **********************/
-typedef struct {
-    uint32_t gid_left;
-    uint32_t gid_right;
-} kern_pair_ref_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -243,7 +239,7 @@ static uint32_t get_glyph_dsc_id(const lv_font_t * font, uint32_t letter)
 
             if(p) {
                 lv_uintptr_t ofs = p - fdsc->cmaps[i].unicode_list;
-                glyph_id = fdsc->cmaps[i].glyph_id_start + (uint32_t) ofs;
+                glyph_id = fdsc->cmaps[i].glyph_id_start + ofs;
             }
         }
         else if(fdsc->cmaps[i].type == LV_FONT_FMT_TXT_CMAP_SPARSE_FULL) {
@@ -278,7 +274,7 @@ static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t
             /*Use binary search to find the kern value.
              *The pairs are ordered left_id first, then right_id secondly.*/
             const uint16_t * g_ids = kdsc->glyph_ids;
-            kern_pair_ref_t g_id_both = {gid_left, gid_right};
+            uint16_t g_id_both = (gid_right << 8) + gid_left; /*Create one number from the ids*/
             uint16_t * kid_p = _lv_utils_bsearch(&g_id_both, g_ids, kdsc->pair_cnt, 2, kern_pair_8_compare);
 
             /*If the `g_id_both` were found get its index from the pointer*/
@@ -291,7 +287,7 @@ static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t
             /*Use binary search to find the kern value.
              *The pairs are ordered left_id first, then right_id secondly.*/
             const uint32_t * g_ids = kdsc->glyph_ids;
-            kern_pair_ref_t g_id_both = {gid_left, gid_right};
+            uint32_t g_id_both = (gid_right << 16) + gid_left; /*Create one number from the ids*/
             uint32_t * kid_p = _lv_utils_bsearch(&g_id_both, g_ids, kdsc->pair_cnt, 4, kern_pair_16_compare);
 
             /*If the `g_id_both` were found get its index from the pointer*/
@@ -323,23 +319,23 @@ static int8_t get_kern_value(const lv_font_t * font, uint32_t gid_left, uint32_t
 
 static int32_t kern_pair_8_compare(const void * ref, const void * element)
 {
-    const kern_pair_ref_t * ref8_p = ref;
+    const uint8_t * ref8_p = ref;
     const uint8_t * element8_p = element;
 
     /*If the MSB is different it will matter. If not return the diff. of the LSB*/
-    if(ref8_p->gid_left != element8_p[0]) return (int32_t) ref8_p->gid_left - element8_p[0];
-    else return (int32_t) ref8_p->gid_right - element8_p[1];
+    if(ref8_p[0] != element8_p[0]) return (int32_t)ref8_p[0] - element8_p[0];
+    else return (int32_t) ref8_p[1] - element8_p[1];
 
 }
 
 static int32_t kern_pair_16_compare(const void * ref, const void * element)
 {
-    const kern_pair_ref_t * ref16_p = ref;
+    const uint16_t * ref16_p = ref;
     const uint16_t * element16_p = element;
 
     /*If the MSB is different it will matter. If not return the diff. of the LSB*/
-    if(ref16_p->gid_left != element16_p[0]) return (int32_t) ref16_p->gid_left - element16_p[0];
-    else return (int32_t) ref16_p->gid_right - element16_p[1];
+    if(ref16_p[0] != element16_p[0]) return (int32_t)ref16_p[0] - element16_p[0];
+    else return (int32_t) ref16_p[1] - element16_p[1];
 }
 
 #if LV_USE_FONT_COMPRESSED

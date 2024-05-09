@@ -35,162 +35,242 @@ extern "C" {
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB565
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB565(dsc) \
-    _lv_color_blend_to_rgb565_arm2d(dsc)
+    _lv_color_blend_to_rgb565_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB565_WITH_OPA
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB565_WITH_OPA(dsc) \
-    _lv_color_blend_to_rgb565_with_opa_arm2d(dsc)
+    _lv_color_blend_to_rgb565_with_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB565_WITH_MASK
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB565_WITH_MASK(dsc) \
-    _lv_color_blend_to_rgb565_with_mask_arm2d(dsc)
+    _lv_color_blend_to_rgb565_with_mask_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB565_MIX_MASK_OPA
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB565_MIX_MASK_OPA(dsc) \
-    _lv_color_blend_to_rgb565_mix_mask_opa_arm2d(dsc)
+    _lv_color_blend_to_rgb565_mix_mask_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565(dsc)  \
-    _lv_rgb565_blend_normal_to_rgb565_arm2d(dsc)
+    _lv_rgb565_blend_normal_to_rgb565_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_WITH_OPA
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_WITH_OPA(dsc)  \
-    _lv_rgb565_blend_normal_to_rgb565_with_opa_arm2d(dsc)
+    _lv_rgb565_blend_normal_to_rgb565_with_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_WITH_MASK
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_WITH_MASK(dsc)  \
-    _lv_rgb565_blend_normal_to_rgb565_with_mask_arm2d(dsc)
+    _lv_rgb565_blend_normal_to_rgb565_with_mask_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA(dsc)  \
-    _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_arm2d(dsc)
+    _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565(dsc, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb565_arm2d(dsc, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb565_helium(dsc, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_WITH_OPA
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_WITH_OPA(dsc, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb565_with_opa_arm2d(dsc, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb565_with_opa_helium(dsc, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_WITH_MASK
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_WITH_MASK(dsc, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb565_with_mask_arm2d(dsc, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb565_with_mask_helium(dsc, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA(dsc, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_arm2d(dsc, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_helium(dsc, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565(dsc)  \
-    _lv_argb8888_blend_normal_to_rgb565_arm2d(dsc)
+    _lv_argb8888_blend_normal_to_rgb565_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_WITH_OPA
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_WITH_OPA(dsc)  \
-    _lv_argb8888_blend_normal_to_rgb565_with_opa_arm2d(dsc)
+    _lv_argb8888_blend_normal_to_rgb565_with_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_WITH_MASK
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_WITH_MASK(dsc)  \
-    _lv_argb8888_blend_normal_to_rgb565_with_mask_arm2d(dsc)
+    _lv_argb8888_blend_normal_to_rgb565_with_mask_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB565_MIX_MASK_OPA(dsc)  \
-    _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_arm2d(dsc)
+    _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_helium(dsc)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB888
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB888(dsc, dst_px_size) \
-    _lv_color_blend_to_rgb888_arm2d(dsc, dst_px_size)
+    _lv_color_blend_to_rgb888_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB888_WITH_OPA
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB888_WITH_OPA(dsc, dst_px_size) \
-    _lv_color_blend_to_rgb888_with_opa_arm2d(dsc, dst_px_size)
+    _lv_color_blend_to_rgb888_with_opa_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB888_WITH_MASK
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB888_WITH_MASK(dsc, dst_px_size) \
-    _lv_color_blend_to_rgb888_with_mask_arm2d(dsc, dst_px_size)
+    _lv_color_blend_to_rgb888_with_mask_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_COLOR_BLEND_TO_RGB888_MIX_MASK_OPA
 #define LV_DRAW_SW_COLOR_BLEND_TO_RGB888_MIX_MASK_OPA(dsc, dst_px_size) \
-    _lv_color_blend_to_rgb888_mix_mask_opa_arm2d(dsc, dst_px_size)
+    _lv_color_blend_to_rgb888_mix_mask_opa_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888(dsc, dst_px_size)  \
-    _lv_rgb565_blend_normal_to_rgb888_arm2d(dsc, dst_px_size)
+    _lv_rgb565_blend_normal_to_rgb888_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_WITH_OPA
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_WITH_OPA(dsc, dst_px_size)  \
-    _lv_rgb565_blend_normal_to_rgb888_with_opa_arm2d(dsc, dst_px_size)
+    _lv_rgb565_blend_normal_to_rgb888_with_opa_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_WITH_MASK
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_WITH_MASK(dsc, dst_px_size)  \
-    _lv_rgb565_blend_normal_to_rgb888_with_mask_arm2d(dsc, dst_px_size)
+    _lv_rgb565_blend_normal_to_rgb888_with_mask_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA
 #define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA(dsc, dst_px_size)  \
-    _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_arm2d(dsc, dst_px_size)
+    _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888(dsc, dst_px_size, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb888_arm2d(dsc, dst_px_size, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb888_helium(dsc, dst_px_size, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_WITH_OPA
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_WITH_OPA(dsc, dst_px_size, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb888_with_opa_arm2d(dsc, dst_px_size, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb888_with_opa_helium(dsc, dst_px_size, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_WITH_MASK
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_WITH_MASK(dsc, dst_px_size, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb888_with_mask_arm2d(dsc, dst_px_size, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb888_with_mask_helium(dsc, dst_px_size, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA
 #define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA(dsc, dst_px_size, src_px_size)  \
-    _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_arm2d(dsc, dst_px_size, src_px_size)
+    _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_helium(dsc, dst_px_size, src_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888(dsc, dst_px_size)  \
-    _lv_argb8888_blend_normal_to_rgb888_arm2d(dsc, dst_px_size)
+    _lv_argb8888_blend_normal_to_rgb888_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_WITH_OPA
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_WITH_OPA(dsc, dst_px_size)  \
-    _lv_argb8888_blend_normal_to_rgb888_with_opa_arm2d(dsc, dst_px_size)
+    _lv_argb8888_blend_normal_to_rgb888_with_opa_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_WITH_MASK
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_WITH_MASK(dsc, dst_px_size)  \
-    _lv_argb8888_blend_normal_to_rgb888_with_mask_arm2d(dsc, dst_px_size)
+    _lv_argb8888_blend_normal_to_rgb888_with_mask_helium(dsc, dst_px_size)
 #endif
 
 #ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA
 #define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_RGB888_MIX_MASK_OPA(dsc, dst_px_size)  \
-    _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_arm2d(dsc, dst_px_size)
+    _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_helium(dsc, dst_px_size)
+#endif
+
+#ifndef LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888
+#define LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888(dsc) \
+    _lv_color_blend_to_argb8888_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_WITH_OPA
+#define LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_WITH_OPA(dsc) \
+    _lv_color_blend_to_argb8888_with_opa_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_WITH_MASK
+#define LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_WITH_MASK(dsc) \
+    _lv_color_blend_to_argb8888_with_mask_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_MIX_MASK_OPA
+#define LV_DRAW_SW_COLOR_BLEND_TO_ARGB8888_MIX_MASK_OPA(dsc) \
+    _lv_color_blend_to_argb8888_mix_mask_opa_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888
+#define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888(dsc)  \
+    _lv_rgb565_blend_normal_to_argb8888_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_WITH_OPA
+#define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_WITH_OPA(dsc)  \
+    _lv_rgb565_blend_normal_to_argb8888_with_opa_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_WITH_MASK
+#define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_WITH_MASK(dsc)  \
+    _lv_rgb565_blend_normal_to_argb8888_with_mask_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA
+#define LV_DRAW_SW_RGB565_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA(dsc)  \
+    _lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888
+#define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888(dsc, src_px_size)  \
+    _lv_rgb888_blend_normal_to_argb8888_helium(dsc, src_px_size)
+#endif
+
+#ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_WITH_OPA
+#define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_WITH_OPA(dsc, src_px_size)  \
+    _lv_rgb888_blend_normal_to_argb8888_with_opa_helium(dsc, src_px_size)
+#endif
+
+#ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_WITH_MASK
+#define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_WITH_MASK(dsc, src_px_size)  \
+    _lv_rgb888_blend_normal_to_argb8888_with_mask_helium(dsc, src_px_size)
+#endif
+
+#ifndef LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA
+#define LV_DRAW_SW_RGB888_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA(dsc, src_px_size)  \
+    _lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_helium(dsc, src_px_size)
+#endif
+
+#ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888
+#define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888(dsc)  \
+    _lv_argb8888_blend_normal_to_argb8888_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_WITH_OPA
+#define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_WITH_OPA(dsc)  \
+    _lv_argb8888_blend_normal_to_argb8888_with_opa_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_WITH_MASK
+#define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_WITH_MASK(dsc)  \
+    _lv_argb8888_blend_normal_to_argb8888_with_mask_helium(dsc)
+#endif
+
+#ifndef LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA
+#define LV_DRAW_SW_ARGB8888_BLEND_NORMAL_TO_ARGB8888_MIX_MASK_OPA(dsc)  \
+    _lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_helium(dsc)
 #endif
 
 /**********************
@@ -201,7 +281,7 @@ extern "C" {
  * GLOBAL PROTOTYPES
  **********************/
 
-static inline lv_result_t _lv_color_blend_to_rgb565_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline lv_result_t _lv_color_blend_to_rgb565_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t stride = (dsc->dest_stride) / sizeof(uint16_t);
@@ -212,7 +292,7 @@ static inline lv_result_t _lv_color_blend_to_rgb565_arm2d(_lv_draw_sw_blend_fill
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb565_with_opa_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline lv_result_t _lv_color_blend_to_rgb565_with_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t stride = (dsc->dest_stride) / sizeof(uint16_t);
@@ -224,7 +304,7 @@ static inline lv_result_t _lv_color_blend_to_rgb565_with_opa_arm2d(_lv_draw_sw_b
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb565_with_mask_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline lv_result_t _lv_color_blend_to_rgb565_with_mask_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t stride = (dsc->dest_stride) / sizeof(uint16_t);
@@ -237,7 +317,7 @@ static inline lv_result_t _lv_color_blend_to_rgb565_with_mask_arm2d(_lv_draw_sw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb565_mix_mask_opa_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc)
+static inline lv_result_t _lv_color_blend_to_rgb565_mix_mask_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t stride = (dsc->dest_stride) / sizeof(uint16_t);
@@ -251,7 +331,7 @@ static inline lv_result_t _lv_color_blend_to_rgb565_mix_mask_opa_arm2d(_lv_draw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
 
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
@@ -265,7 +345,7 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_arm2d(_lv_draw_sw_bl
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -279,7 +359,7 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_opa_arm2d(_lv_d
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -295,7 +375,7 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_with_mask_arm2d(_lv_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -318,8 +398,8 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb565_mix_mask_opa_arm2d(_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                  uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t src_px_size)
 {
     if(src_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -338,8 +418,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_arm2d(_lv_draw_sw_bl
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                            uint32_t src_px_size)
 {
     if(src_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -371,8 +451,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_opa_arm2d(_lv_d
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                            uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                             uint32_t src_px_size)
 {
     if(src_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -406,8 +486,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_with_mask_arm2d(_lv_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                               uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                                uint32_t src_px_size)
 {
     if(src_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -447,7 +527,7 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb565_mix_mask_opa_arm2d(_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -477,7 +557,7 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_arm2d(_lv_draw_sw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -525,7 +605,7 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_opa_arm2d(_lv
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -575,7 +655,7 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_with_mask_arm2d(_l
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
 {
     arm_2d_size_t draw_size = {dsc->dest_w, dsc->dest_h};
     int16_t des_stride = dsc->dest_stride / sizeof(uint16_t);
@@ -626,7 +706,7 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb565_mix_mask_opa_arm2d
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb888_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
+static inline lv_result_t _lv_color_blend_to_rgb888_helium(_lv_draw_sw_blend_fill_dsc_t * dsc, uint32_t dst_px_size)
 {
     if(dst_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -641,8 +721,8 @@ static inline lv_result_t _lv_color_blend_to_rgb888_arm2d(_lv_draw_sw_blend_fill
 
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb888_with_opa_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                   uint32_t dst_px_size)
+static inline lv_result_t _lv_color_blend_to_rgb888_with_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc,
+                                                                    uint32_t dst_px_size)
 {
     if(dst_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -658,8 +738,8 @@ static inline lv_result_t _lv_color_blend_to_rgb888_with_opa_arm2d(_lv_draw_sw_b
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb888_with_mask_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                    uint32_t dst_px_size)
+static inline lv_result_t _lv_color_blend_to_rgb888_with_mask_helium(_lv_draw_sw_blend_fill_dsc_t * dsc,
+                                                                     uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -677,8 +757,8 @@ static inline lv_result_t _lv_color_blend_to_rgb888_with_mask_arm2d(_lv_draw_sw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_color_blend_to_rgb888_mix_mask_opa_arm2d(_lv_draw_sw_blend_fill_dsc_t * dsc,
-                                                                       uint32_t dst_px_size)
+static inline lv_result_t _lv_color_blend_to_rgb888_mix_mask_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc,
+                                                                        uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -697,8 +777,8 @@ static inline lv_result_t _lv_color_blend_to_rgb888_mix_mask_opa_arm2d(_lv_draw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                  uint32_t dst_px_size)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -719,8 +799,8 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_arm2d(_lv_draw_sw_bl
 
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t dst_px_size)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                            uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -754,8 +834,8 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_opa_arm2d(_lv_d
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                            uint32_t dst_px_size)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                             uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -790,8 +870,8 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_with_mask_arm2d(_lv_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                               uint32_t dst_px_size)
+static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                                uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -832,9 +912,9 @@ static inline lv_result_t _lv_rgb565_blend_normal_to_rgb888_mix_mask_opa_arm2d(_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                  uint32_t dst_px_size,
-                                                                  uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                   uint32_t dst_px_size,
+                                                                   uint32_t src_px_size)
 {
     if((dst_px_size == 3) || (src_px_size == 3)) {
         return LV_RESULT_INVALID;
@@ -853,8 +933,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_arm2d(_lv_draw_sw_bl
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                           uint32_t dst_px_size, uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                            uint32_t dst_px_size, uint32_t src_px_size)
 {
     if((dst_px_size == 3) || (src_px_size == 3)) {
         return LV_RESULT_INVALID;
@@ -874,8 +954,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_opa_arm2d(_lv_d
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                            uint32_t dst_px_size, uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                             uint32_t dst_px_size, uint32_t src_px_size)
 {
     if((dst_px_size == 3) || (src_px_size == 3)) {
         return LV_RESULT_INVALID;
@@ -896,8 +976,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_with_mask_arm2d(_lv_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                               uint32_t dst_px_size, uint32_t src_px_size)
+static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                                uint32_t dst_px_size, uint32_t src_px_size)
 {
     if((dst_px_size == 3) || (src_px_size == 3)) {
         return LV_RESULT_INVALID;
@@ -924,8 +1004,8 @@ static inline lv_result_t _lv_rgb888_blend_normal_to_rgb888_mix_mask_opa_arm2d(_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                    uint32_t dst_px_size)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                     uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -948,8 +1028,8 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_arm2d(_lv_draw_sw_
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                             uint32_t dst_px_size)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                              uint32_t dst_px_size)
 {
     if(dst_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -988,8 +1068,8 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_opa_arm2d(_lv
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_mask_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                              uint32_t dst_px_size)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                               uint32_t dst_px_size)
 {
 
     if(dst_px_size == 3) {
@@ -1015,8 +1095,8 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_with_mask_arm2d(_l
     return LV_RESULT_OK;
 }
 
-static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_arm2d(_lv_draw_sw_blend_image_dsc_t * dsc,
-                                                                                 uint32_t dst_px_size)
+static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                                  uint32_t dst_px_size)
 {
     if(dst_px_size == 3) {
         return LV_RESULT_INVALID;
@@ -1045,6 +1125,307 @@ static inline lv_result_t _lv_argb8888_blend_normal_to_rgb888_mix_mask_opa_arm2d
                                                    &draw_size);
 
     return LV_RESULT_OK;
+}
+
+static inline lv_result_t _lv_color_blend_to_argb8888_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = &dsc->color
+    };
+
+    lv_color_blend_to_argb8888_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_color_blend_to_argb8888_with_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = &dsc->color
+    };
+    lv_color_blend_to_argb8888_with_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_color_blend_to_argb8888_with_mask_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = &dsc->color,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_color_blend_to_argb8888_with_mask_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_color_blend_to_argb8888_mix_mask_opa_helium(_lv_draw_sw_blend_fill_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = &dsc->color,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_color_blend_to_argb8888_mix_mask_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    lv_rgb565_blend_normal_to_argb8888_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    lv_rgb565_blend_normal_to_argb8888_with_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_rgb565_blend_normal_to_argb8888_with_mask_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_rgb565_blend_normal_to_argb8888_mix_mask_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                     uint32_t src_px_size)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    if(src_px_size == 3) {
+        lv_rgb888_blend_normal_to_argb8888_helium(&asm_dsc);
+    }
+    else {
+        lv_xrgb8888_blend_normal_to_argb8888_helium(&asm_dsc);
+    }
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                              uint32_t src_px_size)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    if(src_px_size == 3) {
+        lv_rgb888_blend_normal_to_argb8888_with_opa_helium(&asm_dsc);
+    }
+    else {
+        lv_xrgb8888_blend_normal_to_argb8888_with_opa_helium(&asm_dsc);
+    }
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                               uint32_t src_px_size)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    if(src_px_size == 3) {
+        lv_rgb888_blend_normal_to_argb8888_with_mask_helium(&asm_dsc);
+    }
+    else {
+        lv_xrgb8888_blend_normal_to_argb8888_with_mask_helium(&asm_dsc);
+    }
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc,
+                                                                                  uint32_t src_px_size)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    if(src_px_size == 3) {
+        lv_rgb888_blend_normal_to_argb8888_mix_mask_opa_helium(&asm_dsc);
+    }
+    else {
+        lv_xrgb8888_blend_normal_to_argb8888_mix_mask_opa_helium(&asm_dsc);
+    }
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    lv_argb8888_blend_normal_to_argb8888_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride
+    };
+    lv_argb8888_blend_normal_to_argb8888_with_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_with_mask_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_argb8888_blend_normal_to_argb8888_with_mask_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
+}
+
+static inline lv_result_t _lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_helium(_lv_draw_sw_blend_image_dsc_t * dsc)
+{
+#if 0
+    asm_dsc_t asm_dsc = {
+        .opa = dsc->opa,
+        .dst_buf = dsc->dest_buf,
+        .dst_w = dsc->dest_w,
+        .dst_h = dsc->dest_h,
+        .dst_stride = dsc->dest_stride,
+        .src_buf = dsc->src_buf,
+        .src_stride = dsc->src_stride,
+        .mask_buf = dsc->mask_buf,
+        .mask_stride = dsc->mask_stride
+    };
+    lv_argb8888_blend_normal_to_argb8888_mix_mask_opa_helium(&asm_dsc);
+#endif
+    return LV_RESULT_INVALID;
 }
 
 /**********************

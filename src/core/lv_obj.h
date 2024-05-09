@@ -243,6 +243,10 @@ struct _lv_obj_t {
     uint16_t is_deleting : 1;
 };
 
+struct _lv_obj_create_info_t {
+    bool use_theme;
+};
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -252,7 +256,12 @@ struct _lv_obj_t {
  * @param parent    pointer to a parent object. If NULL then a screen will be created.
  * @return          pointer to the new object
  */
-lv_obj_t * lv_obj_create(lv_obj_t * parent);
+lv_obj_t * lv_obj_create_ex(lv_obj_t * parent, lv_obj_create_info_t * create_info);
+
+static inline lv_obj_t * lv_obj_create(lv_obj_t * parent)
+{
+    return lv_obj_create_ex(parent, NULL);
+}
 
 /*=====================
  * Setter functions
