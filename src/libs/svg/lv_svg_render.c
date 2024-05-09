@@ -73,8 +73,7 @@ typedef struct {
 
 typedef struct {
     lv_svg_render_obj_t base;
-    lv_svg_render_obj_t * start;
-    lv_svg_render_obj_t * end;
+    lv_array_t items;
 } lv_svg_render_group_t;
 
 typedef struct {
@@ -196,8 +195,8 @@ struct _lv_svg_draw_dsc {
 struct _lv_svg_drawing_builder_state {
     const lv_svg_node_t * doc;
     struct _lv_svg_draw_dsc * draw_dsc;
+    int in_group_deps;
     bool in_defs;
-    bool in_group;
 #if LV_USE_FREETYPE
     bool in_text;
     lv_svg_node_t * cur_text;
@@ -730,6 +729,10 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                         dsc->fill_dsc.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
                     }
                     obj->flags |= _RENDER_ATTR_FILL;
+                    if(obj->dsc.fill_dsc.opa == LV_OPA_0) {
+                        dsc->fill_dsc.opa = LV_OPA_COVER;
+                        obj->flags |= _RENDER_ATTR_FILL_OPACITY;
+                    }
                 }
             }
             break;
@@ -1086,6 +1089,13 @@ static void _init_viewport(lv_svg_render_obj_t * obj, const lv_svg_node_t * node
     view->viewport_fill = false;
 }
 
+static void _init_group(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
+{
+    _init_obj(obj, node);
+    lv_svg_render_group_t * group = (lv_svg_render_group_t *)obj;
+    lv_array_init(&group->items, LV_TREE_NODE(node)->child_cnt, sizeof(lv_svg_render_obj_t *));
+}
+
 static void _init_image(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
 {
     _init_obj(obj, node);
@@ -1392,22 +1402,15 @@ static void _render_group(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc
     struct _lv_svg_draw_dsc save_dsc;
     lv_memzero(&save_dsc, sizeof(struct _lv_svg_draw_dsc));
 
-    lv_svg_render_obj_t * list = group->start;
-    while(list != group->end) {
+    for(uint32_t i = 0; i < group->items.size; i++) {
+        lv_svg_render_obj_t * list = *((lv_svg_render_obj_t **)lv_array_at(&group->items, i));
+
         if(list->render && (list->flags & _RENDER_IN_GROUP)) {
             _copy_draw_dsc(&(save_dsc.dsc), &(dsc->current_dsc));
             _special_render(list, dsc);
             list->render(list, dsc, matrix);
             _copy_draw_dsc(&(dsc->current_dsc), &(save_dsc.dsc));
         }
-        list = list->next;
-    }
-    // draw last in group
-    if(list->render && (list->flags & _RENDER_IN_GROUP)) {
-        _copy_draw_dsc(&(save_dsc.dsc), &(dsc->current_dsc));
-        _special_render(list, dsc);
-        list->render(list, dsc, matrix);
-        _copy_draw_dsc(&(dsc->current_dsc), &(save_dsc.dsc));
     }
 
     _restore_matrix(&mtx, dsc);
@@ -1754,6 +1757,12 @@ static void _destroy_use(lv_svg_render_obj_t * obj)
     }
 }
 
+static void _destroy_group(lv_svg_render_obj_t * obj)
+{
+    lv_svg_render_group_t * group = (lv_svg_render_group_t *)obj;
+    lv_array_deinit(&group->items);
+}
+
 #if LV_USE_FREETYPE
 static void _destroy_text(lv_svg_render_obj_t * obj)
 {
@@ -1959,9 +1968,10 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
         case LV_SVG_TAG_G: {
                 lv_svg_render_group_t * group = lv_malloc(sizeof(lv_svg_render_group_t));
                 lv_memzero(group, sizeof(lv_svg_render_group_t));
-                group->base.init = _init_obj;
+                group->base.init = _init_group;
                 group->base.set_attr = _set_attr;
                 group->base.render = _render_group;
+                group->base.destroy = _destroy_group;
                 _set_render_attrs(LV_SVG_RENDER_OBJ(group), node, state);
                 return LV_SVG_RENDER_OBJ(group);
             }
@@ -1981,7 +1991,7 @@ static bool _lv_svg_doc_walk_cb(const lv_tree_node_t * node, void * data)
     if(state->in_defs) {
         obj->flags |= _RENDER_IN_DEFS;
     }
-    if(state->in_group) {
+    if(state->in_group_deps > 0) {
         obj->flags |= _RENDER_IN_GROUP;
     }
 
@@ -2012,7 +2022,7 @@ static bool _lv_svg_doc_walk_before_cb(const lv_tree_node_t * node, void * data)
     }
 
     if(svg_node->type == LV_SVG_TAG_G) {
-        state->in_group = true;
+        state->in_group_deps++;
     }
     state->draw_dsc = _lv_svg_draw_dsc_push(state->draw_dsc);
     return true;
@@ -2044,10 +2054,16 @@ static void _lv_svg_doc_walk_after_cb(const lv_tree_node_t * node, void * data)
 #endif
     if(svg_node->type == LV_SVG_TAG_G) {
         lv_svg_render_group_t * group = (lv_svg_render_group_t *)svg_node->render_obj;
-        group->start = svg_node->render_obj;
-        group->end = state->tail;
-        state->in_group = false;
-        group->base.flags &= ~_RENDER_IN_GROUP;
+        uint32_t count = LV_TREE_NODE(node)->child_cnt;
+        for(uint32_t i = 0; i < count; i++) {
+            lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(node, i);
+            lv_array_push_back(&group->items, (uint8_t *)(&svg_node->render_obj));
+        }
+
+        state->in_group_deps--;
+        if(state->in_group_deps == 0) {
+            group->base.flags &= ~_RENDER_IN_GROUP;
+        }
     }
     if(svg_node->type == LV_SVG_TAG_DEFS) {
         state->in_defs = false;
@@ -2123,8 +2139,8 @@ lv_svg_render_obj_t * lv_svg_render_create(const lv_svg_node_t * svg_doc)
     struct _lv_svg_drawing_builder_state state = {
         .doc = svg_doc,
         .draw_dsc = dsc,
+        .in_group_deps = 0,
         .in_defs = false,
-        .in_group = false,
 #if LV_USE_FREETYPE
         .in_text = false,
         .cur_text = NULL,
