@@ -225,8 +225,8 @@ void lv_svg_render_init(const lv_svg_render_hal_t * hal)
 
 static struct _lv_svg_draw_dsc * _lv_svg_draw_dsc_create(void)
 {
-    struct _lv_svg_draw_dsc * dsc = lv_malloc(sizeof(struct _lv_svg_draw_dsc));
-    lv_memzero(dsc, sizeof(struct _lv_svg_draw_dsc));
+    struct _lv_svg_draw_dsc * dsc = lv_malloc_zeroed(sizeof(struct _lv_svg_draw_dsc));
+    LV_ASSERT_MALLOC(dsc);
     _init_draw_dsc(&(dsc->dsc));
     return dsc;
 }
@@ -244,8 +244,8 @@ static void _lv_svg_draw_dsc_delete(struct _lv_svg_draw_dsc * dsc)
 static struct _lv_svg_draw_dsc * _lv_svg_draw_dsc_push(struct _lv_svg_draw_dsc * dsc)
 {
     if(!dsc) return NULL;
-    struct _lv_svg_draw_dsc * cur = lv_malloc(sizeof(struct _lv_svg_draw_dsc));
-    lv_memzero(cur, sizeof(struct _lv_svg_draw_dsc));
+    struct _lv_svg_draw_dsc * cur = lv_malloc_zeroed(sizeof(struct _lv_svg_draw_dsc));
+    LV_ASSERT_MALLOC(cur);
     _copy_draw_dsc(&(cur->dsc), &(dsc->dsc));
     cur->fill_ref = dsc->fill_ref;
     cur->stroke_ref = dsc->stroke_ref;
@@ -1133,6 +1133,7 @@ static void _init_content(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
     const char * str = node->xml_id;
     content->count = _lv_text_get_encoded_length(str);
     content->letters = lv_malloc(sizeof(uint32_t) * content->count);
+    LV_ASSERT_MALLOC(content->letters);
     uint32_t offset = 0;
     for(uint32_t i = 0; i < content->count; i++) {
         content->letters[i] = _lv_text_encoded_next(str, &offset);
@@ -1807,8 +1808,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
 {
     switch(node->type) {
         case LV_SVG_TAG_SVG: {
-                lv_svg_render_viewport_t * view = lv_malloc(sizeof(lv_svg_render_viewport_t));
-                lv_memzero(view, sizeof(lv_svg_render_viewport_t));
+                lv_svg_render_viewport_t * view = lv_malloc_zeroed(sizeof(lv_svg_render_viewport_t));
+                LV_ASSERT_MALLOC(view);
                 view->base.init = _init_viewport;
                 view->base.render = _render_viewport;
                 view->base.set_attr = _set_viewport_attr;
@@ -1816,8 +1817,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(view);
             }
         case LV_SVG_TAG_RECT: {
-                lv_svg_render_rect_t * rect = lv_malloc(sizeof(lv_svg_render_rect_t));
-                lv_memzero(rect, sizeof(lv_svg_render_rect_t));
+                lv_svg_render_rect_t * rect = lv_malloc_zeroed(sizeof(lv_svg_render_rect_t));
+                LV_ASSERT_MALLOC(rect);
                 rect->base.init = _init_obj;
                 rect->base.render = _render_rect;
                 rect->base.set_attr = _set_rect_attr;
@@ -1826,8 +1827,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(rect);
             }
         case LV_SVG_TAG_CIRCLE: {
-                lv_svg_render_circle_t * circle = lv_malloc(sizeof(lv_svg_render_circle_t));
-                lv_memzero(circle, sizeof(lv_svg_render_circle_t));
+                lv_svg_render_circle_t * circle = lv_malloc_zeroed(sizeof(lv_svg_render_circle_t));
+                LV_ASSERT_MALLOC(circle);
                 circle->base.init = _init_obj;
                 circle->base.render = _render_circle;
                 circle->base.set_attr = _set_circle_attr;
@@ -1836,8 +1837,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(circle);
             }
         case LV_SVG_TAG_ELLIPSE: {
-                lv_svg_render_ellipse_t * ellipse = lv_malloc(sizeof(lv_svg_render_ellipse_t));
-                lv_memzero(ellipse, sizeof(lv_svg_render_ellipse_t));
+                lv_svg_render_ellipse_t * ellipse = lv_malloc_zeroed(sizeof(lv_svg_render_ellipse_t));
+                LV_ASSERT_MALLOC(ellipse);
                 ellipse->base.init = _init_obj;
                 ellipse->base.render = _render_ellipse;
                 ellipse->base.set_attr = _set_ellipse_attr;
@@ -1846,8 +1847,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(ellipse);
             }
         case LV_SVG_TAG_LINE: {
-                lv_svg_render_line_t * line = lv_malloc(sizeof(lv_svg_render_line_t));
-                lv_memzero(line, sizeof(lv_svg_render_line_t));
+                lv_svg_render_line_t * line = lv_malloc_zeroed(sizeof(lv_svg_render_line_t));
+                LV_ASSERT_MALLOC(line);
                 line->base.init = _init_obj;
                 line->base.render = _render_line;
                 line->base.set_attr = _set_line_attr;
@@ -1856,8 +1857,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(line);
             }
         case LV_SVG_TAG_POLYLINE: {
-                lv_svg_render_poly_t * poly = lv_malloc(sizeof(lv_svg_render_poly_t));
-                lv_memzero(poly, sizeof(lv_svg_render_poly_t));
+                lv_svg_render_poly_t * poly = lv_malloc_zeroed(sizeof(lv_svg_render_poly_t));
+                LV_ASSERT_MALLOC(poly);
                 poly->base.init = _init_poly;
                 poly->base.render = _render_poly;
                 poly->base.set_attr = _set_polyline_attr;
@@ -1867,8 +1868,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(poly);
             }
         case LV_SVG_TAG_POLYGON: {
-                lv_svg_render_poly_t * poly = lv_malloc(sizeof(lv_svg_render_poly_t));
-                lv_memzero(poly, sizeof(lv_svg_render_poly_t));
+                lv_svg_render_poly_t * poly = lv_malloc_zeroed(sizeof(lv_svg_render_poly_t));
+                LV_ASSERT_MALLOC(poly);
                 poly->base.init = _init_poly;
                 poly->base.render = _render_poly;
                 poly->base.set_attr = _set_polygen_attr;
@@ -1878,8 +1879,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(poly);
             }
         case LV_SVG_TAG_PATH: {
-                lv_svg_render_poly_t * poly = lv_malloc(sizeof(lv_svg_render_poly_t));
-                lv_memzero(poly, sizeof(lv_svg_render_poly_t));
+                lv_svg_render_poly_t * poly = lv_malloc_zeroed(sizeof(lv_svg_render_poly_t));
+                LV_ASSERT_MALLOC(poly);
                 poly->base.init = _init_poly;
                 poly->base.render = _render_poly;
                 poly->base.set_attr = _set_path_attr;
@@ -1890,8 +1891,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
             }
 #if LV_USE_FREETYPE
         case LV_SVG_TAG_TEXT: {
-                lv_svg_render_text_t * txt = lv_malloc(sizeof(lv_svg_render_text_t));
-                lv_memzero(txt, sizeof(lv_svg_render_text_t));
+                lv_svg_render_text_t * txt = lv_malloc_zeroed(sizeof(lv_svg_render_text_t));
+                LV_ASSERT_MALLOC(txt);
                 txt->base.init = _init_text;
                 txt->base.set_attr = _set_text_attr;
                 txt->base.render = _render_text;
@@ -1901,8 +1902,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(txt);
             }
         case LV_SVG_TAG_TSPAN: {
-                lv_svg_render_tspan_t * span = lv_malloc(sizeof(lv_svg_render_tspan_t));
-                lv_memzero(span, sizeof(lv_svg_render_tspan_t));
+                lv_svg_render_tspan_t * span = lv_malloc_zeroed(sizeof(lv_svg_render_tspan_t));
+                LV_ASSERT_MALLOC(span);
                 lv_svg_render_content_t * content = (lv_svg_render_content_t *)span;
                 content->render_content = _render_span;
                 content->base.init = _init_tspan;
@@ -1913,8 +1914,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(span);
             }
         case LV_SVG_TAG_CONTENT: {
-                lv_svg_render_content_t * content = lv_malloc(sizeof(lv_svg_render_content_t));
-                lv_memzero(content, sizeof(lv_svg_render_content_t));
+                lv_svg_render_content_t * content = lv_malloc_zeroed(sizeof(lv_svg_render_content_t));
+                LV_ASSERT_MALLOC(content);
                 content->base.init = _init_content;
                 content->base.destroy = _destroy_content;
                 _set_render_attrs(LV_SVG_RENDER_OBJ(content), node, state);
@@ -1922,8 +1923,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
             }
 #endif
         case LV_SVG_TAG_IMAGE: {
-                lv_svg_render_image_t * image = lv_malloc(sizeof(lv_svg_render_image_t));
-                lv_memzero(image, sizeof(lv_svg_render_image_t));
+                lv_svg_render_image_t * image = lv_malloc_zeroed(sizeof(lv_svg_render_image_t));
+                LV_ASSERT_MALLOC(image);
                 image->base.init = _init_image;
                 image->base.render = _render_image;
                 image->base.set_attr = _set_image_attr;
@@ -1931,8 +1932,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(image);
             }
         case LV_SVG_TAG_USE: {
-                lv_svg_render_use_t * use = lv_malloc(sizeof(lv_svg_render_use_t));
-                lv_memzero(use, sizeof(lv_svg_render_use_t));
+                lv_svg_render_use_t * use = lv_malloc_zeroed(sizeof(lv_svg_render_use_t));
+                LV_ASSERT_MALLOC(use);
                 use->base.init = _init_obj;
                 use->base.set_attr = _set_use_attr;
                 use->base.render = _render_use;
@@ -1941,8 +1942,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(use);
             }
         case LV_SVG_TAG_SOLID_COLOR: {
-                lv_svg_render_solid_t * solid = lv_malloc(sizeof(lv_svg_render_solid_t));
-                lv_memzero(solid, sizeof(lv_svg_render_solid_t));
+                lv_svg_render_solid_t * solid = lv_malloc_zeroed(sizeof(lv_svg_render_solid_t));
+                LV_ASSERT_MALLOC(solid);
                 solid->base.init = _init_obj;
                 solid->base.set_attr = _set_solid_attr;
                 solid->base.set_paint_ref = _set_solid_ref;
@@ -1951,8 +1952,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
             }
         case LV_SVG_TAG_RADIAL_GRADIENT:
         case LV_SVG_TAG_LINEAR_GRADIENT: {
-                lv_svg_render_gradient_t * grad = lv_malloc(sizeof(lv_svg_render_gradient_t));
-                lv_memzero(grad, sizeof(lv_svg_render_gradient_t));
+                lv_svg_render_gradient_t * grad = lv_malloc_zeroed(sizeof(lv_svg_render_gradient_t));
+                LV_ASSERT_MALLOC(grad);
                 grad->base.init = _init_gradient;
                 grad->base.set_attr = _set_gradient_attr;
                 grad->base.set_paint_ref = _set_gradient_ref;
@@ -1966,8 +1967,8 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 return LV_SVG_RENDER_OBJ(grad);
             }
         case LV_SVG_TAG_G: {
-                lv_svg_render_group_t * group = lv_malloc(sizeof(lv_svg_render_group_t));
-                lv_memzero(group, sizeof(lv_svg_render_group_t));
+                lv_svg_render_group_t * group = lv_malloc_zeroed(sizeof(lv_svg_render_group_t));
+                LV_ASSERT_MALLOC(group);
                 group->base.init = _init_group;
                 group->base.set_attr = _set_attr;
                 group->base.render = _render_group;
@@ -2056,8 +2057,8 @@ static void _lv_svg_doc_walk_after_cb(const lv_tree_node_t * node, void * data)
         lv_svg_render_group_t * group = (lv_svg_render_group_t *)svg_node->render_obj;
         uint32_t count = LV_TREE_NODE(node)->child_cnt;
         for(uint32_t i = 0; i < count; i++) {
-            lv_svg_node_t * svg_node = LV_SVG_NODE_CHILD(node, i);
-            lv_array_push_back(&group->items, (uint8_t *)(&svg_node->render_obj));
+            lv_svg_node_t * child = LV_SVG_NODE_CHILD(node, i);
+            lv_array_push_back(&group->items, (uint8_t *)(&child->render_obj));
         }
 
         state->in_group_deps--;
