@@ -160,6 +160,14 @@ typedef struct {
                                                         * Any of LV_GRAD_DIR_HOR, LV_GRAD_DIR_VER, LV_GRAD_DIR_NONE */
 } lv_grad_dsc_t;
 
+/** A image colorkey definition.
+ *  The transparency within the color range of [low, high] will be set to LV_OPA_TRANSP If the "enable" flag is set to true.
+ */
+typedef struct {
+    lv_color_t low;
+    lv_color_t high;
+} lv_image_colorkey_t;
+
 /**
  * A common type to handle all the property types in the same way.
  */
@@ -322,7 +330,9 @@ enum _lv_style_prop_t {
     LV_STYLE_GRID_CELL_Y_ALIGN      = 139,
 #endif
 
-    _LV_STYLE_LAST_BUILT_IN_PROP     = 140,
+    LV_STYLE_IMAGE_COLORKEY         = 140,
+
+    _LV_STYLE_LAST_BUILT_IN_PROP     = 141,
 
     _LV_STYLE_NUM_BUILT_IN_PROPS     = _LV_STYLE_LAST_BUILT_IN_PROP + 1,
 

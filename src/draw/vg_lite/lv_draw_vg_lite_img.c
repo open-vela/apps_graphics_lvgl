@@ -102,6 +102,10 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
     LV_VG_LITE_ASSERT_SRC_BUFFER(&src_buf);
     LV_VG_LITE_ASSERT_DEST_BUFFER(&u->target_buffer);
 
+    if(dsc->colorkey) {
+        lv_vg_lite_set_color_key(dsc->colorkey);
+    }
+
     /* If clipping is not required, blit directly */
     if(_lv_area_is_in(&image_tf_area, draw_unit->clip_area, false)) {
         /* The image area is the coordinates relative to the image itself */
@@ -156,6 +160,10 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
         LV_PROFILER_END_TAG("vg_lite_draw_pattern");
 
         lv_vg_lite_path_drop(u, path);
+    }
+
+    if(dsc->colorkey) {
+        lv_vg_lite_set_color_key(NULL);
     }
 
     lv_vg_lite_pending_add(u->image_dsc_pending, &decoder_dsc);
