@@ -12,8 +12,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-#include "../../lv_conf_internal.h"
-#include "../../widgets/image/lv_image.h"
+#include "../../../lvgl.h"
 #if LV_USE_FFMPEG != 0
 
 /*********************
