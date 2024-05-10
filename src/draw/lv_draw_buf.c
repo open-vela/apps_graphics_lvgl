@@ -242,6 +242,10 @@ lv_draw_buf_t * lv_draw_buf_dup(const lv_draw_buf_t * draw_buf)
     /*Choose the smaller size to copy*/
     uint32_t size = LV_MIN(draw_buf->data_size, new_buf->data_size);
 
+    if(size == 0) {
+        LV_LOG_WARN("Data size is zero");
+    }
+
     /*Copy image data*/
     lv_memcpy(new_buf->data, draw_buf->data, size);
     return new_buf;
