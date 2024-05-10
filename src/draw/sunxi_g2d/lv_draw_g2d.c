@@ -194,12 +194,11 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
             }
 
         case LV_DRAW_TASK_TYPE_IMAGE: {
-                lv_draw_image_dsc_t * draw_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
-                const lv_image_dsc_t * img_dsc = draw_dsc->src;
+                lv_draw_image_dsc_t * img_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
                 if(!_g2d_cf_supported(img_dsc->header.cf))
                     return 0;
 
-                if(!_g2d_draw_img_supported(draw_dsc, size))
+                if(!_g2d_draw_img_supported(img_dsc, size))
                     return 0;
 
                 if(t->preference_score > 70) {
