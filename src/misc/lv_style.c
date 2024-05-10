@@ -361,7 +361,11 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
             };
         case LV_STYLE_BG_COLOR:
             return (lv_style_value_t) {
+#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
+                .color = black
+#else
                 .color = white
+#endif
             };
         case LV_STYLE_BG_GRAD_COLOR:
         case LV_STYLE_BORDER_COLOR:
@@ -372,7 +376,11 @@ lv_style_value_t lv_style_prop_get_default(lv_style_prop_t prop)
         case LV_STYLE_TEXT_COLOR:
         case LV_STYLE_IMAGE_RECOLOR:
             return (lv_style_value_t) {
+#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
+                .color = white
+#else
                 .color = black
+#endif
             };
         case LV_STYLE_OPA:
         case LV_STYLE_OPA_LAYERED:
