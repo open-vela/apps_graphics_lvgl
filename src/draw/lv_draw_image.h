@@ -57,6 +57,7 @@ typedef struct _lv_draw_image_dsc_t {
 
     uint16_t antialias          : 1;
     uint16_t tile               : 1;
+    const lv_image_colorkey_t * colorkey;
     lv_draw_image_sup_t * sup;
 
     /** Might be used to indicate the original size of the image if only a small portion is rendered now.
