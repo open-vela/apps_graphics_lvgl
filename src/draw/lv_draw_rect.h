@@ -46,6 +46,7 @@ typedef struct {
     lv_opa_t bg_image_opa;
     lv_opa_t bg_image_recolor_opa;
     uint8_t bg_image_tiled;
+    const lv_image_colorkey_t * bg_image_colorkey;
 
     /*Border*/
     lv_color_t border_color;

@@ -181,6 +181,10 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
 
                     vg_lite_color_t recolor = lv_vg_lite_color(dsc->fill_dsc.img_dsc.recolor, dsc->fill_dsc.img_dsc.recolor_opa, true);
 
+                    if(dsc->fill_dsc.img_dsc.colorkey) {
+                        lv_vg_lite_set_color_key(dsc->fill_dsc.img_dsc.colorkey);
+                    }
+
                     LV_VG_LITE_ASSERT_MATRIX(&pattern_matrix);
 
                     LV_PROFILER_BEGIN_TAG("vg_lite_draw_pattern");
@@ -197,6 +201,10 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
                                                vg_color,
                                                VG_LITE_FILTER_BI_LINEAR));
                     LV_PROFILER_END_TAG("vg_lite_draw_pattern");
+
+                    if(dsc->fill_dsc.img_dsc.colorkey) {
+                        lv_vg_lite_set_color_key(NULL);
+                    }
 
                     lv_vg_lite_pending_add(u->image_dsc_pending, &decoder_dsc);
                 }

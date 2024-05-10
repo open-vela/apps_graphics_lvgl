@@ -173,6 +173,8 @@ void lv_vg_lite_flush(struct _lv_draw_vg_lite_unit_t * u);
 
 void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u);
 
+void lv_vg_lite_set_color_key(const lv_image_colorkey_t * colorkey);
+
 /**********************
  *      MACROS
  **********************/
