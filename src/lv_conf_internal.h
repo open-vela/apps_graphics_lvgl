@@ -2975,6 +2975,15 @@
         #endif
     #endif
 
+    /*Driver for /dev/mouse*/
+    #ifndef LV_USE_NUTTX_MOUSE
+        #ifdef CONFIG_LV_USE_NUTTX_MOUSE
+            #define LV_USE_NUTTX_MOUSE CONFIG_LV_USE_NUTTX_MOUSE
+        #else
+            #define LV_USE_NUTTX_MOUSE    0
+        #endif
+    #endif
+
 #endif
 
 /*Driver for /dev/dri/card*/

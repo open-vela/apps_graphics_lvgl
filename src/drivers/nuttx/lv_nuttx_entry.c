@@ -17,6 +17,7 @@
 #include "lv_nuttx_cache.h"
 #include "lv_nuttx_image_cache.h"
 #include "lv_nuttx_profiler.h"
+#include "lv_nuttx_mouse.h"
 
 #include "../../../lvgl.h"
 
@@ -90,6 +91,10 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
 #ifdef CONFIG_UINPUT_TOUCH
     dsc->utouch_path = "/dev/utouch";
 #endif
+
+#ifdef LV_USE_NUTTX_MOUSE
+    dsc->mouse_path = "/dev/mouse0";
+#endif
 }
 
 void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
@@ -148,6 +153,15 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
             lv_indev_t * indev = lv_nuttx_touchscreen_create(dsc->utouch_path);
             if(result) {
                 result->utouch_indev = indev;
+            }
+        }
+#endif
+
+#if LV_USE_NUTTX_MOUSE
+        if(dsc->mouse_path) {
+            lv_indev_t * indev = lv_nuttx_mouse_create(dsc->mouse_path);
+            if(result) {
+                result->mouse_indev = indev;
             }
         }
 #endif

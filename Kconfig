@@ -1522,6 +1522,17 @@ menu "LVGL configuration"
 			depends on LV_USE_NUTTX
 			default n
 
+		config LV_USE_NUTTX_MOUSE
+			bool "Use NuttX mouse driver"
+			depends on LV_USE_NUTTX
+			default n
+
+		if LV_USE_NUTTX_MOUSE
+			config LV_MOUSE_RATE
+				int "Mouse default rate"
+				default 3
+		endif
+
 		config LV_USE_LINUX_DRM
 			bool "Use Linux DRM device"
 			default n
