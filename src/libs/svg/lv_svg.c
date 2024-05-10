@@ -9,6 +9,7 @@
 #include "lv_svg.h"
 #if LV_USE_SVG
 
+#include "../../misc/lv_assert.h"
 #include "../../misc/lv_log.h"
 #include "../../stdlib/lv_mem.h"
 
@@ -77,6 +78,9 @@ const lv_tree_class_t lv_svg_node_class = {
  **********************/
 lv_svg_node_t * lv_svg_load_data(const char * svg_data, uint32_t data_len)
 {
+    LV_ASSERT_NULL(svg_data);
+    LV_ASSERT(data_len > 0);
+
     _lv_svg_parser_t parser;
     _lv_svg_parser_init(&parser);
 
@@ -111,6 +115,7 @@ lv_svg_node_t * lv_svg_node_create(lv_svg_node_t * parent)
 
 void lv_svg_node_delete(lv_svg_node_t * node)
 {
+    LV_ASSERT_NULL(node);
     lv_tree_node_delete((lv_tree_node_t *)node);
 }
 

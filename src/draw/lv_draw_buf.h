@@ -15,8 +15,7 @@ extern "C" {
  *********************/
 #include "../misc/lv_area.h"
 #include "../misc/lv_color.h"
-#include "../stdlib/lv_string.h"
-#include "lv_image_dsc.h"
+#include "lv_image_buf.h"
 
 /*********************
  *      DEFINES
@@ -33,7 +32,7 @@ LV_EXPORT_CONST_INT(LV_STRIDE_AUTO);
 typedef struct {
     lv_image_header_t header;
     uint32_t data_size;     /*Total buf size in bytes*/
-    uint8_t * data;
+    void * data;
     void * unaligned_data;  /*Unaligned address of `data`, used internally by lvgl*/
 } lv_draw_buf_t;
 
@@ -57,13 +56,11 @@ typedef struct {
     static uint8_t buf_##name[_LV_DRAW_BUF_SIZE(_w, _h, _cf)]; \
     static lv_draw_buf_t name = { \
                                   .header = { \
-                                              .magic = LV_IMAGE_HEADER_MAGIC, \
-                                              .cf = (_cf), \
-                                              .flags = LV_IMAGE_FLAGS_MODIFIABLE, \
                                               .w = (_w), \
                                               .h = (_h), \
+                                              .cf = (_cf), \
+                                              .flags = LV_IMAGE_FLAGS_MODIFIABLE, \
                                               .stride = _LV_DRAW_BUF_STRIDE(_w, _cf), \
-                                              .reserved_2 = 0, \
                                             }, \
                                   .data_size = sizeof(buf_##name), \
                                   .data = buf_##name, \
@@ -76,7 +73,8 @@ typedef void (*lv_draw_buf_free_cb)(void * draw_buf);
 
 typedef void * (*lv_draw_buf_align_cb)(void * buf, lv_color_format_t color_format);
 
-typedef void (*lv_draw_buf_invalidate_cache_cb)(const lv_draw_buf_t * draw_buf, const lv_area_t * area);
+typedef void (*lv_draw_buf_invalidate_cache_cb)(void * buf, uint32_t stride, lv_color_format_t color_format,
+                                                const lv_area_t * area);
 
 typedef uint32_t (*lv_draw_buf_width_to_stride_cb)(uint32_t w, lv_color_format_t color_format);
 
@@ -114,11 +112,12 @@ void * lv_draw_buf_align(void * buf, lv_color_format_t color_format);
 
 /**
  * Invalidate the cache of the buffer
- * @param draw_buf     the draw buffer needs to be invalidated
- * @param area         the area to invalidate in the buffer,
- *                     use NULL to invalidate the whole draw buffer address range
+ * @param buf          a memory address to invalidate
+ * @param stride       stride of the buffer
+ * @param color_format color format of the buffer
+ * @param area         the area to invalidate in the buffer
  */
-void lv_draw_buf_invalidate_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * area);
+void lv_draw_buf_invalidate_cache(void * buf, uint32_t stride, lv_color_format_t color_format, const lv_area_t * area);
 
 /**
  * Calculate the stride in bytes based on a width and color format
@@ -196,7 +195,7 @@ lv_draw_buf_t * lv_draw_buf_reshape(lv_draw_buf_t * draw_buf, lv_color_format_t 
                                     uint32_t stride);
 
 /**
- * Destroy a draw buf by free the actual buffer if it's marked as LV_IMAGE_FLAGS_ALLOCATED in header.
+ * Destroy a draw buf by free the actual buffer if it's marked as LV_IMAGE_FLAGS_MODIFIABLE in header.
  * Then free the lv_draw_buf_t struct.
  */
 void lv_draw_buf_destroy(lv_draw_buf_t * buf);
@@ -207,12 +206,9 @@ void lv_draw_buf_destroy(lv_draw_buf_t * buf);
 void * lv_draw_buf_goto_xy(const lv_draw_buf_t * buf, uint32_t x, uint32_t y);
 
 /**
- * Adjust the stride of a draw buf in place.
- * @param src       pointer to a draw buffer
- * @param stride    the new stride in bytes for image. Use LV_STRIDE_AUTO for automatic calculation.
- * @return          LV_RESULT_OK: success or LV_RESULT_INVALID: failed
+ * Adjust the stride of a draw buf.
  */
-lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride);
+lv_draw_buf_t * lv_draw_buf_adjust_stride(const lv_draw_buf_t * src, uint32_t stride);
 
 /**
  * Premultiply draw buffer color with alpha channel.
@@ -251,43 +247,7 @@ static inline void lv_draw_buf_from_image(lv_draw_buf_t * buf, const lv_image_ds
 
 static inline void lv_draw_buf_to_image(const lv_draw_buf_t * buf, lv_image_dsc_t * img)
 {
-    lv_memcpy((void *)img, buf, sizeof(lv_image_dsc_t));
-}
-
-/**
- * Set the palette color of an indexed image. Valid only for `LV_COLOR_FORMAT_I1/2/4/8`
- * @param draw_buf pointer to an image descriptor
- * @param index the palette color to set:
- *   - for `LV_COLOR_FORMAT_I1`: 0..1
- *   - for `LV_COLOR_FORMAT_I2`: 0..3
- *   - for `LV_COLOR_FORMAT_I4`: 0..15
- *   - for `LV_COLOR_FORMAT_I8`: 0..255
- * @param color the color to set in lv_color32_t format
- */
-void lv_draw_buf_set_palette(lv_draw_buf_t * draw_buf, uint8_t index, lv_color32_t color);
-
-/**
- * @deprecated Use lv_draw_buf_set_palette instead.
- */
-static inline void lv_image_buf_set_palette(lv_image_dsc_t * dsc, uint8_t id, lv_color32_t c)
-{
-    LV_LOG_WARN("Deprecated API, use lv_draw_buf_set_palette instead.");
-    lv_draw_buf_set_palette((lv_draw_buf_t *)dsc, id, c);
-}
-
-/**
- * @deprecated Use lv_draw_buffer_create/destroy instead.
- * Free the data pointer and dsc struct of an image.
- */
-static inline void lv_image_buf_free(lv_image_dsc_t * dsc)
-{
-    LV_LOG_WARN("Deprecated API, use lv_draw_buf_destroy instead.");
-    if(dsc != NULL) {
-        if(dsc->data != NULL)
-            lv_free((void *)dsc->data);
-
-        lv_free((void *)dsc);
-    }
+    lv_memcpy(img, buf, sizeof(lv_image_dsc_t));
 }
 
 /**********************

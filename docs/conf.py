@@ -41,8 +41,7 @@ extensions = [
     'breathe',
     'sphinx_sitemap',
     'lv_example',
-    'sphinx_rtd_dark_mode',
-    'link_roles'
+    'sphinx_rtd_dark_mode'
 ]
 
 default_dark_mode = False
@@ -91,7 +90,7 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'doxygen_html', 'Thumbs.db', '.DS_Store',
-                    'README.md', 'README_*', 'lv_examples', 'out_html', 'env', '_ext', 'examples']
+                    'README.md', 'lv_examples', 'out_html', 'env', '_ext', 'examples']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
