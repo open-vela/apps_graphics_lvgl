@@ -32,7 +32,6 @@ extern "C" {
 #include "nuttx/lv_nuttx_libuv.h"
 
 #include "evdev/lv_evdev.h"
-#include "libinput/lv_libinput.h"
 
 #include "windows/lv_windows_input.h"
 #include "windows/lv_windows_display.h"

@@ -359,6 +359,7 @@ static void _process_string(lv_svg_node_t * node, lv_svg_attr_type_t type, const
 
     uint32_t len = val_end - val_start;
     char * str = lv_malloc(len + 1);
+    LV_ASSERT_MALLOC(str);
     lv_memcpy(str, val_start, len);
     str[len] = '\0';
     attr->value.sval = str;
@@ -380,6 +381,7 @@ static void _process_xlink(lv_svg_node_t * node, lv_svg_attr_type_t type, const 
 
     uint32_t len = val_end - val_start;
     char * str = lv_malloc(len + 1);
+    LV_ASSERT_MALLOC(str);
     lv_memcpy(str, val_start, len);
     str[len] = '\0';
     attr->value.sval = str;
@@ -759,8 +761,8 @@ static void _process_view_box(lv_svg_node_t * node, lv_svg_attr_type_t type, con
         return;
     }
 
-    float * vals = lv_malloc(sizeof(float) * 4);
-    lv_memset(vals, 0, sizeof(float) * 4);
+    float * vals = lv_malloc_zeroed(sizeof(float) * 4);
+    LV_ASSERT_MALLOC(vals);
     const char * ptr = val_start;
     for(int i = 0; i < 4; i++) {
         ptr = _parse_number(ptr, val_end, &vals[i]);
@@ -786,8 +788,8 @@ static void _process_points_value(lv_svg_node_t * node, lv_svg_attr_type_t type,
     attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
 
     uint32_t list_cap = 4;
-    lv_svg_attr_values_list_t * list = (lv_svg_attr_values_list_t *)lv_malloc(sizeof(lv_svg_point_t) * list_cap + sizeof(
-                                                                                  uint32_t));
+    lv_svg_attr_values_list_t * list = lv_malloc(sizeof(lv_svg_point_t) * list_cap + sizeof(uint32_t));
+    LV_ASSERT_MALLOC(list);
 
     float val_number = 0.0f;
     const char * ptr = val_start;
@@ -797,6 +799,7 @@ static void _process_points_value(lv_svg_node_t * node, lv_svg_attr_type_t type,
         if(point_cnt == list_cap) {
             list_cap = list_cap << 1;
             list = (lv_svg_attr_values_list_t *)lv_realloc(list, sizeof(lv_svg_point_t) * list_cap + sizeof(uint32_t));
+            LV_ASSERT_MALLOC(list);
         }
         lv_svg_point_t * pt = (lv_svg_point_t *)(&list->data) + point_cnt;
         val_number = 0.0f;
@@ -887,7 +890,8 @@ static void _process_path_value(lv_svg_node_t * node, lv_svg_attr_type_t type, c
 
     uint32_t list_cap = 4;
     uint32_t list_size = sizeof(lv_svg_point_t) * list_cap + sizeof(uint32_t) * list_cap + sizeof(uint32_t);
-    lv_svg_attr_values_list_t * list = (lv_svg_attr_values_list_t *)lv_malloc(list_size);
+    lv_svg_attr_values_list_t * list = lv_malloc(list_size);
+    LV_ASSERT_MALLOC(list);
 
     uint32_t cmd_cnt = 0;
     uint32_t cur_size = 0;
@@ -1186,7 +1190,8 @@ static void _process_paint_dasharray(lv_svg_node_t * node, lv_svg_attr_type_t ty
         attr->val_type = LV_SVG_ATTR_VALUE_PTR;
 
         uint32_t list_cap = 4;
-        lv_svg_attr_values_list_t * list = (lv_svg_attr_values_list_t *)lv_malloc(sizeof(float) * list_cap + sizeof(uint32_t));
+        lv_svg_attr_values_list_t * list = lv_malloc(sizeof(float) * list_cap + sizeof(uint32_t));
+        LV_ASSERT_MALLOC(list);
 
         uint32_t count = 0;
         const char * ptr = val_start;
@@ -1194,7 +1199,8 @@ static void _process_paint_dasharray(lv_svg_node_t * node, lv_svg_attr_type_t ty
         while(ptr < val_end) {
             if(count == list_cap) {
                 list_cap = list_cap << 1;
-                list = (lv_svg_attr_values_list_t *)lv_realloc(list, sizeof(float) * list_cap + sizeof(uint32_t));
+                list = lv_realloc(list, sizeof(float) * list_cap + sizeof(uint32_t));
+                LV_ASSERT_MALLOC(list);
             }
             float * val = (float *)(&list->data) + count;
             ptr = _parse_number(ptr, val_end, val);
@@ -1234,6 +1240,7 @@ static void _process_font_attrs(lv_svg_node_t * node, lv_svg_attr_type_t type, c
         attr->val_type = LV_SVG_ATTR_VALUE_PTR;
 
         char * str = lv_malloc(len + 1);
+        LV_ASSERT_MALLOC(str);
         lv_memcpy(str, val_start, len);
         str[len] = '\0';
         attr->value.sval = str;
@@ -1367,6 +1374,7 @@ static void _process_paint(lv_svg_node_t * node, lv_svg_attr_type_t type, const 
             attr->val_type = LV_SVG_ATTR_VALUE_PTR;
             len = url_end - url_start;
             char * node_id = lv_malloc(len + 1);
+            LV_ASSERT_MALLOC(node_id);
             lv_memcpy(node_id, url_start, len);
             node_id[len] = '\0';
             attr->value.sval = node_id;
@@ -1443,8 +1451,8 @@ static void _process_transform(lv_svg_node_t * node, lv_svg_attr_type_t type, co
         return;
     }
 
-    lv_svg_matrix_t * matrix = (lv_svg_matrix_t *)lv_malloc(sizeof(lv_svg_matrix_t));
-    lv_memset(matrix, 0, sizeof(lv_svg_matrix_t));
+    lv_svg_matrix_t * matrix = lv_malloc_zeroed(sizeof(lv_svg_matrix_t));
+    LV_ASSERT_MALLOC(matrix);
     matrix->m[0][0] = matrix->m[1][1] = matrix->m[2][2] = 1.0f; // identity
 
     const char * ptr = val_start;
@@ -1535,6 +1543,7 @@ static void _process_attrs_tag(_lv_svg_parser_t * parser, lv_svg_node_t * node, 
 
         if(type == LV_SVG_ATTR_XML_ID || type == LV_SVG_ATTR_ID) { // get xml:id
             char * str = lv_malloc(value_len + 1);
+            LV_ASSERT_MALLOC(str);
             lv_memcpy(str, tok_attr->value_start, value_len);
             str[value_len] = '\0';
             node->xml_id = str;
@@ -1636,6 +1645,7 @@ static bool _process_begin_tag(_lv_svg_parser_t * parser, lv_svg_tag_t tag, cons
     if(token->type == LV_SVG_TOKEN_CONTENT) {
         uint32_t len = SVG_TOKEN_LEN(token);
         char * content = lv_malloc(len + 1);
+        LV_ASSERT_MALLOC(content);
         lv_memcpy(content, token->start, len);
         content[len] = '\0';
         lv_svg_node_t * node = lv_svg_node_create(parser->cur_node);
@@ -1650,6 +1660,7 @@ static bool _process_begin_tag(_lv_svg_parser_t * parser, lv_svg_tag_t tag, cons
             parser->state = LV_SVG_PARSER_IGNORE;
             uint32_t len = SVG_TOKEN_LEN(token);
             parser->ignore_name = lv_malloc(len + 1);
+            LV_ASSERT_MALLOC(parser->ignore_name);
             parser->ignore_len = len;
             lv_memcpy(parser->ignore_name, token->start, len);
             parser->ignore_name[len] = '\0';
@@ -1676,6 +1687,8 @@ static bool _process_begin_tag(_lv_svg_parser_t * parser, lv_svg_tag_t tag, cons
  **********************/
 void _lv_svg_parser_init(_lv_svg_parser_t * parser)
 {
+    LV_ASSERT_NULL(parser);
+    lv_memzero(parser, sizeof(_lv_svg_parser_t));
     parser->state = LV_SVG_PARSER_PROCESS;
     parser->ignore_name = NULL;
     parser->ignore_len = 0;
@@ -1686,6 +1699,7 @@ void _lv_svg_parser_init(_lv_svg_parser_t * parser)
 
 void _lv_svg_parser_deinit(_lv_svg_parser_t * parser)
 {
+    LV_ASSERT_NULL(parser);
     if(parser->ignore_name) {
         lv_free(parser->ignore_name);
         parser->ignore_name = NULL;
@@ -1700,6 +1714,7 @@ void _lv_svg_parser_deinit(_lv_svg_parser_t * parser)
 
 bool _lv_svg_parser_is_finish(_lv_svg_parser_t * parser)
 {
+    LV_ASSERT_NULL(parser);
     return (parser->doc_root != NULL)
            && (parser->cur_node == parser->doc_root)
            && (parser->state != LV_SVG_PARSER_IGNORE);
@@ -1707,6 +1722,8 @@ bool _lv_svg_parser_is_finish(_lv_svg_parser_t * parser)
 
 bool _lv_svg_parser_token(_lv_svg_parser_t * parser, const _lv_svg_token_t * token)
 {
+    LV_ASSERT_NULL(parser);
+    LV_ASSERT_NULL(token);
     lv_svg_tag_t tag = _get_svg_tag_type(token);
 
     if(parser->doc_root == NULL) {
@@ -1727,37 +1744,39 @@ bool _lv_svg_parser_token(_lv_svg_parser_t * parser, const _lv_svg_token_t * tok
 #include <stdio.h>
 void _lv_svg_dump_tree(lv_svg_node_t * root, int depth)
 {
-    if(root) {
-        for(int i = 0; i < depth; i++) {
+    if(!root) {
+        return;
+    }
+
+    for(int i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    if(root->type == LV_SVG_TAG_CONTENT) {
+        printf("content: [%s]\n", root->xml_id);
+    }
+    else {
+        printf("tag <%s>", _svg_tag_map[root->type - 1].name);
+        if(root->xml_id) {
+            printf(" - id [%s]", root->xml_id);
+        }
+        printf("\n");
+    }
+
+    uint32_t len = lv_array_size(&root->attrs);
+    for(uint32_t i = 0; i < len; i++) {
+        for(int j = 0; j < depth; j++) {
             printf("  ");
         }
-        if(root->type == LV_SVG_TAG_CONTENT) {
-            printf("content: [%s]\n", root->xml_id);
-        }
-        else {
-            printf("tag <%s>", _svg_tag_map[root->type - 1].name);
-            if(root->xml_id) {
-                printf(" - id [%s]", root->xml_id);
-            }
-            printf("\n");
-        }
+        lv_svg_attr_t * attr = lv_array_at(&root->attrs, i);
+        printf("   attr <%s>\n", _svg_attr_map[attr->id - 1].name);
+    }
 
-        uint32_t len = lv_array_size(&root->attrs);
-        for(uint32_t i = 0; i < len; i++) {
-            for(int j = 0; j < depth; j++) {
-                printf("  ");
-            }
-            lv_svg_attr_t * attr = lv_array_at(&root->attrs, i);
-            printf("   attr <%s>\n", _svg_attr_map[attr->id - 1].name);
-        }
+    lv_tree_node_t * tree_root = (lv_tree_node_t *)root;
 
-        lv_tree_node_t * tree_root = (lv_tree_node_t *)root;
-
-        for(uint32_t i = 0; i < tree_root->child_cnt; i++) {
-            ++depth;
-            _lv_svg_dump_tree((lv_svg_node_t *)tree_root->children[i], depth);
-            --depth;
-        }
+    for(uint32_t i = 0; i < tree_root->child_cnt; i++) {
+        ++depth;
+        _lv_svg_dump_tree((lv_svg_node_t *)tree_root->children[i], depth);
+        --depth;
     }
 }
 #endif /*LV_USE_SVG_DEBUG*/
