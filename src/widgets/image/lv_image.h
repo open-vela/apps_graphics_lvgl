@@ -98,6 +98,10 @@ enum {
 };
 #endif
 
+typedef struct {
+    lv_obj_create_info_t base;
+} lv_image_create_info_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -107,7 +111,12 @@ enum {
  * @param parent pointer to an object, it will be the parent of the new image
  * @return pointer to the created image
  */
-lv_obj_t * lv_image_create(lv_obj_t * parent);
+lv_obj_t * lv_image_create_ex(lv_obj_t * parent, lv_image_create_info_t * create_info);
+
+static inline lv_obj_t * lv_image_create(lv_obj_t * parent)
+{
+    return lv_image_create_ex(parent, NULL);
+}
 
 /*=====================
  * Setter functions
