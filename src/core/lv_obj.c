@@ -94,12 +94,11 @@ const lv_obj_class_t lv_obj_class = {
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
-
-lv_obj_t * lv_obj_create(lv_obj_t * parent)
+lv_obj_t * lv_obj_create_ex(lv_obj_t * parent, lv_obj_create_info_t * create_info)
 {
     LV_LOG_INFO("begin");
     lv_obj_t * obj = lv_obj_class_create_obj(MY_CLASS, parent);
-    lv_obj_class_init_obj(obj);
+    lv_obj_class_init_obj_ex(obj, create_info);
     return obj;
 }
 
