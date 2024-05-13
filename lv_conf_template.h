@@ -545,6 +545,8 @@
 
 #define LV_USE_LIST       1
 
+#define LV_USE_LOTTIE     0  /*Requires: lv_canvas, thorvg */
+
 #define LV_USE_MENU       1
 
 #define LV_USE_MSGBOX     1
