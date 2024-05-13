@@ -14,7 +14,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS    &lv_gif_class
+#define MY_CLASS (&lv_gif_class)
 
 /**********************
  *      TYPEDEFS
@@ -85,8 +85,6 @@ void lv_gif_set_src(lv_obj_t * obj, const void * src)
     gifobj->imgdsc.header.cf = LV_COLOR_FORMAT_ARGB8888;
     gifobj->imgdsc.header.h = gifobj->gif->height;
     gifobj->imgdsc.header.w = gifobj->gif->width;
-    gifobj->imgdsc.data_size =
-        gifobj->gif->width * gifobj->gif->height * sizeof(lv_color32_t);
     gifobj->last_call = lv_tick_get();
 
     lv_image_set_src(obj, &gifobj->imgdsc);

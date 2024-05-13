@@ -192,8 +192,7 @@ void testTreeSearch(void)
 
     struct _result result = {.num = 0};
 
-    lv_tree_walk((lv_tree_node_t *)node, LV_TREE_WALK_PRE_ORDER, test_search_cb, test_before_search_cb,
-                 test_after_search_cb, &result);
+    lv_tree_walk((lv_tree_node_t *)node, LV_TREE_WALK_PRE_ORDER, test_search_cb, test_before_search_cb, test_after_search_cb, &result);
 
     int32_t ret2[4] = {1, 2};
 
@@ -201,8 +200,7 @@ void testTreeSearch(void)
 
     result.num = 0;
     lv_memset(&result, 0, sizeof(struct _result));
-    lv_tree_walk((lv_tree_node_t *)node, LV_TREE_WALK_POST_ORDER, test_search_cb, test_before_search_cb,
-                 test_after_search_cb, &result);
+    lv_tree_walk((lv_tree_node_t *)node, LV_TREE_WALK_POST_ORDER, test_search_cb, test_before_search_cb, test_after_search_cb, &result);
 
     int32_t ret3[4] = {4, 2};
 
