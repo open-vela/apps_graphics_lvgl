@@ -32,6 +32,8 @@ extern "C" {
  **********************/
 #define lv_image_set_align               lv_image_set_inner_align
 #define lv_image_get_align               lv_image_get_inner_align
+#define lv_snapshot_take_to_buf          lv_snapshot_take_to_draw_buf
+#define lv_snapshot_draw_buf_create      lv_snapshot_create_draw_buf
 
 #ifndef LV_DRAW_LAYER_SIMPLE_BUF_SIZE
 #define LV_DRAW_LAYER_SIMPLE_BUF_SIZE    LV_DRAW_SW_LAYER_SIMPLE_BUF_SIZE
