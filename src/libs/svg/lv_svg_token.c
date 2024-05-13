@@ -351,11 +351,6 @@ static bool _svg_parser_tag(_lv_svg_parser_state_t * state, _lv_svg_token_t * to
 
 bool _lv_svg_tokenizer(const char * svg_data, uint32_t data_len, svg_token_process cb, void * data)
 {
-    LV_ASSERT_NULL(svg_data);
-    LV_ASSERT(data_len > 0);
-    LV_ASSERT_NULL(cb);
-    LV_ASSERT_NULL(data);
-
     _lv_svg_token_t token;
     _lv_svg_token_init(&token);
     _lv_svg_parser_state_t state = {

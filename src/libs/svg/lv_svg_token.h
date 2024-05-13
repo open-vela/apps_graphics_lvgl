@@ -13,17 +13,14 @@
 #if LV_USE_SVG
 
 #include "../../misc/lv_array.h"
-
 /*********************
  *      DEFINES
  *********************/
-
 #define SVG_TOKEN_LEN(t) ((t)->end - (t)->start)
 
 /**********************
  *      TYPEDEFS
  **********************/
-
 typedef enum {
     LV_SVG_TOKEN_BEGIN = 0,
     LV_SVG_TOKEN_END,
@@ -46,20 +43,12 @@ typedef struct {
     lv_array_t attrs;
 } _lv_svg_token_t;
 
-typedef bool (*svg_token_process)(_lv_svg_token_t * token, void * user_data);
-
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 
-/**
- * @brief Parse SVG data and call a callback for each token
- * @param svg_data pointer to SVG data
- * @param len length of the SVG data
- * @param cb callback function to be called for each token
- * @param user_data custom data to be passed to the callback function
- * @return true: SVG data successfully parsed, false: error occurred
- */
+typedef bool (*svg_token_process)(_lv_svg_token_t * token, void * user_data);
+
 bool _lv_svg_tokenizer(const char * svg_data, uint32_t len, svg_token_process cb, void * user_data);
 
 /**********************
