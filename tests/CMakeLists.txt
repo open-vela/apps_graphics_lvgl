@@ -229,6 +229,7 @@ add_library(test_common
         src/test_assets/test_img_emoji_F617.c
         src/test_assets/test_ubuntu_font.c
         src/test_assets/test_kern_one_otf.c
+        src/test_assets/test_lottie_approve.c
         unity/unity_support.c
         unity/unity.c
         ${TEST_IMAGES_SRC}
