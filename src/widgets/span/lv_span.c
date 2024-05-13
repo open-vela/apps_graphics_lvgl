@@ -16,7 +16,7 @@
 /*********************
  *      DEFINES
  *********************/
-#define MY_CLASS &lv_spangroup_class
+#define MY_CLASS (&lv_spangroup_class)
 #define snippet_stack LV_GLOBAL_DEFAULT()->span_snippet_stack
 
 /**********************
@@ -101,10 +101,10 @@ void lv_span_stack_deinit(void)
     lv_free(snippet_stack);
 }
 
-lv_obj_t * lv_spangroup_create_ex(lv_obj_t * par, lv_spangroup_create_info_t * create_info)
+lv_obj_t * lv_spangroup_create(lv_obj_t * par)
 {
     lv_obj_t * obj = lv_obj_class_create_obj(&lv_spangroup_class, par);
-    lv_obj_class_init_obj_ex(obj, create_info ? & (create_info->base) : NULL);
+    lv_obj_class_init_obj(obj);
     return obj;
 }
 
