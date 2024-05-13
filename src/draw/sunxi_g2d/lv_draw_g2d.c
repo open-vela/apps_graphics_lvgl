@@ -164,6 +164,10 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
                 /* Most simple case: just a plain rectangle (no radius, no gradient). */
                 if((draw_dsc->radius != 0) || (draw_dsc->grad.dir != (lv_grad_dir_t)LV_GRAD_DIR_NONE))
                     return 0;
+
+                if((draw_dsc->opa >= LV_OPA_MAX) && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_FILL))) {
+                    return 0;
+                }
                 if((draw_dsc->opa > LV_OPA_MIN) && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_OPA_FILL))) {
                     return 0;
                 }
@@ -176,6 +180,7 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
             }
 
         case LV_DRAW_TASK_TYPE_LAYER: {
+                return 0;
                 const lv_draw_image_dsc_t * draw_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
                 lv_layer_t * layer_to_draw = (lv_layer_t *)draw_dsc->src;
                 //lv_draw_buf_t * draw_buf = &layer_to_draw->draw_buf;
@@ -194,11 +199,12 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
             }
 
         case LV_DRAW_TASK_TYPE_IMAGE: {
-                lv_draw_image_dsc_t * img_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
+                lv_draw_image_dsc_t * draw_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
+                const lv_image_dsc_t * img_dsc = draw_dsc->src;
                 if(!_g2d_cf_supported(img_dsc->header.cf))
                     return 0;
 
-                if(!_g2d_draw_img_supported(img_dsc, size))
+                if(!_g2d_draw_img_supported(draw_dsc, size))
                     return 0;
 
                 if(t->preference_score > 70) {
@@ -268,7 +274,7 @@ static void _g2d_execute_drawing(lv_draw_g2d_unit_t * u)
     lv_area_t draw_area;
     if(!_lv_area_intersect(&draw_area, &t->area, draw_unit->clip_area))
         return; /*Fully clipped, nothing to do*/
-    lv_draw_buf_invalidate_cache(draw_buf->data, draw_buf->header.stride, draw_buf->header.cf, &draw_area);
+    lv_draw_buf_invalidate_cache(draw_buf, &draw_area);
 
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL:

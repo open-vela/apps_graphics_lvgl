@@ -87,8 +87,7 @@ struct _lv_obj_class_t {
  */
 lv_obj_t * lv_obj_class_create_obj(const lv_obj_class_t * class_p, lv_obj_t * parent);
 
-void lv_obj_class_init_obj_ex(lv_obj_t * obj, lv_obj_create_info_t * create_info);
-#define lv_obj_class_init_obj(obj) lv_obj_class_init_obj_ex(obj, NULL)
+void lv_obj_class_init_obj(lv_obj_t * obj);
 
 void _lv_obj_destruct(lv_obj_t * obj);
 

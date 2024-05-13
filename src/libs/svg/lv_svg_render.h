@@ -18,12 +18,9 @@
  *      DEFINES
  *********************/
 
-#define LV_SVG_RENDER_OBJ(n) ((lv_svg_render_obj_t*)(n))
-
 /**********************
  *      TYPEDEFS
  **********************/
-
 typedef struct _lv_svg_render_obj {
     struct _lv_svg_render_obj * next;
     uint32_t flags;
@@ -49,47 +46,21 @@ typedef struct _lv_svg_render_hal {
     void (*load_image)(const char * image_url, lv_draw_image_dsc_t * img_dsc);
     const char * (*get_font_path)(const char * font_family);
 } lv_svg_render_hal_t;
-
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
-
-/**
- * @brief Initialize the SVG render
- * @param hal pointer to a structure with rendering functions
- */
 void lv_svg_render_init(const lv_svg_render_hal_t * hal);
 
-/**
- * @brief Create a new SVG render from an SVG document
- * @param svg_doc pointer to the SVG document
- * @return pointer to the new SVG render object
- */
 lv_svg_render_obj_t * lv_svg_render_create(const lv_svg_node_t * svg_doc);
-
-/**
- * @brief Delete an SVG render object
- * @param render pointer to the SVG render object to delete
- */
 void lv_svg_render_delete(lv_svg_render_obj_t * render);
 
-/**
- * @brief Render an SVG object to a vector graphics
- * @param dsc pointer to the vector graphics descriptor
- * @param render pointer to the SVG render object to render
- */
 void lv_draw_svg_render(lv_vector_dsc_t * dsc, const lv_svg_render_obj_t * render);
-
-/**
- * @brief Draw an SVG document to a layer
- * @param layer pointer to the target layer
- * @param svg_doc pointer to the SVG document to draw
- */
 void lv_draw_svg(lv_layer_t * layer, const lv_svg_node_t * svg_doc);
 
 /**********************
  *      MACROS
  **********************/
+#define LV_SVG_RENDER_OBJ(n) ((lv_svg_render_obj_t*)(n))
 
 #endif /*LV_USE_SVG*/
 
