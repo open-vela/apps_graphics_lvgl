@@ -37,6 +37,10 @@ typedef struct {
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_switch_class;
 
+typedef struct {
+    lv_obj_create_info_t base;
+} lv_switch_create_info_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -46,7 +50,12 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_switch_class;
  * @param parent    pointer to an object, it will be the parent of the new switch
  * @return          pointer to the created switch
  */
-lv_obj_t * lv_switch_create(lv_obj_t * parent);
+lv_obj_t * lv_switch_create_ex(lv_obj_t * parent, lv_switch_create_info_t * create_info);
+
+static inline lv_obj_t * lv_switch_create(lv_obj_t * parent)
+{
+    return lv_switch_create_ex(parent, NULL);
+}
 
 /**********************
  *      MACROS
