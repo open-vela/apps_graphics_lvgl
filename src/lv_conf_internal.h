@@ -2999,6 +2999,13 @@
         #endif
     #endif
 
+    #ifndef LV_NUTTX_VSYNC_TIMER_PERIOD
+        #ifdef CONFIG_LV_NUTTX_VSYNC_TIMER_PERIOD
+            #define LV_NUTTX_VSYNC_TIMER_PERIOD CONFIG_LV_NUTTX_VSYNC_TIMER_PERIOD
+        #else
+            #define LV_NUTTX_VSYNC_TIMER_PERIOD    33    /*[ms]*/
+        #endif
+    #endif
 #endif
 
 /*Driver for /dev/dri/card*/
