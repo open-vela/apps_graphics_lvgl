@@ -207,7 +207,8 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
         blend_dsc.blend_area = img_coords;
         lv_draw_sw_blend(draw_unit, &blend_dsc);
     }
-    else if(!transformed && !masked && cf == LV_COLOR_FORMAT_RGB565A8 && draw_dsc->recolor_opa <= LV_OPA_MIN) {
+    else if(!transformed && !masked && cf == LV_COLOR_FORMAT_RGB565A8 && draw_dsc->recolor_opa <= LV_OPA_MIN &&
+            draw_dsc->colorkey == NULL) {
         int32_t src_h = lv_area_get_height(img_coords);
         int32_t src_w = lv_area_get_width(img_coords);
         blend_dsc.src_area = img_coords;
@@ -227,7 +228,7 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
         lv_draw_sw_blend(draw_unit, &blend_dsc);
     }
     /*The simplest case just copy the pixels into the draw_buf. Blending will convert the colors if needed*/
-    else if(!transformed && !masked && draw_dsc->recolor_opa <= LV_OPA_MIN) {
+    else if(!transformed && !masked && draw_dsc->recolor_opa <= LV_OPA_MIN && draw_dsc->colorkey == NULL) {
         blend_dsc.src_area = img_coords;
         blend_dsc.src_buf = src_buf;
         blend_dsc.blend_area = img_coords;
@@ -235,7 +236,7 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
         lv_draw_sw_blend(draw_unit, &blend_dsc);
     }
     /*Handle masked RGB565, RGB888, XRGB888, or ARGB8888 images*/
-    else if(!transformed && masked && draw_dsc->recolor_opa <= LV_OPA_MIN) {
+    else if(!transformed && masked && draw_dsc->recolor_opa <= LV_OPA_MIN && draw_dsc->colorkey == NULL) {
         blend_dsc.src_area = img_coords;
         blend_dsc.src_buf = src_buf;
         blend_dsc.blend_area = img_coords;
@@ -332,7 +333,7 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                 lv_draw_sw_transform(draw_unit, &relative_area, src_buf, src_w, src_h, img_stride,
                                      draw_dsc, sup, cf, tmp_buf);
             }
-            else if(draw_dsc->recolor_opa >= LV_OPA_MIN) {
+            else if(draw_dsc->recolor_opa >= LV_OPA_MIN || draw_dsc->colorkey) {
                 int32_t h = lv_area_get_height(&relative_area);
                 if(cf_final == LV_COLOR_FORMAT_RGB565A8) {
                     uint32_t stride_px = img_stride / 2;
@@ -368,6 +369,8 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                 lv_color_t color = draw_dsc->recolor;
                 lv_opa_t mix = draw_dsc->recolor_opa;
                 lv_opa_t mix_inv = 255 - mix;
+                lv_color_t l_color = draw_dsc->colorkey ? draw_dsc->colorkey->low : lv_color_black();
+                lv_color_t h_color = draw_dsc->colorkey ? draw_dsc->colorkey->high : lv_color_black();
                 if(cf_final == LV_COLOR_FORMAT_RGB565A8 || cf_final == LV_COLOR_FORMAT_RGB565) {
                     if(LV_RESULT_INVALID == LV_DRAW_SW_RGB565_RECOLOR(tmp_buf, blend_area, color, mix)) {
                         uint16_t c_mult[3];
@@ -378,13 +381,19 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                         int32_t i;
                         int32_t size = lv_area_get_size(&blend_area);
                         for(i = 0; i < size; i++) {
+                            if(draw_dsc->colorkey) {
+                                if(lv_color_is_in_range(lv_color16_to_color(*(lv_color16_t *)&buf16[i]), l_color, h_color)) {
+                                    buf16[i] = 0x00;
+                                    continue;
+                                }
+                            }
                             buf16[i] = (((c_mult[2] + ((buf16[i] >> 11) & 0x1F) * mix_inv) << 3) & 0xF800) +
                                        (((c_mult[1] + ((buf16[i] >> 5) & 0x3F) * mix_inv) >> 3) & 0x07E0) +
                                        ((c_mult[0] + (buf16[i] & 0x1F) * mix_inv) >> 8);
                         }
                     }
                 }
-                else  if(cf_final != LV_COLOR_FORMAT_A8) {
+                else if(cf_final != LV_COLOR_FORMAT_A8) {
                     if(LV_RESULT_INVALID == LV_DRAW_SW_RGB888_RECOLOR(tmp_buf, blend_area, color, mix, cf_final)) {
                         uint32_t size = lv_area_get_size(&blend_area);
                         uint32_t i;
@@ -394,9 +403,41 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                         c_mult[2] = color.red * mix;
                         uint8_t * tmp_buf_2 = tmp_buf;
                         for(i = 0; i < size * px_size; i += px_size) {
+                            if(draw_dsc->colorkey) {
+                                if(lv_color_is_in_range(*(lv_color_t *)&tmp_buf_2[i], l_color, h_color)) {
+                                    lv_memzero(tmp_buf_2 + i, px_size);
+                                    continue;
+                                }
+                            }
                             tmp_buf_2[i + 0] = (c_mult[0] + (tmp_buf_2[i + 0] * mix_inv)) >> 8;
                             tmp_buf_2[i + 1] = (c_mult[1] + (tmp_buf_2[i + 1] * mix_inv)) >> 8;
                             tmp_buf_2[i + 2] = (c_mult[2] + (tmp_buf_2[i + 2] * mix_inv)) >> 8;
+                        }
+                    }
+                }
+            }
+            /*Only apply colorkey*/
+            else if(draw_dsc->colorkey) {
+                lv_color_t l_color = draw_dsc->colorkey->low;
+                lv_color_t h_color = draw_dsc->colorkey->high;
+                if(cf_final == LV_COLOR_FORMAT_RGB565A8 || cf_final == LV_COLOR_FORMAT_RGB565) {
+                    uint16_t * buf16 = (uint16_t *)tmp_buf;
+                    int32_t i;
+                    int32_t size = lv_area_get_size(&blend_area);
+                    for(i = 0; i < size; i++) {
+                        if(lv_color_is_in_range(lv_color16_to_color(*(lv_color16_t *)&buf16[i]), l_color, h_color)) {
+                            buf16[i] = 0x00;
+                        }
+                    }
+                }
+                else if(cf_final != LV_COLOR_FORMAT_A8) {
+                    uint8_t * tmp_buf_2 = tmp_buf;
+                    int32_t i;
+                    int32_t size = lv_area_get_size(&blend_area);
+                    for(i = 0; i < size * px_size; i += px_size) {
+                        if(lv_color_is_in_range(*(lv_color_t *)&tmp_buf_2[i], l_color, h_color)) {
+                            lv_memzero(tmp_buf_2 + i, px_size);
+                            continue;
                         }
                     }
                 }
