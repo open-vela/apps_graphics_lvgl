@@ -576,8 +576,8 @@ void lv_draw_buf_set_palette(lv_draw_buf_t * draw_buf, uint8_t index, lv_color32
         return;
     }
 
-    uint8_t * buf = (uint8_t *)draw_buf->data;
-    lv_memcpy(&buf[index * sizeof(color)], &color, sizeof(color));
+    lv_color32_t * palette = (lv_color32_t *)draw_buf->data;
+    palette[index] = color;
 
     lv_draw_buf_flush_cache(draw_buf, NULL);
 }
