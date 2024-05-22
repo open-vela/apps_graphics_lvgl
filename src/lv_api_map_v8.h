@@ -52,7 +52,6 @@ typedef lv_display_rotation_t       lv_disp_rotation_t;
 typedef lv_display_render_mode_t    lv_disp_render_t;
 typedef lv_anim_completed_cb_t      lv_anim_ready_cb_t;
 typedef lv_screen_load_anim_t       lv_scr_load_anim_t;
-typedef lv_buttonmatrix_ctrl_t      lv_btnmatrix_ctrl_t;
 
 /**********************
  * GLOBAL PROTOTYPES
