@@ -967,6 +967,36 @@ lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp)
     return disp->buf_act;
 }
 
+bool lv_display_get_dirty_area(lv_display_t * disp, lv_area_t * dirty_area)
+{
+    if(!disp) disp = lv_display_get_default();
+    if(!disp) return false;
+
+    LV_ASSERT_NULL(dirty_area);
+    lv_memzero(dirty_area, sizeof(lv_area_t));
+
+    uint16_t inv_index;
+    bool area_joined = false;
+
+    for(inv_index = 0; inv_index < disp->inv_p; inv_index++) {
+        if(disp->inv_area_joined[inv_index] == 0) {
+            FAR const lv_area_t * area_p = &disp->inv_areas[inv_index];
+
+            /* Join to final_area */
+
+            if(!area_joined) {
+                /* copy first area */
+                lv_area_copy(dirty_area, area_p);
+                area_joined = true;
+            }
+            else {
+                _lv_area_join(dirty_area, dirty_area, area_p);
+            }
+        }
+    }
+    return area_joined;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/

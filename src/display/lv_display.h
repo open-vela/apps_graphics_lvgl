@@ -564,6 +564,14 @@ void * lv_display_get_user_data(lv_display_t * disp);
 void * lv_display_get_driver_data(lv_display_t * disp);
 lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp);
 
+/**
+ * Get a joined dirty area on a display.
+ * @param disp          pointer to a display
+ * @param dirty_area    dirty_area to return
+ * @return              true: dirty_area is joined; false: there is no dirty_area
+ */
+bool lv_display_get_dirty_area(lv_display_t * disp, lv_area_t * dirty_area);
+
 /**********************
  *      MACROS
  **********************/
