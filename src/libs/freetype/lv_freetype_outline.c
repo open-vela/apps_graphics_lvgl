@@ -121,11 +121,14 @@ static bool freetype_glyph_outline_create_cb(lv_freetype_outline_node_t * node, 
 {
     LV_PROFILER_FONT_BEGIN;
     lv_freetype_outline_t outline;
+
+    lv_mutex_lock(&dsc->cache_node->face_lock);
     outline = outline_create(dsc->context,
                              dsc->cache_node->face,
                              node->glyph_index,
                              dsc->cache_node->ref_size,
                              dsc->style & LV_FREETYPE_FONT_STYLE_BOLD ? 1 : 0);
+    lv_mutex_unlock(&dsc->cache_node->face_lock);
 
     if(!outline) {
         LV_PROFILER_FONT_END;

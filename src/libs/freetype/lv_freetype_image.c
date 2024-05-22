@@ -128,17 +128,21 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     FT_Error error;
 
+    lv_mutex_lock(&dsc->cache_node->face_lock);
+
     FT_Face face = dsc->cache_node->face;
     FT_Set_Pixel_Sizes(face, 0, dsc->size);
     error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_DEFAULT | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         LV_PROFILER_FONT_END;
         return false;
     }
     error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
     if(error) {
         FT_ERROR_MSG("FT_Render_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         LV_PROFILER_FONT_END;
         return false;
     }
@@ -147,6 +151,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     error = FT_Get_Glyph(face->glyph, &glyph);
     if(error) {
         FT_ERROR_MSG("FT_Get_Glyph", error);
+        lv_mutex_unlock(&dsc->cache_node->face_lock);
         LV_PROFILER_FONT_END;
         return false;
     }
@@ -174,6 +179,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     lv_draw_buf_flush_cache(data->draw_buf, NULL);
     FT_Done_Glyph(glyph);
+    lv_mutex_unlock(&dsc->cache_node->face_lock);
     LV_PROFILER_FONT_END;
     return true;
 }
