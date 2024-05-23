@@ -136,38 +136,42 @@ void lv_tree_node_delete(lv_tree_node_t * node)
     }
 }
 
-bool lv_tree_walk(const lv_tree_node_t * node, lv_tree_walk_mode_t mode, traverse_cb cb, before_cb bcb, after_cb acb,
-                  void * data)
+bool lv_tree_walk(const lv_tree_node_t * node,
+                  lv_tree_walk_mode_t mode,
+                  lv_tree_traverse_cb_t cb,
+                  lv_tree_before_cb_t bcb,
+                  lv_tree_after_cb_t acb,
+                  void * user_data)
 {
     if(node && cb) {
         if(mode == LV_TREE_WALK_PRE_ORDER) {
-            if(bcb && !bcb(node, data)) {
+            if(bcb && !bcb(node, user_data)) {
                 return false;
             }
-            if(!cb(node, data)) {
+            if(!cb(node, user_data)) {
                 return false;
             }
         }
         for(uint32_t i = 0; i < node->child_cnt; i++) {
-            if(!lv_tree_walk(node->children[i], mode, cb, bcb, acb, data)) {
+            if(!lv_tree_walk(node->children[i], mode, cb, bcb, acb, user_data)) {
                 return false;
             }
         }
         if(mode == LV_TREE_WALK_PRE_ORDER) {
             if(acb) {
-                acb(node, data);
+                acb(node, user_data);
             }
         }
 
         if(mode == LV_TREE_WALK_POST_ORDER) {
-            if(bcb && !bcb(node, data)) {
+            if(bcb && !bcb(node, user_data)) {
                 return false;
             }
-            if(!cb(node, data)) {
+            if(!cb(node, user_data)) {
                 return false;
             }
             if(acb) {
-                acb(node, data);
+                acb(node, user_data);
             }
             return true;
         }
