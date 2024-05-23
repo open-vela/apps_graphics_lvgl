@@ -66,7 +66,7 @@ lv_indev_t * lv_nuttx_touchscreen_create(const char * dev_path)
 
     LV_ASSERT_NULL(dev_path);
     LV_LOG_USER("touchscreen %s opening", dev_path);
-    fd = open(dev_path, O_RDONLY | O_NONBLOCK);
+    fd = open(dev_path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if(fd < 0) {
         perror("Error: cannot open touchscreen device");
         return NULL;

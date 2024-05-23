@@ -95,7 +95,7 @@ int lv_nuttx_fbdev_set_file(lv_display_t * disp, const char * file)
 
     /* Open the file for reading and writing*/
 
-    dsc->fd = open(file, O_RDWR);
+    dsc->fd = open(file, O_RDWR | O_CLOEXEC);
     if(dsc->fd < 0) {
         LV_LOG_ERROR("Error: cannot open framebuffer device");
         return -errno;

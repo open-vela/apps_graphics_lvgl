@@ -75,7 +75,7 @@ lv_display_t * lv_nuttx_lcd_create(const char * dev_path)
     LV_ASSERT_NULL(dev_path);
 
     LV_LOG_USER("lcd %s opening", dev_path);
-    fd = open(dev_path, 0);
+    fd = open(dev_path, O_CLOEXEC);
     if(fd < 0) {
         perror("Error: cannot open lcd device");
         return NULL;
