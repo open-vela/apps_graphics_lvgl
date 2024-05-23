@@ -50,6 +50,8 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task);
 
 static void _g2d_execute_drawing(lv_draw_g2d_unit_t * u);
 
+static int32_t lv_draw_g2d_delete(lv_draw_unit_t * draw_unit);
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -73,6 +75,7 @@ void lv_draw_g2d_init(void)
     lv_draw_g2d_unit_t * draw_g2d_unit = lv_draw_create_unit(sizeof(lv_draw_g2d_unit_t));
     draw_g2d_unit->base_unit.dispatch_cb = _g2d_dispatch;
     draw_g2d_unit->base_unit.evaluate_cb = _g2d_evaluate;
+    draw_g2d_unit->base_unit.delete_cb = LV_USE_OS ? lv_draw_g2d_delete : NULL;
 
     lv_g2d_init();
 
@@ -246,7 +249,7 @@ static int32_t _g2d_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 
 #if LV_USE_OS
     /* Let the render thread work. */
-    lv_thread_sync_signal(&draw_g2d_unit->sync);
+    if(draw_g2d_unit->inited) lv_thread_sync_signal(&draw_g2d_unit->sync);
 #else
     _g2d_execute_drawing(draw_g2d_unit);
 
@@ -293,6 +296,7 @@ static void _g2d_render_thread_cb(void * ptr)
     lv_draw_g2d_unit_t * u = ptr;
 
     lv_thread_sync_init(&u->sync);
+    u->inited = true;
 
     while(1) {
         /*
@@ -300,7 +304,15 @@ static void _g2d_render_thread_cb(void * ptr)
          * The thread will have to run as much as there are pending tasks.
          */
         while(u->task_act == NULL) {
+            if(u->exit_status) {
+                break;
+            }
             lv_thread_sync_wait(&u->sync);
+        }
+
+        if(u->exit_status) {
+            LV_LOG_INFO("ready to exit g2d rendering thread");
+            break;
         }
 
         _g2d_execute_drawing(u);
@@ -312,6 +324,11 @@ static void _g2d_render_thread_cb(void * ptr)
         /* The draw unit is free now. Request a new dispatching as it can get a new task. */
         lv_draw_dispatch_request();
     }
+
+    u->inited = false;
+    lv_thread_sync_delete(&u->sync);
+    LV_LOG_INFO("exit g2d rendering thread");
+
 }
 #endif
 
@@ -328,6 +345,25 @@ int lv_g2d_init()
 void lv_g2d_deinit(void)
 {
     sunxi_g2d_close();
+}
+
+static int32_t lv_draw_g2d_delete(lv_draw_unit_t * draw_unit)
+{
+#if LV_USE_OS
+    lv_draw_g2d_unit_t * draw_g2d_unit = (lv_draw_g2d_unit_t *) draw_unit;
+
+    LV_LOG_INFO("cancel g2d rendering thread");
+    draw_g2d_unit->exit_status = true;
+
+    if(draw_g2d_unit->inited) {
+        lv_thread_sync_signal(&draw_g2d_unit->sync);
+    }
+
+    return lv_thread_delete(&draw_g2d_unit->thread);
+#else
+    LV_UNUSED(draw_unit);
+    return 0;
+#endif
 }
 
 #endif /*LV_USE_DRAW_G2D*/
