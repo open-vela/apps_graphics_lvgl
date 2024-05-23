@@ -162,8 +162,6 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
     int32_t size = lv_area_get_width(&img_area) * lv_area_get_height(&img_area);
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL: {
-                //sw neon draw fill type is faster than g2d
-                return 0;
                 const lv_draw_fill_dsc_t * draw_dsc = (lv_draw_fill_dsc_t *) t->draw_dsc;
 
                 /* Most simple case: just a plain rectangle (no radius, no gradient). */
