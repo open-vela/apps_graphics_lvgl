@@ -42,6 +42,8 @@ typedef struct {
 #if LV_USE_OS
     lv_thread_sync_t sync;
     lv_thread_t thread;
+    volatile bool inited;
+    volatile bool exit_status;
 #endif
 } lv_draw_g2d_unit_t;
 
