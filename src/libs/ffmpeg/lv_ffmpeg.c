@@ -259,7 +259,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     /* Get the source type */
     const void * src = dsc->src;
-    lv_image_src_t src_type = lv_image_src_get_type(dsc);
+    lv_image_src_t src_type = dsc->src_type;
 
     if(src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = src;

@@ -298,8 +298,6 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
 
     const void * src = dsc->src;
     lv_image_src_t src_type = dsc->src_type;
-
-    lv_image_src_t src_type = lv_image_src_get_type(src);
     /* miwear could set NULL data variable type of image */
 #if 0
     if(src_type == LV_IMAGE_SRC_VARIABLE) {
