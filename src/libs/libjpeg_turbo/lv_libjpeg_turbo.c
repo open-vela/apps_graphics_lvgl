@@ -105,7 +105,7 @@ void lv_libjpeg_turbo_deinit(void)
 static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc, lv_image_header_t * header)
 {
     LV_UNUSED(decoder); /*Unused*/
-    lv_image_src_t src_type = lv_image_src_get_type(dsc);          /*Get the source type*/
+    lv_image_src_t src_type = dsc->src_type;          /*Get the source type*/
 
     /*If it's a JPEG file...*/
     if(src_type == LV_IMAGE_SRC_FILE) {
