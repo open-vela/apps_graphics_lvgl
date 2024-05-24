@@ -93,7 +93,7 @@ static void mouse_read(lv_indev_t * drv, lv_indev_data_t * data)
 
     /* Handle unexpected return values */
 
-    if (nbytes == sizeof(struct mouse_report_s)) {
+    if(nbytes == sizeof(struct mouse_report_s)) {
         lv_display_t * disp = lv_indev_get_display(drv);
         int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
         int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
@@ -109,8 +109,8 @@ static void mouse_read(lv_indev_t * drv, lv_indev_data_t * data)
 
         uint8_t mouse_buttons = sample.buttons;
 
-        if (mouse_buttons & MOUSE_BUTTON_1 || mouse_buttons & MOUSE_BUTTON_2 ||
-            mouse_buttons & MOUSE_BUTTON_3) {
+        if(mouse_buttons & MOUSE_BUTTON_1 || mouse_buttons & MOUSE_BUTTON_2 ||
+           mouse_buttons & MOUSE_BUTTON_3) {
             mouse->last_state = LV_INDEV_STATE_PRESSED;
         }
         else {
@@ -138,9 +138,9 @@ static void mouse_delete_cb(lv_event_t * e)
     }
 }
 
-static void mouse_set_cursor(FAR lv_indev_t *indev)
+static void mouse_set_cursor(FAR lv_indev_t * indev)
 {
-    FAR lv_obj_t *cursor_obj = lv_obj_create(lv_layer_sys());
+    FAR lv_obj_t * cursor_obj = lv_obj_create(lv_layer_sys());
     lv_obj_remove_style_all(cursor_obj);
 
     int32_t size = 20;
