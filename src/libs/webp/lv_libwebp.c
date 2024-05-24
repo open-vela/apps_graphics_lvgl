@@ -28,7 +28,7 @@
  *  STATIC PROTOTYPES
  **********************/
 
-static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, lv_image_header_t * header);
+static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc, lv_image_header_t * header);
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc);
 static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc);
 static bool get_webp_size(const char * filename, int * width, int * height);
@@ -74,27 +74,21 @@ void lv_libwebp_deinit(void)
 
 /**
  * Get info about a WEBP image
- * @param src can be file name or pointer to a C array
+ * @param dsc can be file name or pointer to a C array
  * @param header store the info here
  * @return LV_RESULT_OK: no error; LV_RESULT_INVALID: can't get the info
  */
-static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, lv_image_header_t * header)
+static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc, lv_image_header_t * header)
 {
     LV_UNUSED(decoder); /*Unused*/
-    lv_image_src_t src_type = lv_image_src_get_type(src);          /*Get the source type*/
+    const void * src = dsc->src;
+    lv_image_src_t src_type = dsc->src_type;          /*Get the source type*/
 
     /*If it's a webp file...*/
     if(src_type == LV_IMAGE_SRC_FILE) {
-        const char * fn = src;
-
-        lv_fs_file_t f;
-        lv_fs_res_t res = lv_fs_open(&f, fn, LV_FS_MODE_RD);
-        if(res != LV_FS_RES_OK) return LV_RESULT_INVALID;
-
         uint8_t buf[WEBP_HEADER_SIZE];
         uint32_t rn;
-        res = lv_fs_read(&f, buf, sizeof(buf), &rn);
-        lv_fs_close(&f);
+        lv_fs_res_t res = lv_fs_read(&dsc->file, buf, sizeof(buf), &rn);
 
         if(res != LV_FS_RES_OK || rn != sizeof(buf)) return LV_RESULT_INVALID;
 
@@ -106,7 +100,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, 
 
         int width;
         int height;
-        if(!get_webp_size(fn, &width, &height)) {
+        if(!get_webp_size(src, &width, &height)) {
             return LV_RESULT_INVALID;
         }
 
