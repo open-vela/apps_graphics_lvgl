@@ -347,10 +347,14 @@ uint32_t lv_draw_get_dependent_count(lv_draw_task_t * t_check)
 
 lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t color_format, const lv_area_t * area)
 {
+    LV_PROFILER_BEGIN;
     lv_display_t * disp = _lv_refr_get_disp_refreshing();
     lv_layer_t * new_layer = lv_malloc_zeroed(sizeof(lv_layer_t));
     LV_ASSERT_MALLOC(new_layer);
-    if(new_layer == NULL) return NULL;
+    if(new_layer == NULL) {
+        LV_PROFILER_END;
+        return NULL;
+    }
 
     new_layer->parent = parent_layer;
     new_layer->_clip_area = *area;
@@ -370,6 +374,7 @@ lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t c
         disp->layer_head = new_layer;
     }
 
+    LV_PROFILER_END;
     return new_layer;
 }
 
