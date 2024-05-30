@@ -33,7 +33,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc);
 static bool get_webp_size(const char * filename, int * width, int * height);
 static lv_draw_buf_t * decode_webp_file(lv_image_decoder_dsc_t * dsc, const char * filename);
-static void webp_decoder_cache_free_cb(lv_image_cache_data_t * cached_data, void * user_data);
 
 /**********************
  *  STATIC VARIABLES
@@ -56,7 +55,6 @@ void lv_libwebp_init(void)
     lv_image_decoder_set_info_cb(dec, decoder_info);
     lv_image_decoder_set_open_cb(dec, decoder_open);
     lv_image_decoder_set_close_cb(dec, decoder_close);
-    lv_image_decoder_set_cache_free_cb(dec, (lv_cache_free_cb_t)webp_decoder_cache_free_cb);
 }
 
 void lv_libwebp_deinit(void)
@@ -103,8 +101,8 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, const void * src, 
         static const uint8_t header_riff[] = { 0x52, 0x49, 0x46, 0x46 }; /*RIFF*/
         static const uint8_t header_webp[] = { 0x57, 0x45, 0x42, 0x50 }; /*WEBP*/
 
-        if(memcmp(buf, header_riff, sizeof(header_riff)) != 0) return LV_RESULT_INVALID;
-        if(memcmp(buf + WEBP_HEADER_OFFSET, header_webp, sizeof(header_webp)) != 0) return LV_RESULT_INVALID;
+        if(lv_memcmp(buf, header_riff, sizeof(header_riff)) != 0) return LV_RESULT_INVALID;
+        if(lv_memcmp(buf + WEBP_HEADER_OFFSET, header_webp, sizeof(header_webp)) != 0) return LV_RESULT_INVALID;
 
         int width;
         int height;
@@ -193,10 +191,7 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-    if(dsc->args.no_cache || LV_CACHE_DEF_SIZE == 0)
-        lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
-    else
-        lv_cache_release(dsc->cache, dsc->cache_entry, NULL);
+    if(dsc->args.no_cache || !lv_image_cache_is_enabled()) lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
 }
 
 static uint8_t * alloc_file(const char * filename, uint32_t * size)
@@ -303,14 +298,6 @@ static lv_draw_buf_t * decode_webp_file(lv_image_decoder_dsc_t * dsc, const char
     WebPDecode(data, data_size, &config);
 
     return decoded;
-}
-
-static void webp_decoder_cache_free_cb(lv_image_cache_data_t * cached_data, void * user_data)
-{
-    LV_UNUSED(user_data);
-
-    if(cached_data->src_type == LV_IMAGE_SRC_FILE) lv_free((void *)cached_data->src);
-    lv_draw_buf_destroy((lv_draw_buf_t *)cached_data->decoded);
 }
 
 #endif /*LV_USE_LIBWEBP*/
