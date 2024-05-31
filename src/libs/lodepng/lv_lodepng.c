@@ -23,6 +23,8 @@
 
 #define DECODER_NAME    "LODEPNG"
 
+#define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -199,14 +201,14 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
-        lv_draw_buf_destroy(decoded);
+        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
         LV_PROFILER_END_TAG("lv_lodepng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
     /*The adjusted draw buffer is newly allocated.*/
     if(adjusted != decoded) {
-        lv_draw_buf_destroy(decoded);
+        lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
         decoded = adjusted;
     }
 
@@ -248,7 +250,8 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder);
 
-    if(dsc->args.no_cache || !lv_image_cache_is_enabled()) lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+    if(dsc->args.no_cache ||
+       !lv_image_cache_is_enabled()) lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, (lv_draw_buf_t *)dsc->decoded);
 }
 
 #if LV_USE_LODEPNG_ZLIB_EXTERNAL
@@ -331,7 +334,7 @@ static lv_draw_buf_t * decode_png_data(lv_image_decoder_dsc_t * dsc, const void 
     /*Decode the image in ARGB8888 */
     unsigned error = lodepng_decode32((unsigned char **)&decoded, &png_width, &png_height, png_data, png_data_size);
     if(error) {
-        if(decoded != NULL)  lv_draw_buf_destroy(decoded);
+        if(decoded != NULL)  lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
         return NULL;
     }
 
