@@ -231,14 +231,14 @@ static int32_t _g2d_dispatch(lv_draw_unit_t * draw_unit, lv_layer_t * layer)
 
     /* Return if target buffer format is not supported. */
     if(!_g2d_cf_supported(layer->color_format))
-        return 0;
+        return -1;
 
     /* Try to get an ready to draw. */
     lv_draw_task_t * t = lv_draw_get_next_available_task(layer, NULL, DRAW_UNIT_ID_G2D);
 
-    /* Return 0 is no selection, some tasks can be supported only by other units. */
+    /* Return -1 is no selection, some tasks can be supported only by other units. */
     if(t == NULL || t->preferred_draw_unit_id != DRAW_UNIT_ID_G2D)
-        return 0;
+        return -1;
 
     void * buf = lv_draw_layer_alloc_buf(layer);
     if(buf == NULL)
