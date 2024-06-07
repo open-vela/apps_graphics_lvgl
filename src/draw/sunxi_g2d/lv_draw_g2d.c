@@ -122,19 +122,22 @@ static bool _g2d_draw_img_supported(const lv_draw_image_dsc_t * draw_dsc, int32_
      * be obtained in a single G2D configuration. Two steps are required.
      */
 
-    if(!has_opa && !src_has_alpha  && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_BLIT)))
-        return false;
+    if((draw_dsc->scale_x == LV_SCALE_NONE) && (draw_dsc->scale_y == LV_SCALE_NONE)) {
+        if(!has_opa && !src_has_alpha  && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_BLIT)))
+            return false;
 
-    if((has_opa || src_has_alpha)  && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_BLEND)))
-        return false;
+        if((has_opa || src_has_alpha)  && (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_BLEND)))
+            return false;
 
-    /* G2D can only rotate at 90x angles. */
-    if(draw_dsc->rotation || has_recolor)
-        return false;
+        /* G2D can only rotate at 90x angles. */
+        if(draw_dsc->rotation || has_recolor)
+            return false;
 
-    if(((draw_dsc->scale_x != LV_SCALE_NONE) || (draw_dsc->scale_y != LV_SCALE_NONE)) &&
-       (size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_SCALE)))
-        return false;
+    }
+    else {
+        if(size < sunxifb_g2d_get_limit(SUNXI_G2D_LIMIT_SCALE))
+            return false;
+    }
 
     /*
      * G2D is set to process 16x16 blocks to optimize the system for memory
