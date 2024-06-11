@@ -1082,14 +1082,6 @@ void lv_vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_
     lv_memcpy(matrix, &temp, sizeof(temp));
 }
 
-void lv_vg_lite_matrix_flip_y(vg_lite_matrix_t * matrix)
-{
-    vg_lite_matrix_t m ;
-    vg_lite_identity(&m);
-    m.m[1][1] = -m.m[1][1];
-    lv_vg_lite_matrix_multiply(matrix, &m);
-}
-
 bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t * matrix)
 {
     vg_lite_float_t det00, det01, det02;
