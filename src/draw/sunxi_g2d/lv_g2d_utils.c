@@ -54,8 +54,8 @@ int32_t sunxifb_g2d_get_limit(sunxi_g2d_limit limit)
             /* 100x100=10000, g2d is 176us~326us, cpu is 196us~400us */
             return 10000;
         case SUNXI_G2D_LIMIT_SCALE:
-            /* 100x100=10000, g2d is 606us~870us, cpu is 777us~949us */
-            return 10000;
+            /* 50x50=2500, g2d is 606us~870us, cpu is 777us~949us */
+            return 2500;
         default:
             return 0;
     }
