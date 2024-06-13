@@ -229,11 +229,15 @@ static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * colo
         else {
             dsc->pinfo.yoffset = dsc->mem2_yoffset;
         }
-
-        if(ioctl(dsc->fd, FBIOPAN_DISPLAY, (unsigned long)((uintptr_t) & (dsc->pinfo))) < 0) {
-            LV_LOG_ERROR("ioctl(FBIOPAN_DISPLAY) failed: %d", errno);
-        }
     }
+    else {
+        dsc->pinfo.yoffset = 0;
+    }
+
+    if(ioctl(dsc->fd, FBIOPAN_DISPLAY, (unsigned long)((uintptr_t) & (dsc->pinfo))) < 0) {
+        LV_LOG_ERROR("ioctl(FBIOPAN_DISPLAY) failed: %d", errno);
+    }
+
     lv_display_flush_ready(disp);
 }
 
