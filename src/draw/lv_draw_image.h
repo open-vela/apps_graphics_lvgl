@@ -69,6 +69,8 @@ typedef struct _lv_draw_image_dsc_t {
      * Used when a part of a layer is rendered to show the total layer size*/
     lv_area_t original_area;
     const lv_image_dsc_t * bitmap_mask_src;
+
+    int32_t clip_radius;
 } lv_draw_image_dsc_t;
 
 /**
