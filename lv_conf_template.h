@@ -200,6 +200,9 @@
  */
 #define LV_VG_LITE_GRAD_CACHE_SIZE 32
 
+/* Enable A4/A8 image support */
+#define LV_VG_LITE_USE_ALPHA_IMAGE 0
+
 #endif
 
 /* Use G2D GPU. */
@@ -918,6 +921,12 @@
 
     /*Driver for /dev/input*/
     #define LV_USE_NUTTX_TOUCHSCREEN    0
+
+    /*Driver for /dev/mouse*/
+    #define LV_USE_NUTTX_MOUSE    0
+
+    /*NuttX VSYNC timer period in milliseconds*/
+    #define LV_NUTTX_VSYNC_TIMER_PERIOD     33
 
 #endif
 

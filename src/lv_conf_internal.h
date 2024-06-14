@@ -516,6 +516,24 @@
     #endif
 #endif
 
+/* Enable A4/A8 image support */
+#ifndef LV_VG_LITE_USE_ALPHA_IMAGE
+    #ifdef CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
+        #define LV_VG_LITE_USE_ALPHA_IMAGE CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
+    #else
+        #define LV_VG_LITE_USE_ALPHA_IMAGE 0
+    #endif
+#endif
+
+#endif
+
+/* Use G2D GPU. */
+#ifndef LV_USE_DRAW_G2D
+    #ifdef CONFIG_LV_USE_DRAW_G2D
+        #define LV_USE_DRAW_G2D CONFIG_LV_USE_DRAW_G2D
+    #else
+        #define LV_USE_DRAW_G2D 0
+    #endif
 #endif
 
 /*=======================
@@ -2999,13 +3017,15 @@
         #endif
     #endif
 
+    /*NuttX VSYNC timer period in milliseconds*/
     #ifndef LV_NUTTX_VSYNC_TIMER_PERIOD
         #ifdef CONFIG_LV_NUTTX_VSYNC_TIMER_PERIOD
             #define LV_NUTTX_VSYNC_TIMER_PERIOD CONFIG_LV_NUTTX_VSYNC_TIMER_PERIOD
         #else
-            #define LV_NUTTX_VSYNC_TIMER_PERIOD    33    /*[ms]*/
+            #define LV_NUTTX_VSYNC_TIMER_PERIOD     33
         #endif
     #endif
+
 #endif
 
 /*Driver for /dev/dri/card*/
@@ -3321,13 +3341,5 @@ LV_EXPORT_CONST_INT(LV_DRAW_BUF_ALIGN);
         #define _CRT_SECURE_NO_WARNINGS
     #endif
 #endif  /*defined(LV_CONF_SKIP)*/
-
-#ifndef LV_USE_DRAW_G2D
-    #ifdef CONFIG_LV_USE_DRAW_G2D
-        #define LV_USE_DRAW_G2D CONFIG_LV_USE_DRAW_G2D
-    #else
-        #define LV_USE_DRAW_G2D          0
-    #endif
-#endif
 
 #endif  /*LV_CONF_INTERNAL_H*/

@@ -349,22 +349,29 @@ menu "LVGL configuration"
 				which usually improves performance,
 				but does not guarantee the same rendering quality as the software.
 
-			config LV_USE_GPU_SDL
-				bool "Use SDL renderer API"
-				default n
-			config LV_GPU_SDL_INCLUDE_PATH
-				string "include path of SDL header"
-				depends on LV_USE_GPU_SDL
-				default "SDL2/SDL.h"
-			config LV_GPU_SDL_LRU_SIZE
-				int "Maximum buffer size to allocate for rotation"
-				depends on LV_USE_GPU_SDL
-				default 8388608
-				help
-					Texture cache size, 8MB by default.
+		config LV_VG_LITE_USE_ALPHA_IMAGE
+			bool "Enable A4/A8 image support"
+			default n
+			depends on LV_USE_DRAW_VG_LITE
 
-			config LV_USE_DRAW_G2D
-				bool "Use Sunxi G2D platform"
+		config LV_USE_GPU_SDL
+			bool "Use SDL renderer API"
+			default n
+
+		config LV_GPU_SDL_INCLUDE_PATH
+			string "include path of SDL header"
+			depends on LV_USE_GPU_SDL
+			default "SDL2/SDL.h"
+
+		config LV_GPU_SDL_LRU_SIZE
+			int "Maximum buffer size to allocate for rotation"
+			depends on LV_USE_GPU_SDL
+			default 8388608
+			help
+				Texture cache size, 8MB by default.
+
+		config LV_USE_DRAW_G2D
+			bool "Use Sunxi G2D platform"
 
 		config LV_USE_VECTOR_GRAPHIC
 			bool "Use Vector Graphic APIs"
