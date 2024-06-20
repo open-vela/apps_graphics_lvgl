@@ -354,12 +354,14 @@ menu "LVGL configuration"
 			default n
 			depends on LV_USE_DRAW_VG_LITE
 
-		config LV_VG_LITE_LINEAER_GRAD_CACHE_CNT
-			int "VG-Lite linear gradient image maximum cache number."
+		config LV_VG_LITE_GRAD_CACHE_CNT
+			int "VG-Lite gradient maximum cache number."
 			default 32
 			depends on LV_USE_DRAW_VG_LITE
 			help
-				The memory usage of a single gradient image is 4K bytes.
+				The memory usage of a single gradient:
+					linear: 4K bytes.
+					radial: radius * 4K bytes.
 
 		config LV_USE_GPU_SDL
 			bool "Use SDL renderer API"
@@ -610,6 +612,11 @@ menu "LVGL configuration"
 
 			config LV_VG_LITE_THORVG_YUV_SUPPORT
 				bool "Enable YUV color format support"
+				default n
+				depends on LV_USE_VG_LITE_THORVG
+
+			config LV_VG_LITE_THORVG_LINEAR_GRADIENT_EXT_SUPPORT
+				bool "Enable linear gradient extension support"
 				default n
 				depends on LV_USE_VG_LITE_THORVG
 
