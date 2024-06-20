@@ -36,6 +36,11 @@ typedef struct {
     lv_indev_t * uindev;
 } lv_nuttx_uv_t;
 
+typedef struct {
+    void * loop;
+    lv_display_t * disp;
+} lv_nuttx_uv_vsync_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
@@ -52,6 +57,17 @@ void * lv_nuttx_uv_init(lv_nuttx_uv_t * uv_info);
  */
 void lv_nuttx_uv_deinit(void ** data);
 
+/**
+ * Initialize the uv vsync if you just need to initialize the vsync only.
+ * @param uv_vsync Pointer to the lv_nuttx_uv_vsync_t structure.
+ */
+void * lv_nuttx_uv_vsync_init(lv_nuttx_uv_vsync_t * uv_vsync);
+
+/**
+ * Deinitialize the uv vsync configuration for NuttX porting layer.
+ * @param data Pointer to user data.
+ */
+void lv_nuttx_uv_vsync_deinit(void ** data);
 /**********************
  *      MACROS
  **********************/
