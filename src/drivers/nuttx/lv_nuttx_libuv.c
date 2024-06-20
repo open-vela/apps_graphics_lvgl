@@ -28,10 +28,14 @@ typedef struct {
     int fd;
     bool polling;
     uv_poll_t fb_poll;
+} lv_nuttx_uv_fb_ctx_t;
+
+typedef struct {
+    int fd;
     uv_poll_t vsync_poll;
     int32_t vsync_req_count;
     lv_timer_t * vsync_timer;
-} lv_nuttx_uv_fb_ctx_t;
+} lv_nuttx_uv_vsync_ctx_t;
 
 typedef struct {
     int fd;
@@ -44,6 +48,7 @@ typedef struct {
     lv_nuttx_uv_fb_ctx_t fb_ctx;
     lv_nuttx_uv_input_ctx_t input_ctx;
     lv_nuttx_uv_input_ctx_t uinput_ctx;
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx;
     int32_t ref_count;
 } lv_nuttx_uv_ctx_t;
 
@@ -57,7 +62,9 @@ static void lv_nuttx_uv_timer_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 
 static void lv_nuttx_uv_do_vsync(void);
 static void lv_nuttx_uv_vsync_timer_cb(lv_timer_t * t);
+static void lv_nuttx_vsync_deinit_cb(uv_handle_t * handle);
 static void lv_nuttx_uv_vsync_poll_cb(uv_poll_t * handle, int status, int events);
+static void lv_nuttx_uv_disp_vsync_request_cb(lv_event_t * e);
 static void lv_nuttx_uv_disp_poll_cb(uv_poll_t * handle, int status, int events);
 static void lv_nuttx_uv_disp_refr_req_cb(lv_event_t * e);
 static int  lv_nuttx_uv_fb_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
@@ -112,6 +119,15 @@ void * lv_nuttx_uv_init(lv_nuttx_uv_t * uv_info)
         goto err_out;
     }
 
+    lv_nuttx_uv_vsync_t vsync_info;
+    vsync_info.loop = uv_info->loop;
+    vsync_info.disp = uv_info->disp;
+    if((uv_ctx->vsync_ctx = lv_nuttx_uv_vsync_init(&vsync_info)) == NULL) {
+        LV_LOG_ERROR("lv_nuttx_uv_vsync_init fail : %d", ret);
+        goto err_out;
+    }
+    uv_ctx->ref_count++;
+
     return uv_ctx;
 
 err_out:
@@ -124,12 +140,63 @@ void lv_nuttx_uv_deinit(void ** data)
     lv_nuttx_uv_ctx_t * uv_ctx = *data;
 
     if(uv_ctx == NULL) return;
+    lv_nuttx_uv_vsync_deinit((void **)&uv_ctx->vsync_ctx);
+    --uv_ctx->ref_count;
     lv_nuttx_uv_input_deinit(uv_ctx);
     lv_nuttx_uv_uinput_deinit(uv_ctx);
     lv_nuttx_uv_fb_deinit(uv_ctx);
     lv_nuttx_uv_timer_deinit(uv_ctx);
     *data = NULL;
     LV_LOG_USER("Done");
+}
+
+void * lv_nuttx_uv_vsync_init(lv_nuttx_uv_vsync_t * vsync_info)
+{
+    LV_ASSERT_NULL(vsync_info);
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx;
+
+    vsync_ctx = lv_malloc_zeroed(sizeof(lv_nuttx_uv_vsync_ctx_t));
+    LV_ASSERT_MALLOC(vsync_ctx);
+
+    vsync_ctx->vsync_timer = lv_timer_create(lv_nuttx_uv_vsync_timer_cb,
+                                             LV_NUTTX_VSYNC_TIMER_PERIOD, NULL);
+    if(vsync_ctx->vsync_timer == NULL) {
+        LV_LOG_ERROR("lv_nuttx_uv_vsync_init fail");
+        goto err_out;
+    }
+    lv_timer_pause(vsync_ctx->vsync_timer);
+
+    uv_loop_t * loop = vsync_info->loop;
+
+    if(loop != NULL) {
+        vsync_ctx->fd = *(int *)(lv_intptr_t)lv_display_get_driver_data(vsync_info->disp);
+        vsync_ctx->vsync_poll.data = vsync_ctx;
+        uv_poll_init(loop, &vsync_ctx->vsync_poll, vsync_ctx->fd);
+    }
+
+    LV_LOG_USER("lvgl vsync start OK");
+    lv_display_add_event_cb(vsync_info->disp, lv_nuttx_uv_disp_vsync_request_cb, LV_EVENT_VSYNC_REQUEST, vsync_ctx);
+    return vsync_ctx;
+
+err_out:
+    lv_free(vsync_ctx);
+    return NULL;
+}
+
+void lv_nuttx_uv_vsync_deinit(void ** data)
+{
+    LV_ASSERT_NULL(data);
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx = *data;
+
+    if(vsync_ctx == NULL) return;
+    if(vsync_ctx->vsync_timer) {
+        lv_timer_del(vsync_ctx->vsync_timer);
+        vsync_ctx->vsync_timer = NULL;
+    }
+    if(vsync_ctx->fd > 0) {
+        uv_close((uv_handle_t *)&vsync_ctx->vsync_poll, lv_nuttx_vsync_deinit_cb);
+    }
+    *data = NULL;
 }
 
 /**********************
@@ -196,6 +263,13 @@ static void lv_nuttx_uv_timer_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
     LV_LOG_USER("Done");
 }
 
+static void lv_nuttx_vsync_deinit_cb(uv_handle_t * handle)
+{
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx = handle->data;
+    LV_LOG_USER("Done");
+    lv_free(vsync_ctx);
+}
+
 static void lv_nuttx_uv_do_vsync(void)
 {
     lv_display_t * d;
@@ -214,14 +288,14 @@ static void lv_nuttx_uv_vsync_timer_cb(lv_timer_t * t)
 
 static void lv_nuttx_uv_vsync_poll_cb(uv_poll_t * handle, int status, int events)
 {
-    lv_nuttx_uv_fb_ctx_t * fb_ctx = &((lv_nuttx_uv_ctx_t *)(handle->data))->fb_ctx;
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx = (lv_nuttx_uv_vsync_ctx_t *)(handle->data);
 
     LV_UNUSED(status);
     LV_UNUSED(events);
 
     lv_nuttx_uv_do_vsync();
 
-    lv_timer_resume(fb_ctx->vsync_timer);
+    lv_timer_resume(vsync_ctx->vsync_timer);
 }
 
 static void lv_nuttx_uv_disp_poll_cb(uv_poll_t * handle, int status, int events)
@@ -248,23 +322,31 @@ static void lv_nuttx_uv_disp_refr_req_cb(lv_event_t * e)
 
 static void lv_nuttx_uv_disp_vsync_request_cb(lv_event_t * e)
 {
-    lv_nuttx_uv_fb_ctx_t * fb_ctx = lv_event_get_user_data(e);
+    lv_nuttx_uv_vsync_ctx_t * vsync_ctx = lv_event_get_user_data(e);
     void * param = lv_event_get_param(e);
 
     if(param) {
-        if(fb_ctx->vsync_req_count == 0) {
+        if(vsync_ctx->vsync_req_count < 0) return;
+
+        if(vsync_ctx->vsync_req_count == 0) {
             LV_LOG_INFO("enabled");
-            uv_poll_start(&fb_ctx->vsync_poll, UV_PRIORITIZED, lv_nuttx_uv_vsync_poll_cb);
-            lv_timer_resume(fb_ctx->vsync_timer);
+            if(vsync_ctx->fd > 0) {
+                uv_poll_start(&vsync_ctx->vsync_poll, UV_PRIORITIZED, lv_nuttx_uv_vsync_poll_cb);
+            }
+            lv_timer_resume(vsync_ctx->vsync_timer);
         }
-        fb_ctx->vsync_req_count++;
+        vsync_ctx->vsync_req_count++;
     }
     else {
-        fb_ctx->vsync_req_count--;
-        if(fb_ctx->vsync_req_count == 0) {
+        if(vsync_ctx->vsync_req_count == 0) return;
+
+        vsync_ctx->vsync_req_count--;
+        if(vsync_ctx->vsync_req_count == 0) {
             LV_LOG_INFO("disabled");
-            uv_poll_stop(&fb_ctx->vsync_poll);
-            lv_timer_pause(fb_ctx->vsync_timer);
+            if(vsync_ctx->fd > 0) {
+                uv_poll_stop(&vsync_ctx->vsync_poll);
+            }
+            lv_timer_pause(vsync_ctx->vsync_timer);
         }
     }
 }
@@ -299,15 +381,6 @@ static int lv_nuttx_uv_fb_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_c
     uv_ctx->ref_count++;
     uv_poll_start(&fb_ctx->fb_poll, UV_WRITABLE, lv_nuttx_uv_disp_poll_cb);
 
-    fb_ctx->vsync_poll.data = uv_ctx;
-    uv_poll_init(loop, &fb_ctx->vsync_poll, fb_ctx->fd);
-    uv_ctx->ref_count++;
-    lv_display_add_event_cb(disp, lv_nuttx_uv_disp_vsync_request_cb, LV_EVENT_VSYNC_REQUEST, fb_ctx);
-
-    fb_ctx->vsync_timer = lv_timer_create(lv_nuttx_uv_vsync_timer_cb,
-                                          LV_NUTTX_VSYNC_TIMER_PERIOD, NULL);
-    lv_timer_pause(fb_ctx->vsync_timer);
-
     LV_LOG_USER("lvgl fb loop start OK");
 
     /* Register for the invalidate area event */
@@ -323,11 +396,6 @@ static void lv_nuttx_uv_fb_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
     lv_nuttx_uv_fb_ctx_t * fb_ctx = &uv_ctx->fb_ctx;
     if(fb_ctx->fd > 0) {
         uv_close((uv_handle_t *)&fb_ctx->fb_poll, lv_nuttx_uv_deinit_cb);
-        uv_close((uv_handle_t *)&fb_ctx->vsync_poll, lv_nuttx_uv_deinit_cb);
-        if(fb_ctx->vsync_timer) {
-            lv_timer_del(fb_ctx->vsync_timer);
-            fb_ctx->vsync_timer = NULL;
-        }
     }
     LV_LOG_USER("Done");
 }
