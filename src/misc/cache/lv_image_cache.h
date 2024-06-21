@@ -45,6 +45,12 @@ lv_result_t lv_image_cache_init(uint32_t size);
 void lv_image_cache_resize(uint32_t new_size, bool evict_now);
 
 /**
+ * Get image cache size.
+ * @return the size of the cache in bytes or count of images.
+ */
+uint32_t lv_image_cache_get_size(void);
+
+/**
  * Invalidate image cache. Use NULL to invalidate all images.
  * @param src pointer to an image source.
  */
