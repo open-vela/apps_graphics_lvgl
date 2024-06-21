@@ -75,6 +75,14 @@ void lv_image_cache_resize(uint32_t new_size, bool evict_now)
     }
 }
 
+uint32_t lv_image_cache_get_size(void)
+{
+#if LV_CACHE_DEF_SIZE > 0
+    return lv_cache_get_max_size(img_cache_p, NULL);
+#endif
+    return 0;
+}
+
 void lv_image_cache_drop(const void * src)
 {
     /*If user invalidate image, the header cache should be invalidated too.*/
