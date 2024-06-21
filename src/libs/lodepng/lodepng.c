@@ -5331,7 +5331,7 @@ static void decodeGeneric(unsigned char ** out, unsigned * w, unsigned * h,
             stride = *w * 4;
         }
 
-        decoded = lv_draw_buf_create_user(image_cache_draw_buf_handlers, *w, *h, LV_COLOR_FORMAT_ARGB8888, 4 * *w);
+        decoded = lv_draw_buf_create_user(image_cache_draw_buf_handlers, *w, *h, cf, stride);
         if(decoded) {
             *out = (unsigned char*)decoded;
             outsize = decoded->data_size;
