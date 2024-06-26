@@ -100,6 +100,7 @@ typedef struct {
 } lv_matrix_t;
 
 typedef struct {
+    uint8_t flags;
     lv_vector_path_quality_t quality;
     lv_array_t ops;
     lv_array_t points;
