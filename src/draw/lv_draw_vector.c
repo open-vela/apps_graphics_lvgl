@@ -226,9 +226,8 @@ void lv_matrix_transform_path(const lv_matrix_t * matrix, lv_vector_path_t * pat
 /* path functions */
 lv_vector_path_t * lv_vector_path_create(lv_vector_path_quality_t quality)
 {
-    lv_vector_path_t * path = lv_malloc(sizeof(lv_vector_path_t));
+    lv_vector_path_t * path = lv_malloc_zeroed(sizeof(lv_vector_path_t));
     LV_ASSERT_MALLOC(path);
-    lv_memzero(path, sizeof(lv_vector_path_t));
     path->quality = quality;
     lv_array_init(&path->ops, 8, sizeof(uint8_t));
     lv_array_init(&path->points, 8, sizeof(lv_fpoint_t));
@@ -237,6 +236,7 @@ lv_vector_path_t * lv_vector_path_create(lv_vector_path_quality_t quality)
 
 void lv_vector_path_copy(lv_vector_path_t * target_path, const lv_vector_path_t * path)
 {
+    target_path->flags = path->flags;
     target_path->quality = path->quality;
     lv_array_copy(&target_path->ops, &path->ops);
     lv_array_copy(&target_path->points, &path->points);
@@ -244,6 +244,7 @@ void lv_vector_path_copy(lv_vector_path_t * target_path, const lv_vector_path_t 
 
 void lv_vector_path_clear(lv_vector_path_t * path)
 {
+    path->flags = 0;
     lv_array_clear(&path->ops);
     lv_array_clear(&path->points);
 }
