@@ -12,6 +12,7 @@
 
 #include "../../../lvgl.h"
 #include <ctype.h>
+#include <string.h>
 
 /*********************
 *      DEFINES

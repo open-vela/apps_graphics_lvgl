@@ -11,7 +11,9 @@
 #include "lv_svg_render.h"
 #if LV_USE_SVG
 
+#include "../../misc/lv_text_private.h"
 #include <math.h>
+#include <string.h>
 
 /*********************
 *      DEFINES
@@ -31,6 +33,8 @@
         if((p).x > (bounds).x2) (bounds).x2 = (int32_t)(p).x; \
         if((p).y > (bounds).y2) (bounds).y2 = (int32_t)(p).y; \
     } while(0)
+
+#define PCT_TO_PX(v, base) ((v) > 1 ? (v) : ((v) * (base)))
 
 enum {
     _RENDER_NORMAL = 0,
@@ -91,15 +95,7 @@ typedef struct {
 
 typedef struct {
     lv_svg_render_obj_t base;
-    lv_vector_gradient_style_t style;
-    lv_grad_dsc_t grad;
-    float cx;
-    float cy;
-    float r;
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+    lv_vector_gradient_t dsc;
     lv_svg_gradient_units_t units;
 } lv_svg_render_gradient_t;
 
@@ -350,25 +346,25 @@ static void _set_gradient_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t *
     lv_svg_render_gradient_t * grad = (lv_svg_render_gradient_t *)obj;
     switch(attr->id) {
         case LV_SVG_ATTR_CX:
-            grad->cx = attr->value.fval;
+            grad->dsc.cx = attr->value.fval;
             break;
         case LV_SVG_ATTR_CY:
-            grad->cy = attr->value.fval;
+            grad->dsc.cy = attr->value.fval;
             break;
         case LV_SVG_ATTR_R:
-            grad->r = attr->value.fval;
+            grad->dsc.cr = attr->value.fval;
             break;
         case LV_SVG_ATTR_X1:
-            grad->x1 = attr->value.fval;
+            grad->dsc.x1 = attr->value.fval;
             break;
         case LV_SVG_ATTR_Y1:
-            grad->y1 = attr->value.fval;
+            grad->dsc.y1 = attr->value.fval;
             break;
         case LV_SVG_ATTR_X2:
-            grad->x2 = attr->value.fval;
+            grad->dsc.x2 = attr->value.fval;
             break;
         case LV_SVG_ATTR_Y2:
-            grad->y2 = attr->value.fval;
+            grad->dsc.y2 = attr->value.fval;
             break;
         case LV_SVG_ATTR_GRADIENT_UNITS:
             grad->units = attr->value.ival;
@@ -916,41 +912,30 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
         mtx = &dsc->stroke_dsc.matrix;
     }
 
-    grad_dsc->spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
-    grad_dsc->style = grad->style;
-    lv_memcpy(&grad_dsc->grad, &grad->grad, sizeof(lv_grad_dsc_t));
+    lv_memcpy(grad_dsc, &grad->dsc, sizeof(lv_vector_gradient_t));
 
     lv_area_t bounds = {0, 0, 0, 0};
     target_obj->get_bounds(target_obj, &bounds);
 
     int32_t w = bounds.x2 - bounds.x1;
     int32_t h = bounds.y2 - bounds.y1;
-    if(grad->style == LV_VECTOR_GRADIENT_STYLE_RADIAL) {
-        grad_dsc->cx = grad->cx > 1.0f ? grad->cx : grad->cx * w;
-        grad_dsc->cy = grad->cy > 1.0f ? grad->cy : grad->cy * h;
-        grad_dsc->cr = grad->r > 1.0f ? grad->r : grad->r * MAX(w, h);
+    if(grad->dsc.style == LV_VECTOR_GRADIENT_STYLE_RADIAL) {
+        grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
+        grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
+        grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
 
-        if(grad->units == LV_SVG_GRADIENT_UNITS_USER_SPACE) {
-            lv_matrix_translate(mtx, -bounds.x1, -bounds.y1);
+        if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
     else {   // LV_VECTOR_GRADIENT_STYLE_LINEAR
-        float x1 = grad->x1 > 1.0f ? grad->x1 : grad->x1 * w;
-        float y1 = grad->y1 > 1.0f ? grad->y1 : grad->y1 * h;
-        float x2 = grad->x2 > 1.0f ? grad->x2 : grad->x2 * w;
-        float y2 = grad->y2 > 1.0f ? grad->y2 : grad->y2 * h;
+        grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
+        grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
+        grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
+        grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
 
-        float dx = x2 - x1;
-        float dy = y2 - y1;
-        float rot = atan2f(ABS(dy), ABS(dx)) * 180.0f / (float)M_PI;
-        lv_matrix_rotate(mtx, rot);
-
-        if(grad->units == LV_SVG_GRADIENT_UNITS_USER_SPACE) {
-            float sx = ABS(dx / w);
-            float sy = ABS(dy / h);
-            float s = MAX(sx, sy);
-            lv_matrix_scale(mtx, s, s);
-            lv_matrix_translate(mtx, -bounds.x1, -bounds.y1);
+        if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
 }
@@ -985,18 +970,7 @@ static void _deinit_draw_dsc(lv_vector_draw_dsc_t * dsc)
 
 static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_t * src)
 {
-    dst->fill_dsc.style = src->fill_dsc.style;
-    dst->fill_dsc.color = src->fill_dsc.color;
-    dst->fill_dsc.opa = src->fill_dsc.opa;
-    dst->fill_dsc.fill_rule = src->fill_dsc.fill_rule;
-    dst->fill_dsc.gradient.style = src->fill_dsc.gradient.style;
-    dst->fill_dsc.gradient.cx = src->fill_dsc.gradient.cx;
-    dst->fill_dsc.gradient.cy = src->fill_dsc.gradient.cy;
-    dst->fill_dsc.gradient.cr = src->fill_dsc.gradient.cr;
-    dst->fill_dsc.gradient.spread = src->fill_dsc.gradient.spread;
-    lv_memcpy(&(dst->fill_dsc.gradient.grad), &(src->fill_dsc.gradient.grad), sizeof(lv_grad_dsc_t));
-    lv_memcpy(&(dst->fill_dsc.img_dsc), &(src->fill_dsc.img_dsc), sizeof(lv_draw_image_dsc_t));
-    lv_memcpy(&(dst->fill_dsc.matrix), &(src->fill_dsc.matrix), sizeof(lv_matrix_t));
+    lv_memcpy(&dst->fill_dsc, &src->fill_dsc, sizeof(lv_vector_fill_dsc_t));
 
     dst->stroke_dsc.style = src->stroke_dsc.style;
     dst->stroke_dsc.color = src->stroke_dsc.color;
@@ -1006,12 +980,7 @@ static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_
     dst->stroke_dsc.join = src->stroke_dsc.join;
     dst->stroke_dsc.miter_limit = src->stroke_dsc.miter_limit;
     lv_array_copy(&(dst->stroke_dsc.dash_pattern), &(src->stroke_dsc.dash_pattern));
-    dst->stroke_dsc.gradient.style = src->stroke_dsc.gradient.style;
-    dst->stroke_dsc.gradient.cx = src->stroke_dsc.gradient.cx;
-    dst->stroke_dsc.gradient.cy = src->stroke_dsc.gradient.cy;
-    dst->stroke_dsc.gradient.cr = src->stroke_dsc.gradient.cr;
-    dst->stroke_dsc.gradient.spread = src->fill_dsc.gradient.spread;
-    lv_memcpy(&(dst->stroke_dsc.gradient.grad), &(src->stroke_dsc.gradient.grad), sizeof(lv_grad_dsc_t));
+    lv_memcpy(&(dst->stroke_dsc.gradient), &(src->stroke_dsc.gradient), sizeof(lv_vector_gradient_t));
     lv_memcpy(&(dst->stroke_dsc.matrix), &(src->stroke_dsc.matrix), sizeof(lv_matrix_t));
 
     dst->blend_mode = src->blend_mode;
@@ -1131,12 +1100,12 @@ static void _init_content(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
     _init_obj(obj, node);
     lv_svg_render_content_t * content = (lv_svg_render_content_t *)obj;
     const char * str = node->xml_id;
-    content->count = _lv_text_get_encoded_length(str);
+    content->count = lv_text_get_encoded_length(str);
     content->letters = lv_malloc(sizeof(uint32_t) * content->count);
     LV_ASSERT_MALLOC(content->letters);
     uint32_t offset = 0;
     for(uint32_t i = 0; i < content->count; i++) {
-        content->letters[i] = _lv_text_encoded_next(str, &offset);
+        content->letters[i] = lv_text_encoded_next(str, &offset);
     }
 }
 
@@ -1164,38 +1133,37 @@ static void _init_gradient(lv_svg_render_obj_t * obj, const lv_svg_node_t * node
 {
     _init_obj(obj, node);
     lv_svg_render_gradient_t * grad = (lv_svg_render_gradient_t *)obj;
-    grad->grad.dir = LV_GRAD_DIR_HOR;
     grad->units = LV_SVG_GRADIENT_UNITS_OBJECT;
-    grad->cx = 0.5f;
-    grad->cy = 0.5f;
-    grad->r = 0.5f;
-    grad->x1 = 0.0f;
-    grad->y1 = 0.0f;
-    grad->x2 = 1.0f;
-    grad->y2 = 0.0f;
+    grad->dsc.cx = 0.5f;
+    grad->dsc.cy = 0.5f;
+    grad->dsc.cr = 0.5f;
+    grad->dsc.x1 = 0.0f;
+    grad->dsc.y1 = 0.0f;
+    grad->dsc.x2 = 1.0f;
+    grad->dsc.y2 = 0.0f;
+    grad->dsc.spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 
-    uint32_t count = LV_TREE_NODE(node)->child_cnt;
-    count = count > LV_GRADIENT_MAX_STOPS ? LV_GRADIENT_MAX_STOPS : count;
-    grad->grad.stops_count = count;
+    uint32_t count = LV_MIN(LV_TREE_NODE(node)->child_cnt, LV_GRADIENT_MAX_STOPS);
+    grad->dsc.stops_count = count;
 
     for(uint32_t i = 0; i < count; i++) {
         lv_svg_node_t * child_node = LV_SVG_NODE_CHILD(node, i);
         uint32_t len = lv_array_size(&child_node->attrs);
-        grad->grad.stops[i].opa = LV_OPA_COVER;
+        grad->dsc.stops[i].opa = LV_OPA_COVER;
         for(uint32_t j = 0; j < len; j++) {
             lv_svg_attr_t * attr = lv_array_at(&child_node->attrs, j);
 
             switch(attr->id) {
                 case LV_SVG_ATTR_GRADIENT_STOP_COLOR: {
-                        grad->grad.stops[i].color = lv_color_hex(attr->value.uval);
+                        grad->dsc.stops[i].color = lv_color_hex(attr->value.uval);
                     }
                     break;
                 case LV_SVG_ATTR_GRADIENT_STOP_OPACITY: {
-                        grad->grad.stops[i].opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                        grad->dsc.stops[i].opa = (lv_opa_t)(attr->value.fval * 255.0f);
                     }
                     break;
                 case LV_SVG_ATTR_GRADIENT_STOP_OFFSET: {
-                        grad->grad.stops[i].frac = (uint8_t)(attr->value.fval * 255.0f);
+                        grad->dsc.stops[i].frac = (uint8_t)(attr->value.fval * 255.0f);
                     }
                     break;
             }
@@ -1226,16 +1194,7 @@ static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     lv_vector_draw_dsc_t * dst = &(dsc->current_dsc);
 
     if(obj->flags & _RENDER_ATTR_FILL) {
-        dst->fill_dsc.style = src->fill_dsc.style;
-        dst->fill_dsc.color = src->fill_dsc.color;
-        dst->fill_dsc.gradient.style = src->fill_dsc.gradient.style;
-        dst->fill_dsc.gradient.cx = src->fill_dsc.gradient.cx;
-        dst->fill_dsc.gradient.cy = src->fill_dsc.gradient.cy;
-        dst->fill_dsc.gradient.cr = src->fill_dsc.gradient.cr;
-        dst->fill_dsc.gradient.spread = src->fill_dsc.gradient.spread;
-        lv_memcpy(&(dst->fill_dsc.gradient.grad), &(src->fill_dsc.gradient.grad), sizeof(lv_grad_dsc_t));
-        lv_memcpy(&(dst->fill_dsc.img_dsc), &(src->fill_dsc.img_dsc), sizeof(lv_draw_image_dsc_t));
-        lv_memcpy(&(dst->fill_dsc.matrix), &(src->fill_dsc.matrix), sizeof(lv_matrix_t));
+        lv_memcpy(&(dst->fill_dsc), &(src->fill_dsc), sizeof(lv_vector_fill_dsc_t));
         dst->blend_mode = src->blend_mode;
     }
 
@@ -1250,12 +1209,7 @@ static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     if(obj->flags & _RENDER_ATTR_STROKE) {
         dst->stroke_dsc.style = src->stroke_dsc.style;
         dst->stroke_dsc.color = src->stroke_dsc.color;
-        dst->stroke_dsc.gradient.style = src->stroke_dsc.gradient.style;
-        dst->stroke_dsc.gradient.cx = src->stroke_dsc.gradient.cx;
-        dst->stroke_dsc.gradient.cy = src->stroke_dsc.gradient.cy;
-        dst->stroke_dsc.gradient.cr = src->stroke_dsc.gradient.cr;
-        dst->stroke_dsc.gradient.spread = src->fill_dsc.gradient.spread;
-        lv_memcpy(&(dst->stroke_dsc.gradient.grad), &(src->stroke_dsc.gradient.grad), sizeof(lv_grad_dsc_t));
+        lv_memcpy(&(dst->stroke_dsc.gradient), &(src->stroke_dsc.gradient), sizeof(lv_vector_gradient_t));
         lv_memcpy(&(dst->stroke_dsc.matrix), &(src->stroke_dsc.matrix), sizeof(lv_matrix_t));
         dst->blend_mode = src->blend_mode;
     }
@@ -1958,10 +1912,10 @@ static lv_svg_render_obj_t * _lv_svg_render_create(const lv_svg_node_t * node,
                 grad->base.set_attr = _set_gradient_attr;
                 grad->base.set_paint_ref = _set_gradient_ref;
                 if(node->type == LV_SVG_TAG_LINEAR_GRADIENT) {
-                    grad->style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
+                    grad->dsc.style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
                 }
                 else {   // radial gradient
-                    grad->style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
+                    grad->dsc.style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
                 }
                 _set_render_attrs(LV_SVG_RENDER_OBJ(grad), node, state);
                 return LV_SVG_RENDER_OBJ(grad);
