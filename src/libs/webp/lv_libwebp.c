@@ -17,6 +17,10 @@
  *      DEFINES
  *********************/
 
+#define DECODER_NAME    "WEBP"
+
+#define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
+
 #define WEBP_HEADER_SIZE    12
 #define WEBP_HEADER_OFFSET  8
 
@@ -55,6 +59,8 @@ void lv_libwebp_init(void)
     lv_image_decoder_set_info_cb(dec, decoder_info);
     lv_image_decoder_set_open_cb(dec, decoder_open);
     lv_image_decoder_set_close_cb(dec, decoder_close);
+
+    dec->name = DECODER_NAME;
 }
 
 void lv_libwebp_deinit(void)
@@ -185,7 +191,8 @@ static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t *
 {
     LV_UNUSED(decoder); /*Unused*/
 
-    if(dsc->args.no_cache || !lv_image_cache_is_enabled()) lv_draw_buf_destroy((lv_draw_buf_t *)dsc->decoded);
+    if(dsc->args.no_cache ||
+       !lv_image_cache_is_enabled()) lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, (lv_draw_buf_t *)dsc->decoded);
 }
 
 static uint8_t * alloc_file(const char * filename, uint32_t * size)
@@ -273,7 +280,8 @@ static lv_draw_buf_t * decode_webp_file(lv_image_decoder_dsc_t * dsc, const char
 
     /*Alloc image buffer*/
     lv_draw_buf_t * decoded;
-    decoded = lv_draw_buf_create(dsc->header.w, dsc->header.h, dsc->header.cf, LV_STRIDE_AUTO);
+    decoded = lv_draw_buf_create_user(image_cache_draw_buf_handlers, dsc->header.w, dsc->header.h, dsc->header.cf,
+                                      LV_STRIDE_AUTO);
     if(decoded == NULL) {
         LV_LOG_ERROR("alloc draw buffer failed: %s", filename);
         lv_free(data);
