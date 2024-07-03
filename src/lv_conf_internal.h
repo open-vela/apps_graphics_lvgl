@@ -3348,6 +3348,15 @@
     #endif
 #endif
 
+/*Vector clipper demo*/
+#ifndef LV_USE_DEMO_POLYGON_CLIPPER
+    #ifdef CONFIG_LV_USE_DEMO_POLYGON_CLIPPER
+        #define LV_USE_DEMO_POLYGON_CLIPPER CONFIG_LV_USE_DEMO_POLYGON_CLIPPER
+    #else
+        #define LV_USE_DEMO_POLYGON_CLIPPER 0
+    #endif
+#endif
+
 
 /*----------------------------------
  * End of parsing lv_conf_template.h

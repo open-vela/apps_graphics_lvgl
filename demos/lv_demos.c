@@ -67,6 +67,10 @@ static const demo_entry_info_t demos_entry_info[] = {
     { "vector_graphic", .entry_cb = lv_demo_vector_graphic },
 #endif
 
+#if LV_USE_DEMO_POLYGON_CLIPPER && LV_USE_VECTOR_GRAPHIC
+    { "clipper", .entry_cb = lv_demo_vector_clipper },
+#endif
+
 #if LV_USE_DEMO_BENCHMARK
     { "benchmark", .entry_cb = lv_demo_benchmark },
 #endif

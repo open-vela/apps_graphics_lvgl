@@ -94,6 +94,8 @@ extern "C" {
 
 #include "src/draw/lv_draw.h"
 #include "src/draw/lv_draw_vector.h"
+#include "src/draw/lv_draw_buf.h"
+#include "src/draw/lv_vector_clipper.h"
 
 #include "src/libs/barcode/lv_barcode.h"
 #include "src/libs/bin_decoder/lv_bin_decoder.h"
@@ -114,10 +116,6 @@ extern "C" {
 #include "src/libs/svg/lv_svg_render.h"
 
 #include "src/layouts/lv_layout.h"
-
-#include "src/draw/lv_draw.h"
-#include "src/draw/lv_draw_buf.h"
-#include "src/draw/lv_draw_vector.h"
 
 #include "src/themes/lv_theme.h"
 

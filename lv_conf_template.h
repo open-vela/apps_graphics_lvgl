@@ -1023,6 +1023,9 @@
 
 /*Vector graphic demo*/
 #define LV_USE_DEMO_VECTOR_GRAPHIC  0
+
+/*Vector clipper demo*/
+#define LV_USE_DEMO_POLYGON_CLIPPER 0
 /*--END OF LV_CONF_H--*/
 
 #endif /*LV_CONF_H*/
