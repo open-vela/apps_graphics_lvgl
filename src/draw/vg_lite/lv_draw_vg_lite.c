@@ -76,9 +76,7 @@ void lv_draw_vg_lite_init(void)
     lv_vg_lite_grad_init(unit, LV_VG_LITE_GRAD_CACHE_CNT);
 #endif
     lv_vg_lite_path_init(unit);
-#if 0
     lv_vg_lite_decoder_init();
-#endif
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -298,9 +296,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
     lv_vg_lite_grad_deinit(unit);
 #endif
     lv_vg_lite_path_deinit(unit);
-#if 0
     lv_vg_lite_decoder_deinit();
-#endif
     return 1;
 }
 
