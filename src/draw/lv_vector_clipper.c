@@ -192,6 +192,7 @@ static void _flatten_path(lv_vector_path_t * fpath, const lv_vector_path_t * pat
                 }
                 break;
             case LV_VECTOR_PATH_OP_CUBIC_TO: {
+                    LV_ASSERT(pidx > 0);
                     lv_fpoint_t * pt1 = lv_array_at(&path->points, pidx);
                     lv_fpoint_t * pt2 = lv_array_at(&path->points, pidx + 1);
                     lv_fpoint_t * pt3 = lv_array_at(&path->points, pidx + 2);
