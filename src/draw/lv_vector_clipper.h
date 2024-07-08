@@ -6,13 +6,16 @@
 #ifndef LV_VECTOR_CLIPPER_H
 #define LV_VECTOR_CLIPPER_H
 
-#include <lvgl/lvgl.h>
-
-#if LV_USE_VECTOR_GRAPHIC
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*********************
+ *      INCLUDES
+ *********************/
+#include "lv_draw_vector.h"
+
+#if LV_USE_VECTOR_GRAPHIC
 
 /*********************
  *      DEFINES
@@ -51,9 +54,10 @@ bool lv_vector_path_to_polygon(lv_vector_path_t * result, const lv_vector_path_t
 bool lv_vector_path_polygon_clipper(lv_vector_clipper_t type, lv_vector_path_t * result,
                                     const lv_vector_path_t * subject, const lv_vector_path_t * clip);
 
+#endif /* LV_USE_VECTOR_GRAPHIC */
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
 
-#endif /*LV_USE_VECTOR_GRAPHIC*/
 #endif /* LV_VECTOR_CLIPPER_H */
