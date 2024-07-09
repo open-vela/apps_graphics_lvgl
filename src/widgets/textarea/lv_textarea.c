@@ -312,6 +312,7 @@ void lv_textarea_set_text(lv_obj_t * obj, const char * txt)
     }
 
     if(ta->pwd_mode) {
+        lv_free(ta->pwd_tmp);
         ta->pwd_tmp = lv_strdup(txt);
         LV_ASSERT_MALLOC(ta->pwd_tmp);
         if(ta->pwd_tmp == NULL) return;
@@ -393,8 +394,11 @@ void lv_textarea_set_cursor_pos(lv_obj_t * obj, int32_t pos)
     }
     /*Check the right*/
     int32_t w = lv_obj_get_content_width(obj);
-    if(cur_pos.x + font_h - lv_obj_get_scroll_left(obj) > w) {
+    if(cur_pos.x + font_h > w) {
         lv_obj_scroll_to_x(obj, cur_pos.x - w + font_h, LV_ANIM_ON);
+    }
+    else {
+        lv_obj_scroll_to_x(obj, 0, LV_ANIM_ON);
     }
 
     ta->cursor.valid_x = cur_pos.x;
@@ -423,6 +427,7 @@ void lv_textarea_set_password_mode(lv_obj_t * obj, bool en)
     /*Pwd mode is now enabled*/
     if(en) {
         char * txt = lv_label_get_text(ta->label);
+        lv_free(ta->pwd_tmp);
         ta->pwd_tmp = lv_strdup(txt);
         LV_ASSERT_MALLOC(ta->pwd_tmp);
         if(ta->pwd_tmp == NULL) return;
