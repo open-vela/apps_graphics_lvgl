@@ -974,14 +974,14 @@ static bool refr_check_obj_clip_overflow(lv_layer_t * layer, lv_obj_t * obj)
     lv_area_copy(&obj_coords, &obj->coords);
     lv_area_increase(&obj_coords, ext_size, ext_size);
 
-    lv_obj_get_transformed_area(obj, &obj_coords, true, false);
+    lv_obj_get_transformed_area(obj, &obj_coords, LV_OBJ_POINT_TRANSFORM_FLAG_RECURSIVE);
 
     lv_area_t clip_coords_for_obj;
     if(!_lv_area_intersect(&clip_coords_for_obj, &layer->_clip_area, &obj_coords)) {
         return false;
     }
 
-    bool has_clip = memcmp(&clip_coords_for_obj, &obj_coords, sizeof(lv_area_t)) != 0;
+    bool has_clip = lv_memcmp(&clip_coords_for_obj, &obj_coords, sizeof(lv_area_t)) != 0;
     return has_clip;
 }
 
