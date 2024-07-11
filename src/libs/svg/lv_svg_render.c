@@ -1141,32 +1141,51 @@ static void _init_gradient(lv_svg_render_obj_t * obj, const lv_svg_node_t * node
     grad->dsc.y2 = 0.0f;
     grad->dsc.spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 
-    uint32_t count = LV_MIN(LV_TREE_NODE(node)->child_cnt, LV_GRADIENT_MAX_STOPS);
-    grad->dsc.stops_count = count;
+    uint32_t count = LV_TREE_NODE(node)->child_cnt;
+    uint32_t stop_count = 0;
 
     for(uint32_t i = 0; i < count; i++) {
         lv_svg_node_t * child_node = LV_SVG_NODE_CHILD(node, i);
         uint32_t len = lv_array_size(&child_node->attrs);
-        grad->dsc.stops[i].opa = LV_OPA_COVER;
+
+        bool is_stop = false;
+        lv_color_t stop_color = lv_color_black();
+        lv_opa_t stop_opa = LV_OPA_COVER;
+        uint8_t stop_frac = 0;
+
         for(uint32_t j = 0; j < len; j++) {
             lv_svg_attr_t * attr = lv_array_at(&child_node->attrs, j);
-
             switch(attr->id) {
                 case LV_SVG_ATTR_GRADIENT_STOP_COLOR: {
-                        grad->dsc.stops[i].color = lv_color_hex(attr->value.uval);
+                        stop_color = lv_color_hex(attr->value.uval);
+                        is_stop = true;
                     }
                     break;
                 case LV_SVG_ATTR_GRADIENT_STOP_OPACITY: {
-                        grad->dsc.stops[i].opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                        stop_opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                        is_stop = true;
                     }
                     break;
                 case LV_SVG_ATTR_GRADIENT_STOP_OFFSET: {
-                        grad->dsc.stops[i].frac = (uint8_t)(attr->value.fval * 255.0f);
+                        stop_frac = (uint8_t)(attr->value.fval * 255.0f);
+                        is_stop = true;
                     }
                     break;
             }
         }
+
+        if(is_stop) {
+            grad->dsc.stops[stop_count].opa = stop_opa;
+            grad->dsc.stops[stop_count].frac = stop_frac;
+            grad->dsc.stops[stop_count].color = stop_color;
+            stop_count++;
+        }
+
+        if(stop_count == LV_GRADIENT_MAX_STOPS) {
+            break;
+        }
     }
+    grad->dsc.stops_count = stop_count;
 }
 
 static void _setup_matrix(lv_matrix_t * matrix, lv_vector_dsc_t * dsc, const lv_svg_render_obj_t * obj)
