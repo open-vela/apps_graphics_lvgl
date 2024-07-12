@@ -63,6 +63,8 @@ enum {
     LV_VECTOR_BLEND_NONE,
     LV_VECTOR_BLEND_ADDITIVE,
     LV_VECTOR_BLEND_SUBTRACTIVE,
+    LV_VECTOR_BLEND_DARKEN,
+    LV_VECTOR_BLEND_LIGHTEN,
 };
 typedef uint8_t lv_vector_blend_t;
 
