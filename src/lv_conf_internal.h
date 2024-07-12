@@ -572,6 +572,16 @@
     #endif
 #endif
 
+/* VG-Lite stroke maximum cache number.
+ */
+#ifndef LV_VG_LITE_STROKE_CACHE_CNT
+    #ifdef CONFIG_LV_VG_LITE_STROKE_CACHE_CNT
+        #define LV_VG_LITE_STROKE_CACHE_CNT CONFIG_LV_VG_LITE_STROKE_CACHE_CNT
+    #else
+        #define LV_VG_LITE_STROKE_CACHE_CNT 32
+    #endif
+#endif
+
 /* Enable A4/A8 image support */
 #ifndef LV_VG_LITE_USE_ALPHA_IMAGE
     #ifdef CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
