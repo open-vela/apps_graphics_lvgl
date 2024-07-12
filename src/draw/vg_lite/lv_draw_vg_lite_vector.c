@@ -415,6 +415,10 @@ static vg_lite_blend_t lv_blend_to_vg(lv_vector_blend_t blend)
             return VG_LITE_BLEND_DST_IN;
         case LV_VECTOR_BLEND_SUBTRACTIVE:
             return VG_LITE_BLEND_SUBTRACT;
+        case LV_VECTOR_BLEND_DARKEN:
+            return VG_LITE_BLEND_DARKEN;
+        case LV_VECTOR_BLEND_LIGHTEN:
+            return VG_LITE_BLEND_LIGHTEN;
         default:
             return VG_LITE_BLEND_SRC_OVER;
     }

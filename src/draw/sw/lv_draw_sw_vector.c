@@ -347,6 +347,10 @@ static Tvg_Blend_Method _lv_blend_to_tvg(lv_vector_blend_t blend)
             return TVG_BLEND_METHOD_SRCOVER;
         case LV_VECTOR_BLEND_ADDITIVE:
             return TVG_BLEND_METHOD_ADD;
+        case LV_VECTOR_BLEND_DARKEN:
+            return TVG_BLEND_METHOD_DARKEN;
+        case LV_VECTOR_BLEND_LIGHTEN:
+            return TVG_BLEND_METHOD_LIGHTEN;
         case LV_VECTOR_BLEND_SRC_IN:
         case LV_VECTOR_BLEND_DST_OVER:
         case LV_VECTOR_BLEND_DST_IN:
