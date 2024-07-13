@@ -53,11 +53,20 @@ typedef _lv_span_mode_t lv_span_mode_t;
 typedef uint32_t lv_span_mode_t;
 #endif /*DOXYGEN*/
 
+typedef struct _lv_span_coords_t {
+    lv_area_t heading;
+    lv_area_t middle;
+    lv_area_t trailing;
+} lv_span_coords_t;
+
 typedef struct {
     char * txt;             /* a pointer to display text */
     lv_obj_t * spangroup;   /* a pointer to spangroup */
     lv_style_t style;       /* display text style */
     uint32_t static_flag : 1;/* the text is static flag */
+
+    lv_point_t trailing_pos;
+    int32_t trailing_height;
 } lv_span_t;
 
 /** Data of label*/
@@ -246,6 +255,29 @@ uint32_t lv_spangroup_get_expand_width(lv_obj_t * obj, uint32_t max_width);
 
  */
 int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width);
+
+/**
+ * Get the span's coords in the spangroup.
+ * @note Before calling this function, please make sure that the layout of span group has been updated.
+ * +--------+
+ * |Heading +--->------------------+
+ * |  Pos   |   |     Heading      |
+ * +--------+---+------------------+
+ * |                               |
+ * |                               |
+ * |                               |
+ * |            Middle   +--------+|
+ * |                     |Trailing||
+ * |                   +-|  Pos   ||
+ * |                   | +--------+|
+ * +-------------------v-----------+
+ * |     Trailing      |
+ * +-------------------+
+ * @param obj       pointer to a spangroup object.
+ * @param span      pointer to a span.
+ * @return the span's coords in the spangroup.
+ */
+lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, lv_span_t * span);
 
 /*=====================
  * Other functions
