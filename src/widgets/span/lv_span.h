@@ -80,6 +80,8 @@ typedef struct {
     uint32_t mode : 2;       /* details see lv_span_mode_t */
     uint32_t overflow : 1;   /* details see lv_span_overflow_t */
     uint32_t refresh : 1;    /* the spangroup need refresh cache_w and cache_h */
+
+    lv_array_t event_spans;
 } lv_spangroup_t;
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_spangroup_class;
@@ -278,6 +280,17 @@ int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width);
  * @return the span's coords in the spangroup.
  */
 lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, lv_span_t * span);
+
+/**
+ * Add an event callback to a span.
+ * @param obj       pointer to a spangroup object.
+ * @param span      pointer to a span.
+ * @param cb        the callback function.
+ * @param code      the event code.
+ * @param user_data user data for the callback.
+ */
+void lv_spangroup_add_span_event_cb(lv_obj_t * obj, lv_span_t * span, lv_event_cb_t cb, lv_event_code_t code,
+                                    void * user_data);
 
 /*=====================
  * Other functions
