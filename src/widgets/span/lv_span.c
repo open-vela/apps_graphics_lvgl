@@ -38,6 +38,11 @@ struct _snippet_stack {
     uint32_t        index;
 };
 
+typedef struct _span_event_list_key_pair {
+    lv_span_t * span;
+    lv_event_list_t event_list;
+} span_event_key_pair;
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -588,6 +593,37 @@ lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, lv_span_t * span)
     return coords;
 }
 
+void lv_spangroup_add_span_event_cb(lv_obj_t * obj, lv_span_t * span, lv_event_cb_t cb, lv_event_code_t code,
+                                    void * user_data)
+{
+    if(obj == NULL || span == NULL || cb == NULL) {
+        return;
+    }
+
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_spangroup_t * spans = (lv_spangroup_t *)obj;
+
+    span_event_key_pair * found_pair = NULL;
+    for(uint32_t i = 0; i < lv_array_size(&spans->event_spans) ; i++) {
+        span_event_key_pair * pair = lv_array_at(&spans->event_spans, i);
+        if(pair->span == span) {
+            found_pair = pair;
+            break;
+        }
+    }
+
+    if(found_pair == NULL) {
+        span_event_key_pair pair = {
+            .span = span,
+            .event_list = { 0 },
+        };
+        lv_array_push_back(&spans->event_spans, &pair);
+        found_pair = lv_array_back(&spans->event_spans);
+    }
+
+    lv_event_add(&found_pair->event_list, cb, code, user_data);
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -604,6 +640,8 @@ static void lv_spangroup_constructor(const lv_obj_class_t * class_p, lv_obj_t * 
     spans->cache_w = 0;
     spans->cache_h = 0;
     spans->refresh = 1;
+
+    lv_array_init(&spans->event_spans, 0, sizeof(span_event_key_pair));
 }
 
 static void lv_spangroup_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
@@ -677,6 +715,52 @@ static void lv_spangroup_event(const lv_obj_class_t * class_p, lv_event_t * e)
         }
         self_size->x = LV_MAX(self_size->x, width);
         self_size->y = LV_MAX(self_size->y, height);
+    }
+    else if(code == LV_EVENT_PRESSED ||
+            code == LV_EVENT_PRESSING ||
+            code == LV_EVENT_RELEASED ||
+            code == LV_EVENT_CLICKED ||
+            code == LV_EVENT_LONG_PRESSED ||
+            code == LV_EVENT_LONG_PRESSED_REPEAT ||
+            code == LV_EVENT_ROTARY) {
+
+        if(lv_array_size(&spans->event_spans) == 0) return;
+
+        /* find the span that in the hit area */
+        lv_point_t point;
+        lv_area_t ori_area;
+        lv_indev_get_point(lv_indev_active(), &point);
+        lv_obj_get_coords(obj, &ori_area);
+        lv_point_t rel_point = {
+            .x = point.x - ori_area.x1,
+            .y = point.y - ori_area.y1,
+        };
+
+        span_event_key_pair * hit_span_pair = NULL;
+
+        for(uint32_t i = 0; i < lv_array_size(&spans->event_spans) ; i++) {
+            span_event_key_pair * pair = lv_array_at(&spans->event_spans, i);
+            lv_span_coords_t coords = lv_spangroup_get_span_coords(obj, pair->span);
+
+            /* check if the rel_point is in the span coords */
+            if(_lv_area_is_point_on(&coords.heading,  &rel_point, 0) ||
+               _lv_area_is_point_on(&coords.middle,   &rel_point, 0) ||
+               _lv_area_is_point_on(&coords.trailing, &rel_point, 0)) {
+                hit_span_pair = pair;
+                break;
+            }
+        }
+
+        if(hit_span_pair == NULL) return;
+
+        lv_event_t e_;
+        lv_memzero(&e_, sizeof(e_));
+        e_.code = code;
+        e_.current_target = obj;
+        e_.original_target = obj;
+        e_.param = hit_span_pair->span;
+        lv_event_send(&hit_span_pair->event_list, &e_, true);
+        lv_event_send(&hit_span_pair->event_list, &e_, false);
     }
 }
 
