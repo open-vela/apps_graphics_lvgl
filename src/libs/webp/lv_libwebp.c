@@ -299,6 +299,7 @@ static lv_draw_buf_t * decode_webp_file(lv_image_decoder_dsc_t * dsc, const char
 
     WebPDecode(data, data_size, &config);
 
+    lv_free(data);
     return decoded;
 }
 
