@@ -161,7 +161,12 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
             return LV_RES_OK;
         }
 
-#if LV_CACHE_DEF_SIZE > 0
+        /*If the image cache is disabled, just return the decoded image*/
+        if(!lv_image_cache_is_enabled()) {
+            LV_PROFILER_END_TAG("lv_libwebp_decoder_open");
+            return LV_RESULT_OK;
+        }
+
         lv_image_cache_data_t search_key;
         search_key.src_type = dsc->src_type;
         search_key.src = dsc->src;
@@ -175,7 +180,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
             return LV_RESULT_INVALID;
         }
         dsc->cache_entry = entry;
-#endif
+
         LV_PROFILER_END_TAG("lv_libwebp_decoder_open");
         return LV_RESULT_OK;     /*The image is fully decoded. Return with its pointer*/
     }

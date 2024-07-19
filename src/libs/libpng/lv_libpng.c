@@ -154,7 +154,10 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         }
 
         /*If the image cache is disabled, just return the decoded image*/
-        if(!lv_image_cache_is_enabled()) return LV_RESULT_OK;
+        if(!lv_image_cache_is_enabled()) {
+            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            return LV_RESULT_OK;
+        }
 
         /*Add the decoded image to the cache*/
         lv_image_cache_data_t search_key;
