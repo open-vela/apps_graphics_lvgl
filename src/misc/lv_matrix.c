@@ -121,20 +121,31 @@ void lv_matrix_skew(lv_matrix_t * matrix, float skew_x, float skew_y)
     lv_matrix_multiply(matrix, &skm);
 }
 
-void lv_matrix_multiply(lv_matrix_t * matrix, const lv_matrix_t * mul)
+void lv_matrix_multiply(lv_matrix_t * matrix, const lv_matrix_t * matrix2)
 {
-    /*TODO: use NEON to optimize this function on ARM architecture.*/
-    lv_matrix_t tmp;
+    lv_matrix_t result;
+    result.m[0][0] = matrix->m[0][0] * matrix2->m[0][0] + matrix->m[0][1] * matrix2->m[1][0] + matrix->m[0][2] *
+                     matrix2->m[2][0];
+    result.m[0][1] = matrix->m[0][0] * matrix2->m[0][1] + matrix->m[0][1] * matrix2->m[1][1] + matrix->m[0][2] *
+                     matrix2->m[2][1];
+    result.m[0][2] = matrix->m[0][0] * matrix2->m[0][2] + matrix->m[0][1] * matrix2->m[1][2] + matrix->m[0][2] *
+                     matrix2->m[2][2];
 
-    for(int y = 0; y < 3; y++) {
-        for(int x = 0; x < 3; x++) {
-            tmp.m[y][x] = (matrix->m[y][0] * mul->m[0][x])
-                          + (matrix->m[y][1] * mul->m[1][x])
-                          + (matrix->m[y][2] * mul->m[2][x]);
-        }
-    }
+    result.m[1][0] = matrix->m[1][0] * matrix2->m[0][0] + matrix->m[1][1] * matrix2->m[1][0] + matrix->m[1][2] *
+                     matrix2->m[2][0];
+    result.m[1][1] = matrix->m[1][0] * matrix2->m[0][1] + matrix->m[1][1] * matrix2->m[1][1] + matrix->m[1][2] *
+                     matrix2->m[2][1];
+    result.m[1][2] = matrix->m[1][0] * matrix2->m[0][2] + matrix->m[1][1] * matrix2->m[1][2] + matrix->m[1][2] *
+                     matrix2->m[2][2];
 
-    lv_memcpy(matrix, &tmp, sizeof(lv_matrix_t));
+    result.m[2][0] = matrix->m[2][0] * matrix2->m[0][0] + matrix->m[2][1] * matrix2->m[1][0] + matrix->m[2][2] *
+                     matrix2->m[2][0];
+    result.m[2][1] = matrix->m[2][0] * matrix2->m[0][1] + matrix->m[2][1] * matrix2->m[1][1] + matrix->m[2][2] *
+                     matrix2->m[2][1];
+    result.m[2][2] = matrix->m[2][0] * matrix2->m[0][2] + matrix->m[2][1] * matrix2->m[1][2] + matrix->m[2][2] *
+                     matrix2->m[2][2];
+
+    *matrix = result;
 }
 
 bool lv_matrix_inverse(lv_matrix_t * matrix, const lv_matrix_t * m)
@@ -212,13 +223,16 @@ lv_area_t lv_matrix_transform_area(const lv_matrix_t * matrix, const lv_area_t *
 
 bool lv_matrix_is_identity_or_translation(const lv_matrix_t * matrix)
 {
-    return (matrix->m[0][0] == 1.0f &&
-            matrix->m[0][1] == 0.0f &&
-            matrix->m[1][0] == 0.0f &&
-            matrix->m[1][1] == 1.0f &&
-            matrix->m[2][0] == 0.0f &&
-            matrix->m[2][1] == 0.0f &&
-            matrix->m[2][2] == 1.0f);
+    if(matrix->m[0][0] != 1.0f || matrix->m[1][1] != 1.0f || matrix->m[2][2] != 1.0f) {
+        return false;
+    }
+
+    if(matrix->m[0][1] != 0.0f || matrix->m[0][2] != 0.0f || matrix->m[1][0] != 0.0f || matrix->m[1][2] != 0.0f ||
+       matrix->m[2][0] != 0.0f || matrix->m[2][1] != 0.0f) {
+        return false;
+    }
+
+    return true;
 }
 
 /**********************
