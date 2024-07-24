@@ -18,7 +18,13 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define LV_ARRAY_DEFAULT_CAPACITY 8
+#ifndef LV_ARRAY_DEFAULT_CAPACITY
+#define LV_ARRAY_DEFAULT_CAPACITY  4
+#endif
+
+#ifndef LV_ARRAY_DEFAULT_SHRINK_RATIO
+#define LV_ARRAY_DEFAULT_SHRINK_RATIO 2
+#endif
 
 /**********************
  *      TYPEDEFS
@@ -114,6 +120,12 @@ static inline void lv_array_clear(lv_array_t * array)
 {
     array->size = 0;
 }
+
+/**
+ * Shrink the memory capacity of array if necessary.
+ * @param array pointer to an `lv_array_t` variable
+ */
+void lv_array_shrink(lv_array_t * array);
 
 /**
  * Remove the element at the specified position in the array.
