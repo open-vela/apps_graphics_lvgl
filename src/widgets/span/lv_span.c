@@ -615,7 +615,7 @@ void lv_spangroup_add_span_event_cb(lv_obj_t * obj, lv_span_t * span, lv_event_c
     if(found_pair == NULL) {
         span_event_key_pair pair = {
             .span = span,
-            .event_list = { 0 },
+            .event_list = { .array = {0}, .flags = 0 },
         };
         lv_array_push_back(&spans->event_spans, &pair);
         found_pair = lv_array_back(&spans->event_spans);
