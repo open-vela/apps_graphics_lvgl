@@ -149,6 +149,9 @@ typedef struct _lv_font_t lv_font_t;
 struct _lv_image_decoder_t;
 typedef struct _lv_image_decoder_t lv_image_decoder_t;
 
+struct _lv_event_list_t;
+typedef struct _lv_event_list_t lv_event_list_t;
+
 #endif /*__ASSEMBLY__*/
 
 /**********************
