@@ -219,7 +219,8 @@ static void _g2d_blit(lv_draw_buf_t * dest_buf, const lv_area_t * dest_area,
     lv_draw_buf_invalidate_cache((lv_draw_buf_t *)src_buf, src_area);
 
     unsigned long src_vaddr_start = (unsigned long)src_buf->data + src_stride * src_area->y1 + src_px_size * src_area->x1;
-    unsigned long dest_vaddr_start = (unsigned long)dest_buf->data + dest_stride * dest_area->y1 + dest_px_size * dest_area->x1;
+    unsigned long dest_vaddr_start = (unsigned long)dest_buf->data + dest_stride * dest_area->y1 + dest_px_size *
+                                     dest_area->x1;
 
     hal_dcache_clean_invalidate(src_vaddr_start, src_stride * src_h);
     hal_dcache_clean_invalidate(dest_vaddr_start, dest_stride * dest_h);

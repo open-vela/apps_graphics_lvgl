@@ -17,7 +17,7 @@
 #include <pthread.h>
 #include "lv_nuttx_cache.h"
 #if LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP
-#include "lv_nuttx_image_cache.h"
+    #include "lv_nuttx_image_cache.h"
 #endif
 #include "lv_nuttx_profiler.h"
 #include "lv_nuttx_mouse.h"
