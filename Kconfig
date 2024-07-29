@@ -1228,6 +1228,10 @@ menu "LVGL configuration"
 			bool "SVG library"
 			depends on LV_USE_VECTOR_GRAPHIC
 
+		config LV_USE_SVG_ANIMATION
+			bool "SVG animation"
+			depends on LV_USE_SVG
+
 		config LV_USE_RLE
 			bool "LVGL's version of RLE compression method"
 

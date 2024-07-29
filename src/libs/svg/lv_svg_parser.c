@@ -53,14 +53,16 @@ static const struct _lv_svg_tag_map {
     {"linearGradient", 14, LV_SVG_TAG_LINEAR_GRADIENT},
     {"radialGradient", 14, LV_SVG_TAG_RADIAL_GRADIENT},
     {"stop", 4, LV_SVG_TAG_STOP},
-    {"set", 3, LV_SVG_TAG_SET},
-    {"mpath", 5, LV_SVG_TAG_MPATH},
     {"defs", 4, LV_SVG_TAG_DEFS},
     {"image", 5, LV_SVG_TAG_IMAGE},
+#if LV_USE_SVG_ANIMATION
+    {"mpath", 5, LV_SVG_TAG_MPATH},
+    {"set", 3, LV_SVG_TAG_SET},
     {"animate", 7, LV_SVG_TAG_ANIMATE},
     {"animateColor", 12, LV_SVG_TAG_ANIMATE_COLOR},
     {"animateTransform", 16, LV_SVG_TAG_ANIMATE_TRANSFORM},
     {"animateMotion", 13, LV_SVG_TAG_ANIMATE_MOTION},
+#endif
     {"text", 4, LV_SVG_TAG_TEXT},
     {"tspan", 5, LV_SVG_TAG_TSPAN},
     {"textArea", 8, LV_SVG_TAG_TEXT_AREA},
@@ -123,6 +125,31 @@ static const struct _lv_svg_attr_map {
     {"font-size", 9, LV_SVG_ATTR_FONT_SIZE},
     {"transform", 9, LV_SVG_ATTR_TRANSFORM},
     {"text-anchor", 11, LV_SVG_ATTR_TEXT_ANCHOR},
+#if LV_USE_SVG_ANIMATION
+    {"attributeName", 13, LV_SVG_ATTR_ATTRIBUTE_NAME},
+    {"attributeType", 13, LV_SVG_ATTR_ATTRIBUTE_TYPE},
+    {"begin", 5, LV_SVG_ATTR_BEGIN},
+    {"end", 3, LV_SVG_ATTR_END},
+    {"dur", 3, LV_SVG_ATTR_DUR},
+    {"min", 3, LV_SVG_ATTR_MIN},
+    {"max", 3, LV_SVG_ATTR_MAX},
+    {"restart", 7, LV_SVG_ATTR_RESTART},
+    {"repeatCount", 11, LV_SVG_ATTR_REPEAT_COUNT},
+    {"repeatDur", 9, LV_SVG_ATTR_REPEAT_DUR},
+    {"calcMode", 8, LV_SVG_ATTR_CALC_MODE},
+    {"values", 6, LV_SVG_ATTR_VALUES},
+    {"keyTimes", 8, LV_SVG_ATTR_KEY_TIMES},
+    {"keySplines", 10, LV_SVG_ATTR_KEY_SPLINES},
+    {"keyPoints", 9, LV_SVG_ATTR_KEY_POINTS},
+    {"from", 4, LV_SVG_ATTR_FROM},
+    {"to", 2, LV_SVG_ATTR_TO},
+    {"by", 2, LV_SVG_ATTR_BY},
+    {"additive", 8, LV_SVG_ATTR_ADDITIVE},
+    {"accumulate", 10, LV_SVG_ATTR_ACCUMULATE},
+    {"path", 4, LV_SVG_ATTR_PATH},
+    {"rotate", 6, LV_SVG_ATTR_ROTATE},
+    {"type", 4, LV_SVG_ATTR_TRANSFORM_TYPE},
+#endif
 };
 
 static const struct _lv_svg_attr_aspect_ratio_map {
@@ -565,17 +592,7 @@ static void _multiply_matrix(lv_svg_matrix_t * matrix, const lv_svg_matrix_t * m
     lv_memcpy(matrix, &tmp, sizeof(lv_svg_matrix_t));
 }
 
-enum {
-    _parse_matrix_matrix = 1,
-    _parse_matrix_translate,
-    _parse_matrix_rotate,
-    _parse_matrix_scale,
-    _parse_matrix_skew_x,
-    _parse_matrix_skew_y,
-};
-typedef uint8_t _parse_matrix_type_t;
-
-static const char * _parse_matrix(const char * str, const char * str_end, _parse_matrix_type_t type,
+static const char * _parse_matrix(const char * str, const char * str_end, lv_svg_transform_type_t type,
                                   lv_svg_matrix_t * matrix)
 {
     // skip loading
@@ -589,7 +606,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
 
     const char * ptr = str;
     switch(type) {
-        case _parse_matrix_matrix: {
+        case LV_SVG_TRANSFORM_TYPE_MATRIX: {
                 float vals[6] = {0};
                 for(int i = 0; i < 6; i++) {
                     ptr = _parse_number(ptr, str_end, &vals[i]);
@@ -607,7 +624,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
                 _multiply_matrix(matrix, &mt);
             }
             break;
-        case _parse_matrix_translate: {
+        case LV_SVG_TRANSFORM_TYPE_TRANSLATE: {
                 float tx = 0.0f, ty = 0.0f;
                 ptr = _parse_number(ptr, str_end, &tx);
                 if(!ptr) return str;
@@ -629,7 +646,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
                 _multiply_matrix(matrix, &tlm);
             }
             break;
-        case _parse_matrix_rotate: {
+        case LV_SVG_TRANSFORM_TYPE_ROTATE: {
                 float degree = 0.0f, cx = 0.0f, cy = 0.0f;
                 bool trans = false;
 
@@ -678,7 +695,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
                 }
             }
             break;
-        case _parse_matrix_scale: {
+        case LV_SVG_TRANSFORM_TYPE_SCALE: {
                 float sx = 0.0f, sy = 0.0f;
                 ptr = _parse_number(ptr, str_end, &sx);
                 if(!ptr) return str;
@@ -702,7 +719,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
                 _multiply_matrix(matrix, &scm);
             }
             break;
-        case _parse_matrix_skew_x: {
+        case LV_SVG_TRANSFORM_TYPE_SKEW_X: {
                 float degree = 0.0f;
                 ptr = _parse_number(ptr, str_end, &degree);
                 if(!ptr) return str;
@@ -721,7 +738,7 @@ static const char * _parse_matrix(const char * str, const char * str_end, _parse
                 _multiply_matrix(matrix, &skm);
             }
             break;
-        case _parse_matrix_skew_y: {
+        case LV_SVG_TRANSFORM_TYPE_SKEW_Y: {
                 float degree = 0.0f;
                 ptr = _parse_number(ptr, str_end, &degree);
                 if(!ptr) return str;
@@ -939,6 +956,7 @@ static void _process_path_value(lv_svg_node_t * node, lv_svg_attr_type_t type, c
             list_cap = list_cap << 1;
             list_size = sizeof(lv_svg_point_t) * list_cap + sizeof(uint32_t) * list_cap + sizeof(uint32_t);
             list = (lv_svg_attr_values_list_t *)lv_realloc(list, list_size);
+            LV_ASSERT_MALLOC(list);
         }
 
         data_ptr = (uint8_t *)(&list->data) + cur_size;
@@ -1383,6 +1401,18 @@ static void _process_paint(lv_svg_node_t * node, lv_svg_attr_type_t type, const 
         return;
     }
     else {
+#if LV_USE_SVG_ANIMATION
+        if(len == 6) {
+            if(strncmp(val_start, "freeze", 6) == 0) {
+                attr->value.ival = LV_SVG_ANIM_FREEZE;
+                return;
+            }
+            else if(strncmp(val_start, "remove", 6) == 0) {
+                attr->value.ival = LV_SVG_ANIM_REMOVE;
+                return;
+            }
+        }
+#endif
         // parse color
         uint32_t color = 0;
         _parse_color(val_start, val_end, &color);
@@ -1463,23 +1493,23 @@ static void _process_transform(lv_svg_node_t * node, lv_svg_attr_type_t type, co
 
         len = val_end - ptr;
 
-        if(len >= 6 && strncmp(ptr, "matrix", 6) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_matrix, matrix);
+        if(len >= 9 && strncmp(ptr, "translate", 9) == 0) {
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_TRANSLATE, matrix);
         }
-        else if(len >= 9 && strncmp(ptr, "translate", 9) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_translate, matrix);
+        else if(len >= 6 && strncmp(ptr, "matrix", 6) == 0) {
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_MATRIX, matrix);
         }
         else if(len >= 6 && strncmp(ptr, "rotate", 6) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_rotate, matrix);
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_ROTATE, matrix);
         }
         else if(len >= 5 && strncmp(ptr, "scale", 5) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_scale, matrix);
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_SCALE, matrix);
         }
         else if(len >= 5 && strncmp(ptr, "skewX", 5) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_skew_x, matrix);
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_SKEW_X, matrix);
         }
         else if(len >= 5 && strncmp(ptr, "skewY", 5) == 0) {
-            ptr = _parse_matrix(ptr, val_end, _parse_matrix_skew_y, matrix);
+            ptr = _parse_matrix(ptr, val_end, LV_SVG_TRANSFORM_TYPE_SKEW_Y, matrix);
         }
 
         ++ptr;
@@ -1528,6 +1558,460 @@ static void _process_preserve_aspect_ratio(lv_svg_node_t * node, lv_svg_attr_typ
     }
     attr->value.uval = ratio;
 }
+
+#if LV_USE_SVG_ANIMATION
+typedef void(*_parse_list_cb)(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start, const char * val_end,
+                              int32_t dpi, void * data);
+
+static uint32_t _parse_anim_value_list(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start,
+                                       const char * val_end, int32_t dpi, _parse_list_cb cb, void * data)
+{
+    uint32_t count = 0;
+    val_start = _skip_space(val_start, val_end);
+    const char * ptr = val_start;
+
+    while(ptr != val_end) {
+        if(*ptr == ';') {
+            cb(node, attr, val_start, ptr, dpi, data);
+            val_start = ++ptr;
+            val_start = _skip_space(val_start, val_end);
+            count++;
+        }
+        else {
+            ++ptr;
+        }
+    }
+    if(val_start < val_end) {
+        cb(node, attr, val_start, ptr, dpi, data);
+        count++;
+    }
+    return count;
+}
+
+static const char * _parse_clock_time(const char * str, const char * str_end, float * val)
+{
+    str = _parse_number(str, str_end, val);
+    if(str) {
+        uint32_t len = str_end - str;
+        if(len > 0) {
+            if(len >= 2 && str[0] == 'm' && str[1] == 's') {
+                *val = roundf(*val);
+            }
+            else {
+                *val = roundf(*val * 1000.0f);
+            }
+        }
+        else {
+            *val = roundf(*val * 1000.0f);
+        }
+        str += len;
+        return str;
+    }
+    *val = roundf(*val * 1000.0f);
+    return str;
+}
+
+static void _process_clock_time(lv_svg_node_t * node, lv_svg_attr_type_t type, const char * val_start,
+                                const char * val_end)
+{
+    CHECK_AND_RESIZE_ATTRS(node->attrs);
+
+    node->attrs.size++;
+    lv_svg_attr_t * attr = lv_array_at(&node->attrs, node->attrs.size - 1);
+    attr->id = type;
+    attr->val_type = LV_SVG_ATTR_VALUE_DATA;
+    attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
+
+    uint32_t len = val_end - val_start;
+    if(len == 10 && strncmp(val_start, "indefinite", 10) == 0) {
+        attr->value.fval = 0.0f;
+        return;
+    }
+
+    float val_number = 0.0f;
+    val_start = _parse_clock_time(val_start, val_end, &val_number);
+    attr->value.fval = val_number; // ms
+}
+
+static void _process_anim_attr_number(lv_svg_node_t * node, lv_svg_attr_type_t type, const char * val_start,
+                                      const char * val_end)
+{
+    CHECK_AND_RESIZE_ATTRS(node->attrs);
+
+    node->attrs.size++;
+    lv_svg_attr_t * attr = lv_array_at(&node->attrs, node->attrs.size - 1);
+    attr->id = type;
+    attr->val_type = LV_SVG_ATTR_VALUE_DATA;
+    attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
+
+    if(type == LV_SVG_ATTR_REPEAT_COUNT) {
+        uint32_t len = val_end - val_start;
+        if(len == 10 && strncmp(val_start, "indefinite", 10) == 0) {
+            attr->value.uval = 0;
+            return;
+        }
+
+        float val_number = 0.0f;
+        val_start = _parse_number(val_start, val_end, &val_number);
+        attr->value.uval = (uint32_t)val_number;
+    }
+    else {   // LV_SVG_ATTR_ROTATE
+        uint32_t len = val_end - val_start;
+        if(len == 4 && strncmp(val_start, "auto", 4) == 0) {
+            attr->class_type =
+                LV_SVG_ATTR_VALUE_INHERIT; // rotated over time by the angle of the direction (i.e., directional tangent vector) of the motion path
+            attr->value.fval = 0.0f;
+            return;
+        }
+        else if(len == 12 && strncmp(val_start, "auto-reverse", 12) == 0) {
+            attr->class_type =
+                LV_SVG_ATTR_VALUE_INHERIT; // rotated over time by the angle of the direction (i.e., directional tangent vector) of the motion path plus 180 degrees.
+            attr->value.fval = 180.0f;
+            return;
+        }
+
+        float val_number = 0.0f;
+        val_start = _parse_number(val_start, val_end, &val_number);
+        attr->value.fval = val_number;
+    }
+}
+
+static void _process_anim_attr_names(lv_svg_node_t * node, lv_svg_attr_type_t type, const char * val_start,
+                                     const char * val_end)
+{
+    CHECK_AND_RESIZE_ATTRS(node->attrs);
+
+    node->attrs.size++;
+    lv_svg_attr_t * attr = lv_array_at(&node->attrs, node->attrs.size - 1);
+    attr->id = type;
+    attr->val_type = LV_SVG_ATTR_VALUE_DATA;
+    attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
+    attr->value.ival = _get_svg_attr_type(val_start, val_end);
+}
+
+static void _process_anim_attr_options(lv_svg_node_t * node, lv_svg_attr_type_t type, const char * val_start,
+                                       const char * val_end)
+{
+    CHECK_AND_RESIZE_ATTRS(node->attrs);
+
+    node->attrs.size++;
+    lv_svg_attr_t * attr = lv_array_at(&node->attrs, node->attrs.size - 1);
+    attr->id = type;
+    attr->val_type = LV_SVG_ATTR_VALUE_DATA;
+    attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
+
+    uint32_t len = val_end - val_start;
+    switch(type) {
+        case LV_SVG_ATTR_RESTART: {
+                if(len == 6 && strncmp(val_start, "always", 6) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_RESTART_ALWAYS;
+                    return;
+                }
+                else if(len == 13 && strncmp(val_start, "whenNotActive", 13) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_RESTART_WHEN_NOT_ACTIVE;
+                    return;
+                }
+                else if(len == 5 && strncmp(val_start, "never", 5) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_RESTART_NEVER;
+                    return;
+                }
+            }
+            break;
+        case LV_SVG_ATTR_CALC_MODE: {
+                if(len == 6 && strncmp(val_start, "linear", 6) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_CALC_MODE_LINEAR;
+                    return;
+                }
+                else if(len == 5 && strncmp(val_start, "paced", 5) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_CALC_MODE_PACED;
+                    return;
+                }
+                else if(len == 6 && strncmp(val_start, "spline", 6) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_CALC_MODE_SPLINE;
+                    return;
+                }
+                else if(len == 8 && strncmp(val_start, "discrete", 8) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_CALC_MODE_DISCRETE;
+                    return;
+                }
+            }
+            break;
+        case LV_SVG_ATTR_ADDITIVE: {
+                if(len == 7 && strncmp(val_start, "replace", 7) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_ADDITIVE_REPLACE;
+                    return;
+                }
+                else if(len == 3 && strncmp(val_start, "sum", 3) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_ADDITIVE_SUM;
+                    return;
+                }
+            }
+            break;
+        case LV_SVG_ATTR_ACCUMULATE: {
+                if(len == 4 && strncmp(val_start, "none", 4) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_ACCUMULATE_NONE;
+                    return;
+                }
+                else if(len == 3 && strncmp(val_start, "sum", 3) == 0) {
+                    attr->value.ival = LV_SVG_ANIM_ACCUMULATE_SUM;
+                    return;
+                }
+            }
+            break;
+        case LV_SVG_ATTR_TRANSFORM_TYPE: {
+                if(len == 9 && strncmp(val_start, "translate", 9) == 0) {
+                    attr->value.ival = LV_SVG_TRANSFORM_TYPE_TRANSLATE;
+                    return;
+                }
+                else if(len == 5 && strncmp(val_start, "scale", 5) == 0) {
+                    attr->value.ival = LV_SVG_TRANSFORM_TYPE_SCALE;
+                    return;
+                }
+                else if(len == 6 && strncmp(val_start, "rotate", 6) == 0) {
+                    attr->value.ival = LV_SVG_TRANSFORM_TYPE_ROTATE;
+                    return;
+                }
+                else if(len == 5 && strncmp(val_start, "skewX", 5) == 0) {
+                    attr->value.ival = LV_SVG_TRANSFORM_TYPE_SKEW_X;
+                    return;
+                }
+                else if(len == 5 && strncmp(val_start, "skewY", 5) == 0) {
+                    attr->value.ival = LV_SVG_TRANSFORM_TYPE_SKEW_Y;
+                    return;
+                }
+            }
+            break;
+    }
+    attr->value.ival = 0;
+}
+
+static void _parse_anim_value(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start, const char * val_end,
+                              int32_t dpi)
+{
+    if(node->type == LV_SVG_TAG_ANIMATE || node->type == LV_SVG_TAG_SET) {
+        float val_number = 0.0f;
+        val_start = _parse_length(val_start, val_end, dpi, &val_number);
+        attr->value.fval = val_number;
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_COLOR) {
+        uint32_t color = 0;
+        val_start = _parse_color(val_start, val_end, &color);
+        attr->value.uval = color;
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_TRANSFORM) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        lv_svg_attr_values_list_t * list = lv_malloc(sizeof(float) * 4 + sizeof(uint32_t));
+        LV_ASSERT_MALLOC(list);
+
+        float val_number = 0.0f;
+        uint32_t cnt = 0;
+        const char * ptr = val_start;
+
+        while((ptr < val_end) && (cnt < 3)) {
+            float * val = (float *)(&list->data) + cnt;
+
+            val_number = 0.0f;
+            ptr = _parse_number(ptr, val_end, &val_number);
+            *val = val_number;
+
+            if(!ptr) break;
+            ++cnt;
+        }
+
+        list->length = cnt;
+        attr->value.val = list;
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_MOTION) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        lv_svg_attr_values_list_t * list = lv_malloc(sizeof(lv_svg_point_t) + sizeof(uint32_t));
+        LV_ASSERT_MALLOC(list);
+
+        lv_svg_point_t * pt = (lv_svg_point_t *)(&list->data);
+
+        float val_number = 0.0f;
+        val_start = _parse_number(val_start, val_end, &val_number);
+        pt->x = val_number;
+        val_number = 0.0f;
+        val_start = _parse_number(val_start, val_end, &val_number);
+        pt->y = val_number;
+
+        list->length = 1;
+        attr->value.val = list;
+    }
+}
+
+struct _parse_value_list_context {
+    uint32_t mem_size;
+    uint32_t list_count;
+    lv_svg_attr_values_list_t * list;
+};
+
+struct _transform_values_list {
+    uint32_t length;
+    float data[4];
+};
+
+#define GET_NEXT_VALUE_PTR(ptr, ctx, type) \
+    do { \
+        lv_svg_attr_values_list_t * list = ctx->list; \
+        if(!list) { \
+            ctx->mem_size = sizeof(type) * 4 + sizeof(uint32_t);\
+            ctx->list = lv_malloc_zeroed(ctx->mem_size); \
+            LV_ASSERT_MALLOC(ctx->list); \
+            ptr = (type *)(&(ctx->list->data)); \
+            ctx->list_count = 1; \
+        } else { \
+            uint32_t mem = sizeof(type) * (ctx->list_count + 1) + sizeof(uint32_t); \
+            if(ctx->mem_size < mem) { \
+                ctx->mem_size = (ctx->list_count << 1) * sizeof(type) + sizeof(uint32_t); \
+                ctx->list = (lv_svg_attr_values_list_t *)lv_realloc(ctx->list, ctx->mem_size); \
+                LV_ASSERT_MALLOC(ctx->list); \
+            } \
+            ptr = (type *)(&(ctx->list->data)) + ctx->list_count; \
+            ctx->list_count++; \
+        } \
+    } while(0)
+
+static void _anim_values_cb(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start, const char * val_end,
+                            int32_t dpi, void * data)
+{
+    LV_UNUSED(attr);
+    struct _parse_value_list_context * ctx = (struct _parse_value_list_context *)data;
+
+    if(node->type == LV_SVG_TAG_ANIMATE || node->type == LV_SVG_TAG_SET) {
+        float * val_number = NULL;
+        GET_NEXT_VALUE_PTR(val_number, ctx, float);
+        val_start = _parse_length(val_start, val_end, dpi, val_number);
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_COLOR) {
+        uint32_t * color = NULL;
+        GET_NEXT_VALUE_PTR(color, ctx, uint32_t);
+        val_start = _parse_color(val_start, val_end, color);
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_TRANSFORM) {
+        struct _transform_values_list * trans_vals = NULL;
+        GET_NEXT_VALUE_PTR(trans_vals, ctx, struct _transform_values_list);
+
+        uint32_t cnt = 0;
+        const char * ptr = val_start;
+
+        while((ptr < val_end) && (cnt < 3)) {
+            float * val = &(trans_vals->data[cnt]);
+            ptr = _parse_number(ptr, val_end, val);
+            if(!ptr) break;
+            ++cnt;
+        }
+
+        trans_vals->length = cnt;
+    }
+    else if(node->type == LV_SVG_TAG_ANIMATE_MOTION) {
+        lv_svg_point_t * point = NULL;
+        GET_NEXT_VALUE_PTR(point, ctx, lv_svg_point_t);
+        val_start = _parse_number(val_start, val_end, &point->x);
+        val_start = _parse_number(val_start, val_end, &point->y);
+    }
+    ctx->list->length = ctx->list_count;
+}
+
+static void _anim_keys_cb(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start, const char * val_end,
+                          int32_t dpi, void * data)
+{
+    LV_UNUSED(node);
+    LV_UNUSED(attr);
+    LV_UNUSED(dpi);
+    struct _parse_value_list_context * ctx = (struct _parse_value_list_context *)data;
+
+    float * val_number = NULL;
+    GET_NEXT_VALUE_PTR(val_number, ctx, float);
+    val_start = _parse_number(val_start, val_end, val_number);
+
+    ctx->list->length = ctx->list_count;
+}
+
+static void _anim_key_splines_cb(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start,
+                                 const char * val_end, int32_t dpi, void * data)
+{
+    LV_UNUSED(node);
+    LV_UNUSED(attr);
+    LV_UNUSED(dpi);
+    struct _parse_value_list_context * ctx = (struct _parse_value_list_context *)data;
+
+    lv_svg_point_t * point = NULL;
+    GET_NEXT_VALUE_PTR(point, ctx, lv_svg_point_t);
+    val_start = _parse_number(val_start, val_end, &point->x);
+    val_start = _parse_number(val_start, val_end, &point->y);
+
+    GET_NEXT_VALUE_PTR(point, ctx, lv_svg_point_t);
+    val_start = _parse_number(val_start, val_end, &point->x);
+    val_start = _parse_number(val_start, val_end, &point->y);
+
+    ctx->list->length = ctx->list_count;
+}
+
+static void _anim_begin_end_cb(lv_svg_node_t * node, lv_svg_attr_t * attr, const char * val_start,
+                               const char * val_end, int32_t dpi, void * data)
+{
+    LV_UNUSED(node);
+    LV_UNUSED(attr);
+    LV_UNUSED(dpi);
+    struct _parse_value_list_context * ctx = (struct _parse_value_list_context *)data;
+
+    // offset-value
+    float * val_number = NULL;
+    GET_NEXT_VALUE_PTR(val_number, ctx, float);
+    val_start = _parse_clock_time(val_start, val_end, val_number);
+
+    //FIXME: not support begin-end type
+    // syncbase-value
+    // event-value
+    // repeat-value
+    // accessKey-value
+    // indefinite
+
+    ctx->list->length = ctx->list_count;
+}
+
+static void _process_anim_attr_values(lv_svg_node_t * node, lv_svg_attr_type_t type, const char * val_start,
+                                      const char * val_end, int32_t dpi)
+{
+    CHECK_AND_RESIZE_ATTRS(node->attrs);
+
+    node->attrs.size++;
+    lv_svg_attr_t * attr = lv_array_at(&node->attrs, node->attrs.size - 1);
+    attr->id = type;
+    attr->val_type = LV_SVG_ATTR_VALUE_DATA;
+    attr->class_type = LV_SVG_ATTR_VALUE_INITIAL;
+
+    if(type == LV_SVG_ATTR_VALUES) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        struct _parse_value_list_context ctx = {.mem_size = 0, .list_count = 0, .list = NULL};
+        _parse_anim_value_list(node, attr, val_start, val_end, dpi, _anim_values_cb, &ctx);
+        attr->value.val = ctx.list;
+    }
+    else if(type == LV_SVG_ATTR_KEY_TIMES || type == LV_SVG_ATTR_KEY_POINTS) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        struct _parse_value_list_context ctx = {.mem_size = 0, .list_count = 0, .list = NULL};
+        _parse_anim_value_list(node, attr, val_start, val_end, dpi, _anim_keys_cb, &ctx);
+        attr->value.val = ctx.list;
+    }
+    else if(type == LV_SVG_ATTR_KEY_SPLINES) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        struct _parse_value_list_context ctx = {.mem_size = 0, .list_count = 0, .list = NULL};
+        _parse_anim_value_list(node, attr, val_start, val_end, dpi, _anim_key_splines_cb, &ctx);
+        attr->value.val = ctx.list;
+    }
+    else if(type == LV_SVG_ATTR_BEGIN || type == LV_SVG_ATTR_END) {
+        attr->val_type = LV_SVG_ATTR_VALUE_PTR;
+        struct _parse_value_list_context ctx = {.mem_size = 0, .list_count = 0, .list = NULL};
+        _parse_anim_value_list(node, attr, val_start, val_end, dpi, _anim_begin_end_cb, &ctx);
+        attr->value.val = ctx.list;
+    }
+    else {
+        _parse_anim_value(node, attr, val_start, val_end, dpi);
+    }
+}
+
+#endif
 
 static void _process_attrs_tag(_lv_svg_parser_t * parser, lv_svg_node_t * node, const _lv_svg_token_t * token)
 {
@@ -1590,6 +2074,9 @@ static void _process_attrs_tag(_lv_svg_parser_t * parser, lv_svg_node_t * node, 
                 _process_points_value(node, type, tok_attr->value_start, tok_attr->value_end);
                 break;
             case LV_SVG_ATTR_D:
+#if LV_USE_SVG_ANIMATION
+            case LV_SVG_ATTR_PATH:
+#endif
                 _process_path_value(node, type, tok_attr->value_start, tok_attr->value_end);
                 break;
             case LV_SVG_ATTR_TRANSFORM:
@@ -1627,6 +2114,40 @@ static void _process_attrs_tag(_lv_svg_parser_t * parser, lv_svg_node_t * node, 
             case LV_SVG_ATTR_XLINK_HREF:
                 _process_xlink(node, type, tok_attr->value_start, tok_attr->value_end);
                 break;
+#if LV_USE_SVG_ANIMATION
+            case LV_SVG_ATTR_DUR:
+            case LV_SVG_ATTR_MIN:
+            case LV_SVG_ATTR_MAX:
+            case LV_SVG_ATTR_REPEAT_DUR:
+                _process_clock_time(node, type, tok_attr->value_start, tok_attr->value_end);
+                break;
+            case LV_SVG_ATTR_ATTRIBUTE_NAME:
+                _process_anim_attr_names(node, type, tok_attr->value_start, tok_attr->value_end);
+                break;
+            case LV_SVG_ATTR_FROM:
+            case LV_SVG_ATTR_TO:
+            case LV_SVG_ATTR_BY:
+            case LV_SVG_ATTR_VALUES:
+            case LV_SVG_ATTR_KEY_TIMES:
+            case LV_SVG_ATTR_KEY_POINTS:
+            case LV_SVG_ATTR_KEY_SPLINES:
+            case LV_SVG_ATTR_BEGIN:
+            case LV_SVG_ATTR_END:
+                _process_anim_attr_values(node, type, tok_attr->value_start, tok_attr->value_end, parser->dpi);
+                break;
+            case LV_SVG_ATTR_ROTATE:
+            case LV_SVG_ATTR_REPEAT_COUNT:
+                _process_anim_attr_number(node, type, tok_attr->value_start, tok_attr->value_end);
+                break;
+            case LV_SVG_ATTR_RESTART:
+            case LV_SVG_ATTR_CALC_MODE:
+            case LV_SVG_ATTR_ADDITIVE:
+            case LV_SVG_ATTR_ACCUMULATE:
+            case LV_SVG_ATTR_TRANSFORM_TYPE:
+                _process_anim_attr_options(node, type, tok_attr->value_start, tok_attr->value_end);
+                break;
+            case LV_SVG_ATTR_ATTRIBUTE_TYPE:
+#endif
             case LV_SVG_ATTR_DISPLAY:
             case LV_SVG_ATTR_VISIBILITY:
             case LV_SVG_ATTR_TEXT_ANCHOR:
