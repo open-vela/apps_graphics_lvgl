@@ -241,6 +241,7 @@ static void canvas_draw(const char * name, void (*draw_cb)(lv_layer_t *))
     lv_draw_buf_t * draw_buf = lv_draw_buf_create(640, 480, LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
     TEST_ASSERT_NOT_NULL(draw_buf);
     lv_canvas_set_draw_buf(canvas, draw_buf);
+    lv_canvas_fill_bg(canvas, lv_color_make(0xff, 0xff, 0xff), 255);
 
     lv_layer_t layer;
     lv_canvas_init_layer(canvas, &layer);
@@ -251,9 +252,14 @@ static void canvas_draw(const char * name, void (*draw_cb)(lv_layer_t *))
 
 #ifndef NON_AMD64_BUILD
     char fn_buf[64];
-    lv_snprintf(fn_buf, sizeof(fn_buf), "draw/vector_%s.png", name);
+    lv_snprintf(fn_buf, sizeof(fn_buf), "draw/vector_%s.lp64.png", name);
+    TEST_ASSERT_EQUAL_SCREENSHOT(fn_buf);
+#else
+    char fn_buf[64];
+    lv_snprintf(fn_buf, sizeof(fn_buf), "draw/vector_%s.lp32.png", name);
     TEST_ASSERT_EQUAL_SCREENSHOT(fn_buf);
 #endif
+
     lv_image_cache_drop(draw_buf);
     lv_draw_buf_destroy(draw_buf);
     lv_obj_del(canvas);

@@ -889,6 +889,7 @@ void lv_display_delete_refr_timer(lv_display_t * disp)
 
 lv_result_t lv_display_send_vsync_event(lv_display_t * disp, void * param)
 {
+    LV_UNUSED(param);
     if(!disp) disp = lv_display_get_default();
     if(!disp) return LV_RESULT_INVALID;
 

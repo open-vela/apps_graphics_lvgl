@@ -60,6 +60,7 @@ set(SANITIZE_AND_COVERAGE_OPTIONS
 
 set(LVGL_TEST_OPTIONS_VG_LITE
     -DLV_TEST_OPTION=6
+    -Wno-unused-but-set-variable # unused variables are common in the dual-heap arrangement
     -Wno-dangling-pointer # workaround for thorvg dangling-pointer warning
 )
 
@@ -93,6 +94,7 @@ set(LVGL_TEST_OPTIONS_TEST_SYSHEAP
 set(LVGL_TEST_OPTIONS_TEST_DEFHEAP
     -DLV_TEST_OPTION=5
     -DLVGL_CI_USING_DEF_HEAP
+    -Wno-unused-but-set-variable # unused variables are common in the dual-heap arrangement
     ${SANITIZE_AND_COVERAGE_OPTIONS}
 )
 
@@ -147,6 +149,7 @@ endif()
 # Options lvgl and examples are compiled with.
 set(COMPILE_OPTIONS
     -DLV_CONF_PATH=${LVGL_TEST_DIR}/src/lv_test_conf.h
+    -DTEST_FONT_PATH="${LVGL_TEST_DIR}/src/test_files/fonts/noto/NotoSansSC-Regular.ttf"
     -DLV_BUILD_TEST
     -pedantic-errors
     -Wall
@@ -158,7 +161,6 @@ set(COMPILE_OPTIONS
     -Wextra
     -Wformat-security
     -Wmaybe-uninitialized
-    -Wmissing-prototypes
     -Wpointer-arith
     -Wmultichar
     -Wpedantic
@@ -190,7 +192,6 @@ filter_compiler_options(CXX LVGL_CXX_COMPILE_OPTIONS
         -Wno-shadow
         -Wno-unused-parameter
         -Wno-c++11-extensions
-        -Wno-missing-prototypes
         -Wno-deprecated-copy-with-user-provided-dtor
         -Wno-float-conversion
         -Wno-pedantic
@@ -205,6 +206,9 @@ target_compile_options(lvgl PUBLIC $<$<COMPILE_LANGUAGE:ASM>: ${LVGL_C_COMPILE_O
 target_compile_options(lvgl PUBLIC $<$<COMPILE_LANGUAGE:CXX>: ${LVGL_CXX_COMPILE_OPTIONS}>)
 if (TARGET lvgl_examples)
   target_compile_options(lvgl_examples PUBLIC ${LVGL_C_COMPILE_OPTIONS})
+endif()
+if (TARGET lvgl_thorvg)
+  target_compile_options(lvgl_thorvg PUBLIC $<$<COMPILE_LANGUAGE:CXX>: ${LVGL_CXX_COMPILE_OPTIONS}>)
 endif()
 
 

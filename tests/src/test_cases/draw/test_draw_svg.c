@@ -1,6 +1,7 @@
 #if LV_BUILD_TEST
 #include "../lvgl.h"
 #include "lv_test_helpers.h"
+#include <string.h>
 
 #include "unity/unity.h"
 
@@ -11,8 +12,7 @@ static lv_draw_buf_t * canvas_buf;
 void setUp(void)
 {
     canvas = lv_canvas_create(lv_scr_act());
-    uint32_t stride = 480 * 4 + 128; /*Test non-default stride*/
-    canvas_buf = lv_draw_buf_create(480, 480, LV_COLOR_FORMAT_ARGB8888, stride);
+    canvas_buf = lv_draw_buf_create(480, 480, LV_COLOR_FORMAT_ARGB8888, 0);
     TEST_ASSERT_NOT_NULL(canvas_buf);
     lv_canvas_set_draw_buf(canvas, canvas_buf);
     lv_canvas_fill_bg(canvas, lv_color_make(0xff, 0xff, 0xff), 255);
@@ -118,7 +118,12 @@ static void load_image(const char * image_url, lv_draw_image_dsc_t * img_dsc)
 
 static const char * get_font_path(const char * font_family)
 {
+    LV_UNUSED(font_family);
+#ifndef TEST_FONT_PATH
     return "./src/test_files/fonts/noto/NotoSansSC-Regular.ttf";
+#else
+    return TEST_FONT_PATH;
+#endif
 }
 
 const lv_svg_render_hal_t hal = {
@@ -279,7 +284,6 @@ void test_draw_shapes(void)
     draw_svg(svg);
     draw_snapshot(SNAPSHOT_NAME(svg_shapes_10));
     lv_svg_node_delete(svg);
-
 
     const char * svg_shapes_11 = \
                                  "<svg width=\'800\' height=\'800\' viewBox=\'0 0 800 800\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'>"

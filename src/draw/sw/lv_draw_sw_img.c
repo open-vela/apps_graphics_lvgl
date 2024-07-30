@@ -434,7 +434,7 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
                     uint8_t * tmp_buf_2 = tmp_buf;
                     int32_t i;
                     int32_t size = lv_area_get_size(&blend_area);
-                    for(i = 0; i < size * px_size; i += px_size) {
+                    for(i = 0; i < (int32_t)(size * px_size); i += px_size) {
                         if(lv_color_is_in_range(*(lv_color_t *)&tmp_buf_2[i], l_color, h_color)) {
                             lv_memzero(tmp_buf_2 + i, px_size);
                             continue;

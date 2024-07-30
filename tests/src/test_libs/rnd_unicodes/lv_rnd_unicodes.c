@@ -8,7 +8,6 @@
  *********************/
 #include "lv_rnd_unicodes.h"
 
-
 #include "rnd_unicodes/src/library.h"
 
 #define UNICODE_MAX_VALUE 0x10FFFF

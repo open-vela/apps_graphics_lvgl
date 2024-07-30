@@ -61,5 +61,4 @@ void test_clip_corner_1(void)
     TEST_ASSERT_EQUAL_SCREENSHOT("draw/clip_corner_1.png");
 
 }
-
 #endif

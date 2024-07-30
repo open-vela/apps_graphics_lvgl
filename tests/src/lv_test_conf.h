@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 
+#define FAR
+#define LV_USE_NUTTX_MOUSE 0
+
 /***********************
  * PLATFORM CONFIGS
  ***********************/
