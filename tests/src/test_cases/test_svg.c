@@ -15,7 +15,6 @@ static const char * svg_str_1 = \
                                 "<desc> SVG Test </desc>"
                                 "</svg>";
 
-
 void setUp(void)
 {
 }
@@ -368,7 +367,6 @@ void testTransform(void)
 
     lv_svg_node_delete(svg_node_root);
 
-
     const char * svg_tr5 = \
                            "<svg><g transform=\"translate(1, 2) translate(2.0, 2)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr5, lv_strlen(svg_tr5));
@@ -380,7 +378,6 @@ void testTransform(void)
 
     lv_svg_node_delete(svg_node_root);
 
-
     const char * svg_tr6 = \
                            "<svg><g transform=\" scale(0.5) scale(0.5 0.5)\"/></svg>";
     svg_node_root = lv_svg_load_data(svg_tr6, lv_strlen(svg_tr6));
@@ -391,7 +388,6 @@ void testTransform(void)
     TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][1], 0.25f);
 
     lv_svg_node_delete(svg_node_root);
-
 
     const char * svg_tr7 = \
                            "<svg><g transform=\" translate(10 ) scale( 0.5  0.5) scale(0.5 ) \"/></svg>";
@@ -416,7 +412,6 @@ void testTransform(void)
     TEST_ASSERT_EQUAL_FLOAT(matrix->m[1][2], 0.0f);
 
     lv_svg_node_delete(svg_node_root);
-
 
     const char * svg_tr9 = \
                            "<svg><g transform=\" rotate(90 ) \"/></svg>";
@@ -549,7 +544,6 @@ void testStrokeFillAttrs(void)
     TEST_ASSERT_EQUAL(f2, 3);
     lv_svg_node_delete(svg_node_root);
 
-
     const char * svg_sf2 = \
                            "<svg><g fill-rule=\"evenodd\" stroke-width=\'-1\' stroke-miterlimit=\'-5.0\'/></svg>";
     svg_node_root = lv_svg_load_data(svg_sf2, lv_strlen(svg_sf2));
@@ -629,7 +623,6 @@ void testTextAttrs(void)
     TEST_ASSERT_EQUAL_STRING(content, "hello world!");
     lv_svg_node_delete(svg_node_root);
 
-
     const char * svg_sf1 = \
                            "<svg><text font-size=\'16em\' font=\'user\' font-style=\" italic \" >hello<tspan>my\n</tspan>world!</text></svg>";
     svg_node_root = lv_svg_load_data(svg_sf1, lv_strlen(svg_sf1));
@@ -670,7 +663,6 @@ void testGradient(void)
     float o2 = (LV_ARRAY_GET(&svg_node1->attrs, 2, lv_svg_attr_t))->value.fval;
     TEST_ASSERT_EQUAL_FLOAT(o2, 1.0f);
     lv_svg_node_delete(svg_node_root);
-
 
     const char * svg_gt2 = \
                            "<svg><defs><radialGradient xml:id=\"gt2\" gradientUnits=\"userSpaceOnUse\""
@@ -819,7 +811,6 @@ void testBadCase(void)
     TEST_ASSERT_NOT_EQUAL(NULL, svg);
     lv_svg_node_delete(svg);
 
-
     const char * svg_b15 = \
                            "<svg>"
                            "<path d=\'m-122.3,84.285s0.1,1.894-0.73,1.875c-0.82-0.019-17.27-48.094-37.8-45.851,0,0,17.78-7.353,38.53,43.976z\'/>"
@@ -839,7 +830,6 @@ void testBadCase(void)
     TEST_ASSERT_EQUAL_FLOAT(((lv_svg_point_t *)(&path->data))->y, 84.285f);
 
     lv_svg_node_delete(svg);
-
 
     const char * svg_b16 = \
                            "<svg>"

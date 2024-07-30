@@ -5,7 +5,6 @@
 
 #include "sys/time.h"
 
-
 void setUp(void)
 {
 }
@@ -18,7 +17,7 @@ static inline suseconds_t get_time(void)
 {
     struct timeval t;
     gettimeofday(&t, 0);
-    suseconds_t t1 = (suseconds_t)(t.tv_sec * 1000  + t.tv_usec/1000);
+    suseconds_t t1 = (suseconds_t)(t.tv_sec * 1000  + t.tv_usec / 1000);
     return t1;
 }
 
@@ -56,7 +55,7 @@ void test_matrix_translate(void)
 
 void test_matrix_rotate(void)
 {
-    lv_fpoint_t p1 = {.x=100.0f, .y=0.0f};
+    lv_fpoint_t p1 = {.x = 100.0f, .y = 0.0f};
     lv_fpoint_t p2 = p1;
 
     lv_matrix_t matrix;
@@ -104,7 +103,6 @@ void test_matrix_skew(void)
     TEST_ASSERT_EQUAL_FLOAT(matrix2.m[1][0], matrix.m[1][0]);
 }
 
-
 void test_matrix_scale(void)
 {
     lv_matrix_t matrix;
@@ -132,7 +130,7 @@ static float new_matrix_multiply(int count)
     }
     t2 = get_time();
 
-    return (float)(t2-t1);
+    return (float)(t2 - t1);
 }
 
 static float old_matrix_multiply(int count)
@@ -153,7 +151,7 @@ static float old_matrix_multiply(int count)
     }
     t2 = get_time();
 
-    return (float)(t2-t1);
+    return (float)(t2 - t1);
 }
 
 void test_matrix_performance(void)
@@ -164,6 +162,5 @@ void test_matrix_performance(void)
 
     TEST_ASSERT_LESS_OR_EQUAL_INT32((int32_t)t2, (int32_t)t1);
 }
-
 
 #endif
