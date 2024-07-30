@@ -233,7 +233,7 @@ static void _make_polygon(gpc_polygon * polygon, const lv_vector_path_t * polygo
             case LV_VECTOR_PATH_OP_MOVE_TO: {
                     if(line_to) {
                         polygon->num_contours++;
-                        if(polygon->num_contours == init_caps) {
+                        if(polygon->num_contours == (int32_t)init_caps) {
                             init_caps = init_caps << 1;
                             polygon->contour = (gpc_vertex_list *)lv_realloc(polygon->contour, sizeof(gpc_vertex_list) * init_caps);
                         }

@@ -118,7 +118,6 @@ void test_lottie_rescale(void)
     TEST_ASSERT_EQUAL_SCREENSHOT("widgets/lottie_3_small.png");
 }
 
-
 void test_lottie_non_uniform_shape(void)
 {
     lv_obj_t * lottie = lv_lottie_create(lv_screen_active());
