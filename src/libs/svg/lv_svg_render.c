@@ -984,8 +984,9 @@ static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_
     dst->blend_mode = src->blend_mode;
 }
 
-static void _copy_draw_dsc_from_ref(lv_vector_draw_dsc_t * dst, const lv_svg_render_obj_t * obj)
+static void _copy_draw_dsc_from_ref(lv_vector_dsc_t * dsc, const lv_svg_render_obj_t * obj)
 {
+    lv_vector_draw_dsc_t * dst = &(dsc->current_dsc);
     if(obj->fill_ref) {
         lv_svg_render_obj_t * list = obj->head;
         while(list) {
@@ -1202,7 +1203,6 @@ static void _restore_matrix(lv_matrix_t * matrix, lv_vector_dsc_t * dsc)
 static void _prepare_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc)
 {
     _copy_draw_dsc(&(dsc->current_dsc), &(obj->dsc));
-    _copy_draw_dsc_from_ref(&(dsc->current_dsc), obj);
 }
 
 static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc)
@@ -1250,8 +1250,6 @@ static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     if(obj->flags & _RENDER_ATTR_STROKE_DASH_ARRAY) {
         lv_array_copy(&(dst->stroke_dsc.dash_pattern), &(src->stroke_dsc.dash_pattern));
     }
-
-    _copy_draw_dsc_from_ref(dst, obj);
 }
 
 // render functions
@@ -1284,6 +1282,8 @@ static void _render_rect(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
     lv_area_t rc = {(int32_t)rect->x, (int32_t)rect->y, (int32_t)(rect->x + rect->width), (int32_t)(rect->y + rect->height)};
     lv_vector_path_append_rect(path, &rc, rect->rx, rect->ry);
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, path);
     lv_vector_path_delete(path);
 
@@ -1303,6 +1303,8 @@ static void _render_circle(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * ds
     lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
     lv_fpoint_t cp = {circle->cx, circle->cy};
     lv_vector_path_append_circle(path, &cp, circle->r, circle->r);
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, path);
     lv_vector_path_delete(path);
 
@@ -1322,6 +1324,8 @@ static void _render_ellipse(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
     lv_fpoint_t cp = {ellipse->cx, ellipse->cy};
     lv_vector_path_append_circle(path, &cp, ellipse->rx, ellipse->ry);
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, path);
     lv_vector_path_delete(path);
 
@@ -1343,6 +1347,8 @@ static void _render_line(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     lv_vector_path_move_to(path, &sp);
     lv_fpoint_t ep = {line->x2, line->y2};
     lv_vector_path_line_to(path, &ep);
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, path);
     lv_vector_path_delete(path);
 
@@ -1359,6 +1365,8 @@ static void _render_poly(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     }
 
     lv_svg_render_poly_t * poly = (lv_svg_render_poly_t *)obj;
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, poly->path);
 
     _restore_matrix(&mtx, dsc);
@@ -1487,6 +1495,8 @@ static void _render_image(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc
 
     lv_vector_dsc_set_fill_transform(dsc, &mtx);
     lv_vector_dsc_set_fill_image(dsc, &image->img_dsc);
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, path);
     lv_vector_path_delete(path);
 
@@ -1539,7 +1549,7 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
                                              text->style);
     }
 
-    if(!lv_freetype_is_outline_font(text->font)) {
+    if(!text->font || !lv_freetype_is_outline_font(text->font)) {
         LV_LOG_ERROR("svg current font is not outline font!");
         return;
     }
@@ -1589,6 +1599,8 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
         lv_vector_path_delete(glyph_path);
         lv_vector_path_get_bounding(text->path, &text->bounds);
     }
+
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, text->path);
 
     _restore_matrix(&tmtx, dsc);
@@ -1611,7 +1623,7 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
                                              span->style);
     }
 
-    if(!lv_freetype_is_outline_font(span->font)) {
+    if(!span->font || !lv_freetype_is_outline_font(span->font)) {
         LV_LOG_ERROR("svg current font is not outline font!");
         return;
     }
@@ -1621,7 +1633,6 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
     _copy_draw_dsc(&(save_dsc.dsc), &(dsc->current_dsc));
 
     _copy_draw_dsc(&(dsc->current_dsc), &(obj->dsc));
-    _copy_draw_dsc_from_ref(&(dsc->current_dsc), obj);
 
     if(lv_array_size(&span->path->ops) == 0) { /* empty path */
         lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
@@ -1650,6 +1661,7 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
         lv_vector_path_delete(glyph_path);
         lv_vector_path_get_bounding(span->path, &span->bounds);
     }
+    _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, span->path);
 
     _copy_draw_dsc(&(dsc->current_dsc), &(save_dsc.dsc));
