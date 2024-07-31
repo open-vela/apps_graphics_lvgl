@@ -84,6 +84,7 @@ void lv_draw_sw_mask_init(void)
 
 void lv_draw_sw_mask_deinit(void)
 {
+    _lv_draw_sw_mask_cleanup();
     lv_mutex_delete(&circle_cache_mutex);
 }
 
@@ -350,7 +351,6 @@ void lv_draw_sw_mask_radius_init(lv_draw_sw_mask_radius_param_t * param, const l
 
     circ_calc_aa4(param->circle, radius);
     lv_mutex_unlock(&circle_cache_mutex);
-
 }
 
 void lv_draw_sw_mask_fade_init(lv_draw_sw_mask_fade_param_t * param, const lv_area_t * coords, lv_opa_t opa_top,
