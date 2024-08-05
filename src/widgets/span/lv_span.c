@@ -13,6 +13,8 @@
 #include "../../misc/lv_assert.h"
 #include "../../misc/lv_text_private.h"
 #include "../../core/lv_global.h"
+#include "../../misc/lv_text_line_process.h"
+#include "../../misc/lv_iter.h"
 
 /*********************
  *      DEFINES
@@ -792,7 +794,16 @@ static bool lv_text_get_snippet(const char * txt, const lv_font_t * font,
     real_max_width++;
 #endif
 
-    uint32_t ofs = lv_text_get_next_line(txt, font, letter_space, real_max_width, use_width, flag);
+    LV_UNUSED(flag);
+
+    lv_text_line_process_line_info_t line_info;
+    lv_iter_t * iter = lv_text_line_process_iter_create(txt, font, real_max_width, letter_space, 0, true);
+    lv_iter_next(iter, &line_info);
+    lv_text_line_process_iter_destroy(iter);
+
+    uint32_t ofs = line_info.pos.brk;
+    *use_width = line_info.real_width;
+
     *end_ofs = ofs;
 
     if(txt[ofs] == '\0' && *use_width < max_width) {
