@@ -132,7 +132,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     FT_Face face = dsc->cache_node->face;
     FT_Set_Pixel_Sizes(face, 0, dsc->size);
-    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_DEFAULT);
+    error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_DEFAULT | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
         return false;
