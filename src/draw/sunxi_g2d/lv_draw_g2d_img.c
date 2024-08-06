@@ -188,8 +188,10 @@ static void _g2d_blit_transform(lv_draw_buf_t * dest_buf, const lv_area_t * dest
         }
         lv_area_t src_area_clip, dest_area_clip;
         lv_area_copy(&dest_area_clip, dest_area);
-        if(!_lv_area_intersect(&dest_area_clip, &dest_area_clip, clip_area))
+        if(!_lv_area_intersect(&dest_area_clip, &dest_area_clip, clip_area)) {
+            lv_draw_buf_destroy(scale_buf);
             return;
+        }
         lv_area_copy(&src_area_clip, &dest_area_clip);
         lv_area_move(&src_area_clip, -dest_area->x1, -dest_area->y1);
         _g2d_blit(dest_buf, &dest_area_clip,
