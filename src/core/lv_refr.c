@@ -626,11 +626,13 @@ static void refr_area(const lv_area_t * area_p)
         if(disp_refr->render_mode == LV_DISPLAY_RENDER_MODE_FULL) {
             disp_refr->last_part = 1;
             layer->_clip_area = disp_area;
+            layer->phy_clip_area = disp_area;
             refr_area_part(layer);
         }
         else if(disp_refr->render_mode == LV_DISPLAY_RENDER_MODE_DIRECT) {
             disp_refr->last_part = disp_refr->last_area;
             layer->_clip_area = *area_p;
+            layer->phy_clip_area = *area_p;
             refr_area_part(layer);
         }
         LV_PROFILER_END;
@@ -658,6 +660,7 @@ static void refr_area(const lv_area_t * area_p)
         layer->draw_buf = disp_refr->buf_act;
         layer->buf_area = sub_area;
         layer->_clip_area = sub_area;
+        layer->phy_clip_area = sub_area;
         layer_reshape_draw_buf(layer, LV_STRIDE_AUTO);
         if(sub_area.y2 > y2) sub_area.y2 = y2;
         row_last = sub_area.y2;
@@ -675,6 +678,7 @@ static void refr_area(const lv_area_t * area_p)
         layer->draw_buf = disp_refr->buf_act;
         layer->buf_area = sub_area;
         layer->_clip_area = sub_area;
+        layer->phy_clip_area = sub_area;
         layer_reshape_draw_buf(layer, LV_STRIDE_AUTO);
         disp_refr->last_part = 1;
         refr_area_part(layer);

@@ -177,6 +177,8 @@ struct _lv_layer_t  {
      */
     lv_area_t _clip_area;
 
+    lv_area_t phy_clip_area;
+
 #if LV_DRAW_TRANSFORM_USE_MATRIX
     /** Transform matrix to be applied when rendering the layer */
     lv_matrix_t matrix;
