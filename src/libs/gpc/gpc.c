@@ -68,11 +68,11 @@ Copyright: (C) Advanced Interfaces Group,
 
 /*
 ===========================================================================
-                                 Macros 
+                                 Macros
 ===========================================================================
 */
 
-#define EQ(a, b)           (fabs((a) - (b)) <= GPC_EPSILON)
+#define EQ(a, b)           (fabsf((a) - (b)) <= GPC_EPSILON)
 
 #define PREV_INDEX(i, n)   ((i - 1 + n) % n)
 #define NEXT_INDEX(i, n)   ((i + 1    ) % n)
@@ -671,8 +671,8 @@ static void add_st_edge(st_node **st, it_node **it, edge_node *edge,
     den= ((*st)->xt - (*st)->xb) - (edge->xt - edge->xb);
 
     /* If new edge and ST edge don't cross */
-    if ((edge->xt >= (*st)->xt) || (edge->dx == (*st)->dx) || 
-        (fabs(den) <= FLT_EPSILON))
+    if ((edge->xt >= (*st)->xt) || (edge->dx == (*st)->dx) ||
+        (fabsf(den) <= FLT_EPSILON))
     {
       /* No intersection - insert edge here (before the ST edge) */
       existing_node= *st;
