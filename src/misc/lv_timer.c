@@ -77,7 +77,7 @@ LV_ATTRIBUTE_TIMER_HANDLER uint32_t lv_timer_handler(void)
         return 1;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_TIMER_BEGIN;
     uint32_t handler_start = lv_tick_get();
 
     if(handler_start == 0) {
@@ -139,7 +139,7 @@ LV_ATTRIBUTE_TIMER_HANDLER uint32_t lv_timer_handler(void)
     state_p->already_running = false; /*Release the mutex*/
 
     LV_TRACE_TIMER("finished (%" LV_PRIu32 " ms until the next timer call)", time_until_next);
-    LV_PROFILER_END;
+    LV_PROFILER_TIMER_END;
     return time_until_next;
 }
 

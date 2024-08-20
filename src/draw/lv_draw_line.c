@@ -50,7 +50,7 @@ lv_draw_line_dsc_t * lv_draw_task_get_line_dsc(lv_draw_task_t * task)
 
 void LV_ATTRIBUTE_FAST_MEM lv_draw_line(lv_layer_t * layer, const lv_draw_line_dsc_t * dsc)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
     lv_area_t a;
     a.x1 = (int32_t)LV_MIN(dsc->p1.x, dsc->p2.x) - dsc->width;
     a.x2 = (int32_t)LV_MAX(dsc->p1.x, dsc->p2.x) + dsc->width;
@@ -64,7 +64,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_line(lv_layer_t * layer, const lv_draw_line_d
     t->type = LV_DRAW_TASK_TYPE_LINE;
 
     lv_draw_finalize_task_creation(layer, t);
-    LV_PROFILER_END;
+    LV_PROFILER_DRAW_END;
 }
 
 /**********************

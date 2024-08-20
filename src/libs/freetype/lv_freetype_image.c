@@ -90,6 +90,7 @@ static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
 {
     LV_UNUSED(unicode_letter);
     LV_UNUSED(draw_buf);
+    LV_PROFILER_FONT_BEGIN;
     const lv_font_t * font = g_dsc->resolved_font;
     lv_freetype_font_dsc_t * dsc = (lv_freetype_font_dsc_t *)font->dsc;
     LV_ASSERT_FREETYPE_FONT_DSC(dsc);
@@ -109,6 +110,7 @@ static const void * freetype_get_glyph_bitmap_cb(lv_font_glyph_dsc_t * g_dsc,
     g_dsc->entry = entry;
     lv_freetype_image_cache_data_t * cache_node = lv_cache_entry_get_data(entry);
 
+    LV_PROFILER_FONT_END;
     return cache_node->draw_buf;
 }
 
@@ -126,6 +128,8 @@ static void freetype_image_release_cb(const lv_font_t * font, lv_font_glyph_dsc_
 
 static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void * user_data)
 {
+    LV_PROFILER_FONT_BEGIN;
+
     lv_freetype_font_dsc_t * dsc = (lv_freetype_font_dsc_t *)user_data;
 
     FT_Error error;
@@ -135,11 +139,13 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     error = FT_Load_Glyph(face, data->glyph_index,  FT_LOAD_DEFAULT | FT_LOAD_NO_AUTOHINT);
     if(error) {
         FT_ERROR_MSG("FT_Load_Glyph", error);
+        LV_PROFILER_FONT_END;
         return false;
     }
     error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
     if(error) {
         FT_ERROR_MSG("FT_Render_Glyph", error);
+        LV_PROFILER_FONT_END;
         return false;
     }
 
@@ -147,6 +153,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     error = FT_Get_Glyph(face->glyph, &glyph);
     if(error) {
         FT_ERROR_MSG("FT_Get_Glyph", error);
+        LV_PROFILER_FONT_END;
         return false;
     }
 
@@ -164,7 +171,7 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
     }
 
     FT_Done_Glyph(glyph);
-
+    LV_PROFILER_FONT_END;
     return true;
 }
 static void freetype_image_free_cb(lv_freetype_image_cache_data_t * data, void * user_data)
