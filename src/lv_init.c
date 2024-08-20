@@ -300,9 +300,6 @@ void lv_init(void)
 #if LV_USE_ETC2
     lv_etc2_init();
 #endif
-#if LV_USE_GIF
-    lv_gif_init();
-#endif
 
 #if LV_USE_LIBWEBP
     lv_libwebp_init();
@@ -400,10 +397,6 @@ void lv_deinit(void)
 
 #if LV_USE_DRAW_G2D
     lv_draw_g2d_deinit();
-#endif
-
-#if LV_USE_GIF
-    lv_gif_deinit();
 #endif
 
     lv_draw_deinit();

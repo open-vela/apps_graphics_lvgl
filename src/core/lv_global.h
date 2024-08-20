@@ -29,7 +29,6 @@ extern "C" {
 #include "../misc/lv_timer.h"
 #include "../others/sysmon/lv_sysmon.h"
 #include "../stdlib/builtin/lv_tlsf.h"
-#include "../libs/gif/lv_gif_decoder.h"
 
 #if LV_USE_FONT_COMPRESSED
 #include "../font/lv_font_fmt_txt.h"
@@ -120,10 +119,6 @@ typedef struct _lv_global_t {
 #endif
 #if LV_DRAW_SW_COMPLEX
     _lv_draw_sw_mask_radius_circle_dsc_arr_t sw_circle_cache;
-#endif
-
-#if LV_USE_GIF
-    lv_gif_decoder_t * gif_decoder;
 #endif
 
 #if LV_USE_LOG
