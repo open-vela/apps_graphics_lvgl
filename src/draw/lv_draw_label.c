@@ -85,7 +85,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_label(lv_layer_t * layer, const lv_draw_label
         return;
     }
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
     lv_draw_task_t * t = lv_draw_add_task(layer, coords);
 
     t->draw_dsc = lv_malloc(sizeof(*dsc));
@@ -99,7 +99,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_label(lv_layer_t * layer, const lv_draw_label
     }
 
     lv_draw_finalize_task_creation(layer, t);
-    LV_PROFILER_END;
+    LV_PROFILER_DRAW_END;
 }
 
 void LV_ATTRIBUTE_FAST_MEM lv_draw_character(lv_layer_t * layer, lv_draw_label_dsc_t * dsc,
@@ -113,7 +113,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_character(lv_layer_t * layer, lv_draw_label_d
 
     if(lv_text_is_marker(unicode_letter)) return;
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
 
     lv_font_glyph_dsc_t g;
     lv_font_get_glyph_dsc(dsc->font, &g, unicode_letter, 0);
@@ -139,7 +139,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_character(lv_layer_t * layer, lv_draw_label_d
     dsc->text_local = 1;
 
     lv_draw_label(layer, dsc, &a);
-    LV_PROFILER_END;
+    LV_PROFILER_DRAW_END;
 }
 
 void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_label_dsc_t * dsc,
@@ -382,7 +382,7 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
     if(lv_text_is_marker(letter)) /*Markers are valid letters but should not be rendered.*/
         return;
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_DRAW_BEGIN;
     bool g_ret = lv_font_get_glyph_dsc(font, &g, letter, '\0');
     if(g_ret == false) {
         /*Add warning if the dsc is not found*/
@@ -391,7 +391,7 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
 
     /*Don't draw anything if the character is empty. E.g. space*/
     if((g.box_h == 0) || (g.box_w == 0)) {
-        LV_PROFILER_END;
+        LV_PROFILER_DRAW_END;
         return;
     }
 
@@ -404,7 +404,7 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
     /*If the letter is completely out of mask don't draw it*/
     if(_lv_area_is_out(&letter_coords, draw_unit->clip_area, 0) &&
        _lv_area_is_out(dsc->bg_coords, draw_unit->clip_area, 0)) {
-        LV_PROFILER_END;
+        LV_PROFILER_DRAW_END;
         return;
     }
 
@@ -439,5 +439,5 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
     if(g.resolved_font && font->release_glyph) {
         font->release_glyph(font, &g);
     }
-    LV_PROFILER_END;
+    LV_PROFILER_DRAW_END;
 }

@@ -334,7 +334,7 @@ void _lv_refr_set_disp_refreshing(lv_display_t * disp)
 
 void _lv_display_refr_timer(lv_timer_t * tmr)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     LV_TRACE_REFR("begin");
 
     if(tmr) {
@@ -352,26 +352,28 @@ void _lv_display_refr_timer(lv_timer_t * tmr)
 
     if(disp_refr == NULL) {
         LV_LOG_WARN("No display registered");
+        LV_PROFILER_REFR_END;
         return;
     }
 
     lv_draw_buf_t * buf_act = disp_refr->buf_act;
     if(!(buf_act && buf_act->data && buf_act->data_size)) {
         LV_LOG_WARN("No draw buffer");
+        LV_PROFILER_REFR_END;
         return;
     }
 
     lv_display_send_event(disp_refr, LV_EVENT_REFR_START, NULL);
 
     /*Refresh the screen's layout if required*/
-    LV_PROFILER_BEGIN_TAG("layout");
+    LV_PROFILER_LAYOUT_BEGIN_TAG("layout");
     lv_obj_update_layout(disp_refr->act_scr);
     if(disp_refr->prev_scr) lv_obj_update_layout(disp_refr->prev_scr);
 
     lv_obj_update_layout(disp_refr->bottom_layer);
     lv_obj_update_layout(disp_refr->top_layer);
     lv_obj_update_layout(disp_refr->sys_layer);
-    LV_PROFILER_END_TAG("layout");
+    LV_PROFILER_LAYOUT_END_TAG("layout");
 
     /*Do nothing if there is no active screen*/
     if(disp_refr->act_scr == NULL) {
@@ -419,7 +421,7 @@ refr_finish:
     lv_display_send_event(disp_refr, LV_EVENT_REFR_READY, NULL);
 
     LV_TRACE_REFR("finished");
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 /**********************
@@ -431,7 +433,7 @@ refr_finish:
  */
 static void lv_refr_join_area(void)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     uint32_t join_from;
     uint32_t join_in;
     lv_area_t joined_area;
@@ -462,7 +464,7 @@ static void lv_refr_join_area(void)
             }
         }
     }
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 /**
@@ -479,7 +481,7 @@ static void refr_sync_areas(void)
     /*Do not sync if no sync areas*/
     if(_lv_ll_is_empty(&disp_refr->sync_areas)) return;
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     /*With double buffered direct mode synchronize the rendered areas to the other buffer*/
     /*We need to wait for ready here to not mess up the active screen*/
     wait_for_flushing(disp_refr);
@@ -540,7 +542,7 @@ static void refr_sync_areas(void)
 
     /*Clear sync areas*/
     _lv_ll_clear(&disp_refr->sync_areas);
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 /**
@@ -549,7 +551,7 @@ static void refr_sync_areas(void)
 static void refr_invalid_areas(void)
 {
     if(disp_refr->inv_p == 0) return;
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
 
     /*Find the last area which will be drawn*/
     int32_t i;
@@ -579,7 +581,7 @@ static void refr_invalid_areas(void)
     }
 
     disp_refr->rendering_in_progress = false;
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 /**
@@ -603,7 +605,7 @@ static void layer_reshape_draw_buf(lv_layer_t * layer, uint32_t stride)
  */
 static void refr_area(const lv_area_t * area_p)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     lv_layer_t * layer = disp_refr->layer_head;
     layer->draw_buf = disp_refr->buf_act;
 
@@ -635,7 +637,7 @@ static void refr_area(const lv_area_t * area_p)
             layer->phy_clip_area = *area_p;
             refr_area_part(layer);
         }
-        LV_PROFILER_END;
+        LV_PROFILER_REFR_END;
         return;
     }
 
@@ -683,12 +685,12 @@ static void refr_area(const lv_area_t * area_p)
         disp_refr->last_part = 1;
         refr_area_part(layer);
     }
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 static void refr_area_part(lv_layer_t * layer)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     disp_refr->refreshed_area = layer->_clip_area;
 
     /* In single buffered mode wait here until the buffer is freed.
@@ -747,7 +749,7 @@ static void refr_area_part(lv_layer_t * layer)
     refr_obj_and_children(layer, lv_display_get_layer_sys(disp_refr));
 
     draw_buf_flush(disp_refr);
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 /**
@@ -804,7 +806,7 @@ static void refr_obj_and_children(lv_layer_t * layer, lv_obj_t * top_obj)
     if(top_obj == NULL) top_obj = lv_display_get_screen_active(disp_refr);
     if(top_obj == NULL) return;  /*Shouldn't happen*/
 
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     /*Refresh the top object and its children*/
     refr_obj(layer, top_obj);
 
@@ -841,7 +843,7 @@ static void refr_obj_and_children(lv_layer_t * layer, lv_obj_t * top_obj)
         /*Go a level deeper*/
         parent = lv_obj_get_parent(parent);
     }
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 static lv_result_t layer_get_area(lv_layer_t * layer, lv_obj_t * obj, lv_layer_type_t layer_type,
@@ -1184,7 +1186,7 @@ static void draw_buf_flush(lv_display_t * disp)
 
 static void call_flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * px_map)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     LV_TRACE_REFR("Calling flush_cb on (%d;%d)(%d;%d) area with %p image pointer",
                   (int)area->x1, (int)area->y1, (int)area->x2, (int)area->y2, (void *)px_map);
 
@@ -1199,12 +1201,12 @@ static void call_flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t *
     disp->flush_cb(disp, &offset_area, px_map);
     lv_display_send_event(disp, LV_EVENT_FLUSH_FINISH, &offset_area);
 
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }
 
 static void wait_for_flushing(lv_display_t * disp)
 {
-    LV_PROFILER_BEGIN;
+    LV_PROFILER_REFR_BEGIN;
     LV_LOG_TRACE("begin");
 
     lv_display_send_event(disp, LV_EVENT_FLUSH_WAIT_START, NULL);
@@ -1220,5 +1222,5 @@ static void wait_for_flushing(lv_display_t * disp)
     lv_display_send_event(disp, LV_EVENT_FLUSH_WAIT_FINISH, NULL);
 
     LV_LOG_TRACE("end");
-    LV_PROFILER_END;
+    LV_PROFILER_REFR_END;
 }

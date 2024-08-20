@@ -122,21 +122,21 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
     LV_UNUSED(decoder); /*Unused*/
-    LV_PROFILER_BEGIN_TAG("lv_libpng_decoder_open");
+    LV_PROFILER_DECODER_BEGIN_TAG("lv_libpng_decoder_open");
 
     /*If it's a PNG file...*/
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = dsc->src;
         lv_draw_buf_t * decoded = decode_png_file(dsc, fn);
         if(decoded == NULL) {
-            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
             return LV_RESULT_INVALID;
         }
 
         lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
         if(adjusted == NULL) {
             lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
-            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
             return LV_RESULT_INVALID;
         }
 
@@ -149,13 +149,13 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         dsc->decoded = decoded;
 
         if(dsc->args.no_cache) {
-            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
             return LV_RES_OK;
         }
 
         /*If the image cache is disabled, just return the decoded image*/
         if(!lv_image_cache_is_enabled()) {
-            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
             return LV_RESULT_OK;
         }
 
@@ -169,16 +169,16 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         if(entry == NULL) {
             lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
-            LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+            LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
             return LV_RESULT_INVALID;
         }
         dsc->cache_entry = entry;
-        LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
 
         return LV_RESULT_OK;     /*The image is fully decoded. Return with its pointer*/
     }
 
-    LV_PROFILER_END_TAG("lv_libpng_decoder_open");
+    LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
     return LV_RESULT_INVALID;    /*If not returned earlier then it failed*/
 }
 
