@@ -595,15 +595,6 @@
     #endif
 #endif
 
-/* Enable A4/A8 image support */
-#ifndef LV_VG_LITE_USE_ALPHA_IMAGE
-    #ifdef CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
-        #define LV_VG_LITE_USE_ALPHA_IMAGE CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
-    #else
-        #define LV_VG_LITE_USE_ALPHA_IMAGE 0
-    #endif
-#endif
-
 #endif
 
 /* Use G2D GPU. */
