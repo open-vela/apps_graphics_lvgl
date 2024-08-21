@@ -461,10 +461,8 @@ bool lv_vg_lite_is_dest_cf_supported(lv_color_format_t cf)
 bool lv_vg_lite_is_src_cf_supported(lv_color_format_t cf)
 {
     switch(cf) {
-#if LV_VG_LITE_USE_ALPHA_IMAGE
         case LV_COLOR_FORMAT_A4:
         case LV_COLOR_FORMAT_A8:
-#endif
         case LV_COLOR_FORMAT_L8:
         case LV_COLOR_FORMAT_RGB565:
         case LV_COLOR_FORMAT_ARGB8888:
