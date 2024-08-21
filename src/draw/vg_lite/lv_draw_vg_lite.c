@@ -106,18 +106,6 @@ static bool check_image_is_supported(const lv_draw_image_dsc_t * dsc)
     return lv_vg_lite_is_src_cf_supported(dsc->header.cf);
 }
 
-static inline bool check_font_is_supported(const lv_draw_label_dsc_t * dsc)
-{
-    const lv_font_fmt_txt_dsc_t * font_dsc = dsc->font->dsc;
-    if(!font_dsc) return true;
-    if(!(font_dsc->bpp == 0 || font_dsc->bpp == LV_FONT_GLYPH_FORMAT_VECTOR ||
-         font_dsc->bpp == LV_FONT_GLYPH_FORMAT_IMAGE)) {
-        LV_LOG_TRACE("only support image font and vector font");
-        return false;
-    }
-    return true;
-}
-
 static bool check_arc_is_supported(const lv_draw_arc_dsc_t * dsc)
 {
     if(dsc->img_src == NULL) {
@@ -262,6 +250,7 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
     }
 
     switch(task->type) {
+        case LV_DRAW_TASK_TYPE_LABEL:
         case LV_DRAW_TASK_TYPE_FILL:
 #if LV_VG_LITE_USE_BOX_SHADOW
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
@@ -285,13 +274,6 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 
         case LV_DRAW_TASK_TYPE_IMAGE: {
                 if(!check_image_is_supported(task->draw_dsc)) {
-                    return 0;
-                }
-            }
-            break;
-
-        case LV_DRAW_TASK_TYPE_LABEL: {
-                if(!check_font_is_supported(task->draw_dsc)) {
                     return 0;
                 }
             }
