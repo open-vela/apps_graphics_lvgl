@@ -42,6 +42,9 @@ Copyright: (C) Advanced Interfaces Group,
 #include <float.h>
 #include <math.h>
 
+#include "../../stdlib/lv_mem.h"
+#include "../../misc/lv_assert.h"
+
 
 /*
 ===========================================================================
@@ -107,6 +110,17 @@ Copyright: (C) Advanced Interfaces Group,
                             exit(0);}} else p= NULL;}
 
 #define FREE(p)            {if (p) {free(p); (p)= NULL;}}
+
+
+#undef MALLOC
+#undef FREE
+
+#define MALLOC(p, b, s, t) {if ((b) > 0) { \
+                            p= (t*)lv_malloc(b); \
+                            LV_ASSERT_MALLOC(p); \
+                            } else p= NULL;}
+
+#define FREE(p)            {if (p) {lv_free(p); (p)= NULL;}}
 
 
 /*
