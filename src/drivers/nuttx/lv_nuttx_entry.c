@@ -16,9 +16,7 @@
 #include <syslog.h>
 #include <pthread.h>
 #include "lv_nuttx_cache.h"
-#if LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP
-    #include "lv_nuttx_image_cache.h"
-#endif
+#include "lv_nuttx_image_cache.h"
 #include "lv_nuttx_profiler.h"
 #include "lv_nuttx_mouse.h"
 
@@ -123,9 +121,7 @@ void lv_nuttx_init(const lv_nuttx_dsc_t * dsc, lv_nuttx_result_t * result)
 
     lv_nuttx_cache_init();
 
-#if LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP
-    lv_nuttx_image_cache_init();
-#endif
+    lv_nuttx_image_cache_init(LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP);
 
 #if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
     lv_nuttx_profiler_init();
@@ -233,9 +229,7 @@ void lv_nuttx_deinit(lv_nuttx_result_t * result)
     if(nuttx_ctx_p) {
         lv_nuttx_cache_deinit();
 
-#if LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP
         lv_nuttx_image_cache_deinit();
-#endif
         lv_free(nuttx_ctx_p);
         nuttx_ctx_p = NULL;
     }
