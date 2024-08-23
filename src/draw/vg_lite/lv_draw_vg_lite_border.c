@@ -78,7 +78,7 @@ void lv_draw_vg_lite_border(lv_draw_unit_t * draw_unit, const lv_draw_border_dsc
     lv_vg_lite_path_append_rect(path,
                                 coords->x1, coords->y1,
                                 w, h,
-                                r_out, r_out);
+                                r_out);
 
     /* inner rect */
     int32_t x_offset = 0;
@@ -109,7 +109,7 @@ void lv_draw_vg_lite_border(lv_draw_unit_t * draw_unit, const lv_draw_border_dsc
                                 coords->y1 + y_offset,
                                 w_inner,
                                 h_inner,
-                                r_in, r_in);
+                                r_in);
 
     lv_vg_lite_path_end(path);
 
