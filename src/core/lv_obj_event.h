@@ -54,6 +54,24 @@ typedef struct {
     const lv_area_t * area;
 } lv_cover_check_info_t;
 
+/** Event param, Check if obj can be scrolled by the crown. */
+typedef enum {
+    LV_INDEV_CROWN_SCROLL_NONE  = 0,  /**< Not responding to check events. */
+    LV_INDEV_CROWN_SCROLL_INV   = 1,  /**< Object cannot be scrolled */
+    LV_INDEV_CROWN_SCROLL_OK    = 2,  /**< Object can be scrolled */
+} lv_crown_scroll_t;
+
+/**< Crown scroll param, Check if the object can be scrolled*/
+typedef struct {
+    lv_indev_t* indev;     /**< Crown scroll indev */
+    lv_crown_scroll_t res; /**< Check result */
+} lv_crown_scroll_check_t;
+
+/**< Crown scroll param, Check if the object can be scrolled by chaining*/
+typedef struct {
+    lv_crown_scroll_t res; /**< Check result */
+} lv_crown_scroll_chain_check_t;
+
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
