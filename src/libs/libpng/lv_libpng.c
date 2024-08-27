@@ -287,6 +287,7 @@ static lv_draw_buf_t * decode_png_file(lv_image_decoder_dsc_t * dsc, const char 
     decoded = lv_draw_buf_create_user(image_cache_draw_buf_handlers, image.width, image.height, cf, LV_STRIDE_AUTO);
     if(decoded == NULL) {
         LV_LOG_ERROR("alloc PNG_IMAGE_SIZE(%" LV_PRIu32 ") failed: %s", (uint32_t)PNG_IMAGE_SIZE(image), filename);
+        png_image_free(&image);
         lv_free(data);
         return NULL;
     }
