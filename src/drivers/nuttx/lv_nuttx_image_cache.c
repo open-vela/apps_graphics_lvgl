@@ -159,7 +159,7 @@ static void * malloc_cb(size_t size_bytes, lv_color_format_t color_format)
     size_bytes += LV_DRAW_BUF_ALIGN - 1;
     uint32_t cache_max_size = lv_cache_get_max_size(img_cache_p, NULL);
 
-    if(size_bytes > cache_max_size) {
+    if(lv_cache_is_enabled(img_cache_p) && size_bytes > cache_max_size) {
         LV_LOG_ERROR("data size (%" LV_PRIu32 ") is larger than max size (%" LV_PRIu32 ")",
                      (uint32_t)size_bytes,
                      cache_max_size);
@@ -171,7 +171,7 @@ static void * malloc_cb(size_t size_bytes, lv_color_format_t color_format)
         if(ctx->independent_image_heap) {
             mem = mm_malloc(ctx->heap, size_bytes);
         }
-        else if(img_cache_p->size + size_bytes < img_cache_p->max_size) {
+        else if((!lv_cache_is_enabled(img_cache_p)) || (lv_cache_get_size(img_cache_p, NULL) + size_bytes < cache_max_size)) {
             mem = ctx->malloc_cb(size_bytes, color_format);
         }
         if(mem) return mem;
