@@ -395,10 +395,20 @@ static void draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * dsc,  
         return;
     }
 
+    /* workaround function center emoji mandatory, https://github.com/lvgl/lvgl/pull/3668 */
+    int32_t real_h;
+    if(g.format == LV_FONT_GLYPH_FORMAT_IMAGE) {
+        /*Center image font drawing position*/
+        real_h = (font->line_height - g.box_h) / 2;
+    }
+    else {
+        real_h = (font->line_height - font->base_line) - g.box_h;
+    }
+
     lv_area_t letter_coords;
     letter_coords.x1 = pos->x + g.ofs_x;
     letter_coords.x2 = letter_coords.x1 + g.box_w - 1;
-    letter_coords.y1 = pos->y + (font->line_height - font->base_line) - g.box_h - g.ofs_y;
+    letter_coords.y1 = pos->y + real_h - g.ofs_y;
     letter_coords.y2 = letter_coords.y1 + g.box_h - 1;
 
     /*If the letter is completely out of mask don't draw it*/
