@@ -330,7 +330,7 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride);
  */
 lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf);
 
-static inline bool lv_draw_buf_has_flag(lv_draw_buf_t * draw_buf, lv_image_flags_t flag)
+static inline bool lv_draw_buf_has_flag(const lv_draw_buf_t * draw_buf, lv_image_flags_t flag)
 {
     return draw_buf->header.flags & flag;
 }
