@@ -91,6 +91,13 @@ void lv_obj_set_scroll_snap_x(lv_obj_t * obj, lv_scroll_snap_t align);
  */
 void lv_obj_set_scroll_snap_y(lv_obj_t * obj, lv_scroll_snap_t align);
 
+/**
+ * Set the elastic dir value.
+ * @param obj       pointer to an object
+ * @param dir       the allow scroll directions
+ */
+void lv_obj_set_elastic_dir(lv_obj_t * obj, lv_dir_t dir);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -122,6 +129,13 @@ lv_scroll_snap_t lv_obj_get_scroll_snap_x(const lv_obj_t * obj);
  * @return          the current snap align from `lv_scroll_snap_t`
  */
 lv_scroll_snap_t lv_obj_get_scroll_snap_y(const lv_obj_t * obj);
+
+/**
+ * Get the elastic dir value.
+ * @param obj       pointer to an object
+ * @return          the force elastic scroll value.
+ */
+lv_dir_t lv_obj_get_elastic_dir(const lv_obj_t * obj);
 
 /**
  * Get current X scroll position.

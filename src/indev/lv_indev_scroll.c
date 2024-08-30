@@ -186,7 +186,17 @@ void _lv_indev_scroll_throw_handler(lv_indev_t * indev)
         if(align_y == LV_SCROLL_SNAP_NONE) {
             int32_t st = lv_obj_get_scroll_top(scroll_obj);
             int32_t sb = lv_obj_get_scroll_bottom(scroll_obj);
-            if(st > 0 || sb > 0) {
+            if(st + sb <= 0 && lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_VER) {
+                if(lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_TOP) {
+                    lv_obj_scroll_by(scroll_obj, 0, st, LV_ANIM_ON);
+                    if(indev->reset_query) return;
+                }
+                else if(lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_BOTTOM) {
+                    lv_obj_scroll_by(scroll_obj, 0, -sb, LV_ANIM_ON);
+                    if(indev->reset_query) return;
+                }
+            }
+            else if(st > 0 || sb > 0) {
                 if(st < 0) {
                     lv_obj_scroll_by(scroll_obj, 0, st, LV_ANIM_ON);
                     if(indev->reset_query) return;
@@ -202,7 +212,17 @@ void _lv_indev_scroll_throw_handler(lv_indev_t * indev)
         if(align_x == LV_SCROLL_SNAP_NONE) {
             int32_t sl = lv_obj_get_scroll_left(scroll_obj);
             int32_t sr = lv_obj_get_scroll_right(scroll_obj);
-            if(sl > 0 || sr > 0) {
+            if(sl + sr <= 0 && lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_HOR) {
+                if(lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_LEFT) {
+                    lv_obj_scroll_by(scroll_obj, sl, 0, LV_ANIM_ON);
+                    if(indev->reset_query) return;
+                }
+                else if(lv_obj_get_elastic_dir(scroll_obj) & LV_DIR_RIGHT) {
+                    lv_obj_scroll_by(scroll_obj, -sr, 0, LV_ANIM_ON);
+                    if(indev->reset_query) return;
+                }
+            }
+            else if(sl > 0 || sr > 0) {
                 if(sl < 0) {
                     lv_obj_scroll_by(scroll_obj, sl, 0, LV_ANIM_ON);
                     if(indev->reset_query) return;
@@ -334,17 +354,17 @@ lv_obj_t * lv_indev_find_scroll_obj(lv_indev_t * indev)
         int32_t sr = lv_obj_get_scroll_right(obj_act);
 
         /*If this object is scrollable into the current scroll direction then save it as a candidate.
-         *It's important only to be scrollable on the current axis (hor/ver) because if the scroll
-         *is propagated to this object it can show at least elastic scroll effect.
-         *But if not hor/ver scrollable do not scroll it at all (so it's not a good candidate)*/
-        if((st > 0 || sb > 0)  &&
+        *It's important only to be scrollable on the current axis (hor/ver) because if the scroll
+        *is propagated to this object it can show at least elastic scroll effect.
+        *But if not hor/ver scrollable do not scroll it at all (so it's not a good candidate)*/
+        if((st > 0 || sb > 0 || (lv_obj_get_elastic_dir(obj_act) & LV_DIR_VER))  &&
            ((up_en    && obj_scroll_sum.y >=   scroll_limit) ||
             (down_en  && obj_scroll_sum.y <= - scroll_limit))) {
             obj_candidate = obj_act;
             dir_candidate = LV_DIR_VER;
         }
 
-        if((sl > 0 || sr > 0)  &&
+        if((sl > 0 || sr > 0 || (lv_obj_get_elastic_dir(obj_act) & LV_DIR_HOR))  &&
            ((left_en   && obj_scroll_sum.x >=   scroll_limit) ||
             (right_en  && obj_scroll_sum.x <= - scroll_limit))) {
             obj_candidate = obj_act;

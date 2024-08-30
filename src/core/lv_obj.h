@@ -216,6 +216,7 @@ typedef struct {
     uint16_t scroll_snap_y : 2;     /**< Where to align the snappable children vertically*/
     uint16_t scroll_dir : 4;        /**< The allowed scroll direction(s), see `lv_dir_t`*/
     uint16_t layer_type : 2;        /**< Cache the layer type here. Element of @lv_intermediate_layer_type_t */
+    uint16_t elastic_dir : 4;     /**< Force the object to be elastic in all directions*/
 } _lv_obj_spec_attr_t;
 
 struct _lv_obj_t {

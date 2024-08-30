@@ -85,6 +85,12 @@ void lv_obj_set_scroll_snap_y(lv_obj_t * obj, lv_scroll_snap_t align)
     obj->spec_attr->scroll_snap_y = align;
 }
 
+void lv_obj_set_elastic_dir(lv_obj_t * obj, lv_dir_t dir)
+{
+    lv_obj_allocate_spec_attr(obj);
+    obj->spec_attr->elastic_dir = dir;
+}
+
 /*=====================
  * Getter functions
  *====================*/
@@ -111,6 +117,12 @@ lv_scroll_snap_t lv_obj_get_scroll_snap_y(const lv_obj_t * obj)
 {
     if(obj->spec_attr) return (lv_scroll_snap_t) obj->spec_attr->scroll_snap_y;
     else return LV_SCROLL_SNAP_NONE;
+}
+
+lv_dir_t lv_obj_get_elastic_dir(const lv_obj_t * obj)
+{
+    if(obj->spec_attr) return obj->spec_attr->elastic_dir;
+    else return LV_DIR_NONE;
 }
 
 int32_t lv_obj_get_scroll_x(const lv_obj_t * obj)
