@@ -108,6 +108,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
     uint32_t end;
     uint32_t brk;
     bool is_line_leading = true;
+    bool is_word_breakable = false;
     uint32_t real_width = 0;
     uint32_t ideal_width = 0;
 
@@ -138,6 +139,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
         }
 
         if(word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION) {
+            is_word_breakable = true;
             lv_iter_peek_advance(word_iter);
             lv_text_word_process_word_info_t word_next;
             res = lv_iter_peek(word_iter, &word_next);
@@ -176,13 +178,24 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
             }
             else if(word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION &&
                     (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word_next.type == LV_TEXT_WORD_PROCESS_SPACE)) {
-                end = word.pos.start;
-                brk = word.pos.start;
+                if(is_line_leading || is_word_breakable) {
+                    end = word_next.pos.end;
+                    brk = word_next.pos.brk;
+                }
+                else {
+                    end = word.pos.start;
+                    brk = word.pos.start;
+                }
 
                 real_width -= word.real_width;
                 ideal_width -= word.ideal_width;
             }
             break;
+        }
+        if(word.type == LV_TEXT_WORD_PROCESS_CJK
+           || word.type == LV_TEXT_WORD_PROCESS_LATIN
+           || word.type == LV_TEXT_WORD_PROCESS_NUMBER) {
+            is_word_breakable = false;
         }
 
         is_line_leading = false;
