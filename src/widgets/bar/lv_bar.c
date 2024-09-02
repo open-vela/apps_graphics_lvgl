@@ -374,9 +374,9 @@ static void draw_indic(lv_event_t * e)
         anim_start_value_x = -anim_start_value_x;
     }
 
-    /*Set the indicator length*/
+    /*Set the indicator length, anim_cur_value_x is progress value, convert to coordinates, hor-1/ver+1. */
     if(hor) {
-        *axis2 = *axis1 + anim_cur_value_x;
+        *axis2 = *axis1 + anim_cur_value_x - 1;
         *axis1 += anim_start_value_x;
     }
     else {
