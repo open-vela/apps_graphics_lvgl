@@ -302,6 +302,12 @@ static bool is_close_punctuation(uint32_t ch)
         0x27e9, // '⟩'
         0x2019, // '’'
         0x201d, // '”'
+        0x7c, // '|'
+        0xb7, // '·'
+        0x2f, // '/'
+        0xff5c, // '｜'
+        0x2014, // '—'
+        0xff5e, // '～'
         0
     };
     for(int i = 0; close_punctuations[i]; i++) if(ch == close_punctuations[i]) return true;
