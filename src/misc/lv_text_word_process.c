@@ -193,7 +193,11 @@ static lv_result_t word_iter_next_cb(void * instance, void * context, void * ele
                 if(word_type_next == LV_TEXT_WORD_PROCESS_NUMBER) continue;
                 else break;
             case LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION:
+                if(word_type_next == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION) continue;
+                else break;
             case LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION:
+                if(word_type_next == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION) continue;
+                else break;
             case LV_TEXT_WORD_PROCESS_RETURN:
                 break;
             case LV_TEXT_WORD_PROCESS_NEWLINE:
