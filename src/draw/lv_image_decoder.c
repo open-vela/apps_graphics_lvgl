@@ -288,6 +288,16 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
     return decoded;
 }
 
+void lv_image_decoder_header_expand(lv_image_header_t * header, uint32_t expand_size)
+{
+    header->w += expand_size * 2;
+    header->h += expand_size * 2;
+
+    if(expand_size > 0) {
+        header->flags |= LV_IMAGE_FLAGS_EXPANDED;
+    }
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/

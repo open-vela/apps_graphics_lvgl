@@ -768,6 +768,9 @@
  *Requires `LV_USE_MATRIX = 1`*/
 #define LV_USE_VECTOR_GRAPHIC  0
 
+/*Enable the image decoder size expand feature*/
+#define LV_DECODER_IMG_SIZE_EXPAND 0
+
 /* Enable ThorVG (vector graphics library) from the src/libs folder */
 #define LV_USE_THORVG_INTERNAL 0
 

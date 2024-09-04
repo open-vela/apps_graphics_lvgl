@@ -330,6 +330,31 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride);
  */
 lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf);
 
+/**
+ * Copy the palette from `src` to `dest` draw buffer.
+ */
+void lv_draw_buf_copy_palette(lv_draw_buf_t * dest, lv_draw_buf_t * src);
+
+/**
+ * Convert the color format of the draw buffer to dst draw buffer.
+ */
+void lv_draw_buf_color_convert(lv_draw_buf_t * dst, lv_draw_buf_t * src, uint32_t dst_offset_x, uint32_t dst_offset_y);
+
+/**
+ * Alloc and Fill the draw buffer with the alpha color.
+ */
+lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expand_size);
+
+/**
+ * Expand the draw buffer by the given size.
+ * The new area will be filled with the alpha color. this function workaroud the issue of GPU drawing
+ * @param origin       the original draw buffer
+ * @param expand_size  the size to expand in pixels
+ *
+ * @return the expanded draw buffer on success, origin buffer will be return if failed.
+ */
+lv_draw_buf_t * lv_draw_buf_expand(lv_draw_buf_t * origin, uint32_t expand_size);
+
 static inline bool lv_draw_buf_has_flag(const lv_draw_buf_t * draw_buf, lv_image_flags_t flag)
 {
     return draw_buf->header.flags & flag;
