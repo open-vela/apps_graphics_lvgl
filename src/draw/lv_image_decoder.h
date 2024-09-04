@@ -296,6 +296,13 @@ lv_cache_entry_t * lv_image_decoder_add_to_cache(lv_image_decoder_t * decoder,
  */
 lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_draw_buf_t * decoded);
 
+/**
+ * Expand the image header by the given size.
+ * @param header the image info will be stored here
+ * @param expand_size the size to expand
+ */
+void lv_image_decoder_header_expand(lv_image_header_t * header, uint32_t expand_size);
+
 /**********************
  *      MACROS
  **********************/
