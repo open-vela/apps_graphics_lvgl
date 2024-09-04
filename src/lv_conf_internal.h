@@ -28,7 +28,7 @@
 #define LV_DRAW_SW_ASM_HELIUM       2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
-#define LV_ARRAY_DEFAULT_CAPACITY   4
+#define LV_ARRAY_DEFAULT_CAPACITY   8
 
 /* Handle special Kconfig options */
 #ifndef LV_KCONFIG_IGNORE
