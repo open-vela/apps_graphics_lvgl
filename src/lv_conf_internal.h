@@ -28,6 +28,8 @@
 #define LV_DRAW_SW_ASM_HELIUM       2
 #define LV_DRAW_SW_ASM_CUSTOM       255
 
+#define LV_ARRAY_DEFAULT_CAPACITY   8
+
 /* Handle special Kconfig options */
 #ifndef LV_KCONFIG_IGNORE
     #include "lv_conf_kconfig.h"
@@ -2505,6 +2507,15 @@
         #define LV_USE_VECTOR_GRAPHIC CONFIG_LV_USE_VECTOR_GRAPHIC
     #else
         #define LV_USE_VECTOR_GRAPHIC  0
+    #endif
+#endif
+
+/*Enable the image decoder size expand feature*/
+#ifndef LV_DECODER_IMG_SIZE_EXPAND
+    #ifdef CONFIG_LV_DECODER_IMG_SIZE_EXPAND
+        #define LV_DECODER_IMG_SIZE_EXPAND CONFIG_LV_DECODER_IMG_SIZE_EXPAND
+    #else
+        #define LV_DECODER_IMG_SIZE_EXPAND 0
     #endif
 #endif
 
