@@ -23,7 +23,7 @@
 
 #define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
 
-#define JPEG_PIXEL_SIZE 4 /* XRGB888 */
+#define JPEG_PIXEL_SIZE 4 /* ARGB8888 */
 #define JPEG_SIGNATURE 0xFFD8FF
 #define IS_JPEG_SIGNATURE(x) (((x) & 0x00FFFFFF) == JPEG_SIGNATURE)
 
@@ -142,6 +142,8 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         header->cf = LV_COLOR_FORMAT_RGB888;
         header->w = (orientation % 180) ? height : width;
         header->h = (orientation % 180) ? width : height;
+
+        lv_image_decoder_header_expand(header, LV_DECODER_IMG_SIZE_EXPAND);
 
         return LV_RESULT_OK;
     }
@@ -339,7 +341,7 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
 
     /* set parameters for decompression */
 
-    cinfo.out_color_space = JCS_EXT_BGRX;
+    cinfo.out_color_space = JCS_EXT_BGRA;
 
     /* In this example, we don't need to change any of the defaults set by
      * jpeg_read_header(), so we do nothing here.
@@ -413,6 +415,8 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
     /* At this point you may want to check to see whether any corrupt-data
     * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
     */
+
+    decoded = lv_draw_buf_expand(decoded, LV_DECODER_IMG_SIZE_EXPAND);
 
     /* And we're done! */
     return decoded;

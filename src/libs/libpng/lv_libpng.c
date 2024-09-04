@@ -107,6 +107,8 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         header->w = (int32_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
         header->h = (int32_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
 
+        lv_image_decoder_header_expand(header, LV_DECODER_IMG_SIZE_EXPAND);
+
         return LV_RESULT_OK;
     }
 
