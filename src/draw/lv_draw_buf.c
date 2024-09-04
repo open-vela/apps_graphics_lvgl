@@ -542,6 +542,122 @@ void lv_draw_buf_set_palette(lv_draw_buf_t * draw_buf, uint8_t index, lv_color32
     lv_memcpy(&buf[index * sizeof(color)], &color, sizeof(color));
 }
 
+void lv_draw_buf_copy_palette(lv_draw_buf_t * dest, lv_draw_buf_t * src)
+{
+    if(dest->header.cf != src->header.cf) {
+        return;
+    }
+
+    lv_color_format_t cf = src->header.cf;
+    uint32_t size = LV_COLOR_INDEXED_PALETTE_SIZE(cf);
+    if(size == 0) {
+        return;
+    }
+
+    lv_memcpy(dest->data, src->data, size * sizeof(lv_color32_t));
+}
+
+lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expand_size)
+{
+    lv_draw_buf_t * new_draw_buf = NULL;
+    lv_color_format_t cf = draw_buff->header.cf;
+    uint32_t expand_width = draw_buff->header.w + expand_size * 2;
+    uint32_t expand_height = draw_buff->header.h + expand_size * 2;
+
+    if(!LV_COLOR_FORMAT_IS_INDEXED(cf)) {
+        new_draw_buf = lv_draw_buf_create(expand_width, expand_height, cf, LV_STRIDE_AUTO);
+        lv_draw_buf_clear(new_draw_buf, NULL);
+    }
+    else if(cf == LV_COLOR_FORMAT_I8) {
+        uint32_t palette_size = LV_COLOR_INDEXED_PALETTE_SIZE(cf);
+        int color_index = -1;
+        lv_color32_t * data = (lv_color32_t *)draw_buff->data;
+        for(int i = 0; i < palette_size; i++) {
+            if(data->alpha == 0) {
+                color_index = i;
+                break;
+            }
+            data++;
+        }
+
+        if(color_index < 0) {
+            LV_LOG_WARN("image has no transparent color in palette!, use RGBA8888");
+            new_draw_buf = lv_draw_buf_create(expand_width, expand_height, LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
+            lv_draw_buf_clear(new_draw_buf, NULL);
+        }
+        else {
+            new_draw_buf = lv_draw_buf_create(expand_width, expand_height, cf, LV_STRIDE_AUTO);
+
+            /*clear buffer*/
+            uint8_t * dest = lv_draw_buf_goto_xy(new_draw_buf, 0, 0);
+            lv_memset(dest, color_index, new_draw_buf->header.stride * new_draw_buf->header.h);
+        }
+    }
+
+    if(new_draw_buf) {
+        lv_draw_buf_copy_palette(new_draw_buf, draw_buff);
+    }
+
+    return new_draw_buf;
+}
+
+void lv_draw_buf_color_convert(lv_draw_buf_t * dst, lv_draw_buf_t * src, uint32_t dst_offset_x, uint32_t dst_offset_y)
+{
+    uint8_t * src_buf = lv_draw_buf_goto_xy(src, 0, 0);
+    uint8_t * dst_buf = lv_draw_buf_goto_xy(dst, 0, 0);
+    uint32_t  dst_pixel_size = lv_color_format_get_size(dst->header.cf);
+    uint32_t  src_pixel_size = lv_color_format_get_size(src->header.cf);
+    int x;
+    int y;
+
+    dst_buf += dst_offset_y * dst->header.stride + dst_offset_x * dst_pixel_size;
+    if(dst->header.cf == src->header.cf) {
+        for(y = 0; y < src->header.h; y++) {
+            lv_memcpy(dst_buf, src_buf, src->header.w * src_pixel_size);
+            dst_buf += dst->header.stride;
+            src_buf += src->header.stride;
+        }
+    }
+    else {
+        if(src->header.cf == LV_COLOR_FORMAT_I8 && dst->header.cf == LV_COLOR_FORMAT_ARGB8888) {
+            lv_color32_t * paltte_head = (lv_color32_t *)src->data;
+            for(y = 0; y < src->header.h; y++) {
+                lv_color32_t * dst_pixel = (lv_color32_t *)dst_buf;
+                const uint8_t * src_pixel = src_buf;
+                for(x = 0; x < src->header.w; x++) {
+                    *dst_pixel = paltte_head[*src_pixel];
+                    dst_pixel++;
+                    src_pixel++;
+                }
+                dst_buf += dst->header.stride;
+                src_buf += src->header.stride;
+            }
+        }
+        else {
+            LV_LOG_WARN("color convert not implemented yet");
+        }
+    }
+}
+
+lv_draw_buf_t * lv_draw_buf_expand(lv_draw_buf_t * decoded, uint32_t expand_size)
+{
+    if(expand_size <= 0) {
+        return decoded;
+    }
+
+    lv_draw_buf_t * new_decoded = lv_draw_buf_fill_expand(decoded, expand_size);
+
+    if(!new_decoded) {
+        LV_LOG_WARN("expand for decoded image failed!");
+        return decoded;
+    }
+
+    lv_draw_buf_color_convert(new_decoded, decoded, expand_size, expand_size);
+    lv_draw_buf_destroy(decoded);
+
+    return new_decoded;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
