@@ -101,14 +101,7 @@ static bool check_border_is_supported(const lv_draw_border_dsc_t * dsc)
 
 static bool check_image_is_supported(const lv_draw_image_dsc_t * dsc)
 {
-    lv_image_header_t header;
-    lv_result_t res = lv_image_decoder_get_info(dsc->src, &header);
-    if(res != LV_RESULT_OK) {
-        LV_LOG_TRACE("get image info failed");
-        return false;
-    }
-
-    return lv_vg_lite_is_src_cf_supported(header.cf);
+    return lv_vg_lite_is_src_cf_supported(dsc->header.cf);
 }
 
 static inline bool check_font_is_supported(const lv_draw_label_dsc_t * dsc)
