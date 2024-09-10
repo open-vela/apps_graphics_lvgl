@@ -219,8 +219,9 @@ void lv_draw_rect(lv_layer_t * layer, const lv_draw_rect_dsc_t * dsc, const lv_a
                 t->draw_dsc = bg_image_dsc;
                 bg_image_dsc->base = dsc->base;
                 bg_image_dsc->base.dsc_size = sizeof(lv_draw_image_dsc_t);
-                if(LV_IMAGE_SRC_FILE == lv_image_src_get_type(dsc->bg_image_src)) {
+                if(lv_image_src_get_type(dsc->bg_image_src) == LV_IMAGE_SRC_FILE) {
                     bg_image_dsc->src = lv_strdup(dsc->bg_image_src);
+                    bg_image_dsc->src_local = 1;
                 }
                 else {
                     bg_image_dsc->src = dsc->bg_image_src;

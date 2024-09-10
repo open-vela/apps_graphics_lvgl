@@ -223,7 +223,7 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
 
             if(t->type == LV_DRAW_TASK_TYPE_IMAGE) {
                 lv_draw_image_dsc_t * draw_image_dsc = t->draw_dsc;
-                if(LV_IMAGE_SRC_FILE == lv_image_src_get_type(draw_image_dsc->src)) {
+                if(draw_image_dsc->src_local && lv_image_src_get_type(draw_image_dsc->src) == LV_IMAGE_SRC_FILE) {
                     lv_free((void *)draw_image_dsc->src);
                     draw_image_dsc->src = NULL;
                 }
