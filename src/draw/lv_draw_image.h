@@ -57,6 +57,11 @@ typedef struct _lv_draw_image_dsc_t {
 
     uint16_t antialias          : 1;
     uint16_t tile               : 1;
+
+    /**
+     * < 1: malloc buffer and copy `src` path text there.
+     * 0: `src` is const and it's pointer will be valid during rendering.*/
+    uint16_t src_local          : 1;
     const lv_image_colorkey_t * colorkey;
     lv_draw_image_sup_t * sup;
 
