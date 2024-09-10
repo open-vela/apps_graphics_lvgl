@@ -116,7 +116,7 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
     lv_draw_task_t * t = lv_draw_add_task(layer, coords);
     t->draw_dsc = new_image_dsc;
     t->type = LV_DRAW_TASK_TYPE_IMAGE;
-    if(LV_IMAGE_SRC_FILE == lv_image_src_get_type(new_image_dsc->src)) {
+    if(new_image_dsc->src_local && lv_image_src_get_type(new_image_dsc->src) == LV_IMAGE_SRC_FILE) {
         new_image_dsc->src = lv_strdup(new_image_dsc->src);
     }
 
