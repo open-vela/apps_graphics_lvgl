@@ -135,14 +135,6 @@ void lv_cache_drop_all(lv_cache_t * cache, void * user_data);
 bool lv_cache_evict_one(lv_cache_t * cache, void * user_data);
 
 /**
- * Evict one entry from the cache. The eviction policy will be used to select the entry to evict.
- * @param cache         The cache object pointer to evict an entry.
- * @param user_data     A user data pointer that will be passed to the free callback.
- * @return              Returns true if an entry is evicted, false if no entry is evicted.
- */
-bool lv_cache_evict_one(lv_cache_t * cache, void * user_data);
-
-/**
  * Set the maximum size of the cache.
  * If the current cache size is greater than the new maximum size, the cache's policy will be used to evict entries until the new maximum size is reached.
  * If set to 0, the cache will be disabled.
