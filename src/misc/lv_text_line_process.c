@@ -138,7 +138,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
             break;
         }
 
-        if(word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION) {
+        if(word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION || word.type == LV_TEXT_WORD_PROCESS_QUOTATION) {
             is_word_breakable = true;
             lv_iter_peek_advance(word_iter);
             lv_text_word_process_word_info_t word_next;
@@ -176,8 +176,9 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                 end++;
                 brk++;
             }
-            else if(word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION &&
-                    (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word_next.type == LV_TEXT_WORD_PROCESS_SPACE)) {
+            else if((word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word.type != LV_TEXT_WORD_PROCESS_QUOTATION) &&
+                    (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
+                     || word_next.type == LV_TEXT_WORD_PROCESS_SPACE)) {
                 if(is_line_leading || is_word_breakable) {
                     end = word_next.pos.end;
                     brk = word_next.pos.brk;

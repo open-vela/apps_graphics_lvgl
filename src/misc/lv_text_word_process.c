@@ -198,6 +198,9 @@ static lv_result_t word_iter_next_cb(void * instance, void * context, void * ele
             case LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION:
                 if(word_type_next == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION) continue;
                 else break;
+            case LV_TEXT_WORD_PROCESS_QUOTATION:
+                if(word_type_next == LV_TEXT_WORD_PROCESS_QUOTATION) continue;
+                else break;
             case LV_TEXT_WORD_PROCESS_RETURN:
                 break;
             case LV_TEXT_WORD_PROCESS_NEWLINE:
@@ -318,6 +321,27 @@ static bool is_close_punctuation(uint32_t ch)
     return false;
 }
 
+static bool is_quotation(uint32_t ch)
+{
+    const uint32_t is_quotation[] = {
+        0x22,   // '"'
+        0x27,   // '''
+        0x275B, // '❛'
+        0x275C, // '❜'
+        0x275D, // '❝'
+        0x275E, // '❞'
+        0x2E00, // '⸀'
+        0x2E01, // '⸁'
+        0x2E06, // '⸆'
+        0x2E07, // '⸇'
+        0x2E08, // '⸈'
+        0x2E0B, // '⸋'
+        0
+    };
+    for(int i = 0; is_quotation[i]; i++) if(ch == is_quotation[i]) return true;
+    return false;
+}
+
 static lv_text_word_process_word_type_t text_word_type_get(uint32_t ch)
 {
     if(is_latin(ch)) return LV_TEXT_WORD_PROCESS_LATIN;
@@ -326,6 +350,7 @@ static lv_text_word_process_word_type_t text_word_type_get(uint32_t ch)
     else if(ch >= '0' && ch <= '9') return LV_TEXT_WORD_PROCESS_NUMBER;
     else if(is_open_punctuation(ch)) return LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION;
     else if(is_close_punctuation(ch)) return LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION;
+    else if(is_quotation(ch)) return LV_TEXT_WORD_PROCESS_QUOTATION;
     else if(ch == '\n' || ch == '\r') return LV_TEXT_WORD_PROCESS_NEWLINE;
     else if(ch == ' ') return LV_TEXT_WORD_PROCESS_SPACE;
     else if(ch == '\t') return LV_TEXT_WORD_PROCESS_TAB;
