@@ -157,6 +157,9 @@ typedef struct _lv_event_list_t lv_event_list_t;
 
 typedef struct _lv_arc_label_t lv_arc_label_t;
 
+struct _lv_array_t;
+typedef struct _lv_array_t lv_array_t;
+
 struct _lv_iter_t;
 typedef struct _lv_iter_t lv_iter_t;
 
