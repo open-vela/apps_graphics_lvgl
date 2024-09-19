@@ -163,6 +163,9 @@ typedef struct _lv_array_t lv_array_t;
 struct _lv_iter_t;
 typedef struct _lv_iter_t lv_iter_t;
 
+struct _lv_circle_buf_t;
+typedef struct _lv_circle_buf_t lv_circle_buf_t;
+
 struct _lv_matrix_t;
 typedef struct _lv_matrix_t lv_matrix_t;
 
