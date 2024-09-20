@@ -176,8 +176,10 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                 end++;
                 brk++;
             }
-            else if((word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word.type != LV_TEXT_WORD_PROCESS_QUOTATION) &&
-                    (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
+            else if(word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION && word.type != LV_TEXT_WORD_PROCESS_QUOTATION &&
+                    (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION
+                     || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
+                     || word_next.type == LV_TEXT_WORD_PROCESS_HYPHEN
                      || word_next.type == LV_TEXT_WORD_PROCESS_SPACE)) {
                 if(is_line_leading || is_word_breakable) {
                     end = word_next.pos.end;

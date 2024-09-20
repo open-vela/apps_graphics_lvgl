@@ -187,7 +187,7 @@ static lv_result_t word_iter_next_cb(void * instance, void * context, void * ele
             case LV_TEXT_WORD_PROCESS_CJK:
                 break;
             case LV_TEXT_WORD_PROCESS_HYPHEN:
-                if(word_type_next == LV_TEXT_WORD_PROCESS_LATIN || word_type_next == LV_TEXT_WORD_PROCESS_NUMBER) continue;
+                if(word_type_next == LV_TEXT_WORD_PROCESS_HYPHEN) continue;
                 else break;
             case LV_TEXT_WORD_PROCESS_NUMBER:
                 if(word_type_next == LV_TEXT_WORD_PROCESS_NUMBER) continue;
