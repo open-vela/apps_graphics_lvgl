@@ -5,7 +5,7 @@ import sys
 from os import path
 
 import gdb
-from nuttx_gdb import utils
+from nuttxgdb import utils
 
 # Add current script folder so we can import module lvgl
 
