@@ -18,6 +18,7 @@ void tearDown(void)
 void test_render_to_rgb565(void)
 {
     lv_display_set_color_format(NULL, LV_COLOR_FORMAT_RGB565);
+    hal_init_colorformat(LV_COLOR_FORMAT_RGB565);
 
     lv_opa_t opa_values[2] = {0xff, 0x80};
     uint32_t opa;
