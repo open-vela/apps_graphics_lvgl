@@ -271,7 +271,7 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_sw_blend_image_to_rgb888(_lv_draw_sw_blend_im
             argb8888_image_blend(dsc, dest_px_size);
             break;
         default:
-            LV_LOG_WARN("Not supported source color format");
+            LV_LOG_WARN("Not supported source color format:%d", dsc->src_color_format);
             break;
     }
 }
