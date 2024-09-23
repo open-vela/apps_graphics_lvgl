@@ -67,6 +67,11 @@ void test_bar_should_update_indicator_right_coordinate_based_on_bar_value(void)
     lv_test_indev_wait(50);
 
     int32_t actual_coord = lv_area_get_width(&bar_ptr->indic_area);
+    /* **************************************************************
+     * get rightEdge coord of indicator. (Note: this is relative value)
+     * Add 1 to calculation because the coordinates start at 0
+    ***************************************************************/
+    actual_coord += 1;
 
     /* Calculate test_bar indicator right coordinate, using rule of 3 */
     int32_t bar_max_value = lv_bar_get_max_value(test_bar);
@@ -121,6 +126,7 @@ void test_bar_rtl_should_update_indicator_left_coordinate_based_on_bar_value(voi
     lv_test_indev_wait(50);
 
     int32_t actual_coord = bar_ptr->indic_area.x1;
+    actual_coord += 1;
 
     /* Calculate current indicator width */
     int32_t bar_max_value = lv_bar_get_max_value(test_bar);
@@ -129,6 +135,10 @@ void test_bar_rtl_should_update_indicator_left_coordinate_based_on_bar_value(voi
     int32_t indicator_width = (bar_value * indicator_part_width) / bar_max_value;
 
     int32_t expected_coord = (bar_width - right_padding) - indicator_width;
+    /* **************************************************************
+     * because this case is LV_BASE_DIR_RTL mode, the expected_coord is the pixels counts
+     * from start of indicator to the end of bar,not coord,so -1 to get the start position.
+    *****************************************************************/
     expected_coord -= 1;
 
     TEST_ASSERT_EQUAL_INT32(expected_coord, actual_coord);
