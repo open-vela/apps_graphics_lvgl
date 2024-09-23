@@ -12,6 +12,12 @@ extern "C" {
 void lv_test_init(void);
 void lv_test_deinit(void);
 
+/*
+ * a workaround to set colorformat of display.
+ * reinit the buffer of display by colorformat.
+ */
+void hal_init_colorformat(lv_color_format_t colorformat);
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif
