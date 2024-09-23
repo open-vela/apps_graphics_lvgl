@@ -35,6 +35,11 @@ void lv_demo_stress(void);
  */
 bool lv_demo_stress_finished(void);
 
+/********************
+ * stress demo deinit
+ */
+void lv_demo_stress_deinit(void);
+
 /**********************
  *      MACROS
  **********************/

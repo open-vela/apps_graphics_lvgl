@@ -34,6 +34,7 @@ static lv_obj_t * main_page;
 static lv_obj_t * ta;
 static size_t mem_free_start = 0;
 static int16_t g_state = -1;
+static lv_timer_t * g_demo_timer = NULL;
 
 /**********************
  *      MACROS
@@ -46,8 +47,13 @@ static int16_t g_state = -1;
 void lv_demo_stress(void)
 {
     LV_LOG_USER("Starting stress test. (< 100 bytes permanent memory leak is normal due to fragmentation)");
-    lv_timer_t * t = lv_timer_create(obj_test_task_cb, LV_DEMO_STRESS_TIME_STEP, NULL);
-    lv_timer_ready(t); /*Prepare the test right now in first state change.*/
+    g_demo_timer = lv_timer_create(obj_test_task_cb, LV_DEMO_STRESS_TIME_STEP, NULL);
+    lv_timer_ready(g_demo_timer); /*Prepare the test right now in first state change.*/
+}
+
+void lv_demo_stress_deinit(void)
+{
+    if(g_demo_timer) lv_timer_delete(g_demo_timer);
 }
 
 bool lv_demo_stress_finished(void)
