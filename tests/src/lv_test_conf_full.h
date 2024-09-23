@@ -1,5 +1,5 @@
 #define LV_MEM_SIZE                     (32 * 1024 * 1024)
-#define LV_DRAW_SW_SHADOW_CACHE_SIZE    8
+#define LV_DRAW_SW_SHADOW_CACHE_SIZE    (8)
 #define LV_USE_LOG              1
 #define LV_LOG_LEVEL            LV_LOG_LEVEL_TRACE
 #define LV_LOG_PRINTF           1
@@ -53,7 +53,7 @@
 
 #define LV_USE_FS_STDIO     1
 #define LV_FS_STDIO_LETTER  'A'
-#define LV_FS_STDIO_CACHE_SIZE 512
+#define LV_FS_STDIO_CACHE_SIZE (512)
 #define LV_USE_FS_POSIX     1
 #define LV_FS_POSIX_LETTER  'B'
 #define LV_USE_FS_MEMFS     1
@@ -127,4 +127,4 @@
 
 #define LV_USE_FREETYPE 1
 #define LV_FREETYPE_USE_LVGL_PORT 0
-#define LV_FREETYPE_CACHE_FT_GLYPH_CNT 10
+#define LV_FREETYPE_CACHE_FT_GLYPH_CNT (10)
