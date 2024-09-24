@@ -142,6 +142,9 @@ void test_msgbox_close_async_modal(void)
 
     // lv_msgbox_close deletes the message box
     TEST_ASSERT_NOT_NULL(msgbox);
+
+    // Since msgbox has no parent, it won´t be clean up at tearDown()
+    lv_msgbox_close(msgbox);
 }
 
 #endif
