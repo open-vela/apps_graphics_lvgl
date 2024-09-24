@@ -403,15 +403,17 @@ void tearDown(void)
 void test_freetype_bitmap_rendering_test(void)
 {
     /*Create a font*/
-    lv_font_t * font_italic = lv_freetype_font_create("./src/test_files/fonts/noto/NotoSansSC-Regular.ttf",
+    char file_path[256] = {0};
+    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH "%s", "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
+    lv_font_t * font_italic = lv_freetype_font_create(file_path,
                                                       LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
                                                       24,
                                                       LV_FREETYPE_FONT_STYLE_ITALIC);
-    lv_font_t * font_normal = lv_freetype_font_create("./src/test_files/fonts/noto/NotoSansSC-Regular.ttf",
+    lv_font_t * font_normal = lv_freetype_font_create(file_path,
                                                       LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
                                                       24,
                                                       LV_FREETYPE_FONT_STYLE_NORMAL);
-    lv_font_t * font_normal_small = lv_freetype_font_create("./src/test_files/fonts/noto/NotoSansSC-Regular.ttf",
+    lv_font_t * font_normal_small = lv_freetype_font_create(file_path,
                                                             LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
                                                             12,
                                                             LV_FREETYPE_FONT_STYLE_NORMAL);
@@ -461,7 +463,9 @@ void test_freetype_bitmap_rendering_test(void)
 void test_freetype_outline_rendering_test(void)
 {
     /*Create a font*/
-    lv_font_t * font_italic = lv_freetype_font_create("./src/test_files/fonts/noto/NotoSansSC-Regular.ttf",
+    char file_path[256] = {0};
+    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH "%s", "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
+    lv_font_t * font_italic = lv_freetype_font_create(file_path,
                                                       LV_FREETYPE_FONT_RENDER_MODE_OUTLINE,
                                                       24,
                                                       LV_FREETYPE_FONT_STYLE_ITALIC);
