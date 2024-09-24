@@ -1,11 +1,11 @@
 /*********************
  *      INCLUDES
  *********************/
+
 #include "lv_demo_clipper.h"
 
 #if LV_USE_DEMO_POLYGON_CLIPPER
-
-#include "../../../ext/draw/shapes/lvx_vector_shapes.h"
+#include <uikit/uikit.h>
 
 #include "time.h"
 #include "unistd.h"
@@ -177,7 +177,7 @@ static void _create_scene_2(lv_vector_clipper_obj_t * clipper)
     lv_matrix_t matrix;
 
     lv_vector_path_t * p1 = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-    lvx_vector_shapes_factory(LVX_VECTOR_SHAPE_CLOVER, p1);
+    vg_vector_shapes_factory(VG_VECTOR_SHAPE_CLOVER, p1);
     lv_matrix_identity(&matrix);
     lv_matrix_scale(&matrix, 0.5f, 0.5f);
     lv_matrix_translate(&matrix, 400, 400);
@@ -186,7 +186,7 @@ static void _create_scene_2(lv_vector_clipper_obj_t * clipper)
 
     lv_vector_path_clear(p1);
 
-    lvx_vector_shapes_factory(LVX_VECTOR_SHAPE_HEART, p1);
+    vg_vector_shapes_factory(VG_VECTOR_SHAPE_HEART, p1);
     lv_matrix_identity(&matrix);
     lv_matrix_scale(&matrix, 0.3f, 0.3f);
     lv_matrix_translate(&matrix, 900, 600);
@@ -227,7 +227,7 @@ static void _create_scene_4(lv_vector_clipper_obj_t * clipper)
     lv_matrix_t matrix;
 
     lv_vector_path_t * p1 = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-    lvx_vector_shapes_factory(LVX_VECTOR_SHAPE_CLOVER, p1);
+    vg_vector_shapes_factory(VG_VECTOR_SHAPE_CLOVER, p1);
     lv_matrix_identity(&matrix);
     lv_matrix_scale(&matrix, 0.5f, 0.5f);
     lv_matrix_translate(&matrix, 300, 200);
@@ -236,7 +236,7 @@ static void _create_scene_4(lv_vector_clipper_obj_t * clipper)
 
     lv_vector_path_clear(p1);
 
-    lvx_vector_shapes_factory(LVX_VECTOR_SHAPE_HEART, p1);
+    vg_vector_shapes_factory(VG_VECTOR_SHAPE_HEART, p1);
     lv_matrix_identity(&matrix);
     lv_matrix_scale(&matrix, 0.3f, 0.3f);
     lv_matrix_translate(&matrix, 900, 400);
