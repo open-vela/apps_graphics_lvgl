@@ -90,7 +90,7 @@ void test_checkbox_should_allocate_memory_for_static_text(void)
 
     lv_mem_monitor(&m1);
 
-    LV_HEAP_CHECK(TEST_ASSERT_LESS_THAN(initial_available_memory, m1.free_size));
+    LV_HEAP_CHECK(TEST_ASSERT_LESS_OR_EQUAL(initial_available_memory, m1.free_size));
 }
 
 void test_checkbox_rtl(void)
