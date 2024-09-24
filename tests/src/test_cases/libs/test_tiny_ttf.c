@@ -36,8 +36,11 @@ void test_tiny_ttf_rendering_test(void)
                       "I'm a font created with Tiny TTF\n"
                       "Accents: ÁÉÍÓÖŐÜŰ áéíóöőüű");
     lv_obj_center(label);
-
-    TEST_ASSERT_EQUAL_SCREENSHOT("libs/tiny_ttf_1.png");
+#if __WORDSIZE == 64
+    TEST_ASSERT_EQUAL_SCREENSHOT("libs/tiny_ttf_1.lp64.png");
+#elif __WORDSIZE == 32
+    TEST_ASSERT_EQUAL_SCREENSHOT("libs/tiny_ttf_1.lp32.png");
+#endif
 
     lv_obj_del(label);
     lv_tiny_ttf_destroy(font);
