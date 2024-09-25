@@ -67,9 +67,9 @@ struct Fill::Impl
         free(transform);
     }
 
-    void method(DuplicateMethod<Fill>* dup)
+    void method(DuplicateMethod<Fill>* duplicate)
     {
-        this->dup = dup;
+        this->dup = duplicate;
     }
 
     Fill* duplicate()
@@ -97,7 +97,7 @@ struct RadialGradient::Impl
     float r = 0.0f, fr = 0.0f;
 
     Fill* duplicate();
-    Result radial(float cx, float cy, float r, float fx, float fy, float fr);
+    Result radial(float endcircle_cx, float endcircle_cy, float endcircle_r, float startcircle_fx, float startcircle_fy, float startcircle_fr);
 };
 
 

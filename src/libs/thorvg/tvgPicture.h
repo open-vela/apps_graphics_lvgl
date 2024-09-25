@@ -154,15 +154,15 @@ struct Picture::Impl
         return ret;
     }
 
-    bool size(float w, float h)
+    bool size(float width, float height)
     {
-        this->w = w;
-        this->h = h;
+        this->w = width;
+        this->h = height;
         resizing = true;
         return true;
     }
 
-    bool bounds(float* x, float* y, float* w, float* h, bool stroking)
+    bool bounds(float* x, float* y, float* width, float* height, bool stroking)
     {
         if (rm.triangleCnt > 0) {
             auto triangles = rm.triangles;
@@ -187,13 +187,13 @@ struct Picture::Impl
             }
             if (x) *x = min.x;
             if (y) *y = min.y;
-            if (w) *w = max.x - min.x;
-            if (h) *h = max.y - min.y;
+            if (width) *width = max.x - min.x;
+            if (height) *height = max.y - min.y;
         } else {
             if (x) *x = 0;
             if (y) *y = 0;
-            if (w) *w = this->w;
-            if (h) *h = this->h;
+            if (width) *width = this->w;
+            if (height) *height = this->h;
         }
         return true;
     }
@@ -233,11 +233,11 @@ struct Picture::Impl
         return Result::Success;
     }
 
-    Result load(uint32_t* data, uint32_t w, uint32_t h, bool copy)
+    Result load(uint32_t* data, uint32_t width, uint32_t height, bool copy)
     {
         if (paint || surface) return Result::InsufficientCondition;
         if (loader) loader->close();
-        loader = LoaderMgr::loader(data, w, h, copy);
+        loader = LoaderMgr::loader(data, width, height, copy);
         if (!loader) return Result::FailedAllocation;
         this->w = loader->w;
         this->h = loader->h;
@@ -292,17 +292,17 @@ struct Picture::Impl
         return new PictureIterator(paint);
     }
 
-    uint32_t* data(uint32_t* w, uint32_t* h)
+    uint32_t* data(uint32_t* width, uint32_t* height)
     {
         //Try it, If not loaded yet.
         load();
 
         if (loader) {
-            if (w) *w = static_cast<uint32_t>(loader->w);
-            if (h) *h = static_cast<uint32_t>(loader->h);
+            if (width) *width = static_cast<uint32_t>(loader->w);
+            if (height) *height = static_cast<uint32_t>(loader->h);
         } else {
-            if (w) *w = 0;
-            if (h) *h = 0;
+            if (width) *width = 0;
+            if (height) *height = 0;
         }
         if (surface) return surface->buf32;
         else return nullptr;

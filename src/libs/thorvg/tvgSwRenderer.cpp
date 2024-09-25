@@ -181,11 +181,11 @@ struct SwShapeTask : SwTask
 
         //Clip Path
         for (auto clip = clips.data; clip < clips.end(); ++clip) {
-            auto clipper = static_cast<SwTask*>(*clip);
+            auto clippertmp = static_cast<SwTask*>(*clip);
             //Clip shape rle
-            if (shape.rle && !clipper->clip(shape.rle)) goto err;
+            if (shape.rle && !clippertmp->clip(shape.rle)) goto err;
             //Clip stroke rle
-            if (shape.strokeRle && !clipper->clip(shape.strokeRle)) goto err;
+            if (shape.strokeRle && !clippertmp->clip(shape.strokeRle)) goto err;
         }
         return;
 
@@ -775,12 +775,12 @@ void* SwRenderer::prepareCommon(SwTask* task, const RenderTransform* transform, 
 }
 
 
-RenderData SwRenderer::prepare(Surface* surface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
+RenderData SwRenderer::prepare(Surface* psurface, const RenderMesh* mesh, RenderData data, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flags)
 {
     //prepare task
     auto task = static_cast<SwImageTask*>(data);
     if (!task) task = new SwImageTask;
-    task->source = surface;
+    task->source = psurface;
     task->mesh = mesh;
     return prepareCommon(task, transform, clips, opacity, flags);
 }
@@ -796,8 +796,8 @@ RenderData SwRenderer::prepare(const Array<RenderData>& scene, RenderData data, 
     //TODO: Failed threading them. It would be better if it's possible.
     //See: https://github.com/thorvg/thorvg/issues/1409
     //Guarantee composition targets get ready.
-    for (auto task = scene.data; task < scene.end(); ++task) {
-        static_cast<SwTask*>(*task)->done();
+    for (auto taskitr = scene.data; taskitr < scene.end(); ++taskitr) {
+        static_cast<SwTask*>(*taskitr)->done();
     }
     return prepareCommon(task, transform, clips, opacity, flags);
 }

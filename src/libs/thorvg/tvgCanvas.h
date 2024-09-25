@@ -107,8 +107,8 @@ struct Canvas::Impl
             return Result::InvalidArguments;
         //Update all retained paint nodes
         } else {
-            for (auto paint : paints) {
-                paint->pImpl->update(*renderer, nullptr, clips, 255, flag);
+            for (auto paintItem : paints) {
+                paintItem->pImpl->update(*renderer, nullptr, clips, 255, flag);
             }
         }
 

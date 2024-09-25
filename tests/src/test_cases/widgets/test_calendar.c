@@ -210,12 +210,12 @@ void test_calendar_get_btnmatrix(void)
 
 void test_calendar_custom_year_list(void)
 {
-    lv_obj_t  * _test_calendar = lv_calendar_create(lv_screen_active());
+    lv_obj_t * _test_calendar1 = lv_calendar_create(lv_screen_active());
 
-    lv_calendar_header_dropdown_create(_test_calendar);
+    lv_calendar_header_dropdown_create(_test_calendar1);
 
     const char * years = "2024\n2023\n2022\n2021\n2020\n2019";
-    lv_calendar_header_dropdown_set_year_list(_test_calendar, years);
+    lv_calendar_header_dropdown_set_year_list(_test_calendar1, years);
 
     TEST_ASSERT_EQUAL_SCREENSHOT("widgets/calendar_08.png");
 }

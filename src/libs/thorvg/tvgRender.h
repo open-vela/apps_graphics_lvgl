@@ -127,7 +127,7 @@ struct RenderTransform
     bool overriding = false;  //user transform?
 
     bool update();
-    void override(const Matrix& m);
+    void override(const Matrix& matrix);
 
     RenderTransform();
     RenderTransform(const RenderTransform* lhs, const RenderTransform* rhs);
