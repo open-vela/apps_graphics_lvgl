@@ -470,7 +470,7 @@ void test_draw_text(void)
     lv_svg_render_init(&hal);
 
     const char * svg_text_1 = \
-                              "<svg><text x=20 y=60 font-family=\"sans-serif\" font-size=\"24\">"
+                              "<svg><text x=20 y=60 font-size=\"24\">"
                               "hello <tspan fill=\"red\" font-size=\"36\">all</tspan> world"
                               "</text></svg>";
 

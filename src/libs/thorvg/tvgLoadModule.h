@@ -41,10 +41,10 @@ public:
 
     virtual bool open(const string& path) { return false; }
     virtual bool open(const char* data, uint32_t size, bool copy) { return false; }
-    virtual bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) { return false; }
+    virtual bool open(const uint32_t* data, uint32_t width, uint32_t height, bool copy) { return false; }
 
     //Override this if the vector-format has own resizing policy.
-    virtual bool resize(Paint* paint, float w, float h) { return false; }
+    virtual bool resize(Paint* paint, float width, float height) { return false; }
 
     virtual bool animatable() { return false; }  //true if this loader supports animation.
     virtual void sync() {};  //finish immediately if any async update jobs.

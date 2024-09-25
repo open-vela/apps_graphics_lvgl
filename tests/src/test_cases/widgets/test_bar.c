@@ -163,54 +163,54 @@ void test_bar_normal(void)
     lv_obj_set_style_bg_opa(screen, LV_OPA_100, 0);
     lv_obj_set_style_pad_all(screen, 0, 0);
 
-    lv_obj_t * test_bar = lv_bar_create(screen);
-    lv_obj_set_style_radius(test_bar, 100, 0);
-    lv_obj_set_style_radius(test_bar, 100, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(test_bar, LV_OPA_30, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, bg_color, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, indic_color, LV_PART_INDICATOR);
-    lv_bar_set_range(test_bar, 0, 100);
-    lv_bar_set_value(test_bar, 30, LV_ANIM_OFF);
-    lv_obj_set_size(test_bar, w, h);
-    lv_obj_align(test_bar, LV_ALIGN_TOP_LEFT, x, y);
+    lv_obj_t * test_bar1 = lv_bar_create(screen);
+    lv_obj_set_style_radius(test_bar1, 100, 0);
+    lv_obj_set_style_radius(test_bar1, 100, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(test_bar1, LV_OPA_30, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, bg_color, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, indic_color, LV_PART_INDICATOR);
+    lv_bar_set_range(test_bar1, 0, 100);
+    lv_bar_set_value(test_bar1, 30, LV_ANIM_OFF);
+    lv_obj_set_size(test_bar1, w, h);
+    lv_obj_align(test_bar1, LV_ALIGN_TOP_LEFT, x, y);
     y += h + h_gap;
 
-    test_bar = lv_bar_create(screen);
-    lv_obj_set_style_radius(test_bar, 100, 0);
-    lv_obj_set_style_radius(test_bar, 100, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(test_bar, LV_OPA_30, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, bg_color, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, indic_color, LV_PART_INDICATOR);
-    lv_bar_set_range(test_bar, 0, 100);
-    lv_bar_set_value(test_bar, 30, LV_ANIM_OFF);
-    lv_obj_set_size(test_bar, w, h);
-    lv_obj_align(test_bar, LV_ALIGN_TOP_LEFT, x, y);
-    lv_obj_set_style_base_dir(test_bar, LV_BASE_DIR_RTL, 0);
+    test_bar1 = lv_bar_create(screen);
+    lv_obj_set_style_radius(test_bar1, 100, 0);
+    lv_obj_set_style_radius(test_bar1, 100, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(test_bar1, LV_OPA_30, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, bg_color, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, indic_color, LV_PART_INDICATOR);
+    lv_bar_set_range(test_bar1, 0, 100);
+    lv_bar_set_value(test_bar1, 30, LV_ANIM_OFF);
+    lv_obj_set_size(test_bar1, w, h);
+    lv_obj_align(test_bar1, LV_ALIGN_TOP_LEFT, x, y);
+    lv_obj_set_style_base_dir(test_bar1, LV_BASE_DIR_RTL, 0);
     y += h + h_gap;
 
     x = 150;
-    test_bar = lv_bar_create(screen);
-    lv_obj_set_style_radius(test_bar, 100, 0);
-    lv_obj_set_style_radius(test_bar, 100, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(test_bar, LV_OPA_30, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, bg_color, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, indic_color, LV_PART_INDICATOR);
-    lv_bar_set_range(test_bar, 0, 100);
-    lv_bar_set_value(test_bar, 30, LV_ANIM_OFF);
-    lv_obj_set_size(test_bar, h, w);
-    lv_obj_align(test_bar, LV_ALIGN_TOP_LEFT, x, y);
+    test_bar1 = lv_bar_create(screen);
+    lv_obj_set_style_radius(test_bar1, 100, 0);
+    lv_obj_set_style_radius(test_bar1, 100, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(test_bar1, LV_OPA_30, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, bg_color, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, indic_color, LV_PART_INDICATOR);
+    lv_bar_set_range(test_bar1, 0, 100);
+    lv_bar_set_value(test_bar1, 30, LV_ANIM_OFF);
+    lv_obj_set_size(test_bar1, h, w);
+    lv_obj_align(test_bar1, LV_ALIGN_TOP_LEFT, x, y);
     x += h + w_gap;
 
-    test_bar = lv_bar_create(screen);
-    lv_obj_set_style_radius(test_bar, 100, 0);
-    lv_obj_set_style_radius(test_bar, 100, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(test_bar, LV_OPA_30, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, bg_color, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, indic_color, LV_PART_INDICATOR);
-    lv_bar_set_range(test_bar, 100, 0);
-    lv_bar_set_value(test_bar, 30, LV_ANIM_OFF);
-    lv_obj_set_size(test_bar, h, w);
-    lv_obj_align(test_bar, LV_ALIGN_TOP_LEFT, x, y);
+    test_bar1 = lv_bar_create(screen);
+    lv_obj_set_style_radius(test_bar1, 100, 0);
+    lv_obj_set_style_radius(test_bar1, 100, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(test_bar1, LV_OPA_30, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, bg_color, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, indic_color, LV_PART_INDICATOR);
+    lv_bar_set_range(test_bar1, 100, 0);
+    lv_bar_set_value(test_bar1, 30, LV_ANIM_OFF);
+    lv_obj_set_size(test_bar1, h, w);
+    lv_obj_align(test_bar1, LV_ALIGN_TOP_LEFT, x, y);
     TEST_ASSERT_EQUAL_SCREENSHOT("widgets/bar_1.png");
 }
 
@@ -331,43 +331,43 @@ void test_bar_indicator_should_be_drawn_towards_the_min_range_side_after_setting
 static lv_obj_t * styled_bar_create(bool ver, int32_t start_value, int32_t end_value, lv_grad_dir_t grad_dir,
                                     int32_t bg_radius, int32_t indic_radius, int32_t bg_pad)
 {
-    lv_obj_t * test_bar = lv_bar_create(lv_screen_active());
-    if(ver) lv_obj_set_size(test_bar, 20, 100);
-    else lv_obj_set_size(test_bar, 100, 20);
-    lv_bar_set_range(test_bar, 0, 100);
-    lv_bar_set_mode(test_bar, LV_BAR_MODE_RANGE);
-    lv_bar_set_value(test_bar, end_value, LV_ANIM_OFF);
-    lv_bar_set_start_value(test_bar, start_value, LV_ANIM_OFF);
+    lv_obj_t * test_bar1 = lv_bar_create(lv_screen_active());
+    if(ver) lv_obj_set_size(test_bar1, 20, 100);
+    else lv_obj_set_size(test_bar1, 100, 20);
+    lv_bar_set_range(test_bar1, 0, 100);
+    lv_bar_set_mode(test_bar1, LV_BAR_MODE_RANGE);
+    lv_bar_set_value(test_bar1, end_value, LV_ANIM_OFF);
+    lv_bar_set_start_value(test_bar1, start_value, LV_ANIM_OFF);
 
-    lv_obj_set_style_bg_opa(test_bar, 255, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(test_bar, lv_color_hex3(0x0ff), LV_PART_MAIN);
-    lv_obj_set_style_radius(test_bar, bg_radius, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(test_bar, bg_pad, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(test_bar1, 255, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(test_bar1, lv_color_hex3(0x0ff), LV_PART_MAIN);
+    lv_obj_set_style_radius(test_bar1, bg_radius, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(test_bar1, bg_pad, LV_PART_MAIN);
 
-    lv_obj_set_style_bg_opa(test_bar, LV_OPA_70, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(test_bar, lv_color_hex3(0xf0f), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_grad_color(test_bar, lv_color_hex3(0x8f8), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_grad_dir(test_bar, grad_dir, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_opa(test_bar1, LV_OPA_70, LV_PART_INDICATOR);
+    lv_obj_set_style_bg_color(test_bar1, lv_color_hex3(0xf0f), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_grad_color(test_bar1, lv_color_hex3(0x8f8), LV_PART_INDICATOR);
+    lv_obj_set_style_bg_grad_dir(test_bar1, grad_dir, LV_PART_INDICATOR);
 
-    lv_obj_set_style_border_width(test_bar, 2, LV_PART_INDICATOR);
-    lv_obj_set_style_border_color(test_bar, lv_color_hex3(0x0f0), LV_PART_INDICATOR);
-    lv_obj_set_style_border_opa(test_bar, LV_OPA_70, LV_PART_INDICATOR);
-    lv_obj_set_style_outline_width(test_bar, 2, LV_PART_INDICATOR);
-    lv_obj_set_style_outline_pad(test_bar, 4, LV_PART_INDICATOR);
-    lv_obj_set_style_outline_color(test_bar, lv_color_hex3(0xff0), LV_PART_INDICATOR);
-    lv_obj_set_style_outline_opa(test_bar, LV_OPA_70, LV_PART_INDICATOR);
-    lv_obj_set_style_shadow_width(test_bar, 20, LV_PART_INDICATOR);
-    lv_obj_set_style_shadow_spread(test_bar, 5, LV_PART_INDICATOR);
-    lv_obj_set_style_shadow_color(test_bar, lv_color_hex3(0xf00), LV_PART_INDICATOR);
-    lv_obj_set_style_shadow_opa(test_bar, LV_OPA_70, LV_PART_INDICATOR);
-    lv_obj_set_style_radius(test_bar, indic_radius, LV_PART_INDICATOR);
+    lv_obj_set_style_border_width(test_bar1, 2, LV_PART_INDICATOR);
+    lv_obj_set_style_border_color(test_bar1, lv_color_hex3(0x0f0), LV_PART_INDICATOR);
+    lv_obj_set_style_border_opa(test_bar1, LV_OPA_70, LV_PART_INDICATOR);
+    lv_obj_set_style_outline_width(test_bar1, 2, LV_PART_INDICATOR);
+    lv_obj_set_style_outline_pad(test_bar1, 4, LV_PART_INDICATOR);
+    lv_obj_set_style_outline_color(test_bar1, lv_color_hex3(0xff0), LV_PART_INDICATOR);
+    lv_obj_set_style_outline_opa(test_bar1, LV_OPA_70, LV_PART_INDICATOR);
+    lv_obj_set_style_shadow_width(test_bar1, 20, LV_PART_INDICATOR);
+    lv_obj_set_style_shadow_spread(test_bar1, 5, LV_PART_INDICATOR);
+    lv_obj_set_style_shadow_color(test_bar1, lv_color_hex3(0xf00), LV_PART_INDICATOR);
+    lv_obj_set_style_shadow_opa(test_bar1, LV_OPA_70, LV_PART_INDICATOR);
+    lv_obj_set_style_radius(test_bar1, indic_radius, LV_PART_INDICATOR);
 
-    return test_bar;
+    return test_bar1;
 }
 
 static void render_test_screen_create(bool ver, lv_grad_dir_t grad_dir, const char * ref_img_path)
 {
-    lv_obj_t * test_bar_active_screen = lv_screen_active();
+    test_bar_active_screen = lv_screen_active();
     lv_obj_clean(test_bar_active_screen);
 
     lv_obj_set_flex_flow(test_bar_active_screen, ver ? LV_FLEX_FLOW_ROW_WRAP : LV_FLEX_FLOW_COLUMN_WRAP);

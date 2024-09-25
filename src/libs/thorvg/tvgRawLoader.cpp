@@ -46,18 +46,18 @@ RawLoader::~RawLoader()
 }
 
 
-bool RawLoader::open(const uint32_t* data, uint32_t w, uint32_t h, bool copy)
+bool RawLoader::open(const uint32_t* data, uint32_t width, uint32_t height, bool bcopy)
 {
-    if (!data || w == 0 || h == 0) return false;
+    if (!data || width == 0 || height == 0) return false;
 
-    this->w = (float)w;
-    this->h = (float)h;
-    this->copy = copy;
+    this->w = (float)width;
+    this->h = (float)height;
+    this->copy = bcopy;
 
-    if (copy) {
-        content = (uint32_t*)malloc(sizeof(uint32_t) * w * h);
+    if (bcopy) {
+        content = (uint32_t*)malloc(sizeof(uint32_t) * width * height);
         if (!content) return false;
-        memcpy((void*)content, data, sizeof(uint32_t) * w * h);
+        memcpy((void*)content, data, sizeof(uint32_t) * width * height);
     }
     else content = const_cast<uint32_t*>(data);
 
