@@ -35,9 +35,9 @@
 /* External Class Implementation                                        */
 /************************************************************************/
 
-void RenderTransform::override(const Matrix& m)
+void RenderTransform::override(const Matrix& matrix)
 {
-    this->m = m;
+    this->m = matrix;
     overriding = true;
 }
 
