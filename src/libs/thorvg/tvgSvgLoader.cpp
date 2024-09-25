@@ -3674,18 +3674,18 @@ bool SvgLoader::header()
 }
 
 
-bool SvgLoader::open(const char* data, uint32_t size, bool copy)
+bool SvgLoader::open(const char* data, uint32_t size32, bool bcopy)
 {
     clear();
 
-    if (copy) {
-        content = (char*)malloc(size);
+    if (bcopy) {
+        content = (char*)malloc(size32);
         if (!content) return false;
-        memcpy((char*)content, data, size);
+        memcpy((char*)content, data, size32);
     } else content = data;
 
-    this->size = size;
-    this->copy = copy;
+    this->size = size32;
+    this->copy = bcopy;
 
     return header();
 }
@@ -3713,12 +3713,12 @@ bool SvgLoader::open(const string& path)
 }
 
 
-bool SvgLoader::resize(Paint* paint, float w, float h)
+bool SvgLoader::resize(Paint* paint, float width, float height)
 {
     if (!paint) return false;
 
-    auto sx = w / this->w;
-    auto sy = h / this->h;
+    auto sx = width / this->w;
+    auto sy = height / this->h;
     Matrix m = {sx, 0, 0, 0, sy, 0, 0, 0, 1};
     paint->transform(m);
 

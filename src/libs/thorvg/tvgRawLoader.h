@@ -35,7 +35,7 @@ public:
     ~RawLoader();
 
     using LoadModule::open;
-    bool open(const uint32_t* data, uint32_t w, uint32_t h, bool copy) override;
+    bool open(const uint32_t* data, uint32_t width, uint32_t height, bool bcopy) override;
     bool read() override;
     bool close() override;
 

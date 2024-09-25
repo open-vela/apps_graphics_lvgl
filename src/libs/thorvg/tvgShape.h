@@ -68,16 +68,16 @@ struct Shape::Impl
         return ret;
     }
 
-    bool needComposition(uint8_t opacity)
+    bool needComposition(uint8_t opa)
     {
-        if (opacity == 0) return false;
+        if (opa == 0) return false;
 
         //Shape composition is only necessary when stroking & fill are valid.
         if (!rs.stroke || rs.stroke->width < FLT_EPSILON || (!rs.stroke->fill && rs.stroke->color[3] == 0)) return false;
         if (!rs.fill && rs.color[3] == 0) return false;
 
         //translucent fill & stroke
-        if (opacity < 255) return true;
+        if (opa < 255) return true;
 
         //Composition test
         const Paint* target;
@@ -88,16 +88,16 @@ struct Shape::Impl
         return true;
     }
 
-    RenderData update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+    RenderData update(RenderMethod& renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opa, RenderUpdateFlag pFlag, bool clipper)
     {
-        if ((needComp = needComposition(opacity))) {
+        if ((needComp = needComposition(opa))) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermeidate composition with that opacity value. */
-            this->opacity = opacity;
-            opacity = 255;
+            this->opacity = opa;
+            opa = 255;
         }
 
-        rd = renderer.prepare(rs, rd, transform, clips, opacity, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
+        rd = renderer.prepare(rs, rd, transform, clips, opa, static_cast<RenderUpdateFlag>(pFlag | flag), clipper);
         flag = RenderUpdateFlag::None;
         return rd;
     }
@@ -336,9 +336,9 @@ struct Shape::Impl
         return true;
     }
 
-    void update(RenderUpdateFlag flag)
+    void update(RenderUpdateFlag updateflag)
     {
-        this->flag |= flag;
+        this->flag |= updateflag;
     }
 
     Paint* duplicate()

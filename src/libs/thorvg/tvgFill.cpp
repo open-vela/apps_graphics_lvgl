@@ -45,16 +45,16 @@ Fill* RadialGradient::Impl::duplicate()
 }
 
 
-Result RadialGradient::Impl::radial(float cx, float cy, float r, float fx, float fy, float fr)
+Result RadialGradient::Impl::radial(float endcircle_cx, float endcircle_cy, float endcircle_r, float startcircle_fx, float startcircle_fy, float startcircle_fr)
 {
     if (r < 0 || fr < 0) return Result::InvalidArguments;
 
-    this->cx = cx;
-    this->cy = cy;
-    this->r = r;
-    this->fx = fx;
-    this->fy = fy;
-    this->fr = fr;
+    this->cx = endcircle_cx;
+    this->cy = endcircle_cy;
+    this->r = endcircle_r;
+    this->fx = startcircle_fx;
+    this->fy = startcircle_fy;
+    this->fr = startcircle_fr;
 
     return Result::Success;
 };

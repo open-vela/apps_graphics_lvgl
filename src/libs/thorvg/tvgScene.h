@@ -82,32 +82,32 @@ struct Scene::Impl
         }
     }
 
-    bool dispose(RenderMethod& renderer)
+    bool dispose(RenderMethod& rendermethod)
     {
         for (auto paint : paints) {
-            paint->pImpl->dispose(renderer);
+            paint->pImpl->dispose(rendermethod);
         }
 
-        renderer.dispose(rd);
+        rendermethod.dispose(rd);
         this->renderer = nullptr;
         this->rd = nullptr;
 
         return true;
     }
 
-    bool needComposition(uint8_t opacity)
+    bool needComposition(uint8_t opa)
     {
-        if (opacity == 0 || paints.empty()) return false;
+        if (opa == 0 || paints.empty()) return false;
 
-        //Masking may require composition (even if opacity == 255)
+        //Masking may require composition (even if opa == 255)
         auto compMethod = scene->composite(nullptr);
         if (compMethod != CompositeMethod::None && compMethod != CompositeMethod::ClipPath) return true;
 
-        //Blending may require composition (even if opacity == 255)
+        //Blending may require composition (even if opa == 255)
         if (scene->blend() != BlendMethod::Normal) return true;
 
         //Half translucent requires intermediate composition.
-        if (opacity == 255) return false;
+        if (opa == 255) return false;
 
         //If scene has several children or only scene, it may require composition.
         //OPTIMIZE: the bitmap type of the picture would not need the composition.
@@ -117,52 +117,52 @@ struct Scene::Impl
         return true;
     }
 
-    RenderData update(RenderMethod &renderer, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag flag, bool clipper)
+    RenderData update(RenderMethod &rendermethod, const RenderTransform* transform, Array<RenderData>& clips, uint8_t opa, RenderUpdateFlag flag, bool clipper)
     {
-        if ((needComp = needComposition(opacity))) {
+        if ((needComp = needComposition(opa))) {
             /* Overriding opacity value. If this scene is half-translucent,
                It must do intermeidate composition with that opacity value. */
-            this->opacity = opacity;
-            opacity = 255;
+            this->opacity = opa;
+            opa = 255;
         }
 
-        this->renderer = &renderer;
+        this->renderer = &rendermethod;
 
         if (clipper) {
             Array<RenderData> rds;
             rds.reserve(paints.size());
             for (auto paint : paints) {
-                rds.push(paint->pImpl->update(renderer, transform, clips, opacity, flag, true));
+                rds.push(paint->pImpl->update(rendermethod, transform, clips, opa, flag, true));
             }
-            rd = renderer.prepare(rds, rd, transform, clips, opacity, flag);
+            rd = rendermethod.prepare(rds, rd, transform, clips, opa, flag);
             return rd;
         } else {
             for (auto paint : paints) {
-                paint->pImpl->update(renderer, transform, clips, opacity, flag, false);
+                paint->pImpl->update(rendermethod, transform, clips, opa, flag, false);
             }
             return nullptr;
         }
     }
 
-    bool render(RenderMethod& renderer)
+    bool render(RenderMethod& rendermethod)
     {
         Compositor* cmp = nullptr;
 
         if (needComp) {
-            cmp = renderer.target(bounds(renderer), renderer.colorSpace());
-            renderer.beginComposite(cmp, CompositeMethod::None, opacity);
+            cmp = rendermethod.target(bounds(rendermethod), rendermethod.colorSpace());
+            rendermethod.beginComposite(cmp, CompositeMethod::None, opacity);
         }
 
         for (auto paint : paints) {
-            if (!paint->pImpl->render(renderer)) return false;
+            if (!paint->pImpl->render(rendermethod)) return false;
         }
 
-        if (cmp) renderer.endComposite(cmp);
+        if (cmp) rendermethod.endComposite(cmp);
 
         return true;
     }
 
-    RenderRegion bounds(RenderMethod& renderer) const
+    RenderRegion bounds(RenderMethod& rendermethod) const
     {
         if (paints.empty()) return {0, 0, 0, 0};
 
@@ -172,7 +172,7 @@ struct Scene::Impl
         int32_t y2 = 0;
 
         for (auto paint : paints) {
-            auto region = paint->pImpl->bounds(renderer);
+            auto region = paint->pImpl->bounds(rendermethod);
 
             //Merge regions
             if (region.x < x1) x1 = region.x;

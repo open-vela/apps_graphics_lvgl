@@ -188,7 +188,7 @@ bool Paint::Impl::render(RenderMethod& renderer)
 }
 
 
-RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opacity, RenderUpdateFlag pFlag, bool clipper)
+RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pTransform, Array<RenderData>& clips, uint8_t opa, RenderUpdateFlag pFlag, bool clipper)
 {
     if (renderFlag & RenderUpdateFlag::Transform) {
         if (!rTransform) return nullptr;
@@ -245,7 +245,7 @@ RenderData Paint::Impl::update(RenderMethod& renderer, const RenderTransform* pT
     RenderData rd = nullptr;
     auto newFlag = static_cast<RenderUpdateFlag>(pFlag | renderFlag);
     renderFlag = RenderUpdateFlag::None;
-    opacity = MULTIPLY(opacity, this->opacity);
+    opa = MULTIPLY(opa, this->opacity);
 
     if (rTransform && pTransform) {
         RenderTransform outTransform(pTransform, rTransform);
