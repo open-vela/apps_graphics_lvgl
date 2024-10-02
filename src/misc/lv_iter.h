@@ -48,7 +48,7 @@ lv_iter_t * lv_iter_create(void * instance, uint32_t elem_size, uint32_t context
  * @param iter           `lv_iter_t` object create before
  * @return the iter context
  */
-void * lv_iter_get_context(lv_iter_t * iter);
+void * lv_iter_get_context(const lv_iter_t * iter);
 
 /**
  * Destroy the iterator object, and release the context. Other resources allocated by the user are not released.
