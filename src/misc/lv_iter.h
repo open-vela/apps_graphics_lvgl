@@ -16,7 +16,6 @@ extern "C" {
  *********************/
 
 #include "lv_types.h"
-#include "lv_assert.h"
 
 /*********************
  *      DEFINES
@@ -35,7 +34,7 @@ typedef void (*lv_iter_inspect_cb)(void * elem);
 
 lv_iter_t * lv_iter_create(void * instance, uint32_t elem_size, uint32_t context_size, lv_iter_next_cb next_cb);
 
-void * lv_iter_get_context(lv_iter_t * iter);
+void * lv_iter_get_context(const lv_iter_t * iter);
 
 void lv_iter_destroy(lv_iter_t * iter);
 
