@@ -469,6 +469,7 @@ static void draw_main(lv_event_t * e)
         area_ok = _lv_area_intersect(&mask_sel, &layer->_clip_area, &sel_area);
         if(area_ok) {
             lv_obj_t * label = get_label(obj);
+            if(lv_label_get_recolor(label)) label_dsc.flag |= LV_TEXT_FLAG_RECOLOR;
 
             /*Get the size of the "selected text"*/
             lv_point_t res_p;
@@ -524,6 +525,7 @@ static void draw_label(lv_event_t * e)
     lv_draw_label_dsc_init(&label_draw_dsc);
     label_draw_dsc.base.layer = layer;
     lv_obj_init_draw_label_dsc(roller, LV_PART_MAIN, &label_draw_dsc);
+    if(lv_label_get_recolor(label_obj)) label_draw_dsc.flag |= LV_TEXT_FLAG_RECOLOR;
 
     /*If the roller has shadow or outline it has some ext. draw size
      *therefore the label can overflow the roller's boundaries.
