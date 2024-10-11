@@ -171,7 +171,7 @@ static lv_result_t word_iter_next_cb(void * instance, void * context, void * ele
         lv_text_word_process_word_type_t word_type_next = text_word_type_get(ch_next);
 
         word_pos_end += char_len;
-        word_width += char_width;
+        word_width += char_width + ctx->letter_space;
 
         if(word_width + char_width_next > ctx->remaining_width) {
             if(brk_pos == UINT32_MAX) {
