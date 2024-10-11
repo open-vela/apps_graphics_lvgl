@@ -58,6 +58,7 @@ void lv_draw_label_dsc_init(lv_draw_label_dsc_t * dsc)
     lv_memzero(dsc, sizeof(lv_draw_label_dsc_t));
     dsc->opa = LV_OPA_COVER;
     dsc->color = lv_color_black();
+    dsc->text_length = LV_TEXT_LEN_MAX;
     dsc->font = LV_FONT_DEFAULT;
     dsc->sel_start = LV_DRAW_LABEL_NO_TXT_SEL;
     dsc->sel_end = LV_DRAW_LABEL_NO_TXT_SEL;
@@ -204,6 +205,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         pos.y += dsc->hint->y;
     }
 
+    uint32_t remaining_len = dsc->text_length;
     lv_text_line_process_line_info_t line_info;
     lv_iter_t * line_iter = lv_text_line_process_iter_create(&dsc->text[line_start], font, w, dsc->letter_space, 0, true);
     uint32_t line_end = 0;
@@ -211,12 +213,14 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
     /*Go the first visible line*/
     while(pos.y + line_height_font < draw_unit->clip_area->y1) {
         /*Go to next line*/
+
         if(lv_iter_next(line_iter, &line_info) == LV_RESULT_INVALID) {
             lv_text_line_process_iter_destroy(line_iter);
             return;
         }
         line_start = line_info.pos.start;
         line_end = line_info.pos.brk;
+        remaining_len -= line_end - line_start;
 
         pos.y += line_height;
 
@@ -265,7 +269,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
     int32_t letter_w;
 
     /*Write out all lines*/
-    while(lv_iter_next(line_iter, &line_info) == LV_RESULT_OK) {
+    while(remaining_len && lv_iter_next(line_iter, &line_info) == LV_RESULT_OK) {
         line_start = line_info.pos.start;
         line_end = line_info.pos.brk;
 
@@ -297,7 +301,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         const char * bidi_txt = dsc->text + line_start;
 #endif
 
-        while(i < line_end - line_start) {
+        while(i < remaining_len && i < line_end - line_start) {
             uint32_t logical_char_pos = 0;
             if(sel_start != 0xFFFF && sel_end != 0xFFFF) {
 #if LV_USE_BIDI
@@ -364,6 +368,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         lv_free(bidi_txt);
         bidi_txt = NULL;
 #endif
+        remaining_len -= line_end - line_start;
 
         /*Go the next line position*/
         pos.y += line_height;
