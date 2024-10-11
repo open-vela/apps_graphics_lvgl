@@ -520,6 +520,9 @@
  */
 #define LV_USE_TEXTFLOW 0
 
+/*The control character to use for signaling text recoloring*/
+#define LV_TXT_COLOR_CMD "#"
+
 /*==================
  * WIDGETS
  *================*/

@@ -81,6 +81,7 @@ typedef struct {
     lv_point_t offset; /*Text draw position offset*/
     lv_label_long_mode_t long_mode : 3; /*Determine what to do with the long texts*/
     uint8_t static_txt : 1;             /*Flag to indicate the text is static*/
+    uint8_t recolor : 1;                /**< Enable in-line letter re-coloring*/
     uint8_t expand : 1;                 /*Ignore real width (used by the library with LV_LABEL_LONG_SCROLL)*/
     uint8_t dot_tmp_alloc : 1;          /*1: dot is allocated, 0: dot directly holds up to 4 chars*/
     uint8_t invalid_size_cache : 1;     /*1: Recalculate size and update cache*/
@@ -148,6 +149,14 @@ void lv_label_set_text_selection_start(lv_obj_t * obj, uint32_t index);
  */
 void lv_label_set_text_selection_end(lv_obj_t * obj, uint32_t index);
 
+/**
+ * Enable the recoloring by in-line commands
+ * @param obj           pointer to a label object
+ * @param en            true: enable recoloring, false: disable
+ * @example "This is a #ff0000 red# word"
+ */
+void lv_label_set_recolor(lv_obj_t * obj, bool en);
+
 /*=====================
  * Getter functions
  *====================*/
@@ -206,6 +215,13 @@ uint32_t lv_label_get_text_selection_start(const lv_obj_t * obj);
  * @return          selection end index. `LV_LABEL_TXT_SEL_OFF` if nothing is selected.
  */
 uint32_t lv_label_get_text_selection_end(const lv_obj_t * obj);
+
+/**
+ * @brief Get the recoloring attribute
+ * @param obj       pointer to a label object.
+ * @return          true: recoloring is enabled, false: recoloring is disabled
+ */
+bool lv_label_get_recolor(const lv_obj_t * obj);
 
 /*=====================
  * Other functions
