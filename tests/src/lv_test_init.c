@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <assert.h>
 
 #define HOR_RES 800
 #define VER_RES 480
@@ -104,7 +105,11 @@ static void test_log_print_cb(lv_log_level_t level, const char * buf)
 
 void lv_test_assert_fail(void)
 {
+    /*Flush the output*/
+    fflush(stdout);
+
     /*Handle error on test*/
+    assert(false);
 }
 
 #endif
