@@ -88,6 +88,7 @@ void lv_draw_pxp_init(void)
     draw_pxp_unit->base_unit.evaluate_cb = _pxp_evaluate;
     draw_pxp_unit->base_unit.dispatch_cb = _pxp_dispatch;
     draw_pxp_unit->base_unit.delete_cb = _pxp_delete;
+    draw_pxp_unit->base_unit.name = "NXP_PXP";
 
     lv_pxp_init();
 
