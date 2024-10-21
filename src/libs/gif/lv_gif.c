@@ -82,6 +82,11 @@ void lv_gif_resume(lv_obj_t * obj)
     LV_GIFDEC_RESUME(gif_obj->dec_ctx);
 }
 
+bool lv_gif_get_size(const char * src, uint16_t * w, uint16_t * h)
+{
+    return LV_GIFDEC_GET_SIZE(src, w, h);
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/

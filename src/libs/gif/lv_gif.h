@@ -69,6 +69,15 @@ void lv_gif_pause(lv_obj_t * obj);
  */
 void lv_gif_resume(lv_obj_t * obj);
 
+/**
+ * Get gif width & height
+ * @param src pointer to a gif file
+ * @param w pointer to store width
+ * @param h pointer to store height
+ * @return true: success; false: failed
+ */
+bool lv_gif_get_size(const char * src, uint16_t * w, uint16_t * h);
+
 /**********************
  *      MACROS
  **********************/
