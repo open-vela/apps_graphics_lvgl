@@ -143,6 +143,23 @@ void lv_gifdec_close(void * ctx)
     lv_free(dec_ctx);
 }
 
+bool lv_gifdec_get_size(const char * src, uint16_t * w, uint16_t * h)
+{
+    bool res = false;
+    gd_GIF * gif = gd_open_gif_file(src);
+    if(gif != NULL) {
+        *w = gif->width;
+        *h = gif->height;
+        gd_close_gif(gif);
+        res = true;
+    }
+    else {
+        *w = 0;
+        *h = 0;
+    }
+    return res;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/

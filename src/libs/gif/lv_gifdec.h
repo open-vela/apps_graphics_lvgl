@@ -46,6 +46,10 @@ extern "C" {
 #define LV_GIFDEC_CLOSE(ctx) lv_gifdec_close(ctx)
 #endif
 
+#ifndef LV_GIFDEC_GET_SIZE
+#define LV_GIFDEC_GET_SIZE(src, w, h) lv_gifdec_get_size(src, w, h)
+#endif
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -60,6 +64,7 @@ void lv_gifdec_pause(void * ctx);
 void lv_gifdec_resume(void * ctx);
 void lv_gifdec_restart(void * ctx);
 void lv_gifdec_close(void * ctx);
+bool lv_gifdec_get_size(const char * src, uint16_t * w, uint16_t * h);
 
 #endif /*!LV_USE_CUSTOM_GIF*/
 #endif /*LV_USE_GIF*/
