@@ -15,14 +15,14 @@ To facilitate debugging LVGL with GDB, a GDB plugin is provided. This plugin can
 The GDB plugin can be used with any target where GDB is available. For example, you can use it to debug a device connected to a PC via JLink, which provides a GDB server. Additionally, if your device crashes and you have a core dump, you can use GDB to analyze the core dump.
 To load the LVGL GDB plugin within GDB's command line, type the following command:
 
-``source lvgl/scripts/gdb/lvgl.py``
+``source lvgl/scripts/gdb/gdbinit.py``
 
 
 Example of usage:
 
 .. code:: bash
 
-    (gdb) source lvgl/scripts/gdb/lvgl.py
+    (gdb) source lvgl/scripts/gdb/gdbinit.py
 
     (gdb) dump obj -L 2
     obj@0x60700000dd10 (0,0,799,599)
