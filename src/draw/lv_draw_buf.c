@@ -566,6 +566,8 @@ lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expa
 
     if(!LV_COLOR_FORMAT_IS_INDEXED(cf)) {
         new_draw_buf = lv_draw_buf_create(expand_width, expand_height, cf, LV_STRIDE_AUTO);
+        if(new_draw_buf == NULL) return NULL;
+
         lv_draw_buf_clear(new_draw_buf, NULL);
     }
     else if(cf == LV_COLOR_FORMAT_I8) {
@@ -583,10 +585,13 @@ lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expa
         if(color_index < 0) {
             LV_LOG_WARN("image has no transparent color in palette!, use RGBA8888");
             new_draw_buf = lv_draw_buf_create(expand_width, expand_height, LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
+            if(new_draw_buf == NULL) return NULL;
+
             lv_draw_buf_clear(new_draw_buf, NULL);
         }
         else {
             new_draw_buf = lv_draw_buf_create(expand_width, expand_height, cf, LV_STRIDE_AUTO);
+            if(new_draw_buf == NULL) return NULL;
 
             /*clear buffer*/
             uint8_t * dest = lv_draw_buf_goto_xy(new_draw_buf, 0, 0);
