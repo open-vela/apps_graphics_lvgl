@@ -351,6 +351,20 @@ static Tvg_Blend_Method _lv_blend_to_tvg(lv_vector_blend_t blend)
             return TVG_BLEND_METHOD_DARKEN;
         case LV_VECTOR_BLEND_LIGHTEN:
             return TVG_BLEND_METHOD_LIGHTEN;
+        case LV_VECTOR_BLEND_HARDLIGHT:
+            return TVG_BLEND_METHOD_HARDLIGHT;
+        case LV_VECTOR_BLEND_SOFTLIGHT:
+            return TVG_BLEND_METHOD_SOFTLIGHT;
+        case LV_VECTOR_BLEND_OVERLAY:
+            return TVG_BLEND_METHOD_OVERLAY;
+        case LV_VECTOR_BLEND_COLORBURN:
+            return TVG_BLEND_METHOD_COLORBURN;
+        case LV_VECTOR_BLEND_COLORDODGE:
+            return TVG_BLEND_METHOD_COLORDODGE;
+        case LV_VECTOR_BLEND_DIFFERENCE:
+            return TVG_BLEND_METHOD_DIFFERENCE;
+        case LV_VECTOR_BLEND_EXCLUSION:
+            return TVG_BLEND_METHOD_EXCLUSION;
         case LV_VECTOR_BLEND_SRC_IN:
         case LV_VECTOR_BLEND_DST_OVER:
         case LV_VECTOR_BLEND_DST_IN:
