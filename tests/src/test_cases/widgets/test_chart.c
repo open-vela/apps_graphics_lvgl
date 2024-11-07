@@ -45,7 +45,7 @@ void test_chart_set_point_count_increments(void)
     lv_chart_set_point_count(chart, new_point_count);
 
     TEST_ASSERT_EQUAL_MESSAGE(new_point_count, lv_chart_get_point_count(chart),
-        "Actual points in chart are less than expected");
+                              "Actual points in chart are less than expected");
     lv_chart_remove_series(chart, red_series);
 }
 
@@ -59,7 +59,7 @@ void test_chart_set_point_count_decrements(void)
     lv_chart_set_point_count(chart, new_point_count);
 
     TEST_ASSERT_EQUAL_MESSAGE(new_point_count, lv_chart_get_point_count(chart),
-        "Actual points in chart are more than expected");
+                              "Actual points in chart are more than expected");
     lv_chart_remove_series(chart, red_series);
 }
 
@@ -73,7 +73,7 @@ void test_chart_set_point_count_as_same(void)
     lv_chart_set_point_count(chart, new_point_count);
 
     TEST_ASSERT_EQUAL_MESSAGE(new_point_count, lv_chart_get_point_count(chart),
-        "Actual points is not equal to original point count");
+                              "Actual points is not equal to original point count");
     lv_chart_remove_series(chart, red_series);
 }
 
@@ -118,13 +118,14 @@ static void chart_event_cb(lv_event_t * e)
         if(chart_type == LV_CHART_TYPE_LINE && base_dsc->part != LV_PART_INDICATOR)  return;
         if(chart_type == LV_CHART_TYPE_BAR && base_dsc->part != LV_PART_ITEMS)  return;
 
-        const lv_chart_series_t* ser = NULL;
-        if (chart_type == LV_CHART_TYPE_LINE) {
-            for (uint32_t i = 0; i < base_dsc->id1 + 1; i++) {
+        const lv_chart_series_t * ser = NULL;
+        if(chart_type == LV_CHART_TYPE_LINE) {
+            for(uint32_t i = 0; i < base_dsc->id1 + 1; i++) {
                 ser = lv_chart_get_series_next(obj, ser);
             }
-        } else {
-            for (uint32_t i = 0; i < 3 - base_dsc->id1; i++) {
+        }
+        else {
+            for(uint32_t i = 0; i < 3 - base_dsc->id1; i++) {
                 ser = lv_chart_get_series_next(obj, ser);
             }
         }
