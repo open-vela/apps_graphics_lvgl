@@ -8,6 +8,7 @@
  *********************/
 
 #include "lv_vg_lite_decoder.h"
+#include "../lv_image_buf_v8.h"
 
 #if LV_USE_DRAW_VG_LITE
 
@@ -252,11 +253,17 @@ static lv_result_t decoder_open_file(lv_image_decoder_t * decoder, lv_image_deco
     /* get real src header */
     lv_image_header_t src_header;
     uint32_t header_br = 0;
-    res = lv_fs_read(&file, &src_header, sizeof(src_header), &header_br);
-    if(res != LV_FS_RES_OK || header_br != sizeof(src_header)) {
+    uint32_t header_size = lv_image_header_get_size(&dsc->header);
+    res = lv_fs_read(&file, &src_header, header_size, &header_br);
+    if(res != LV_FS_RES_OK || header_br != header_size) {
         LV_LOG_ERROR("read %s lv_image_header_t failed", path);
         lv_fs_close(&file);
         return LV_RESULT_INVALID;
+    }
+
+    if(dsc->header.flags & LV_IMAGE_FLAGS_HEADER_V8) {
+        LV_LOG_ERROR("read %s lv_image_header_t failed", path);
+        lv_image_header_convert_from_v8(&src_header);
     }
 
     lv_draw_buf_t * draw_buf = lv_draw_buf_create_ex(image_cache_draw_buf_handlers, width, height, DEST_IMG_FORMAT,

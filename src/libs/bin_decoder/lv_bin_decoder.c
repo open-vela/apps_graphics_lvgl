@@ -9,6 +9,7 @@
 #include "lv_bin_decoder.h"
 #include "../../draw/lv_draw_image.h"
 #include "../../draw/lv_draw_buf.h"
+#include "../../draw/lv_image_buf_v8.h"
 #include "../../stdlib/lv_string.h"
 #include "../../stdlib/lv_sprintf.h"
 #include "../../libs/rle/lv_rle.h"
@@ -122,8 +123,8 @@ lv_result_t lv_bin_decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         lv_memcpy(header, &image->header, sizeof(lv_image_header_t));
     }
     else if(src_type == LV_IMAGE_SRC_FILE) {
-        /*Support only "*.bin" files*/
-        if(lv_strcmp(lv_fs_get_ext(src), "bin")) return LV_RESULT_INVALID;
+        /*Support "*.rle, *.bin" files*/
+        if(!(lv_strcmp(lv_fs_get_ext(src), "bin") == 0 || lv_strcmp(lv_fs_get_ext(src), "rle") == 0)) return LV_RESULT_INVALID;
 
         lv_fs_res_t res;
         uint32_t rn;
@@ -190,9 +191,6 @@ lv_result_t lv_bin_decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     /*Open the file if it's a file*/
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
-        /*Support only "*.bin" files*/
-        if(lv_strcmp(lv_fs_get_ext(dsc->src), "bin")) return LV_RESULT_INVALID;
-
         /*If the file was open successfully save the file descriptor*/
         decoder_data_t * decoder_data = get_decoder_data(dsc);
         if(decoder_data == NULL) {
@@ -461,6 +459,7 @@ lv_result_t lv_bin_decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
         offset += decoded_area->y1 * dsc->header.stride;
         offset += decoded_area->x1 * bpp / 8; /*Move to x1*/
         if(dsc->src_type == LV_IMAGE_SRC_FILE) {
+            offset += lv_image_header_get_size(&dsc->header); /*File image starts with image header*/
             buf = lv_malloc(len);
             LV_ASSERT_NULL(buf);
             if(buf == NULL)
@@ -510,7 +509,7 @@ lv_result_t lv_bin_decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
         }
 
         /*Now the A8 mask*/
-        offset = sizeof(lv_image_header_t);
+        offset = lv_image_header_get_size(&dsc->header);
         offset += dsc->header.h * dsc->header.stride; /*Move to A8 map*/
         offset += decoded_area->y1 * (dsc->header.stride / 2); /*Move to y1*/
         offset += decoded_area->x1 * 1; /*Move to x1*/
@@ -593,7 +592,7 @@ static lv_result_t decode_indexed(lv_image_decoder_t * decoder, lv_image_decoder
             return LV_RESULT_INVALID;
         }
 
-        res = fs_read_file_at(f, sizeof(lv_image_header_t), (uint8_t *)palette, palette_len, &rn);
+        res = fs_read_file_at(f, lv_image_header_get_size(&dsc->header), (uint8_t *)palette, palette_len, &rn);
         if(res != LV_FS_RES_OK || rn != palette_len) {
             LV_LOG_WARN("Read palette failed: %d", res);
             lv_free((void *)palette);
@@ -620,7 +619,7 @@ static lv_result_t decode_indexed(lv_image_decoder_t * decoder, lv_image_decoder
             goto exit_with_buf;
         }
 
-        uint32_t data_offset = sizeof(lv_image_header_t) + palette_len;
+        uint32_t data_offset = lv_image_header_get_size(&dsc->header) + palette_len;
         data_len -= data_offset;
         res = fs_read_file_at(f, data_offset, (uint8_t *)indexed_data, data_len, &rn);
         if(res != LV_FS_RES_OK || rn != data_len) {
@@ -748,7 +747,7 @@ static lv_result_t load_indexed(lv_image_decoder_t * decoder, lv_image_decoder_d
 
         uint8_t * data = decoded->data;
         uint32_t palette_len = sizeof(lv_color32_t) * LV_COLOR_INDEXED_PALETTE_SIZE(cf);
-        res = fs_read_file_at(f, sizeof(lv_image_header_t), data, palette_len, &rn);
+        res = fs_read_file_at(f, lv_image_header_get_size(&dsc->header), data, palette_len, &rn);
         if(res != LV_FS_RES_OK || rn != palette_len) {
             LV_LOG_WARN("Read palette failed: %d", res);
             lv_draw_buf_destroy(decoded);
@@ -764,7 +763,7 @@ static lv_result_t load_indexed(lv_image_decoder_t * decoder, lv_image_decoder_d
             return LV_RESULT_INVALID;
         }
 
-        uint32_t data_offset = sizeof(lv_image_header_t) + palette_len;
+        uint32_t data_offset = lv_image_header_get_size(&dsc->header) + palette_len;
         data_len -= data_offset;
         data += palette_len;
         res = fs_read_file_at(f, data_offset, data, data_len, &rn);
@@ -808,7 +807,7 @@ static lv_result_t decode_rgb(lv_image_decoder_t * decoder, lv_image_decoder_dsc
     uint8_t * img_data = decoded->data;
 
     uint32_t rn;
-    res = fs_read_file_at(f, sizeof(lv_image_header_t), img_data, len, &rn);
+    res = fs_read_file_at(f, lv_image_header_get_size(&dsc->header), img_data, len, &rn);
     if(res != LV_FS_RES_OK || rn != len) {
         LV_LOG_WARN("Read rgb file failed: %d", res);
         lv_draw_buf_destroy(decoded);
@@ -865,7 +864,7 @@ static lv_result_t decode_alpha_only(lv_image_decoder_t * decoder, lv_image_deco
         lv_memcpy(img_data, decoder_data->decompressed->data, file_len);
     }
     else if(dsc->src_type == LV_IMAGE_SRC_FILE) {
-        res = fs_read_file_at(decoder_data->f, sizeof(lv_image_header_t), img_data, file_len, &rn);
+        res = fs_read_file_at(decoder_data->f, lv_image_header_get_size(&dsc->header), img_data, file_len, &rn);
         if(res != LV_FS_RES_OK || rn != file_len) {
             LV_LOG_WARN("Read header failed: %d", res);
             lv_draw_buf_destroy(decoded);
@@ -931,20 +930,36 @@ static lv_result_t decode_compressed(lv_image_decoder_t * decoder, lv_image_deco
             return LV_RESULT_INVALID;
         }
 
-        compressed_len -= sizeof(lv_image_header_t);
-        compressed_len -= 12;
-
-        /*Read compress header*/
-        len = 12;
-        res = fs_read_file_at(f, sizeof(lv_image_header_t), compressed, len, &rn);
-        if(res != LV_FS_RES_OK || rn != len) {
-            LV_LOG_WARN("Read compressed header failed: %d", res);
-            return LV_RESULT_INVALID;
+        compressed_len -= lv_image_header_get_size(&dsc->header);
+        if(dsc->header.flags & LV_IMAGE_FLAGS_HEADER_V8) {
+            res = lv_fs_seek(f, 0, LV_FS_SEEK_SET);
+            if(res != LV_FS_RES_OK) {
+                return res;
+            }
+            lv_bin_file_header_v8_t header;
+            res = lv_fs_read(f, &header, sizeof(lv_bin_file_header_v8_t), &rn);
+            if(res != LV_FS_RES_OK || rn != sizeof(lv_bin_file_header_v8_t)) {
+                LV_LOG_WARN("Read compressed header failed: %d", res);
+                return LV_RESULT_INVALID;
+            }
+            compressed->method = LV_IMAGE_COMPRESS_RLE;
+            compressed->compressed_size = compressed_len;
+            compressed->decompressed_size = header.rleheader.len_orig;
         }
+        else {
+            compressed_len -= 12;
+            /*Read compress header*/
+            len = 12;
+            res = fs_read_file_at(f, lv_image_header_get_size(&dsc->header), compressed, len, &rn);
+            if(res != LV_FS_RES_OK || rn != len) {
+                LV_LOG_WARN("Read compressed header failed: %d", res);
+                return LV_RESULT_INVALID;
+            }
 
-        if(compressed->compressed_size != compressed_len) {
-            LV_LOG_WARN("Compressed size mismatch: %" LV_PRIu32" != %" LV_PRIu32, compressed->compressed_size, compressed_len);
-            return LV_RESULT_INVALID;
+            if(compressed->compressed_size != compressed_len) {
+                LV_LOG_WARN("Compressed size mismatch: %" LV_PRIu32" != %" LV_PRIu32, compressed->compressed_size, compressed_len);
+                return LV_RESULT_INVALID;
+            }
         }
 
         file_buf = lv_malloc(compressed_len);

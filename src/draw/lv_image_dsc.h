@@ -41,6 +41,10 @@ typedef enum _lv_image_flags_t {
      */
     LV_IMAGE_FLAGS_PREMULTIPLIED    = 0x0001,
     /**
+     * The image has lvgl v8 header format.
+     */
+    LV_IMAGE_FLAGS_HEADER_V8        = 0x0002,
+    /**
      * The image data is compressed, so decoder needs to decode image firstly.
      * If this flag is set, the whole image will be decompressed upon decode, and
      * `get_area_cb` won't be necessary.
@@ -68,7 +72,7 @@ typedef enum _lv_image_flags_t {
     /**
      * The image has expanded pixel data.
      */
-    LV_IMAGE_FLAGS_EXPANDED          = (1 << 7),
+    LV_IMAGE_FLAGS_EXPANDED         = 0x0080,
 
     /**
      * Flags reserved for user, lvgl won't use these bits.
