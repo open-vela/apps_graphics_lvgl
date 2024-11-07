@@ -28,7 +28,7 @@ void test_demo_stress(void)
     loop_through_stress_test();
     size_t mem_before = lv_test_get_free_mem();
     /* loop 5 more times */
-    for (uint32_t i = 0; i < 5; i++) {
+    for(uint32_t i = 0; i < 5; i++) {
         loop_through_stress_test();
     }
     TEST_ASSERT_EQUAL(mem_before, lv_test_get_free_mem());

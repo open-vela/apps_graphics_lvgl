@@ -6,10 +6,12 @@
 void test_obj_tree_1(void);
 void test_obj_tree_2(void);
 
-void setUp(void) {
+void setUp(void)
+{
 }
 
-void tearDown(void) {
+void tearDown(void)
+{
     lv_obj_clean(lv_screen_active());
 }
 
