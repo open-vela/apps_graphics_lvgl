@@ -201,6 +201,21 @@ static inline void lv_obj_center(lv_obj_t * obj)
 }
 
 /**
+ * Set the transfrom matrix of an object
+ * @param obj       pointer to an object
+ * @param matrix    pointer to a matrix to set
+ * @note `LV_DRAW_TRANSFORM_USE_MATRIX` needs to be enabled.
+ */
+void lv_obj_set_transform(lv_obj_t * obj, const lv_matrix_t * matrix);
+
+/**
+ * Reset the transfrom matrix of an object to identity matrix
+ * @param obj       pointer to an object
+ * @note `LV_DRAW_TRANSFORM_USE_MATRIX` needs to be enabled.
+ */
+void lv_obj_reset_transform(lv_obj_t * obj);
+
+/**
  * Copy the coordinates of an object to an area
  * @param obj       pointer to an object
  * @param coords    pointer to an area to store the coordinates
@@ -344,6 +359,13 @@ void lv_obj_refr_pos(lv_obj_t * obj);
 void lv_obj_move_to(lv_obj_t * obj, int32_t x, int32_t y);
 
 void lv_obj_move_children_by(lv_obj_t * obj, int32_t x_diff, int32_t y_diff, bool ignore_floating);
+
+/**
+ * Get the transform matrix of an object
+ * @param obj       pointer to an object
+ * @return          pointer to the transform matrix or NULL if not set
+ */
+const lv_matrix_t * lv_obj_get_transform(const lv_obj_t * obj);
 
 /**
  * Transform a point using the angle and zoom style properties of an object
