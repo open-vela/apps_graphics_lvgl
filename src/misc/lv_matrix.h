@@ -18,7 +18,7 @@ extern "C" {
 
 #if LV_USE_MATRIX
 
-#include <stdbool.h>
+#include "lv_types.h"
 #include "lv_area.h"
 
 /*********************
@@ -29,9 +29,9 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
-typedef struct {
+struct _lv_matrix_t {
     float m[3][3];
-} lv_matrix_t;
+};
 
 /**********************
  * GLOBAL PROTOTYPES

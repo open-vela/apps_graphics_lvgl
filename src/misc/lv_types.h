@@ -155,6 +155,9 @@ typedef struct _lv_event_list_t lv_event_list_t;
 struct _lv_iter_t;
 typedef struct _lv_iter_t lv_iter_t;
 
+struct _lv_matrix_t;
+typedef struct _lv_matrix_t lv_matrix_t;
+
 #endif /*__ASSEMBLY__*/
 
 /**********************
