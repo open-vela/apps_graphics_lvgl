@@ -84,7 +84,12 @@ g2d_fmt_enh g2d_get_px_format(lv_color_format_t cf)
         case LV_COLOR_FORMAT_XRGB8888:
             out_px_format = G2D_FORMAT_XRGB8888;
             break;
-
+        case LV_COLOR_FORMAT_NV21:
+            out_px_format = G2D_FORMAT_YUV420UVC_U1V1U0V0;
+            break;
+        case LV_COLOR_FORMAT_NV12:
+            out_px_format = G2D_FORMAT_YUV420UVC_V1U1V0U0;
+            break;
         default:
             LV_ASSERT_MSG(false, "Unsupported color format.");
             break;
