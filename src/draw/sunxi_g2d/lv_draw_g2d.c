@@ -97,7 +97,8 @@ void lv_draw_g2d_deinit(void)
 static inline bool _g2d_cf_supported(lv_color_format_t cf)
 {
     bool is_cf_supported = (cf == LV_COLOR_FORMAT_RGB565 || cf == LV_COLOR_FORMAT_RGB888 ||
-                            cf == LV_COLOR_FORMAT_ARGB8888 || cf == LV_COLOR_FORMAT_XRGB8888);
+                            cf == LV_COLOR_FORMAT_ARGB8888 || cf == LV_COLOR_FORMAT_XRGB8888 ||
+                            LV_COLOR_FORMAT_IS_NV(cf));
 
     return is_cf_supported;
 }
