@@ -244,7 +244,7 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
                     vg_lite_matrix_t pattern_matrix;
                     lv_vg_lite_matrix(&pattern_matrix, &m);
 
-                    vg_lite_color_t recolor = lv_vg_lite_color(dsc->fill_dsc.img_dsc.recolor, dsc->fill_dsc.img_dsc.recolor_opa, true);
+                    vg_lite_color_t recolor = lv_vg_lite_image_recolor(&image_buffer, &dsc->fill_dsc.img_dsc);
 
                     if(dsc->fill_dsc.img_dsc.colorkey) {
                         lv_vg_lite_set_color_key(dsc->fill_dsc.img_dsc.colorkey);
