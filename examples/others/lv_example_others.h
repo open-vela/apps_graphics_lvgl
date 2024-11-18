@@ -21,6 +21,7 @@ extern "C" {
 #include "monkey/lv_example_monkey.h"
 #include "observer/lv_example_observer.h"
 #include "snapshot/lv_example_snapshot.h"
+#include "gestures/lv_example_gestures.h"
 
 /*********************
  *      DEFINES
