@@ -12,6 +12,8 @@ void lv_image_header_convert_from_v8(lv_image_header_t * src_header)
     LV_ASSERT_NULL(src_header);
 
     lv_bin_file_header_v8_t header_v8;
+    /* v8 image header size must be >= v9 image header size*/
+    LV_ASSERT(sizeof(lv_bin_file_header_v8_t) >= sizeof(lv_image_header_t));
 
     lv_memcpy(&header_v8, src_header, sizeof(lv_image_header_t));
     lv_memzero(src_header, sizeof(lv_image_header_t));
@@ -24,6 +26,10 @@ void lv_image_header_convert_from_v8(lv_image_header_t * src_header)
     src_header->flags |= LV_IMAGE_FLAGS_HEADER_V8;
     src_header->w = header_v8.header.w;
     src_header->h = header_v8.header.h;
+    if(header_v8.header.tiled) {
+        /* LV_IMAGE_FLAGS_USER1 defined as LV_VG_LITE_IMAGE_FLAGS_TILED */
+        src_header->flags |= LV_IMAGE_FLAGS_USER1;
+    }
     LV_LOG_INFO("width %d, height %d, cf %d", (int)header_v8.header.w, (int)header_v8.header.h,
                 (int)header_v8.header.cf);
 }

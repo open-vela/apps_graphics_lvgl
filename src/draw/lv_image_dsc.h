@@ -45,6 +45,10 @@ typedef enum _lv_image_flags_t {
      */
     LV_IMAGE_FLAGS_HEADER_V8        = 0x0002,
     /**
+     * The image header tiled flags.
+     */
+    LV_IMAGE_FLAGS_TILED            = 0x0004,
+    /**
      * The image data is compressed, so decoder needs to decode image firstly.
      * If this flag is set, the whole image will be decompressed upon decode, and
      * `get_area_cb` won't be necessary.

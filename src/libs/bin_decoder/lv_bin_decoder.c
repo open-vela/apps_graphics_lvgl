@@ -142,8 +142,7 @@ lv_result_t lv_bin_decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
          */
         if(header->magic != LV_IMAGE_HEADER_MAGIC) {
             LV_LOG_INFO("Legacy bin image detected: %s", (char *)src);
-            header->cf = header->magic;
-            header->magic = LV_IMAGE_HEADER_MAGIC;
+            lv_image_header_convert_from_v8(header);
         }
 
         /*File is always read to buf, thus data can be modified.*/
@@ -320,8 +319,14 @@ lv_result_t lv_bin_decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     if(dsc->decoded == NULL) return LV_RESULT_OK; /*Need to read via get_area_cb*/
 
     lv_draw_buf_t * decoded = (lv_draw_buf_t *)dsc->decoded;
+
     if(dsc->header.flags & LV_IMAGE_FLAGS_PREMULTIPLIED) {
         lv_draw_buf_set_flag(decoded, LV_IMAGE_FLAGS_PREMULTIPLIED);
+    }
+
+    /* LV_IMAGE_FLAGS_USER1 defined as LV_VG_LITE_IMAGE_FLAGS_TILED */
+    if(dsc->header.flags & LV_IMAGE_FLAGS_USER1) {
+        lv_draw_buf_set_flag(decoded, LV_IMAGE_FLAGS_USER1);
     }
 
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
@@ -418,7 +423,8 @@ lv_result_t lv_bin_decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
     int32_t w_px = lv_area_get_width(full_area);
     uint8_t * img_data = NULL;
     lv_draw_buf_t * decoded = NULL;
-    uint32_t offset = dsc->src_type == LV_IMAGE_SRC_FILE ? sizeof(lv_image_header_t) : 0;   /*Skip the image header*/
+    uint32_t offset = dsc->src_type == LV_IMAGE_SRC_FILE ? lv_image_header_get_size(&dsc->header) :
+                      0;   /*Skip the image header*/
 
     /*We only support read line by line for now*/
     if(decoded_area->y1 == LV_COORD_MIN) {
@@ -459,7 +465,6 @@ lv_result_t lv_bin_decoder_get_area(lv_image_decoder_t * decoder, lv_image_decod
         offset += decoded_area->y1 * dsc->header.stride;
         offset += decoded_area->x1 * bpp / 8; /*Move to x1*/
         if(dsc->src_type == LV_IMAGE_SRC_FILE) {
-            offset += lv_image_header_get_size(&dsc->header); /*File image starts with image header*/
             buf = lv_malloc(len);
             LV_ASSERT_NULL(buf);
             if(buf == NULL)
