@@ -176,7 +176,7 @@ lv_result_t lv_snapshot_take_to_draw_buf(lv_obj_t * obj, lv_color_format_t cf, l
 
     disp_new->layer_head = layer_old;
     _lv_refr_set_disp_refreshing(disp_old);
-
+    lv_draw_buf_invalidate_cache(draw_buf, NULL);
     return LV_RESULT_OK;
 }
 
