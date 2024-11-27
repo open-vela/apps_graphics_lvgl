@@ -107,8 +107,13 @@ void lv_draw_g2d_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t * dsc
         LV_LOG_ERROR("Failed to open image");
         return;
     }
-    bool src_has_alpha = (decoder_dsc.decoded->header.cf == LV_COLOR_FORMAT_ARGB8888);
-    if(dsc->opa >= (lv_opa_t)LV_OPA_MAX && !src_has_alpha)
+
+    lv_color_format_t cf = decoder_dsc.decoded->header.cf;
+    bool src_has_alpha = (cf == LV_COLOR_FORMAT_ARGB8888);
+    if(dsc->opa < (lv_opa_t)LV_OPA_MAX && LV_COLOR_FORMAT_IS_NV(cf)) {
+        LV_LOG_WARN("yuv image can't be blended with alpha");
+    }
+    if((dsc->opa >= (lv_opa_t)LV_OPA_MAX && !src_has_alpha) || LV_COLOR_FORMAT_IS_NV(cf))
         _g2d_blit_no_alpha(layer->draw_buf, &blend_area,
                            decoder_dsc.decoded, &src_area,
                            dsc, draw_unit->clip_area, &layer->buf_area);
