@@ -158,12 +158,12 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
 {
     LV_UNUSED(u);
     lv_area_t img_area;
-    if(!_lv_area_intersect(&img_area, &t->area, &t->clip_area))
-        return 0;
-    int32_t size = lv_area_get_width(&img_area) * lv_area_get_height(&img_area);
+    int32_t size = _lv_area_intersect(&img_area, &t->area, &t->clip_area) ?
+                   lv_area_get_width(&img_area) * lv_area_get_height(&img_area) : 0;
     switch(t->type) {
         case LV_DRAW_TASK_TYPE_FILL: {
                 const lv_draw_fill_dsc_t * draw_dsc = (lv_draw_fill_dsc_t *) t->draw_dsc;
+                if(size == 0) return 0;
 
                 /* Most simple case: just a plain rectangle (no radius, no gradient). */
                 if((draw_dsc->radius != 0) || (draw_dsc->grad.dir != (lv_grad_dir_t)LV_GRAD_DIR_NONE))
@@ -188,12 +188,16 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
                 lv_layer_t * layer_to_draw = (lv_layer_t *)draw_dsc->src;
                 //lv_draw_buf_t * draw_buf = &layer_to_draw->draw_buf;
 
-                if(!_g2d_cf_supported(layer_to_draw->color_format))
-                    return 0;
+                /* support nv12 or nv21 anyway */
+                if(!LV_COLOR_FORMAT_IS_NV(layer_to_draw->color_format)) {
+                    if(size == 0) return 0;
 
-                if(!_g2d_draw_img_supported(draw_dsc, size))
-                    return 0;
+                    if(!_g2d_cf_supported(layer_to_draw->color_format))
+                        return 0;
 
+                    if(!_g2d_draw_img_supported(draw_dsc, size))
+                        return 0;
+                }
                 if(t->preference_score > 70) {
                     t->preference_score = 70;
                     t->preferred_draw_unit_id = DRAW_UNIT_ID_G2D;
@@ -203,11 +207,18 @@ static int32_t _g2d_evaluate(lv_draw_unit_t * u, lv_draw_task_t * t)
 
         case LV_DRAW_TASK_TYPE_IMAGE: {
                 lv_draw_image_dsc_t * img_dsc = (lv_draw_image_dsc_t *) t->draw_dsc;
-                if(!_g2d_cf_supported(img_dsc->header.cf))
-                    return 0;
 
-                if(!_g2d_draw_img_supported(img_dsc, size))
-                    return 0;
+                /* support nv12 or nv21 anyway */
+                if(!LV_COLOR_FORMAT_IS_NV(img_dsc->header.cf)) {
+                    if(size == 0)
+                        return 0;
+
+                    if(!_g2d_cf_supported(img_dsc->header.cf))
+                        return 0;
+
+                    if(!_g2d_draw_img_supported(img_dsc, size))
+                        return 0;
+                }
 
                 if(t->preference_score > 70) {
                     t->preference_score = 70;
@@ -274,8 +285,13 @@ static void _g2d_execute_drawing(lv_draw_g2d_unit_t * u)
     lv_layer_t * layer = draw_unit->target_layer;
     lv_draw_buf_t * draw_buf = layer->draw_buf;
     lv_area_t draw_area;
-    if(!_lv_area_intersect(&draw_area, &t->area, draw_unit->clip_area))
-        return; /*Fully clipped, nothing to do*/
+    if(!_lv_area_intersect(&draw_area, &t->area, draw_unit->clip_area)) {
+        /* Fully clipped, nothing to do.
+         * but if it is a nv12 or nv21 image, draw the image anyway.
+         * because it may has an intersect after transforming) */
+        lv_draw_image_dsc_t * img_dsc = (t->type == LV_DRAW_TASK_TYPE_IMAGE) ? (lv_draw_image_dsc_t *) t->draw_dsc : NULL;
+        if(img_dsc == NULL || !LV_COLOR_FORMAT_IS_NV(img_dsc->header.cf)) return;
+    }
     lv_draw_buf_invalidate_cache(draw_buf, &draw_area);
 
     switch(t->type) {
