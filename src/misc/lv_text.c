@@ -14,8 +14,6 @@
 #include "../stdlib/lv_mem.h"
 #include "../stdlib/lv_string.h"
 #include "../misc/lv_types.h"
-#include "../misc/lv_iter.h"
-#include "../misc/lv_text_line_process.h"
 
 /*********************
  *      DEFINES
@@ -100,19 +98,18 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
     if(text == NULL) return;
     if(font == NULL) return;
 
-    if(flag & LV_TEXT_FLAG_EXPAND || max_width <= 0) max_width = LV_COORD_MAX;
+    if(flag & LV_TEXT_FLAG_EXPAND) max_width = LV_COORD_MAX;
 
-    uint32_t line_start    = 0;
+    uint32_t line_start     = 0;
+    uint32_t new_line_start = 0;
     uint16_t letter_height = lv_font_get_line_height(font);
 
-    lv_iter_t * line_iter = lv_text_line_process_iter_create(text, font, max_width, letter_space, 0, true);
-    lv_text_line_process_line_info_t line_info;
-
     /*Calc. the height and longest line*/
-    while(lv_iter_next(line_iter, &line_info) == LV_RESULT_OK) {
+    while(text[line_start] != '\0') {
+        new_line_start += lv_text_get_next_line(&text[line_start], LV_TEXT_LEN_MAX, font, letter_space, max_width, NULL, flag);
+
         if((unsigned long)size_res->y + (unsigned long)letter_height + (unsigned long)line_space > LV_MAX_OF(int32_t)) {
             LV_LOG_WARN("integer overflow while calculating text height");
-            lv_text_line_process_iter_destroy(line_iter);
             return;
         }
         else {
@@ -121,11 +118,10 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
         }
 
         /*Calculate the longest line*/
-        int32_t act_line_length = lv_text_get_width(&text[line_info.pos.start], line_info.pos.brk - line_info.pos.start, font,
-                                                    letter_space);
+        int32_t act_line_length = lv_text_get_width(&text[line_start], new_line_start - line_start, font, letter_space);
 
         size_res->x = LV_MAX(act_line_length, size_res->x);
-        line_start = line_info.pos.brk;
+        line_start  = new_line_start;
     }
 
     /*Make the text one line taller if the last character is '\n' or '\r'*/
@@ -138,8 +134,6 @@ void lv_text_get_size(lv_point_t * size_res, const char * text, const lv_font_t 
         size_res->y = letter_height;
     else
         size_res->y -= line_space;
-
-    lv_text_line_process_iter_destroy(line_iter);
 }
 
 /**
@@ -210,6 +204,9 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
         if(break_index == NO_BREAK_FOUND && (cur_w - letter_space) > max_width) {
             break_index = i;
             break_letter_count = word_len - 1;
+            if(flag & LV_TEXT_FLAG_BREAK_ALL) {
+                break;
+            }
             /*break_index is now pointing at the character that doesn't fit*/
         }
 
@@ -279,9 +276,9 @@ static uint32_t lv_text_get_next_word(const char * txt, const lv_font_t * font,
 #endif
 }
 
-uint32_t lv_text_get_next_line(const char * txt, const lv_font_t * font,
-                               int32_t letter_space, int32_t max_width,
-                               int32_t * used_width, lv_text_flag_t flag)
+uint32_t lv_text_get_next_line(const char * txt, uint32_t len,
+                               const lv_font_t * font, int32_t letter_space,
+                               int32_t max_width, int32_t * used_width, lv_text_flag_t flag)
 {
     if(used_width) *used_width = 0;
 
@@ -295,10 +292,10 @@ uint32_t lv_text_get_next_line(const char * txt, const lv_font_t * font,
      *without thinking about word wrapping*/
     if((flag & LV_TEXT_FLAG_EXPAND) || (flag & LV_TEXT_FLAG_FIT)) {
         uint32_t i;
-        for(i = 0; txt[i] != '\n' && txt[i] != '\r' && txt[i] != '\0'; i++) {
+        for(i = 0; i < len && txt[i] != '\n' && txt[i] != '\r' && txt[i] != '\0'; i++) {
             /*Just find the new line chars or string ends by incrementing `i`*/
         }
-        if(txt[i] != '\0') i++;    /*To go beyond `\n`*/
+        if(i < len && txt[i] != '\0') i++;    /*To go beyond `\n`*/
         if(used_width) *used_width = -1;
         return i;
     }
@@ -306,7 +303,10 @@ uint32_t lv_text_get_next_line(const char * txt, const lv_font_t * font,
     if(flag & LV_TEXT_FLAG_EXPAND) max_width = LV_COORD_MAX;
     uint32_t i = 0;                                        /*Iterating index into txt*/
 
-    while(txt[i] != '\0' && max_width > 0) {
+    while(i < len && txt[i] != '\0' && max_width > 0) {
+        lv_text_flag_t word_flag = flag;
+        if(i == 0) word_flag |= LV_TEXT_FLAG_BREAK_ALL;
+
         uint32_t word_w = 0;
         uint32_t advance = lv_text_get_next_word(&txt[i], font, letter_space, max_width, flag, &word_w, i == 0);
         max_width -= word_w;
