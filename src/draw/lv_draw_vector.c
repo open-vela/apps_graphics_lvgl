@@ -25,6 +25,9 @@
 #define MATH_RADIANS(deg) ((deg) * DEG_TO_RAD)
 #define MATH_DEGRESS(rad) ((rad) * RAD_TO_DEG)
 
+#define DASH_MAX 32
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 /*********************
 *      DEFINES
  *********************/
@@ -623,6 +626,7 @@ void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, 
 {
     lv_array_t * dash_array = &(dsc->current_dsc.stroke_dsc.dash_pattern);
     if(dash_pattern) {
+        dash_count = MIN(dash_count, DASH_MAX);
         lv_array_clear(dash_array);
         if(lv_array_capacity(dash_array) == 0) {
             lv_array_init(dash_array, dash_count, sizeof(float));
