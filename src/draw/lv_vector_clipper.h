@@ -31,18 +31,6 @@ typedef enum {
     LV_VECTOR_CLIPPER_XOR,
 } lv_vector_clipper_t;
 
-/**********************
- * GLOBAL PROTOTYPES
- **********************/
-
-/**
- * Flatten a path to a polygon path.
- * @param result  The polygon path.
- * @param path    The input path.
- * @return return true if success.
- */
-bool lv_vector_path_to_polygon(lv_vector_path_t * result, const lv_vector_path_t * path);
-
 /**
  * Clip two polygon path with gpc.
  * @param type     The clip type.
