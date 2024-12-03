@@ -99,7 +99,9 @@ extern "C" {
 #include "src/draw/lv_draw.h"
 #include "src/draw/lv_draw_vector.h"
 #include "src/draw/lv_draw_buf.h"
+#include "src/draw/lv_vector_polygon.h"
 #include "src/draw/lv_vector_clipper.h"
+#include "src/draw/lv_vector_stroke.h"
 
 #include "src/libs/barcode/lv_barcode.h"
 #include "src/libs/bin_decoder/lv_bin_decoder.h"
