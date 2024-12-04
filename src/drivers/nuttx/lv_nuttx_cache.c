@@ -17,6 +17,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
 
 /**********************
  *      TYPEDEFS
@@ -46,11 +47,19 @@ void lv_nuttx_cache_init(void)
     lv_draw_buf_handlers_t * handlers = lv_draw_buf_get_handlers();
     handlers->invalidate_cache_cb = invalidate_cache;
     handlers->flush_cache_cb = flush_cache;
+
+    handlers = image_cache_draw_buf_handlers;
+    handlers->invalidate_cache_cb = invalidate_cache;
+    handlers->flush_cache_cb = flush_cache;
 }
 
 void lv_nuttx_cache_deinit(void)
 {
     lv_draw_buf_handlers_t * handlers = lv_draw_buf_get_handlers();
+    handlers->invalidate_cache_cb = NULL;
+    handlers->flush_cache_cb = NULL;
+
+    handlers = image_cache_draw_buf_handlers;
     handlers->invalidate_cache_cb = NULL;
     handlers->flush_cache_cb = NULL;
 }
