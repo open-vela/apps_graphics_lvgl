@@ -162,6 +162,7 @@ void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
         /*Need skip the palette if exists*/
         uint8_t * bufc = lv_draw_buf_goto_xy(draw_buf, 0, 0);
         lv_memzero(bufc, header->h * stride);
+        lv_draw_buf_flush_cache(draw_buf, a);
         LV_PROFILER_DRAW_END;
         return;
     }
@@ -178,6 +179,7 @@ void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
         lv_memzero(bufc, line_length);
         bufc += stride;
     }
+    lv_draw_buf_flush_cache(draw_buf, a);
     LV_PROFILER_DRAW_END;
 }
 
