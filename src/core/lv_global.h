@@ -91,6 +91,7 @@ typedef struct _lv_global_t {
     lv_ll_t indev_ll;
     lv_indev_t * indev_active;
     lv_obj_t * indev_obj_active;
+    lv_obj_t * indev_obj_focused;
 
     uint32_t layout_count;
     lv_layout_dsc_t * layout_list;
