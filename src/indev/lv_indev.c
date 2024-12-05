@@ -54,6 +54,7 @@
 #define indev_act LV_GLOBAL_DEFAULT()->indev_active
 #define indev_obj_act LV_GLOBAL_DEFAULT()->indev_obj_active
 #define indev_ll_head &(LV_GLOBAL_DEFAULT()->indev_ll)
+#define indev_obj_focused LV_GLOBAL_DEFAULT()->indev_obj_focused
 
 /**********************
  *      TYPEDEFS
@@ -292,6 +293,16 @@ void lv_indev_enable(lv_indev_t * indev, bool enable)
 lv_indev_t * lv_indev_active(void)
 {
     return indev_act;
+}
+
+void lv_indev_set_focused_obj(lv_obj_t * obj)
+{
+    indev_obj_focused = obj;
+}
+
+lv_obj_t * lv_indev_get_focused_obj(void)
+{
+    return indev_obj_focused;
 }
 
 void lv_indev_set_type(lv_indev_t * indev, lv_indev_type_t indev_type)

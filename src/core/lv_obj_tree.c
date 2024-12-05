@@ -503,6 +503,10 @@ static void obj_delete_core(lv_obj_t * obj)
 
     obj->is_deleting = true;
 
+    if(obj == lv_indev_get_focused_obj()) {
+        lv_indev_set_focused_obj(NULL);
+    }
+
     /*Let the user free the resources used in `LV_EVENT_DELETE`*/
     lv_result_t res = lv_obj_send_event(obj, LV_EVENT_DELETE, NULL);
     if(res == LV_RESULT_INVALID) {

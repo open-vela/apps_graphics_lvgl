@@ -129,6 +129,18 @@ void lv_indev_enable(lv_indev_t * indev, bool enable);
 lv_indev_t * lv_indev_active(void);
 
 /**
+ * Set the currently focused object
+ * @param obj the focused obj
+ */
+void lv_indev_set_focused_obj(lv_obj_t * obj);
+
+/**
+ * Get the currently focused object
+ * @return focused object
+ */
+lv_obj_t * lv_indev_get_focused_obj(void);
+
+/**
  * Set the type of an input device
  * @param indev pointer to an input device
  * @param indev_type the type of the input device from `lv_indev_type_t` (`LV_INDEV_TYPE_...`)
