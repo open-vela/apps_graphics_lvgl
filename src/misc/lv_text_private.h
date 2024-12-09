@@ -173,6 +173,8 @@ static inline bool lv_text_is_marker(uint32_t letter)
     if(letter == 0x115F) return true;
     /*U+1160 HANGUL JUNGSEONG FILLER*/
     if(letter == 0x1160) return true;
+    /*U+2003 EM SPACE*/
+    if(letter == 0x2003) return true;
 
     /*See https://www.compart.com/en/unicode/block/U+1800*/
     if(letter >= 0x180B && letter <= 0x180E) return true;
