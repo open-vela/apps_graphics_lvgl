@@ -2758,64 +2758,92 @@
 
     /*Enable layout profiler*/
     #ifndef LV_PROFILER_LAYOUT
-        #ifdef CONFIG_LV_PROFILER_LAYOUT
-            #define LV_PROFILER_LAYOUT CONFIG_LV_PROFILER_LAYOUT
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_LAYOUT
+                #define LV_PROFILER_LAYOUT CONFIG_LV_PROFILER_LAYOUT
+            #else
+                #define LV_PROFILER_LAYOUT 0
+            #endif
         #else
-            #define LV_PROFILER_LAYOUT 0
+            #define LV_PROFILER_LAYOUT 1
         #endif
     #endif
 
     /*Enable disp refr profiler*/
     #ifndef LV_PROFILER_REFR
-        #ifdef CONFIG_LV_PROFILER_REFR
-            #define LV_PROFILER_REFR CONFIG_LV_PROFILER_REFR
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_REFR
+                #define LV_PROFILER_REFR CONFIG_LV_PROFILER_REFR
+            #else
+                #define LV_PROFILER_REFR 0
+            #endif
         #else
-            #define LV_PROFILER_REFR 0
+            #define LV_PROFILER_REFR 1
         #endif
     #endif
 
     /*Enable draw profiler*/
     #ifndef LV_PROFILER_DRAW
-        #ifdef CONFIG_LV_PROFILER_DRAW
-            #define LV_PROFILER_DRAW CONFIG_LV_PROFILER_DRAW
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_DRAW
+                #define LV_PROFILER_DRAW CONFIG_LV_PROFILER_DRAW
+            #else
+                #define LV_PROFILER_DRAW 0
+            #endif
         #else
-            #define LV_PROFILER_DRAW 0
+            #define LV_PROFILER_DRAW 1
         #endif
     #endif
 
     /*Enable indev profiler*/
     #ifndef LV_PROFILER_INDEV
-        #ifdef CONFIG_LV_PROFILER_INDEV
-            #define LV_PROFILER_INDEV CONFIG_LV_PROFILER_INDEV
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_INDEV
+                #define LV_PROFILER_INDEV CONFIG_LV_PROFILER_INDEV
+            #else
+                #define LV_PROFILER_INDEV 0
+            #endif
         #else
-            #define LV_PROFILER_INDEV 0
+            #define LV_PROFILER_INDEV 1
         #endif
     #endif
 
     /*Enable decoder profiler*/
     #ifndef LV_PROFILER_DECODER
-        #ifdef CONFIG_LV_PROFILER_DECODER
-            #define LV_PROFILER_DECODER CONFIG_LV_PROFILER_DECODER
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_DECODER
+                #define LV_PROFILER_DECODER CONFIG_LV_PROFILER_DECODER
+            #else
+                #define LV_PROFILER_DECODER 0
+            #endif
         #else
-            #define LV_PROFILER_DECODER 0
+            #define LV_PROFILER_DECODER 1
         #endif
     #endif
 
     /*Enable font profiler*/
     #ifndef LV_PROFILER_FONT
-        #ifdef CONFIG_LV_PROFILER_FONT
-            #define LV_PROFILER_FONT CONFIG_LV_PROFILER_FONT
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_FONT
+                #define LV_PROFILER_FONT CONFIG_LV_PROFILER_FONT
+            #else
+                #define LV_PROFILER_FONT 0
+            #endif
         #else
-            #define LV_PROFILER_FONT 0
+            #define LV_PROFILER_FONT 1
         #endif
     #endif
 
     /*Enable fs profiler*/
     #ifndef LV_PROFILER_FS
-        #ifdef CONFIG_LV_PROFILER_FS
-            #define LV_PROFILER_FS CONFIG_LV_PROFILER_FS
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_FS
+                #define LV_PROFILER_FS CONFIG_LV_PROFILER_FS
+            #else
+                #define LV_PROFILER_FS 0
+            #endif
         #else
-            #define LV_PROFILER_FS 0
+            #define LV_PROFILER_FS 1
         #endif
     #endif
 
@@ -2830,25 +2858,33 @@
 
     /*Enable timer profiler*/
     #ifndef LV_PROFILER_TIMER
-        #ifdef CONFIG_LV_PROFILER_TIMER
-            #define LV_PROFILER_TIMER CONFIG_LV_PROFILER_TIMER
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_TIMER
+                #define LV_PROFILER_TIMER CONFIG_LV_PROFILER_TIMER
+            #else
+                #define LV_PROFILER_TIMER 0
+            #endif
         #else
-            #define LV_PROFILER_TIMER 0
+            #define LV_PROFILER_TIMER 1
         #endif
     #endif
 
     /*Enable cache profiler*/
     #ifndef LV_PROFILER_CACHE
-        #ifdef CONFIG_LV_PROFILER_CACHE
-            #define LV_PROFILER_CACHE CONFIG_LV_PROFILER_CACHE
+        #ifdef _LV_KCONFIG_PRESENT
+            #ifdef CONFIG_LV_PROFILER_CACHE
+                #define LV_PROFILER_CACHE CONFIG_LV_PROFILER_CACHE
+            #else
+                #define LV_PROFILER_CACHE 0
+            #endif
         #else
-            #define LV_PROFILER_CACHE 0
+            #define LV_PROFILER_CACHE 1
         #endif
     #endif
 
     /*Enable event profiler*/
     #ifndef LV_PROFILER_EVENT
-        #ifdef LV_KCONFIG_PRESENT
+        #ifdef _LV_KCONFIG_PRESENT
             #ifdef CONFIG_LV_PROFILER_EVENT
                 #define LV_PROFILER_EVENT CONFIG_LV_PROFILER_EVENT
             #else
