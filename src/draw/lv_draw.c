@@ -134,7 +134,13 @@ void lv_draw_finalize_task_creation(lv_layer_t * layer, lv_draw_task_t * t)
         t->preferred_draw_unit_id = 0;
         lv_draw_unit_t * u = info->unit_head;
         while(u) {
-            if(u->evaluate_cb) u->evaluate_cb(u, t);
+            if(u->evaluate_cb) {
+                LV_PROFILER_DRAW_BEGIN_TAG("evaluate_cb");
+                LV_PROFILER_DRAW_BEGIN_TAG(u->name);
+                u->evaluate_cb(u, t);
+                LV_PROFILER_DRAW_END_TAG(u->name);
+                LV_PROFILER_DRAW_END_TAG("evaluate_cb");
+            }
             u = u->next;
         }
 
@@ -146,7 +152,13 @@ void lv_draw_finalize_task_creation(lv_layer_t * layer, lv_draw_task_t * t)
         t->preferred_draw_unit_id = 0;
         lv_draw_unit_t * u = info->unit_head;
         while(u) {
-            if(u->evaluate_cb) u->evaluate_cb(u, t);
+            if(u->evaluate_cb) {
+                LV_PROFILER_DRAW_BEGIN_TAG("evaluate_cb");
+                LV_PROFILER_DRAW_BEGIN_TAG(u->name);
+                u->evaluate_cb(u, t);
+                LV_PROFILER_DRAW_END_TAG(u->name);
+                LV_PROFILER_DRAW_END_TAG("evaluate_cb");
+            }
             u = u->next;
         }
     }
@@ -182,6 +194,7 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
     while(t) {
         lv_draw_task_t * t_next = t->next;
         if(t->state == LV_DRAW_TASK_STATE_READY) {
+            LV_PROFILER_DRAW_BEGIN_TAG("draw_task_cleanup");
             if(t_prev) t_prev->next = t->next;      /*Remove by it by assigning the next task to the previous*/
             else layer->draw_task_head = t_next;    /*If it was the head, set the next as head*/
 
@@ -231,6 +244,7 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
 
             lv_free(t->draw_dsc);
             lv_free(t);
+            LV_PROFILER_DRAW_END_TAG("draw_task_cleanup");
         }
         else {
             t_prev = t;
@@ -262,7 +276,11 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
         /*Let all draw units to pick draw tasks*/
         lv_draw_unit_t * u = _draw_info.unit_head;
         while(u) {
+            LV_PROFILER_DRAW_BEGIN_TAG("dispatch_cb");
+            LV_PROFILER_DRAW_BEGIN_TAG(u->name);
             int32_t taken_cnt = u->dispatch_cb(u, layer);
+            LV_PROFILER_DRAW_END_TAG(u->name);
+            LV_PROFILER_DRAW_END_TAG("dispatch_cb");
             if(taken_cnt >= 0) render_running = true;
             u = u->next;
         }
@@ -274,21 +292,25 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
 
 void lv_draw_dispatch_wait_for_request(void)
 {
+    LV_PROFILER_DRAW_BEGIN;
 #if LV_USE_OS
     lv_thread_sync_wait(&_draw_info.sync);
 #else
     while(!_draw_info.dispatch_req);
     _draw_info.dispatch_req = 0;
 #endif
+    LV_PROFILER_DRAW_END;
 }
 
 void lv_draw_dispatch_request(void)
 {
+    LV_PROFILER_DRAW_BEGIN;
 #if LV_USE_OS
     lv_thread_sync_signal(&_draw_info.sync);
 #else
     _draw_info.dispatch_req = 1;
 #endif
+    LV_PROFILER_DRAW_END;
 }
 
 lv_draw_task_t * lv_draw_get_next_available_task(lv_layer_t * layer, lv_draw_task_t * t_prev, uint8_t draw_unit_id)
@@ -380,8 +402,10 @@ lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t c
 
 void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
 {
+    LV_PROFILER_DRAW_BEGIN;
     /*If the buffer of the layer is already allocated return it*/
     if(layer->draw_buf != NULL) {
+        LV_PROFILER_DRAW_END;
         return layer->draw_buf->data;
     }
 
@@ -394,6 +418,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
 
     if(layer->draw_buf == NULL) {
         LV_LOG_WARN("Allocating layer buffer failed. Try later");
+        LV_PROFILER_DRAW_END;
         return NULL;
     }
 
@@ -404,6 +429,7 @@ void * lv_draw_layer_alloc_buf(lv_layer_t * layer)
         lv_draw_buf_clear(layer->draw_buf, NULL);
     }
 
+    LV_PROFILER_DRAW_END;
     return layer->draw_buf->data;
 }
 

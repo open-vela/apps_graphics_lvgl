@@ -251,6 +251,12 @@ uint32_t lv_event_register_id(void);
  */
 void _lv_event_mark_deleted(void * target);
 
+/* Get the name of an event code.
+ * @param code  the event code
+ * @return      the name of the event code as a string
+ */
+const char * lv_event_get_code_name(lv_event_code_t code);
+
 /**********************
  *      MACROS
  **********************/
