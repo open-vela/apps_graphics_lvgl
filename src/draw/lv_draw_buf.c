@@ -118,6 +118,8 @@ void lv_draw_buf_invalidate_cache_user(const lv_draw_buf_handlers_t * handlers, 
         return;
     }
 
+    LV_PROFILER_DRAW_BEGIN;
+
     lv_area_t full;
     if(area == NULL) {
         draw_buf_get_full_area(draw_buf, &full);
@@ -125,6 +127,7 @@ void lv_draw_buf_invalidate_cache_user(const lv_draw_buf_handlers_t * handlers, 
     }
 
     handlers->invalidate_cache_cb(draw_buf, area);
+    LV_PROFILER_DRAW_END;
 }
 
 void lv_draw_buf_flush_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * area)
@@ -141,6 +144,8 @@ void lv_draw_buf_flush_cache_user(const lv_draw_buf_handlers_t * handlers, const
         return;
     }
 
+    LV_PROFILER_DRAW_BEGIN;
+
     lv_area_t full;
     if(area == NULL) {
         draw_buf_get_full_area(draw_buf, &full);
@@ -148,6 +153,7 @@ void lv_draw_buf_flush_cache_user(const lv_draw_buf_handlers_t * handlers, const
     }
 
     handlers->flush_cache_cb(draw_buf, area);
+    LV_PROFILER_DRAW_END;
 }
 
 void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
@@ -155,6 +161,7 @@ void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
     LV_ASSERT_NULL(draw_buf);
     if(a && lv_area_get_width(a) < 0) return;
     if(a && lv_area_get_height(a) < 0) return;
+    LV_PROFILER_DRAW_BEGIN;
 
     const lv_image_header_t * header = &draw_buf->header;
     uint32_t stride = header->stride;
@@ -163,6 +170,7 @@ void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
         /*Need skip the palette if exists*/
         uint8_t * bufc = lv_draw_buf_goto_xy(draw_buf, 0, 0);
         lv_memzero(bufc, header->h * stride);
+        LV_PROFILER_DRAW_END;
         return;
     }
 
@@ -178,11 +186,13 @@ void lv_draw_buf_clear(lv_draw_buf_t * draw_buf, const lv_area_t * a)
         lv_memzero(bufc, line_length);
         bufc += stride;
     }
+    LV_PROFILER_DRAW_END;
 }
 
 void lv_draw_buf_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
                       const lv_draw_buf_t * src, const lv_area_t * src_area)
 {
+    LV_PROFILER_DRAW_BEGIN;
     uint8_t * dest_bufc;
     uint8_t * src_bufc;
     int32_t line_width;
@@ -205,6 +215,7 @@ void lv_draw_buf_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
     if((src_area == NULL && line_width != src->header.w) || \
        (src_area != NULL && line_width != lv_area_get_width(src_area))) {
         LV_ASSERT_MSG(0, "Source and destination areas have different width");
+        LV_PROFILER_DRAW_END;
         return;
     }
 
@@ -233,6 +244,7 @@ void lv_draw_buf_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
         dest_bufc += dest_stride;
         src_bufc += src_stride;
     }
+    LV_PROFILER_DRAW_END;
 }
 
 lv_result_t lv_draw_buf_init(lv_draw_buf_t * draw_buf, uint32_t w, uint32_t h, lv_color_format_t cf, uint32_t stride,
@@ -274,9 +286,13 @@ lv_draw_buf_t * lv_draw_buf_create(uint32_t w, uint32_t h, lv_color_format_t cf,
 lv_draw_buf_t * lv_draw_buf_create_user(const lv_draw_buf_handlers_t * handlers, uint32_t w, uint32_t h,
                                         lv_color_format_t cf, uint32_t stride)
 {
+    LV_PROFILER_DRAW_BEGIN;
     lv_draw_buf_t * draw_buf = lv_malloc_zeroed(sizeof(lv_draw_buf_t));
     LV_ASSERT_MALLOC(draw_buf);
-    if(draw_buf == NULL) return NULL;
+    if(draw_buf == NULL) {
+        LV_PROFILER_DRAW_END;
+        return NULL;
+    }
     if(stride == 0) stride = lv_draw_buf_width_to_stride(w, cf);
 
     uint32_t size = _calculate_draw_buf_size(w, h, cf, stride);
@@ -287,6 +303,7 @@ lv_draw_buf_t * lv_draw_buf_create_user(const lv_draw_buf_handlers_t * handlers,
         LV_LOG_WARN("No memory: %"LV_PRIu32"x%"LV_PRIu32", cf: %d, stride: %"LV_PRIu32", %"LV_PRIu32"Byte, ",
                     w, h, cf, stride, size);
         lv_free(draw_buf);
+        LV_PROFILER_DRAW_END;
         return NULL;
     }
 
@@ -299,6 +316,7 @@ lv_draw_buf_t * lv_draw_buf_create_user(const lv_draw_buf_handlers_t * handlers,
     draw_buf->data = lv_draw_buf_align(buf, cf);
     draw_buf->unaligned_data = buf;
     draw_buf->data_size = size;
+    LV_PROFILER_DRAW_END;
     return draw_buf;
 }
 
@@ -309,9 +327,13 @@ lv_draw_buf_t * lv_draw_buf_dup(const lv_draw_buf_t * draw_buf)
 
 lv_draw_buf_t * lv_draw_buf_dup_user(const lv_draw_buf_handlers_t * handlers, const lv_draw_buf_t * draw_buf)
 {
+    LV_PROFILER_DRAW_BEGIN;
     const lv_image_header_t * header = &draw_buf->header;
     lv_draw_buf_t * new_buf = lv_draw_buf_create_user(handlers, header->w, header->h, header->cf, header->stride);
-    if(new_buf == NULL) return NULL;
+    if(new_buf == NULL) {
+        LV_PROFILER_DRAW_END;
+        return NULL;
+    }
 
     new_buf->header.flags = draw_buf->header.flags;
     new_buf->header.flags |= LV_IMAGE_FLAGS_MODIFIABLE | LV_IMAGE_FLAGS_ALLOCATED;
@@ -325,6 +347,7 @@ lv_draw_buf_t * lv_draw_buf_dup_user(const lv_draw_buf_handlers_t * handlers, co
 
     /*Copy image data*/
     lv_memcpy(new_buf->data, draw_buf->data, size);
+    LV_PROFILER_DRAW_END;
     return new_buf;
 }
 
@@ -332,6 +355,7 @@ lv_draw_buf_t * lv_draw_buf_reshape(lv_draw_buf_t * draw_buf, lv_color_format_t 
                                     uint32_t stride)
 {
     if(draw_buf == NULL) return NULL;
+    LV_PROFILER_DRAW_BEGIN;
 
     /*If color format is unknown, keep using the original color format.*/
     if(cf == LV_COLOR_FORMAT_UNKNOWN) cf = draw_buf->header.cf;
@@ -341,6 +365,7 @@ lv_draw_buf_t * lv_draw_buf_reshape(lv_draw_buf_t * draw_buf, lv_color_format_t 
 
     if(size > draw_buf->data_size) {
         LV_LOG_TRACE("Draw buf too small for new shape");
+        LV_PROFILER_DRAW_END;
         return NULL;
     }
 
@@ -349,6 +374,7 @@ lv_draw_buf_t * lv_draw_buf_reshape(lv_draw_buf_t * draw_buf, lv_color_format_t 
     draw_buf->header.h = h;
     draw_buf->header.stride = stride;
 
+    LV_PROFILER_DRAW_END;
     return draw_buf;
 }
 
@@ -361,6 +387,7 @@ void lv_draw_buf_destroy_user(const lv_draw_buf_handlers_t * handlers, lv_draw_b
 {
     LV_ASSERT_NULL(buf);
     if(buf == NULL) return;
+    LV_PROFILER_DRAW_BEGIN;
 
     if(buf->header.flags & LV_IMAGE_FLAGS_ALLOCATED) {
         draw_buf_free(handlers, buf->unaligned_data);
@@ -369,6 +396,7 @@ void lv_draw_buf_destroy_user(const lv_draw_buf_handlers_t * handlers, lv_draw_b
     else {
         LV_LOG_ERROR("draw buffer is not allocated, ignored");
     }
+    LV_PROFILER_DRAW_END;
 }
 
 void * lv_draw_buf_goto_xy(const lv_draw_buf_t * buf, uint32_t x, uint32_t y)
@@ -393,12 +421,14 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride)
     LV_ASSERT_NULL(src->data);
     if(src == NULL) return LV_RESULT_INVALID;
     if(src->data == NULL) return LV_RESULT_INVALID;
+    LV_PROFILER_DRAW_BEGIN;
 
     const lv_image_header_t * header = &src->header;
     uint32_t w = header->w;
     uint32_t h = header->h;
 
     if(!lv_draw_buf_has_flag(src, LV_IMAGE_FLAGS_MODIFIABLE)) {
+        LV_PROFILER_DRAW_END;
         return LV_RESULT_INVALID;
     }
 
@@ -406,19 +436,24 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride)
     if(stride == 0) stride = lv_draw_buf_width_to_stride(w, header->cf);
 
     /*Check if stride already match*/
-    if(header->stride == stride) return LV_RESULT_OK;
+    if(header->stride == stride) {
+        LV_PROFILER_DRAW_END;
+        return LV_RESULT_OK;
+    }
 
     /*Calculate the minimal stride allowed from bpp*/
     uint32_t bpp = lv_color_format_get_bpp(header->cf);
     uint32_t min_stride = (w * bpp + 7) >> 3;
     if(stride < min_stride) {
         LV_LOG_WARN("New stride is too small. min: %" LV_PRId32, min_stride);
+        LV_PROFILER_DRAW_END;
         return LV_RESULT_INVALID;
     }
 
     /*Check if buffer has enough space. */
     uint32_t new_size = _calculate_draw_buf_size(w, h, header->cf, stride);
     if(new_size > src->data_size) {
+        LV_PROFILER_DRAW_END;
         return LV_RESULT_INVALID;
     }
 
@@ -447,6 +482,7 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride)
 
     src->header.stride = stride;
 
+    LV_PROFILER_DRAW_END;
     return LV_RESULT_OK;
 }
 
@@ -460,6 +496,7 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
         LV_LOG_WARN("draw buf is not modifiable: 0x%04x", draw_buf->header.flags);
         return LV_RESULT_INVALID;
     }
+    LV_PROFILER_DRAW_BEGIN;
 
     /*Premultiply color with alpha, do case by case by judging color format*/
     lv_color_format_t cf = draw_buf->header.cf;
@@ -525,6 +562,7 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
 
     draw_buf->header.flags |= LV_IMAGE_FLAGS_PREMULTIPLIED;
 
+    LV_PROFILER_DRAW_END;
     return LV_RESULT_OK;
 }
 
