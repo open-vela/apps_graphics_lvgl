@@ -403,6 +403,10 @@ menu "LVGL configuration"
 			select LV_USE_MATRIX
 			help
 				Enable drawing support vector graphic APIs.
+
+		config LV_DECODER_IMG_SIZE_EXPAND
+			int "Default image expend size."
+			default 0
 	endmenu
 
 	menu "Feature Configuration"
