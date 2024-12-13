@@ -22,6 +22,16 @@
 #define INTERSECT_LIMIT         (1E-30)
 #define DEFAULT_DASH_NUM        (8)
 
+#define ARRAY_PUSH_BACK(arr, p, type) \
+    do { \
+        if ((lv_array_size((arr)) + 1) > lv_array_capacity((arr))) { \
+            lv_array_resize((arr), (arr)->capacity << 1); \
+        } \
+        type * data = ((type *)(arr)->data) + (arr)->size; \
+        *data = *p; \
+        (arr)->size++; \
+    } while(0)
+
 enum {
     LV_BASE_GEN_INITIAL,
     LV_BASE_GEN_START_ACCUMULATE,
@@ -154,7 +164,7 @@ static void add_distance_point(lv_array_t * array, const lv_distance_point_t * d
             remove_last_distance_point(array);
         }
     }
-    lv_array_push_back(array, dp);
+    ARRAY_PUSH_BACK(array, dp, lv_distance_point_t);
 }
 
 static void close_distance(lv_array_t * array, bool closed)
@@ -194,7 +204,7 @@ static void close_distance(lv_array_t * array, bool closed)
 static inline void add_out_point(lv_array_t * array, float x, float y)
 {
     lv_fpoint_t p = {.x = x, .y = y };
-    lv_array_push_back(array, &p);
+    ARRAY_PUSH_BACK(array, &p, lv_fpoint_t);
 }
 
 static void calc_cap(lv_line_generator * gen, const lv_distance_point_t * p1, const lv_distance_point_t * p2, float len)
