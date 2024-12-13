@@ -70,6 +70,11 @@ typedef struct {
      * < 1: malloc buffer and copy `text` there.
      * 0: `text` is const and it's pointer will be valid during rendering.*/
     uint8_t text_local : 1;
+
+    /**
+     * 1: already executed _lv_bidi_process_paragraph.
+     * 0: has not been executed _lv_bidi_process_paragraph.*/
+    uint8_t has_bided : 1;
     lv_draw_label_hint_t * hint;
 } lv_draw_label_dsc_t;
 

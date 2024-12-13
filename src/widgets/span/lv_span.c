@@ -15,6 +15,8 @@
 #include "../../core/lv_global.h"
 #include "../../misc/lv_text_line_process.h"
 #include "../../misc/lv_iter.h"
+#include "../../misc/lv_bidi.h"
+#include "../../misc/lv_text_ap.h"
 
 /*********************
  *      DEFINES
@@ -173,7 +175,13 @@ void lv_span_set_text(lv_span_t * span, const char * text)
         return;
     }
 
-    size_t text_alloc_len = lv_strlen(text) + 1;
+    size_t text_alloc_len = 0;
+
+#if LV_USE_ARABIC_PERSIAN_CHARS
+    text_alloc_len = _lv_text_ap_calc_bytes_count(text);
+#else
+    text_alloc_len = lv_strlen(text) + 1;
+#endif
 
     if(span->txt == NULL || span->static_flag == 1) {
         span->txt = lv_malloc(text_alloc_len);
@@ -187,7 +195,12 @@ void lv_span_set_text(lv_span_t * span, const char * text)
     if(span->txt == NULL) return;
 
     span->static_flag = 0;
+
+#if LV_USE_ARABIC_PERSIAN_CHARS
+    _lv_text_ap_proc(text, span->txt);
+#else
     lv_memcpy(span->txt, text, text_alloc_len);
+#endif
 
     refresh_self_size(span->spangroup);
 }
@@ -203,7 +216,15 @@ void lv_span_set_text_static(lv_span_t * span, const char * text)
         span->txt = NULL;
     }
     span->static_flag = 1;
+
+#if LV_USE_ARABIC_PERSIAN_CHARS
+    size_t text_alloc_len = _lv_text_ap_calc_bytes_count(text);
+    span->txt = lv_malloc(text_alloc_len);
+    LV_ASSERT_MALLOC(span->txt)
+    _lv_text_ap_proc(text, span->txt);
+#else
     span->txt = (char *)text;
+#endif
 
     refresh_self_size(span->spangroup);
 }
@@ -994,6 +1015,28 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
     lv_span_t * cur_span = _lv_ll_get_head(&spans->child_ll);
     const char * cur_txt = cur_span->txt;
     span_text_check(&cur_txt);
+
+    lv_text_align_t align = lv_obj_get_style_text_align(obj, LV_PART_MAIN);
+#if LV_USE_BIDI
+    lv_base_dir_t base_dir = lv_obj_get_style_base_dir(obj, LV_PART_MAIN);
+    if(base_dir == LV_BASE_DIR_AUTO) {
+        base_dir = _lv_bidi_detect_base_dir(cur_txt) == LV_BASE_DIR_RTL ? LV_BASE_DIR_RTL : LV_BASE_DIR_AUTO;
+    }
+
+    while(cur_span) {
+        cur_span = _lv_ll_get_next(&spans->child_ll, cur_span);
+        if(cur_span == NULL) break;
+        cur_txt = cur_span->txt;
+        span_text_check(&cur_txt);
+
+        if(base_dir == LV_BASE_DIR_AUTO) {
+            base_dir = _lv_bidi_detect_base_dir(cur_txt) == LV_BASE_DIR_RTL ? LV_BASE_DIR_RTL : LV_BASE_DIR_AUTO;
+        }
+    }
+    cur_span = _lv_ll_get_head(&spans->child_ll);
+    cur_txt = cur_span->txt;
+#endif
+
     uint32_t cur_txt_ofs = 0;
     lv_snippet_t snippet;   /* use to save cur_span info and push it to stack */
     lv_memzero(&snippet, sizeof(snippet));
@@ -1106,7 +1149,16 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
         }
 
         /* align deal with */
-        lv_text_align_t align = lv_obj_get_style_text_align(obj, LV_PART_MAIN);
+#if LV_USE_BIDI
+        if(base_dir == LV_BASE_DIR_AUTO) {
+            base_dir = LV_BASE_DIR_LTR;
+        }
+
+        if(align == LV_TEXT_ALIGN_AUTO) {
+            if(base_dir == LV_BASE_DIR_RTL) align = LV_TEXT_ALIGN_RIGHT;
+            else align = LV_TEXT_ALIGN_LEFT;
+        }
+#endif
         if(align == LV_TEXT_ALIGN_CENTER || align == LV_TEXT_ALIGN_RIGHT) {
             int32_t align_ofs = 0;
             int32_t txts_w = is_first_line ? indent : 0;
@@ -1123,13 +1175,30 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
             txt_pos.x += align_ofs;
         }
 
+#if LV_USE_BIDI
+        int32_t first_txt_pos_x = txt_pos.x;
+        bool is_draw_rtl = false;
+        lv_snippet_t * pinfo0 = lv_get_snippet(0);
+        lv_base_dir_t bidi_dir = _lv_bidi_detect_base_dir(pinfo0->txt);
+        if(bidi_dir == LV_BASE_DIR_RTL && base_dir == LV_BASE_DIR_RTL) {
+            is_draw_rtl = true;
+            txt_pos.x = coords.x2;
+        }
+#endif
         /* draw line letters */
         uint32_t i;
         for(i = 0; i < item_cnt; i++) {
             lv_snippet_t * pinfo = lv_get_snippet(i);
 
-            /* bidi deal with:todo */
+#if LV_USE_BIDI
+            char * bidi_txt = lv_malloc(pinfo->bytes + 1);
+            lv_memcpy(bidi_txt, pinfo->txt, (size_t)pinfo->bytes);
+            label_draw_dsc.bidi_dir = base_dir;
+            label_draw_dsc.has_bided = true;
+            _lv_bidi_process_paragraph(pinfo->txt, bidi_txt, pinfo->bytes, label_draw_dsc.bidi_dir, NULL, 0);
+#else
             const char * bidi_txt = pinfo->txt;
+#endif
 
             lv_point_t pos;
             pos.x = txt_pos.x;
@@ -1157,6 +1226,13 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
             a.x2 = a.x1 + pinfo->txt_w;
             a.y2 = a.y1 + pinfo->line_h;
 
+#if LV_USE_BIDI
+            if(is_draw_rtl) {
+                a.x1 = pos.x - pinfo->txt_w;
+                a.x2 = pos.x;
+            }
+#endif
+
             bool need_draw_ellipsis = false;
             uint32_t dot_width = 0;
             /* deal overflow */
@@ -1170,18 +1246,62 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
                                                          label_draw_dsc.flag, &pinfo->txt_w, &next_ofs);
                 a.x2 = a.x1 + pinfo->txt_w;
                 label_draw_dsc.text_length = next_ofs + 1;
+#if LV_USE_BIDI
+                if(base_dir == LV_BASE_DIR_RTL) {
+                    if(txt_bytes > label_draw_dsc.text_length) {
+                        char * tmp_txt = lv_malloc(label_draw_dsc.text_length + 1);
+
+                        if(_lv_bidi_detect_base_dir(bidi_txt) == LV_BASE_DIR_RTL) {
+                            lv_memcpy(tmp_txt, bidi_txt + (txt_bytes - label_draw_dsc.text_length), (size_t)label_draw_dsc.text_length);
+                        }
+                        else {
+                            lv_memcpy(tmp_txt, bidi_txt, (size_t)label_draw_dsc.text_length);
+                        }
+
+                        label_draw_dsc.text = tmp_txt;
+                        lv_free(bidi_txt);
+                    }
+                    if(i == 0) {
+                        a.x1 = a.x1 + dot_width;
+                        a.x2 = a.x2 + dot_width;
+                    }
+                }
+#endif
             }
 
             lv_draw_label(layer, &label_draw_dsc, &a);
 
             if(need_draw_ellipsis) {
                 label_draw_dsc.text = "...";
+
+#if LV_USE_BIDI
+                if(label_draw_dsc.bidi_dir == LV_BASE_DIR_RTL) {
+                    a.x1 = first_txt_pos_x;
+                    a.x2 = a.x1 + dot_width;
+                    if(is_draw_rtl) {
+                        a.x1 = first_txt_pos_x - dot_width;
+                        a.x2 = first_txt_pos_x;
+                    }
+                }
+                else {
+                    a.x1 = a.x2;
+                    a.x2 = a.x1 + dot_width;
+                }
+#else
                 a.x1 = a.x2;
                 a.x2 = a.x1 + dot_width;
+#endif
+
                 lv_draw_label(layer, &label_draw_dsc, &a);
             }
 
             txt_pos.x = a.x2;
+
+#if LV_USE_BIDI
+            if(is_draw_rtl) {
+                txt_pos.x = a.x1;
+            }
+#endif
         }
 
 Next_line_init:
