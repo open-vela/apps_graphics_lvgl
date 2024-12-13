@@ -328,10 +328,20 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         /*Write all letter of a line*/
         i = 0;
 #if LV_USE_BIDI
-        char * bidi_txt = lv_malloc(line_end - line_start + 1);
+        size_t bidi_size = line_end - line_start;
+        char * bidi_txt = lv_malloc(bidi_size + 1);
         LV_ASSERT_MALLOC(bidi_txt);
-        _lv_bidi_process_paragraph(dsc->text + real_line_start, bidi_txt, line_end - line_start, base_dir, NULL,
-                                   0);
+
+        /**
+          * has_bided = 1: already executed _lv_bidi_process_paragraph.
+          * has_bided = 0: has not been executed _lv_bidi_process_paragraph.*/
+        if(dsc->has_bided) {
+            lv_memcpy(bidi_txt, &dsc->text[line_start], bidi_size);
+        }
+        else {
+            _lv_bidi_process_paragraph(dsc->text + real_line_start, bidi_txt, line_end - line_start, base_dir, NULL, 0);
+        }
+
 #else
         const char * bidi_txt = dsc->text + real_line_start;
 #endif
@@ -340,9 +350,14 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
             uint32_t logical_char_pos = 0;
             if(sel_start != 0xFFFF && sel_end != 0xFFFF) {
 #if LV_USE_BIDI
-                logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start);
-                uint32_t t = lv_text_encoded_get_char_id(bidi_txt, i);
-                logical_char_pos += _lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, base_dir, t, NULL);
+                if(dsc->has_bided) {
+                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start + i);
+                }
+                else {
+                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start);
+                    uint32_t t = lv_text_encoded_get_char_id(bidi_txt, i);
+                    logical_char_pos += _lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, base_dir, t, NULL);
+                }
 #else
                 logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start + i);
 #endif
