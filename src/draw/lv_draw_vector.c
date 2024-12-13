@@ -46,6 +46,36 @@
         } \
     } while(0)
 
+#define OP_PUSH_BACK(arr, op) \
+    do { \
+        uint8_t * co = ((uint8_t *)(arr)->data) + (arr)->size; \
+        *co = *(op);\
+        (arr)->size++; \
+    } while(0)
+
+#define POINT_PUSH_BACK(arr, p) \
+    do { \
+        lv_fpoint_t * pt = ((lv_fpoint_t *)(arr)->data) + (arr)->size; \
+        *pt = *(p);\
+        (arr)->size++; \
+    } while(0)
+
+#define POINT2_PUSH_BACK(arr, p1, p2) \
+    do { \
+        lv_fpoint_t * pt = ((lv_fpoint_t *)(arr)->data) + (arr)->size; \
+        *pt = *(p1); \
+        *(pt + 1) = *(p2); \
+        (arr)->size += 2; \
+    } while(0)
+
+#define POINT3_PUSH_BACK(arr, p1, p2, p3) \
+    do { \
+        lv_fpoint_t * pt = ((lv_fpoint_t *)(arr)->data) + (arr)->size; \
+        *pt = *(p1); \
+        *(pt + 1) = *(p2); \
+        *(pt + 2) = *(p3); \
+        (arr)->size += 3; \
+    } while(0)
 /**********************
 *      TYPEDEFS
  **********************/
@@ -143,8 +173,8 @@ void lv_vector_path_move_to(lv_vector_path_t * path, const lv_fpoint_t * p)
     CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
 
     uint8_t op = LV_VECTOR_PATH_OP_MOVE_TO;
-    lv_array_push_back(&path->ops, &op);
-    lv_array_push_back(&path->points, p);
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT_PUSH_BACK(&path->points, p);
 }
 
 void lv_vector_path_line_to(lv_vector_path_t * path, const lv_fpoint_t * p)
@@ -157,8 +187,8 @@ void lv_vector_path_line_to(lv_vector_path_t * path, const lv_fpoint_t * p)
     CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
 
     uint8_t op = LV_VECTOR_PATH_OP_LINE_TO;
-    lv_array_push_back(&path->ops, &op);
-    lv_array_push_back(&path->points, p);
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT_PUSH_BACK(&path->points, p);
 }
 
 void lv_vector_path_quad_to(lv_vector_path_t * path, const lv_fpoint_t * p1, const lv_fpoint_t * p2)
@@ -171,9 +201,8 @@ void lv_vector_path_quad_to(lv_vector_path_t * path, const lv_fpoint_t * p1, con
     CHECK_AND_RESIZE_PATH_CONTAINER(path, 2);
 
     uint8_t op = LV_VECTOR_PATH_OP_QUAD_TO;
-    lv_array_push_back(&path->ops, &op);
-    lv_array_push_back(&path->points, p1);
-    lv_array_push_back(&path->points, p2);
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT2_PUSH_BACK(&path->points, p1, p2);
 }
 
 void lv_vector_path_cubic_to(lv_vector_path_t * path, const lv_fpoint_t * p1, const lv_fpoint_t * p2,
@@ -187,10 +216,8 @@ void lv_vector_path_cubic_to(lv_vector_path_t * path, const lv_fpoint_t * p1, co
     CHECK_AND_RESIZE_PATH_CONTAINER(path, 3);
 
     uint8_t op = LV_VECTOR_PATH_OP_CUBIC_TO;
-    lv_array_push_back(&path->ops, &op);
-    lv_array_push_back(&path->points, p1);
-    lv_array_push_back(&path->points, p2);
-    lv_array_push_back(&path->points, p3);
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT3_PUSH_BACK(&path->points, p1, p2, p3);
 }
 
 void lv_vector_path_close(lv_vector_path_t * path)
@@ -203,7 +230,7 @@ void lv_vector_path_close(lv_vector_path_t * path)
     CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
 
     uint8_t op = LV_VECTOR_PATH_OP_CLOSE;
-    lv_array_push_back(&path->ops, &op);
+    OP_PUSH_BACK(&path->ops, &op);
 }
 
 void lv_vector_path_get_bounding(const lv_vector_path_t * path, lv_area_t * area)
