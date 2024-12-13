@@ -120,6 +120,14 @@ lv_obj_t * lv_spangroup_create_ex(lv_obj_t * par, lv_spangroup_create_info_t * c
     return obj;
 }
 
+static void lv_span_init(lv_obj_t * obj, lv_span_t * span)
+{
+    lv_style_init(&span->style);
+    span->txt = (char *)"";
+    span->static_flag = 1;
+    span->spangroup = obj;
+}
+
 lv_span_t * lv_spangroup_new_span(lv_obj_t * obj)
 {
     if(obj == NULL) {
@@ -131,11 +139,30 @@ lv_span_t * lv_spangroup_new_span(lv_obj_t * obj)
     lv_span_t * span = _lv_ll_ins_tail(&spans->child_ll);
     LV_ASSERT_MALLOC(span);
 
-    lv_style_init(&span->style);
-    span->txt = (char *)"";
-    span->static_flag = 1;
-    span->spangroup = obj;
+    lv_span_init(obj, span);
+    refresh_self_size(obj);
 
+    return span;
+}
+
+lv_span_t * lv_spangroup_new_span_prev(lv_obj_t * obj, lv_span_t * span_act)
+{
+    if(obj == NULL) {
+        return NULL;
+    }
+
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_spangroup_t * spans = (lv_spangroup_t *)obj;
+    lv_span_t * span = NULL;
+    if(span_act == NULL) {
+        span = _lv_ll_ins_tail(&spans->child_ll);
+    }
+    else {
+        span = _lv_ll_ins_prev(&spans->child_ll, span_act);
+    }
+    LV_ASSERT_MALLOC(span);
+
+    lv_span_init(obj, span);
     refresh_self_size(obj);
 
     return span;

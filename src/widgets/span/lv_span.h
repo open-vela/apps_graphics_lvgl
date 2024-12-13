@@ -116,6 +116,14 @@ static inline lv_obj_t * lv_spangroup_create(lv_obj_t * parent)
 lv_span_t * lv_spangroup_new_span(lv_obj_t * obj);
 
 /**
+ * Create a span string descriptor and add to spangroup in front of the span_act.
+ * @param obj       pointer to a spangroup object.
+ * @param span_act  pointer to a span object.
+ * @return          pointer to the created span.
+ */
+lv_span_t * lv_spangroup_new_span_prev(lv_obj_t * obj, lv_span_t * span_act);
+
+/**
  * Remove the span from the spangroup and free memory.
  * @param obj   pointer to a spangroup object.
  * @param span  pointer to a span.
