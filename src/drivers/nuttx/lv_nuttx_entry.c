@@ -222,6 +222,11 @@ void lv_nuttx_deinit(lv_nuttx_result_t * result)
             lv_indev_delete(result->utouch_indev);
             result->utouch_indev = NULL;
         }
+
+        if(result->mouse_indev) {
+            lv_indev_delete(result->mouse_indev);
+            result->mouse_indev = NULL;
+        }
     }
 #else
     lv_nuttx_deinit_custom(result);
