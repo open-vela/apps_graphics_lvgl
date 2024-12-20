@@ -198,13 +198,13 @@ static void _g2d_blit_no_alpha(lv_draw_buf_t * dest_buf, const lv_area_t * dest_
     info.src_image_h.clip_rect.y = src_area_clip.y1;
     info.src_image_h.clip_rect.w = src_clip_w;
     info.src_image_h.clip_rect.h = src_clip_h;
-    info.src_image_h.width = src_buf->header.w;
+    info.src_image_h.width = (yuv_buf && yuv_buf->semi_planar.y.stride != 0) ? yuv_buf->semi_planar.y.stride : src_buf->header.w;
     info.src_image_h.height = src_buf->header.h;
     info.src_image_h.mode = G2D_PIXEL_ALPHA;
     info.src_image_h.alpha = 255;
     info.src_image_h.color = 0xee8899;
-    info.src_image_h.align[0] = yuv_buf ? yuv_buf->semi_planar.y.stride : 0; //pitch
-    info.src_image_h.align[1] = yuv_buf ? yuv_buf->semi_planar.uv.stride : 0;
+    info.src_image_h.align[0] = 0;
+    info.src_image_h.align[1] = 0;
     info.src_image_h.align[2] = 0;
     info.src_image_h.laddr[0] = yuv_buf ? (uintptr_t)(yuv_buf->semi_planar.y.buf) : (uintptr_t)(src_buf->data);
     info.src_image_h.laddr[1] = yuv_buf ? (uintptr_t)(yuv_buf->semi_planar.uv.buf) : (uintptr_t) 0;
