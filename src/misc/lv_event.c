@@ -26,9 +26,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static inline void lv_event_add_flag(lv_event_list_t * list, const lv_event_flag_t flag);
-static inline void lv_event_remove_flag(lv_event_list_t * list, const lv_event_flag_t flag);
-static inline bool lv_event_has_flag(const lv_event_list_t * list, const lv_event_flag_t flag);
+
 
 /**********************
  *  STATIC VARIABLES
@@ -361,32 +359,3 @@ const char * lv_event_get_code_name(lv_event_code_t code)
  *   STATIC FUNCTIONS
  **********************/
 
-/**
- * set a flag in the event list.
- * @param list pointer to an `lv_event_list_t` variable
- * @param flag an `lv_event_flag_t` variable
- */
-static inline void lv_event_add_flag(lv_event_list_t * list, const lv_event_flag_t flag)
-{
-    list->flags |= flag;
-}
-
-/**
- * remove a flag in the event list.
- * @param list pointer to an `lv_event_list_t` variable
- * @param flag an `lv_event_flag_t` variable
- */
-static inline void lv_event_remove_flag(lv_event_list_t * list, const lv_event_flag_t flag)
-{
-    list->flags &= (~flag);
-}
-
-/**
- * Is there a certain flag in the event list.
- * @param list pointer to an `lv_event_list_t` variable
- * @param flag an `lv_event_flag_t` variable
- */
-static inline bool lv_event_has_flag(const lv_event_list_t * list, const lv_event_flag_t flag)
-{
-    return (list->flags & flag) != 0;
-}
