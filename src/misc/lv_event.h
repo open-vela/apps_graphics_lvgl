@@ -112,6 +112,14 @@ typedef enum {
     LV_EVENT_VSYNC,
     LV_EVENT_VSYNC_REQUEST,
 
+    /** Crown scroll events*/
+    LV_EVENT_CROWN_SCROLL_BEGIN,       /**< Scrolling begins*/
+    LV_EVENT_CROWN_SCROLL,             /**< Scrolling*/
+    LV_EVENT_CROWN_SCROLL_END,         /**< Scrolling ends*/
+    LV_EVENT_CROWN_SCROLL_CHECK,       /**< Check if the object can be scrolled*/
+    LV_EVENT_CROWN_SCROLL_CHAIN_CHECK, /**< Check if the object can be scrolled by chaining*/
+    LV_EVENT_CROWN_SCROLL_VIBRATION,   /**< Vibrate the object*/
+
     _LV_EVENT_LAST,                 /** Number of default events*/
 
     LV_EVENT_PREPROCESS = 0x8000,   /** This is a flag that can be set with an event so it's processed
