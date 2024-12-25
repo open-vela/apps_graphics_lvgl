@@ -605,7 +605,7 @@ lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expa
         uint32_t palette_size = LV_COLOR_INDEXED_PALETTE_SIZE(cf);
         int color_index = -1;
         lv_color32_t * data = (lv_color32_t *)draw_buff->data;
-        for(int i = 0; i < palette_size; i++) {
+        for(int i = 0; i < (int)palette_size; i++) {
             if(data->alpha == 0) {
                 color_index = i;
                 break;
