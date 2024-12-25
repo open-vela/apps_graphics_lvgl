@@ -982,7 +982,7 @@ bool lv_display_get_dirty_area(lv_display_t * disp, lv_area_t * dirty_area)
 
     for(inv_index = 0; inv_index < disp->inv_p; inv_index++) {
         if(disp->inv_area_joined[inv_index] == 0) {
-            FAR const lv_area_t * area_p = &disp->inv_areas[inv_index];
+            const lv_area_t * area_p = &disp->inv_areas[inv_index];
 
             /* Join to final_area */
 
