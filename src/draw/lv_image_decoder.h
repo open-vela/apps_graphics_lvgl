@@ -49,6 +49,16 @@ struct _lv_image_decoder_dsc_t;
 typedef struct _lv_image_decoder_dsc_t lv_image_decoder_dsc_t;
 
 /**
+ * Custom drawing functions for special image formats.
+ * @param layer pointer to a layer
+ * @param dsc pointer to decoder descriptor
+ * @param coords the coordinates of the image
+ * @param draw_dsc the draw image descriptor
+ * @param clip_area the clip area of the image
+ */
+typedef void (*lv_image_decoder_custom_draw_t)(lv_layer_t * layer, const lv_image_decoder_dsc_t * dsc,
+                                               const lv_area_t * coords, const lv_draw_image_dsc_t * draw_dsc, const lv_area_t * clip_area);
+/**
  * Image decoder args.
  * It determines how to decoder an image, e.g. whether to premultiply the alpha or not.
  * It should be passed to lv_img_decoder_open() function. If NULL is provided, default
@@ -108,6 +118,8 @@ struct _lv_image_decoder_t {
     lv_image_decoder_open_f_t open_cb;
     lv_image_decoder_get_area_cb_t get_area_cb;
     lv_image_decoder_close_f_t close_cb;
+
+    lv_image_decoder_custom_draw_t custom_draw_cb;
 
     const char * name;
 
