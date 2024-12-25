@@ -36,7 +36,7 @@ typedef struct {
     uint32_t palette_size   : 9;
 } lv_draw_image_sup_t;
 
-typedef struct _lv_draw_image_dsc_t {
+struct _lv_draw_image_dsc_t {
     lv_draw_dsc_base_t base;
 
     const void * src;
@@ -71,7 +71,7 @@ typedef struct _lv_draw_image_dsc_t {
     const lv_image_dsc_t * bitmap_mask_src;
 
     int32_t clip_radius;
-} lv_draw_image_dsc_t;
+};
 
 /**
  * PErform the actual rendering of a decoded image

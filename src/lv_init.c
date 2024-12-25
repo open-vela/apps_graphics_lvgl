@@ -32,6 +32,10 @@
 #include "themes/simple/lv_theme_simple.h"
 #include "themes/default/lv_theme_default.h"
 #include "misc/lv_fs.h"
+
+#if LV_USE_SVG
+    #include "libs/svg/lv_svg_decoder.h"
+#endif
 #if LV_USE_DRAW_VGLITE
     #include "draw/nxp/vglite/lv_draw_vglite.h"
 #endif
@@ -316,6 +320,10 @@ void lv_init(void)
 
 #if LV_USE_LIBWEBP
     lv_libwebp_init();
+#endif
+
+#if LV_USE_SVG
+    lv_svg_decoder_init();
 #endif
 
     /*Make FFMPEG last because the last converter will be checked first and
