@@ -216,6 +216,12 @@
  */
 #define LV_VG_LITE_STROKE_CACHE_CNT 32
 
+/* Enable stroke to path optimization. */
+#define LV_VG_LITE_USE_STROKE_TO_PATH 1
+
+/* Enable A4/A8 image support */
+#define LV_VG_LITE_USE_ALPHA_IMAGE 0
+
 #endif
 
 /* Use G2D GPU. */
