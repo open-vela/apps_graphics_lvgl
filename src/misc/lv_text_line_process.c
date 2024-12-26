@@ -108,7 +108,8 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
     uint32_t end;
     uint32_t brk;
     bool is_line_leading = true;
-    bool is_word_breakable = false;
+    lv_text_word_process_word_info_t unresolved_op_qu = { 0 };
+    bool has_unresolved_op_qu = false;
     uint32_t real_width = 0;
     uint32_t ideal_width = 0;
 
@@ -139,7 +140,8 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
         }
 
         if(word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION || word.type == LV_TEXT_WORD_PROCESS_QUOTATION) {
-            is_word_breakable = true;
+            has_unresolved_op_qu = true;
+            unresolved_op_qu = word;
             lv_iter_peek_advance(word_iter);
             lv_text_word_process_word_info_t word_next;
             res = lv_iter_peek(word_iter, &word_next);
@@ -167,27 +169,51 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
             break;
         }
 
-        if(word_next.pos.brk != UINT32_MAX && word_next.pos.brk != word_next.pos.end) {
+        if(word_next.pos.brk != UINT32_MAX) {
             end = word.pos.end;
             brk = word.pos.end;
+
+            if(word_next.pos.brk == word_next.pos.end) {
+                if(word_next.type == LV_TEXT_WORD_PROCESS_CJK
+                   || word_next.type == LV_TEXT_WORD_PROCESS_LATIN
+                   || word.type == LV_TEXT_WORD_PROCESS_NUMBER) {
+                    continue;
+                }
+                else if(word_next.type == LV_TEXT_WORD_PROCESS_SPACE
+                        || word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION
+                        || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
+                        || word_next.type == LV_TEXT_WORD_PROCESS_HYPHEN) {
+                    end = word_next.pos.end;
+                    brk = word_next.pos.brk;
+                    real_width += word_next.real_width;
+                    ideal_width += word_next.ideal_width;
+                    break;
+                }
+            }
 
             if(word_next.type == LV_TEXT_WORD_PROCESS_RETURN || word_next.type == LV_TEXT_WORD_PROCESS_NEWLINE) {
                 lv_iter_next(word_iter, NULL);
                 end++;
                 brk++;
             }
-            else if(word.type != LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION && word.type != LV_TEXT_WORD_PROCESS_QUOTATION &&
+            else if(!(word.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION || word.type == LV_TEXT_WORD_PROCESS_QUOTATION) &&
                     (word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION
                      || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
                      || word_next.type == LV_TEXT_WORD_PROCESS_HYPHEN
                      || word_next.type == LV_TEXT_WORD_PROCESS_SPACE)) {
-                if(is_line_leading || is_word_breakable) {
+                if(is_line_leading) {
                     end = word_next.pos.end;
                     brk = word_next.pos.brk;
                 }
                 else {
-                    end = word.pos.start;
-                    brk = word.pos.start;
+                    if(has_unresolved_op_qu) {
+                        end = unresolved_op_qu.pos.start;
+                        brk = unresolved_op_qu.pos.start;
+                    }
+                    else {
+                        end = word.pos.start;
+                        brk = word.pos.start;
+                    }
                 }
 
                 real_width -= word.real_width;
@@ -198,10 +224,13 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
         if(word.type == LV_TEXT_WORD_PROCESS_CJK
            || word.type == LV_TEXT_WORD_PROCESS_LATIN
            || word.type == LV_TEXT_WORD_PROCESS_NUMBER) {
-            is_word_breakable = false;
+            has_unresolved_op_qu = false;
+            unresolved_op_qu.type = LV_TEXT_WORD_PROCESS_UNKNOWN;
         }
 
-        is_line_leading = false;
+        if(!has_unresolved_op_qu) {
+            is_line_leading = false;
+        }
     }
 
     lv_text_word_process_iter_destroy(word_iter);
