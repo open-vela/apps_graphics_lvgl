@@ -19,6 +19,7 @@
 #include "lv_vg_lite_grad.h"
 #include "lv_vg_lite_pending.h"
 #include "lv_vg_lite_stroke.h"
+#include "lv_vg_lite_stroke_path.h"
 
 /*********************
  *      DEFINES
@@ -77,6 +78,7 @@ void lv_draw_vg_lite_init(void)
 #if LV_USE_VECTOR_GRAPHIC
     lv_vg_lite_grad_init(unit, LV_VG_LITE_GRAD_CACHE_CNT);
     lv_vg_lite_stroke_init(unit, LV_VG_LITE_STROKE_CACHE_CNT);
+    lv_vg_lite_stroke_path_init(unit);
 #endif
     lv_vg_lite_path_init(unit);
     lv_vg_lite_decoder_init();
@@ -309,6 +311,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 #if LV_USE_VECTOR_GRAPHIC
     lv_vg_lite_grad_deinit(unit);
     lv_vg_lite_stroke_deinit(unit);
+    lv_vg_lite_stroke_path_deinit(unit);
 #endif
     lv_vg_lite_path_deinit(unit);
     lv_vg_lite_decoder_deinit();

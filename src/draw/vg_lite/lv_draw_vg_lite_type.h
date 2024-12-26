@@ -53,7 +53,9 @@ struct _lv_draw_vg_lite_unit_t {
     vg_lite_buffer_t target_buffer;
     vg_lite_matrix_t global_matrix;
     struct _lv_vg_lite_path_t * global_path;
+    struct _lv_vg_lite_path_t * stroke_path;
     bool path_in_use;
+    bool stroke_path_in_use;
 };
 
 /**********************
