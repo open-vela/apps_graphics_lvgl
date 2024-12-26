@@ -582,6 +582,28 @@
     #endif
 #endif
 
+/* Enable stroke to path optimization. */
+#ifndef LV_VG_LITE_USE_STROKE_TO_PATH
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_VG_LITE_USE_STROKE_TO_PATH
+            #define LV_VG_LITE_USE_STROKE_TO_PATH CONFIG_LV_VG_LITE_USE_STROKE_TO_PATH
+        #else
+            #define LV_VG_LITE_USE_STROKE_TO_PATH 0
+        #endif
+    #else
+        #define LV_VG_LITE_USE_STROKE_TO_PATH 1
+    #endif
+#endif
+
+/* Enable A4/A8 image support */
+#ifndef LV_VG_LITE_USE_ALPHA_IMAGE
+    #ifdef CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
+        #define LV_VG_LITE_USE_ALPHA_IMAGE CONFIG_LV_VG_LITE_USE_ALPHA_IMAGE
+    #else
+        #define LV_VG_LITE_USE_ALPHA_IMAGE 0
+    #endif
+#endif
+
 #endif
 
 /* Use G2D GPU. */
