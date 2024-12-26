@@ -223,16 +223,13 @@ lv_area_t lv_matrix_transform_area(const lv_matrix_t * matrix, const lv_area_t *
 
 bool lv_matrix_is_identity_or_translation(const lv_matrix_t * matrix)
 {
-    if(matrix->m[0][0] != 1.0f || matrix->m[1][1] != 1.0f || matrix->m[2][2] != 1.0f) {
-        return false;
-    }
-
-    if(matrix->m[0][1] != 0.0f || matrix->m[0][2] != 0.0f || matrix->m[1][0] != 0.0f || matrix->m[1][2] != 0.0f ||
-       matrix->m[2][0] != 0.0f || matrix->m[2][1] != 0.0f) {
-        return false;
-    }
-
-    return true;
+    return (matrix->m[0][0] == 1.0f &&
+            matrix->m[0][1] == 0.0f &&
+            matrix->m[1][0] == 0.0f &&
+            matrix->m[1][1] == 1.0f &&
+            matrix->m[2][0] == 0.0f &&
+            matrix->m[2][1] == 0.0f &&
+            matrix->m[2][2] == 1.0f);
 }
 
 /**********************
