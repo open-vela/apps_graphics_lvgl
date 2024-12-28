@@ -16,8 +16,6 @@ extern "C" {
  *********************/
 #include "lv_types.h"
 
-#include "lv_assert.h"
-
 /*********************
  *      DEFINES
  *********************/
