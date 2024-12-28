@@ -27,8 +27,6 @@ extern "C" {
 #define LV_TXT_ENC_UTF8 1
 #define LV_TXT_ENC_ASCII 2
 
-#define LV_TEXT_LEN_MAX UINT32_MAX
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -41,10 +39,6 @@ enum _lv_text_flag_t {
     LV_TEXT_FLAG_NONE    = 0x00,
     LV_TEXT_FLAG_EXPAND  = 0x01, /**< Ignore max-width to avoid automatic word wrapping*/
     LV_TEXT_FLAG_FIT     = 0x02, /**< Max-width is already equal to the longest line. (Used to skip some calculation)*/
-    LV_TEXT_FLAG_BREAK_ALL = 0x04, /**< To prevent overflow, insert breaks between any two characters.
-                                    Otherwise breaks are inserted at word boundaries, as configured via LV_TXT_BREAK_CHARS
-                                    or according to LV_TXT_LINE_BREAK_LONG_LEN, LV_TXT_LINE_BREAK_LONG_PRE_MIN_LEN,
-                                    and LV_TXT_LINE_BREAK_LONG_POST_MIN_LEN.*/
 };
 
 #ifdef DOXYGEN
