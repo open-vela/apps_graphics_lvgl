@@ -16,7 +16,6 @@ extern "C" {
  *********************/
 #include "lv_types.h"
 
-#include "lv_assert.h"
 #include "lv_text_word_process.h"
 
 /*********************

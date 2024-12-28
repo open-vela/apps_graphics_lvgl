@@ -511,6 +511,10 @@
  *In these languages characters should be replaced with an other form based on their position in the text*/
 #define LV_USE_ARABIC_PERSIAN_CHARS 0
 
+/* Textflow is a module to support more advanced text features (line break rules, etc.).
+ */
+#define LV_USE_TEXTFLOW 0
+
 /*==================
  * WIDGETS
  *================*/

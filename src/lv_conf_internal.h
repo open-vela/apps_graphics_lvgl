@@ -1515,6 +1515,16 @@
     #endif
 #endif
 
+/* Textflow is a module to support more advanced text features (line break rules, etc.).
+ */
+#ifndef LV_USE_TEXTFLOW
+    #ifdef CONFIG_LV_USE_TEXTFLOW
+        #define LV_USE_TEXTFLOW CONFIG_LV_USE_TEXTFLOW
+    #else
+        #define LV_USE_TEXTFLOW 0
+    #endif
+#endif
+
 /*==================
  * WIDGETS
  *================*/
