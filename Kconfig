@@ -905,7 +905,13 @@ menu "LVGL configuration"
 			bool "Enable Arabic/Persian processing"
 			help
 				In these languages characters should be replaced with
-				an other form based on their position in the text.
+				another form based on their position in the text.
+
+		config LV_USE_TEXTFLOW
+			bool "Enable Textflow"
+			help
+				Textflow is a module to support more advanced text features (line break rules, etc.).
+
 	endmenu
 
 	menu "Widget Usage"
