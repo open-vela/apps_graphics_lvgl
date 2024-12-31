@@ -171,6 +171,7 @@ void lv_image_set_src(lv_obj_t * obj, const void * src)
     if(res != LV_RESULT_OK) {
 #if LV_USE_LOG
         char buf[24];
+        LV_UNUSED(buf);
         LV_LOG_WARN("failed to get image info: %s",
                     src_type == LV_IMAGE_SRC_FILE ? (const char *)src : (lv_snprintf(buf, sizeof(buf), "%p", src), buf));
 #endif /*LV_USE_LOG*/
