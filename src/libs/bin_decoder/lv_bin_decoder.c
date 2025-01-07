@@ -140,7 +140,7 @@ lv_result_t lv_bin_decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
          * magic in image header.
          */
         if(header->magic != LV_IMAGE_HEADER_MAGIC) {
-            LV_LOG_WARN("Legacy bin image detected: %s", (char *)src);
+            LV_LOG_INFO("Legacy bin image detected: %s", (char *)src);
             header->cf = header->magic;
             header->magic = LV_IMAGE_HEADER_MAGIC;
         }
