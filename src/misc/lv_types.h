@@ -165,6 +165,7 @@ typedef struct _lv_matrix_t lv_matrix_t;
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
+typedef struct lv_draw_buf_t lv_draw_buf_t;
 
 /**********************
  *      MACROS
