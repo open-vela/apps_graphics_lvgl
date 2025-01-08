@@ -20,6 +20,11 @@
  **********************/
 
 typedef struct {
+    uint32_t text_len;
+    uint32_t index;
+} lv_text_char_process_t;
+
+typedef struct {
     lv_iter_t * char_iter;
     const lv_font_t * font;
     int32_t letter_space;
@@ -57,12 +62,16 @@ static lv_result_t word_iter_next_cb(void * instance, void * context, void * ele
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_iter_t * lv_text_char_process_iter_create(const char * txt)
+lv_iter_t * lv_text_char_process_iter_create(const char * text, const uint32_t text_len)
 {
-    lv_iter_t * iter = lv_iter_create((void *)txt, sizeof(uint32_t), sizeof(uint32_t),
+    lv_iter_t * iter = lv_iter_create((void *)text, sizeof(uint32_t), sizeof(lv_text_char_process_t),
                                       char_iter_next_cb);
 
     if(iter == NULL) return NULL;
+
+    lv_text_char_process_t * ctx = lv_iter_get_context(iter);
+    ctx->text_len = text_len;
+    ctx->index = 0;
 
     return iter;
 }
@@ -72,8 +81,8 @@ void lv_text_char_process_iter_destroy(lv_iter_t * iter)
     lv_iter_destroy(iter);
 }
 
-lv_iter_t * lv_text_word_process_iter_create(const char * txt, const lv_font_t * font, int32_t letter_space,
-                                             int32_t remaining_width, uint8_t flag)
+lv_iter_t * lv_text_word_process_iter_create(const char * txt, const uint32_t text_len, const lv_font_t * font,
+                                             int32_t letter_space, int32_t remaining_width, uint8_t flag)
 {
     lv_iter_t * iter = lv_iter_create((void *)txt, sizeof(lv_text_word_process_word_info_t), sizeof(lv_text_word_process_t),
                                       word_iter_next_cb);
@@ -82,7 +91,7 @@ lv_iter_t * lv_text_word_process_iter_create(const char * txt, const lv_font_t *
 
     lv_text_word_process_t * ctx = lv_iter_get_context(iter);
 
-    ctx->char_iter = lv_text_char_process_iter_create(txt);
+    ctx->char_iter = lv_text_char_process_iter_create(txt, text_len);
 
     if(ctx->char_iter == NULL) {
         lv_iter_destroy(iter);
@@ -113,15 +122,16 @@ void lv_text_word_process_iter_destroy(lv_iter_t * iter)
 static lv_result_t char_iter_next_cb(void * instance, void * context, void * elem)
 {
     const char * txt = (const char *)instance;
-    uint32_t * index = (uint32_t *)context;
+    lv_text_char_process_t * ctx = (lv_text_char_process_t *)context;
     uint32_t * unicode = (uint32_t *)elem;
 
-    if(*index == UINT32_MAX) return LV_RESULT_INVALID;
+    if(ctx->index >= ctx->text_len) return LV_RESULT_INVALID;
+    if(ctx->index == UINT32_MAX) return LV_RESULT_INVALID;
 
-    uint32_t u = lv_text_encoded_next(txt, index);
+    uint32_t u = lv_text_encoded_next(txt, &ctx->index);
 
     if(u == '\0') {
-        *index = UINT32_MAX;
+        ctx->index = UINT32_MAX;
         return LV_RESULT_INVALID;
     }
 

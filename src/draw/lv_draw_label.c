@@ -219,8 +219,9 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
                                                                 dsc->flag);
 #else
     lv_text_line_process_line_info_t line_info;
-    lv_iter_t * line_iter = lv_text_line_process_iter_create(&dsc->text[real_line_start], font, w, dsc->letter_space, 0,
-                                                             true);
+    lv_iter_t * line_iter = lv_text_line_process_iter_create(&dsc->text[real_line_start], remaining_len, font, w,
+                                                             dsc->letter_space,
+                                                             0, true);
     uint32_t line_end = 0;
 #endif
 
