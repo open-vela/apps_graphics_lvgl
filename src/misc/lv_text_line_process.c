@@ -20,6 +20,7 @@
 
 typedef struct {
     const char * text;
+    uint32_t text_len;
     const lv_font_t * font;
 
     lv_text_line_process_line_info_t line_info_prev;
@@ -52,8 +53,8 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
  *   GLOBAL FUNCTIONS
  **********************/
 
-lv_iter_t * lv_text_line_process_iter_create(const char * txt, const lv_font_t * font,
-                                             uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break)
+lv_iter_t * lv_text_line_process_iter_create(const char * txt, uint32_t text_len,
+                                             const lv_font_t * font, uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break)
 {
     lv_iter_t * iter = lv_iter_create((void *)txt, sizeof(lv_text_line_process_line_info_t), sizeof(lv_text_line_process_t),
                                       line_iter_next_cb);
@@ -62,6 +63,7 @@ lv_iter_t * lv_text_line_process_iter_create(const char * txt, const lv_font_t *
 
     lv_text_line_process_t * ctx = lv_iter_get_context(iter);
     ctx->text = txt;
+    ctx->text_len = text_len;
     ctx->font = font;
 
     ctx->max_width = max_width;
@@ -99,8 +101,9 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
         .ideal_width = 0,
     };
 
-    lv_iter_t * word_iter = lv_text_word_process_iter_create(&ctx->text[line_info.pos.start], ctx->font,
-                                                             ctx->letter_space, ctx->max_width, 0);
+    lv_iter_t * word_iter = lv_text_word_process_iter_create(&ctx->text[line_info.pos.start],
+                                                             ctx->text_len - line_info.pos.start,
+                                                             ctx->font, ctx->letter_space, ctx->max_width, 0);
     if(word_iter == NULL) return LV_RESULT_INVALID;
 
     lv_iter_make_peekable(word_iter, 2);
@@ -110,6 +113,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
     bool is_line_leading = true;
     lv_text_word_process_word_info_t unresolved_op_qu = { 0 };
     bool has_unresolved_op_qu = false;
+    uint32_t unresolved_op_qu_word_count = 0;
     uint32_t real_width = 0;
     uint32_t ideal_width = 0;
 
@@ -140,8 +144,17 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
         }
 
         if(word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION || word.type == LV_TEXT_WORD_PROCESS_QUOTATION) {
-            has_unresolved_op_qu = true;
-            unresolved_op_qu = word;
+            bool qu_processed = false;
+
+            if(has_unresolved_op_qu == false || (word.type == LV_TEXT_WORD_PROCESS_OPEN_PUNCTUATION &&
+                                                 unresolved_op_qu_word_count > 0)) {
+                has_unresolved_op_qu = true;
+                unresolved_op_qu = word;
+                unresolved_op_qu_word_count = 0;
+
+                qu_processed = true;
+            }
+
             lv_iter_peek_advance(word_iter);
             lv_text_word_process_word_info_t word_next;
             res = lv_iter_peek(word_iter, &word_next);
@@ -150,12 +163,24 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                     continue;
                 }
 
-                end = word.pos.start;
-                brk = word.pos.start;
+                if(unresolved_op_qu_word_count == 0) {
+                    end = unresolved_op_qu.pos.start;
+                    brk = unresolved_op_qu.pos.start;
+                }
+                else {
+                    end = word.pos.start;
+                    brk = word.pos.start;
 
-                real_width -= word.real_width;
-                ideal_width -= word.ideal_width;
+                    real_width -= word.real_width;
+                    ideal_width -= word.ideal_width;
+                }
                 break;
+            }
+
+            if(qu_processed == false && word.type == LV_TEXT_WORD_PROCESS_QUOTATION) {
+                has_unresolved_op_qu = false;
+                unresolved_op_qu.type = LV_TEXT_WORD_PROCESS_UNKNOWN;
+                unresolved_op_qu_word_count = 0;
             }
         }
 
@@ -183,10 +208,22 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                         || word_next.type == LV_TEXT_WORD_PROCESS_CLOSE_PUNCTUATION
                         || word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION
                         || word_next.type == LV_TEXT_WORD_PROCESS_HYPHEN) {
-                    end = word_next.pos.end;
-                    brk = word_next.pos.brk;
-                    real_width += word_next.real_width;
-                    ideal_width += word_next.ideal_width;
+                    if(word_next.type == LV_TEXT_WORD_PROCESS_QUOTATION) {
+                        if(has_unresolved_op_qu) {
+                            end = word.pos.start;
+                            brk = word.pos.start;
+                        }
+                        else {
+                            end = word.pos.end;
+                            brk = word.pos.end;
+                        }
+                    }
+                    else {
+                        end = word_next.pos.end;
+                        brk = word_next.pos.brk;
+                        real_width += word_next.real_width;
+                        ideal_width += word_next.ideal_width;
+                    }
                     break;
                 }
             }
@@ -206,7 +243,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                     brk = word_next.pos.brk;
                 }
                 else {
-                    if(has_unresolved_op_qu) {
+                    if(has_unresolved_op_qu && unresolved_op_qu_word_count == 0) {
                         end = unresolved_op_qu.pos.start;
                         brk = unresolved_op_qu.pos.start;
                     }
@@ -216,19 +253,30 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
                     }
                 }
 
-                real_width -= word.real_width;
-                ideal_width -= word.ideal_width;
+                if(is_line_leading == false) {
+                    real_width -= word.real_width;
+                    ideal_width -= word.ideal_width;
+                }
+                else {
+                    real_width += word_next.real_width;
+                    ideal_width += word_next.ideal_width;
+                }
+            }
+
+            if(!is_line_leading && has_unresolved_op_qu && unresolved_op_qu_word_count == 0) {
+                end = unresolved_op_qu.pos.start;
+                brk = unresolved_op_qu.pos.start;
             }
             break;
         }
+
         if(word.type == LV_TEXT_WORD_PROCESS_CJK
            || word.type == LV_TEXT_WORD_PROCESS_LATIN
            || word.type == LV_TEXT_WORD_PROCESS_NUMBER) {
-            has_unresolved_op_qu = false;
-            unresolved_op_qu.type = LV_TEXT_WORD_PROCESS_UNKNOWN;
+            if(has_unresolved_op_qu) unresolved_op_qu_word_count++;
         }
 
-        if(!has_unresolved_op_qu) {
+        if(!has_unresolved_op_qu || unresolved_op_qu_word_count > 0) {
             is_line_leading = false;
         }
     }

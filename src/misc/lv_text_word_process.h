@@ -55,12 +55,12 @@ typedef struct {
  * GLOBAL PROTOTYPES
  **********************/
 
-lv_iter_t * lv_text_char_process_iter_create(const char * txt);
+lv_iter_t * lv_text_char_process_iter_create(const char * text, uint32_t text_len);
 
 void lv_text_char_process_iter_destroy(lv_iter_t * iter);
 
-lv_iter_t * lv_text_word_process_iter_create(const char * txt, const lv_font_t * font, int32_t letter_space,
-                                             int32_t remaining_width, uint8_t flag);
+lv_iter_t * lv_text_word_process_iter_create(const char * txt, uint32_t text_len, const lv_font_t * font,
+                                             int32_t letter_space, int32_t remaining_width, uint8_t flag);
 
 void lv_text_word_process_iter_destroy(lv_iter_t * iter);
 
