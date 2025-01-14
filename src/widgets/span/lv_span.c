@@ -222,6 +222,7 @@ void lv_span_set_text_static(lv_span_t * span, const char * text)
     span->txt = lv_malloc(text_alloc_len);
     LV_ASSERT_MALLOC(span->txt)
     _lv_text_ap_proc(text, span->txt);
+    span->static_flag = 0;
 #else
     span->txt = (char *)text;
 #endif
@@ -1159,19 +1160,19 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
             else align = LV_TEXT_ALIGN_LEFT;
         }
 #endif
+        int32_t align_ofs = 0;
+        int32_t txts_w = is_first_line ? indent : 0;
+        uint32_t i_item;
+        for(i_item = 0; i_item < item_cnt; i_item++) {
+            lv_snippet_t * pinfo = lv_get_snippet(i_item);
+            txts_w = txts_w + pinfo->txt_w + pinfo->letter_space;
+        }
+        txts_w -= lv_get_snippet(item_cnt - 1)->letter_space;
+        align_ofs = max_width > txts_w ? max_width - txts_w : 0;
+        if(align == LV_TEXT_ALIGN_CENTER) {
+            align_ofs = align_ofs >> 1;
+        }
         if(align == LV_TEXT_ALIGN_CENTER || align == LV_TEXT_ALIGN_RIGHT) {
-            int32_t align_ofs = 0;
-            int32_t txts_w = is_first_line ? indent : 0;
-            uint32_t i;
-            for(i = 0; i < item_cnt; i++) {
-                lv_snippet_t * pinfo = lv_get_snippet(i);
-                txts_w = txts_w + pinfo->txt_w;
-            }
-            txts_w -= lv_get_snippet(item_cnt - 1)->letter_space;
-            align_ofs = max_width > txts_w ? max_width - txts_w : 0;
-            if(align == LV_TEXT_ALIGN_CENTER) {
-                align_ofs = align_ofs >> 1;
-            }
             txt_pos.x += align_ofs;
         }
 
@@ -1182,7 +1183,12 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
         lv_base_dir_t bidi_dir = _lv_bidi_detect_base_dir(pinfo0->txt);
         if(bidi_dir == LV_BASE_DIR_RTL && base_dir == LV_BASE_DIR_RTL) {
             is_draw_rtl = true;
-            txt_pos.x = coords.x2;
+            if(align == LV_TEXT_ALIGN_LEFT || align == LV_TEXT_ALIGN_CENTER) {
+                txt_pos.x = coords.x2 - align_ofs;
+            }
+            else if(align == LV_TEXT_ALIGN_RIGHT) {
+                txt_pos.x = coords.x2;
+            }
         }
 #endif
         /* draw line letters */
@@ -1191,11 +1197,18 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
             lv_snippet_t * pinfo = lv_get_snippet(i);
 
 #if LV_USE_BIDI
-            char * bidi_txt = lv_malloc(pinfo->bytes + 1);
-            lv_memcpy(bidi_txt, pinfo->txt, (size_t)pinfo->bytes);
-            label_draw_dsc.bidi_dir = base_dir;
-            label_draw_dsc.has_bided = true;
-            _lv_bidi_process_paragraph(pinfo->txt, bidi_txt, pinfo->bytes, label_draw_dsc.bidi_dir, NULL, 0);
+            char * bidi_txt;
+            if(base_dir == LV_BASE_DIR_RTL) {
+                bidi_txt = lv_malloc(pinfo->bytes + 1);
+                lv_memcpy(bidi_txt, pinfo->txt, (size_t)pinfo->bytes);
+                label_draw_dsc.bidi_dir = base_dir;
+                label_draw_dsc.has_bided = true;
+                label_draw_dsc.text_local = true;
+                _lv_bidi_process_paragraph(pinfo->txt, bidi_txt, pinfo->bytes, label_draw_dsc.bidi_dir, NULL, 0);
+            }
+            else {
+                bidi_txt = (char *)pinfo->txt;
+            }
 #else
             const char * bidi_txt = pinfo->txt;
 #endif
@@ -1270,6 +1283,11 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
             }
 
             lv_draw_label(layer, &label_draw_dsc, &a);
+#if LV_USE_BIDI
+            if(label_draw_dsc.has_bided) {
+                lv_free((void *)label_draw_dsc.text);
+            }
+#endif
 
             if(need_draw_ellipsis) {
                 label_draw_dsc.text = "...";
@@ -1278,15 +1296,12 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
                 if(label_draw_dsc.bidi_dir == LV_BASE_DIR_RTL) {
                     a.x1 = first_txt_pos_x;
                     a.x2 = a.x1 + dot_width;
-                    if(is_draw_rtl) {
-                        a.x1 = first_txt_pos_x - dot_width;
-                        a.x2 = first_txt_pos_x;
-                    }
                 }
                 else {
                     a.x1 = a.x2;
                     a.x2 = a.x1 + dot_width;
                 }
+                label_draw_dsc.text_local = false;
 #else
                 a.x1 = a.x2;
                 a.x2 = a.x1 + dot_width;
