@@ -29,6 +29,10 @@
 
 #define LV_TXT_COLOR_CMD "#"
 
+#if LV_USE_FLOAT
+#include <math.h>
+#endif
+
 /*********************
  *      DEFINES
  *********************/
@@ -435,9 +439,13 @@ static void arc_label_draw_main(lv_event_t * e)
         const lv_value_precise_t curr_angle = arc_label->angle_start + (arc_label->dir == LV_ARC_LABEL_DIR_CLOCKWISE ?
                                                                         angle_start :
                                                                         -angle_start);
-
+#if LV_USE_FLOAT
+        const lv_value_precise_t x = cos(curr_angle * M_PI / 180) * arc_r;
+        const lv_value_precise_t y = sin(curr_angle * M_PI / 180) * arc_r;
+#else
         const lv_value_precise_t x = lv_trigo_cos(curr_angle) * arc_r / (lv_value_precise_t)32767;
         const lv_value_precise_t y = lv_trigo_sin(curr_angle) * arc_r / (lv_value_precise_t)32767;
+#endif
 
         lv_point_t point = {
             x + lv_area_get_width(&coords) / 2 + coords.x1 + arc_label->center_offset.x,
@@ -461,7 +469,7 @@ static void arc_label_draw_main(lv_event_t * e)
         prev_letter_w = letter_w;
         processed_word_count++;
 
-#if 1
+#if DEBUG
         lv_draw_line_dsc_t line_dsc;
         lv_draw_line_dsc_init(&line_dsc);
         line_dsc.color = lv_color_make(0x11, 0x45, 0x14);
