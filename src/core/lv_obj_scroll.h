@@ -276,8 +276,15 @@ lv_result_t _lv_obj_scroll_by_raw(lv_obj_t * obj, int32_t x, int32_t y);
 bool lv_obj_is_scrolling(const lv_obj_t * obj);
 
 /**
- * Check the children of `obj` and scroll `obj` to fulfill the scroll_snap settings
- * @param obj       an object whose children needs to checked and snapped
+ * Stop scrolling the current object
+ *
+ * @param obj The object being scrolled
+ */
+void lv_obj_stop_scroll_anim(const lv_obj_t * obj);
+
+/**
+ * Check children of `obj` and scroll `obj` to fulfill scroll_snap settings.
+ * @param obj       Widget whose children need to be checked and snapped
  * @param anim_en   LV_ANIM_ON/OFF
  */
 void lv_obj_update_snap(lv_obj_t * obj, lv_anim_enable_t anim_en);
