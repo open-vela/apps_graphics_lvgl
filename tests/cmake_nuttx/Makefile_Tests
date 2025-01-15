@@ -1,0 +1,22 @@
+get_filename_component(TEST_CASE_NAME ${TEST_CASE_FILE} NAME)
+set(TEST_APP_NAME ${TEST_CASE_NAME})
+string(REPLACE ".c" "" TEST_APP_NAME ${TEST_APP_NAME})
+
+if(NOT ${TEST_APP_NAME} STREQUAL "_test_template")
+
+    set(TEST_APP_RUNNER ${LVGL_PATH}/tests/build_test_nuttx/${TEST_APP_NAME}_Runner.c)
+
+    if(NOT EXISTS ${LVGL_PATH}/tests/build_test_nuttx/test_entries.lock)
+        file(APPEND ${LVGL_PATH}/tests/build_test_nuttx/test_entries.h "extern void ${TEST_APP_NAME}_main(void);\n")
+        file(APPEND ${LVGL_PATH}/tests/build_test_nuttx/test_entries_list.h "${TEST_APP_NAME}_main();\n")
+
+        file(READ ${TEST_CASE_FILE} TEST_CASE_CONTENTS)
+        string(REPLACE "setUp" "${TEST_APP_NAME}_setUp" TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
+        string(REPLACE "tearDown" "${TEST_APP_NAME}_tearDown" TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
+        file(WRITE ${LVGL_PATH}/tests/build_test_nuttx/${TEST_CASE_NAME} "${TEST_CASE_CONTENTS}")
+
+        execute_process(
+            COMMAND ruby ${LVGL_PATH}/tests/unity/generate_test_runner.rb ${LVGL_PATH}/tests/build_test_nuttx/config.yml --main_name=${TEST_APP_NAME}_main --test_reset_name=${TEST_APP_NAME}_resetTest --test_verify_name=${TEST_APP_NAME}_verifyTest --setup_name=${TEST_APP_NAME}_setUp --teardown_name=${TEST_APP_NAME}_tearDown ${TEST_CASE_FILE} ${TEST_APP_RUNNER}
+        )
+    endif()
+endif()
