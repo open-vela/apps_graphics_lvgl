@@ -18,6 +18,7 @@
 #include "lv_vg_lite_pending.h"
 #include "lv_draw_vg_lite_type.h"
 #include "../../misc/cache/lv_cache_entry_private.h"
+#include <float.h>
 
 /*********************
  *      DEFINES
