@@ -153,6 +153,9 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
 #endif
 
     switch(t->type) {
+        case LV_DRAW_TASK_TYPE_LETTER:
+            lv_draw_vg_lite_letter(draw_unit, t->draw_dsc, &t->area);
+            break;
         case LV_DRAW_TASK_TYPE_LABEL:
             lv_draw_vg_lite_label(draw_unit, t->draw_dsc, &t->area);
             break;
@@ -251,6 +254,7 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
 
     switch(task->type) {
         case LV_DRAW_TASK_TYPE_LABEL:
+        case LV_DRAW_TASK_TYPE_LETTER:
         case LV_DRAW_TASK_TYPE_FILL:
 #if LV_VG_LITE_USE_BOX_SHADOW
         case LV_DRAW_TASK_TYPE_BOX_SHADOW:
