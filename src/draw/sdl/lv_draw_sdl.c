@@ -175,7 +175,7 @@ static bool draw_to_texture(lv_draw_sdl_unit_t * u, cache_data_t * data)
     lv_draw_task_t * task = u->task_act;
 
     lv_layer_t dest_layer;
-    lv_memzero(&dest_layer, sizeof(dest_layer));
+    lv_layer_init(&dest_layer);
     lv_draw_buf_t draw_buf;
     dest_layer.draw_buf = &draw_buf;
     lv_draw_buf_init(dest_layer.draw_buf, lv_area_get_width(&task->area), lv_area_get_height(&task->area),

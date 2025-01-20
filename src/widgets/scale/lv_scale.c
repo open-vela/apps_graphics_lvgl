@@ -477,24 +477,28 @@ static void scale_draw_indicator(lv_obj_t * obj, lv_event_t * event)
 
     lv_draw_label_dsc_t label_dsc;
     lv_draw_label_dsc_init(&label_dsc);
+    label_dsc.base.layer = layer;
     /* Formatting the labels with the configured style for LV_PART_INDICATOR */
     lv_obj_init_draw_label_dsc(obj, LV_PART_INDICATOR, &label_dsc);
 
     /* Major tick style */
     lv_draw_line_dsc_t major_tick_dsc;
     lv_draw_line_dsc_init(&major_tick_dsc);
+    major_tick_dsc.base.layer = layer;
     lv_obj_init_draw_line_dsc(obj, LV_PART_INDICATOR, &major_tick_dsc);
 
     /* Configure line draw descriptor for the minor tick drawing */
     lv_draw_line_dsc_t minor_tick_dsc;
     lv_draw_line_dsc_init(&minor_tick_dsc);
+    minor_tick_dsc.base.layer = layer;
     lv_obj_init_draw_line_dsc(obj, LV_PART_ITEMS, &minor_tick_dsc);
 
     /* Main line style */
     lv_draw_line_dsc_t main_line_dsc;
     lv_draw_line_dsc_init(&main_line_dsc);
+    main_line_dsc.base.layer = layer;
     lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &main_line_dsc);
-
+    main_line_dsc.base.layer = layer;
     const int32_t major_len = lv_obj_get_style_length(obj, LV_PART_INDICATOR);
 
     if((LV_SCALE_MODE_VERTICAL_LEFT == scale->mode || LV_SCALE_MODE_VERTICAL_RIGHT == scale->mode)
@@ -695,6 +699,7 @@ static void scale_draw_main(lv_obj_t * obj, lv_event_t * event)
         /* Configure both line and label draw descriptors for the tick and label drawings */
         lv_draw_line_dsc_t line_dsc;
         lv_draw_line_dsc_init(&line_dsc);
+        line_dsc.base.layer = layer;
         lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &line_dsc);
 
         /* Get style properties so they can be used in the main line drawing */
@@ -759,6 +764,7 @@ static void scale_draw_main(lv_obj_t * obj, lv_event_t * event)
         _LV_LL_READ_BACK(&scale->section_ll, section) {
             lv_draw_line_dsc_t main_line_section_dsc;
             lv_draw_line_dsc_init(&main_line_section_dsc);
+            main_line_section_dsc.base.layer = layer;
             lv_obj_init_draw_line_dsc(obj, LV_PART_MAIN, &main_line_section_dsc);
 
             /* Calculate the points of the section line */
@@ -802,6 +808,7 @@ static void scale_draw_main(lv_obj_t * obj, lv_event_t * event)
         /* Configure arc draw descriptors for the main part */
         lv_draw_arc_dsc_t arc_dsc;
         lv_draw_arc_dsc_init(&arc_dsc);
+        arc_dsc.base.layer = layer;
         lv_obj_init_draw_arc_dsc(obj, LV_PART_MAIN, &arc_dsc);
 
         lv_point_t arc_center;
@@ -825,6 +832,7 @@ static void scale_draw_main(lv_obj_t * obj, lv_event_t * event)
         _LV_LL_READ_BACK(&scale->section_ll, section) {
             lv_draw_arc_dsc_t main_arc_section_dsc;
             lv_draw_arc_dsc_init(&main_arc_section_dsc);
+            main_arc_section_dsc.base.layer = layer;
             lv_obj_init_draw_arc_dsc(obj, LV_PART_MAIN, &main_arc_section_dsc);
 
             lv_point_t section_arc_center;

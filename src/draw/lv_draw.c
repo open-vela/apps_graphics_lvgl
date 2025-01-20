@@ -366,6 +366,22 @@ uint32_t lv_draw_get_dependent_count(lv_draw_task_t * t_check)
     return cnt;
 }
 
+void lv_layer_init(lv_layer_t * layer)
+{
+    LV_ASSERT_NULL(layer);
+    lv_memzero(layer, sizeof(lv_layer_t));
+    lv_layer_reset(layer);
+}
+
+void lv_layer_reset(lv_layer_t * layer)
+{
+    LV_ASSERT_NULL(layer);
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    lv_matrix_identity(&layer->matrix);
+#endif
+    layer->opa = LV_OPA_COVER;
+}
+
 lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t color_format, const lv_area_t * area)
 {
     LV_PROFILER_DRAW_BEGIN;
@@ -394,6 +410,11 @@ lv_layer_t * lv_draw_layer_create(lv_layer_t * parent_layer, lv_color_format_t c
     }
     else {
         disp->layer_head = new_layer;
+    }
+
+    /*Inherits transparency from parent*/
+    if(parent_layer) {
+        new_layer->opa = parent_layer->opa;
     }
 
     LV_PROFILER_DRAW_END;
