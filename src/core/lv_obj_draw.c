@@ -25,6 +25,8 @@
  *  STATIC PROTOTYPES
  **********************/
 
+static inline lv_opa_t get_layer_opa(const lv_obj_t * obj, lv_part_t part, const lv_draw_dsc_base_t * base_dsc);
+
 /**********************
  *  STATIC VARIABLES
  **********************/
@@ -43,7 +45,7 @@ void lv_obj_init_draw_rect_dsc(lv_obj_t * obj, uint32_t part, lv_draw_rect_dsc_t
     draw_dsc->base.obj = obj;
     draw_dsc->base.part = part;
 
-    lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, part);
+    lv_opa_t opa = get_layer_opa(obj, part, &draw_dsc->base);
     if(part != LV_PART_MAIN) {
         if(opa <= LV_OPA_MIN) {
             draw_dsc->bg_opa = LV_OPA_TRANSP;
@@ -160,7 +162,7 @@ void lv_obj_init_draw_label_dsc(lv_obj_t * obj, uint32_t part, lv_draw_label_dsc
         return;
     }
 
-    lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, part);
+    lv_opa_t opa = get_layer_opa(obj, part, &draw_dsc->base);
     if(opa < LV_OPA_MAX) {
         draw_dsc->opa = LV_OPA_MIX2(draw_dsc->opa, opa);
     }
@@ -198,7 +200,7 @@ void lv_obj_init_draw_image_dsc(lv_obj_t * obj, uint32_t part, lv_draw_image_dsc
         return;
     }
 
-    lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, part);
+    lv_opa_t opa = get_layer_opa(obj, part, &draw_dsc->base);
     if(opa < LV_OPA_MAX) {
         draw_dsc->opa = LV_OPA_MIX2(draw_dsc->opa, opa);
     }
@@ -235,7 +237,7 @@ void lv_obj_init_draw_line_dsc(lv_obj_t * obj, uint32_t part, lv_draw_line_dsc_t
         return;
     }
 
-    lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, part);
+    lv_opa_t opa = get_layer_opa(obj, part, &draw_dsc->base);
     if(opa < LV_OPA_MAX) {
         draw_dsc->opa = LV_OPA_MIX2(draw_dsc->opa, opa);
     }
@@ -282,7 +284,7 @@ void lv_obj_init_draw_arc_dsc(lv_obj_t * obj, uint32_t part, lv_draw_arc_dsc_t *
         return;
     }
 
-    lv_opa_t opa = lv_obj_get_style_opa_recursive(obj, part);
+    lv_opa_t opa = get_layer_opa(obj, part, &draw_dsc->base);
     if(opa < LV_OPA_MAX) {
         draw_dsc->opa = LV_OPA_MIX2(draw_dsc->opa, opa);
     }
@@ -374,3 +376,14 @@ lv_layer_type_t _lv_obj_get_layer_type(const lv_obj_t * obj)
 /**********************
  *   STATIC FUNCTIONS
  **********************/
+
+static inline lv_opa_t get_layer_opa(const lv_obj_t * obj, lv_part_t part, const lv_draw_dsc_base_t * base_dsc)
+{
+    if(base_dsc->layer) {
+        /* Accessing the layer opa directly is faster than using get style opa recursive */
+        return base_dsc->layer->opa;
+    }
+
+    /* fallback to old recursive style opa */
+    return lv_obj_get_style_opa_recursive(obj, part);
+}
