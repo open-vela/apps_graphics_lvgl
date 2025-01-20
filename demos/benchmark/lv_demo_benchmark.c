@@ -29,13 +29,28 @@
 #include "../../src/display/lv_display_private.h"
 #include "../../src/core/lv_global.h"
 
+#define LV_TEST_FONT_STRING_CHINESE "这是一个普通的测试文本，用于测试基本的显示功能。这里包含了常见的词汇和句式结构，适合测试基本的文本渲染效果。"
+
+#define LV_TEST_FONT_STRING_ENGLISH "This is an ordinary test text used to test basic display functionality. It includes common vocabulary and sentence structures, making it suitable for testing basic text rendering effects."
+
+#define LV_TEST_FONT_SIZE 24
+
 /**********************
  *      TYPEDEFS
  **********************/
 
-typedef struct {
+typedef struct benchmark_context {
+    lv_font_t * freetype_font_bitmap;
+    lv_font_t * freetype_font_outline;
+    lv_font_t * tinyttf_font;
+    lv_obj_t * label_perf;
+    uint32_t scene_act;
+    uint32_t rnd_act;
+} benchmark_context_t;
+
+typedef struct scene_dsc {
     const char * name;
-    void (*create_cb)(void);
+    void (*create_cb)(benchmark_context_t *);
     uint32_t scene_time;
     uint32_t cpu_avg_usage;
     uint32_t fps_avg;
@@ -48,7 +63,7 @@ typedef struct {
  *  STATIC PROTOTYPES
  **********************/
 
-static void load_scene(uint32_t scene);
+static void load_scene(benchmark_context_t * context);
 static void next_scene_timer_cb(lv_timer_t * timer);
 
 #if LV_USE_PERF_MONITOR
@@ -57,24 +72,127 @@ static void next_scene_timer_cb(lv_timer_t * timer);
 
 static void summary_create(void);
 
-static void rnd_reset(void);
-static int32_t rnd_next(int32_t min, int32_t max);
+static void rnd_reset(benchmark_context_t * context);
+static int32_t rnd_next(benchmark_context_t * context, int32_t min, int32_t max);
 static void shake_anim_y_cb(void * var, int32_t v);
-static void shake_anim(lv_obj_t * obj, int32_t y_max);
+static void shake_anim(benchmark_context_t * context, lv_obj_t * obj, int32_t y_max);
 static void scroll_anim(lv_obj_t * obj, int32_t y_max);
 static void scroll_anim_y_cb(void * var, int32_t v);
 static void color_anim_cb(void * var, int32_t v);
 static void color_anim(lv_obj_t * obj);
-static void arc_anim(lv_obj_t * obj);
+static void arc_anim(benchmark_context_t * context, lv_obj_t * obj);
 
 static lv_obj_t * card_create(void);
 
-static void empty_screen_cb(void)
+static void spans_init(lv_obj_t * spans);
+static void spans_text_add(lv_obj_t * spans, const lv_font_t * font, const char * text);
+
+#if LV_USE_FREETYPE
+static void freetype_span_text_bitmap_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * spans = lv_spangroup_create(lv_screen_active());
+    spans_init(spans);
+
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_CHINESE);
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_ENGLISH);
+
+    shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void freetype_span_text_outline_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * spans = lv_spangroup_create(lv_screen_active());
+    spans_init(spans);
+
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_CHINESE);
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_ENGLISH);
+
+    shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void freetype_label_text_bitmap_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * label = lv_label_create(lv_screen_active());
+    if(context->freetype_font_bitmap) {
+        lv_obj_set_style_text_font(label, context->freetype_font_bitmap, 0);
+    }
+    lv_label_set_text(label, LV_TEST_FONT_STRING_CHINESE LV_TEST_FONT_STRING_ENGLISH);
+    lv_obj_set_width(label, lv_pct(100));
+    lv_obj_set_style_y(label, lv_display_get_vertical_resolution(NULL) / 6, 0);
+
+    shake_anim(context, label, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void freetype_label_text_outline_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * label = lv_label_create(lv_screen_active());
+    if(context->freetype_font_outline) {
+        lv_obj_set_style_text_font(label, context->freetype_font_outline, 0);
+    }
+    lv_label_set_text(label, LV_TEST_FONT_STRING_CHINESE LV_TEST_FONT_STRING_ENGLISH);
+    lv_obj_set_width(label, lv_pct(100));
+    lv_obj_set_style_y(label, lv_display_get_vertical_resolution(NULL) / 6, 0);
+
+    shake_anim(context, label, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
+#if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
+static void span_tiny_ttf_text_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * spans = lv_spangroup_create(lv_screen_active());
+    spans_init(spans);
+
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_CHINESE);
+    spans_text_add(spans, context->freetype_font_bitmap, LV_TEST_FONT_STRING_ENGLISH);
+
+    shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void label_tiny_ttf_text_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * label = lv_label_create(lv_screen_active());
+    if(context->tinyttf_font) {
+        lv_obj_set_style_text_font(label, context->tinyttf_font, 0);
+    }
+    lv_label_set_text(label, LV_TEST_FONT_STRING_ENGLISH);
+    lv_obj_set_width(label, lv_pct(100));
+    lv_obj_set_style_y(label, lv_display_get_vertical_resolution(NULL) / 6, 0);
+
+    shake_anim(context, label, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
+static void span_text_cb(benchmark_context_t * context)
+{
+    lv_obj_set_layout(lv_screen_active(), 0);
+
+    lv_obj_t * spans = lv_spangroup_create(lv_screen_active());
+    spans_init(spans);
+    spans_text_add(spans, &lv_font_montserrat_24, LV_TEST_FONT_STRING_ENGLISH);
+    spans_text_add(spans, &lv_font_montserrat_14, LV_TEST_FONT_STRING_ENGLISH);
+
+    shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void empty_screen_cb(benchmark_context_t * context)
 {
     color_anim(lv_screen_active());
 }
 
-static void moving_wallpaper_cb(void)
+static void moving_wallpaper_cb(benchmark_context_t * context)
 {
     lv_obj_set_style_pad_all(lv_screen_active(), 0, 0);
     LV_IMG_DECLARE(img_benchmark_cogwheel_rgb);
@@ -83,11 +201,13 @@ static void moving_wallpaper_cb(void)
     lv_obj_set_size(img, lv_pct(150), lv_pct(150));
     lv_image_set_src(img, &img_benchmark_cogwheel_rgb);
     lv_image_set_inner_align(img, LV_IMAGE_ALIGN_TILE);
-    shake_anim(img, - lv_display_get_vertical_resolution(NULL) / 3);
+    shake_anim(context, img, - lv_display_get_vertical_resolution(NULL) / 3);
 }
 
-static void single_rectangle_cb(void)
+static void single_rectangle_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     lv_obj_t * obj = lv_obj_create(lv_screen_active());
     lv_obj_remove_style_all(obj);
     lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
@@ -95,11 +215,12 @@ static void single_rectangle_cb(void)
     lv_obj_set_size(obj, lv_pct(30), lv_pct(30));
 
     color_anim(obj);
-
 }
 
-static void multiple_rectangles_cb(void)
+static void multiple_rectangles_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY);
 
@@ -114,7 +235,7 @@ static void multiple_rectangles_cb(void)
     }
 }
 
-static void multiple_rgb_images_cb(void)
+static void multiple_rgb_images_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -135,12 +256,12 @@ static void multiple_rgb_images_cb(void)
             lv_image_set_src(obj, &img_benchmark_cogwheel_rgb);
             if(x == 0) lv_obj_add_flag(obj, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
-            shake_anim(obj, 80);
+            shake_anim(context, obj, 80);
         }
     }
 }
 
-static void multiple_argb_images_cb(void)
+static void multiple_argb_images_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -161,12 +282,12 @@ static void multiple_argb_images_cb(void)
             lv_image_set_src(obj, &img_benchmark_cogwheel_argb);
             if(x == 0) lv_obj_add_flag(obj, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
-            shake_anim(obj, 80);
+            shake_anim(context, obj, 80);
         }
     }
 }
 
-static void rotated_argb_image_cb(void)
+static void rotated_argb_image_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -188,13 +309,15 @@ static void rotated_argb_image_cb(void)
             if(x == 0) lv_obj_add_flag(obj, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
             lv_image_set_rotation(obj, lv_rand(100, 3500));
-            shake_anim(obj, 80);
+            shake_anim(context, obj, 80);
         }
     }
 }
 
-static void multiple_labels_cb(void)
+static void multiple_labels_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     lv_obj_set_style_pad_row(lv_screen_active(), 80, 0);
@@ -216,8 +339,10 @@ static void multiple_labels_cb(void)
     }
 }
 
-static void screen_sized_text_cb(void)
+static void screen_sized_text_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     const char * txt =
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec rhoncus arcu, in consectetur orci. Sed vitae dolor sed nisi ultrices vehicula quis ac dolor. Vivamus hendrerit hendrerit lectus, sed tempus velit suscipit in. Fusce eu tristique arcu. Sed et molestie leo, in lacinia nunc. Quisque semper lorem sed ante feugiat, at molestie risus blandit. Maecenas lobortis urna in diam feugiat porta. Ut facilisis mauris eget nibh posuere aliquet. Proin facilisis egestas magna, id vulputate massa bibendum a. Etiam gravida metus non egestas suscipit. Sed sollicitudin mollis nisi, eu fringilla leo vestibulum posuere. Donec et ex nulla. Phasellus et ornare justo, vel hendrerit justo. Curabitur pulvinar nunc sed tincidunt dignissim. Praesent eleifend lectus velit, id malesuada ante placerat id. Fusce massa erat, egestas vel venenatis eu, tempus nec est.\n\n"
         "Phasellus iaculis malesuada molestie. Cras ullamcorper justo a dolor dignissim tincidunt. Mauris euismod risus quis lobortis mollis. Ut vitae placerat massa, aliquet various lectus. Nulla ac ornare purus, quis auctor velit. Donec posuere dolor rhoncus efficitur dictum. Integer venenatis aliquet nunc eu convallis. Nunc quis various velit. Suspendisse enim metus, molestie eget mauris sit amet, euismod volutpat turpis. Duis rhoncus commodo gravida. Pellentesque velit mi, dictum id consequat placerat, condimentum ac elit. Duis aliquet leo eu dolor cursus rhoncus. Quisque aliquam sapien ut purus hendrerit laoreet. Ut venenatis venenatis risus, a vestibulum enim lobortis a. Maecenas auctor tortor lorem, quis laoreet nulla aliquet a. Sed ipsum lorem, facilisis in congue a, dictum ut ligula.\n\n"
@@ -236,7 +361,7 @@ static void screen_sized_text_cb(void)
     scroll_anim(scr, lv_obj_get_scroll_bottom(scr));
 }
 
-static void multiple_arcs_cb(void)
+static void multiple_arcs_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -266,35 +391,12 @@ static void multiple_arcs_cb(void)
             lv_obj_set_style_arc_width(obj, 10, LV_PART_INDICATOR);
             lv_obj_set_style_arc_rounded(obj, false, LV_PART_INDICATOR);
             lv_obj_set_style_arc_color(obj, lv_color_hex3(lv_rand(0x00f, 0xff0)), LV_PART_INDICATOR);
-            arc_anim(obj);
+            arc_anim(context, obj);
         }
     }
 }
 
-static void containers_cb(void)
-{
-
-    lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
-    lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-
-    int32_t hor_cnt = ((int32_t)lv_display_get_horizontal_resolution(NULL) - 16) / 300;
-    int32_t ver_cnt = ((int32_t)lv_display_get_vertical_resolution(NULL) - 16) / 150;
-
-    if(hor_cnt < 1) hor_cnt = 1;
-    if(ver_cnt < 1) ver_cnt = 1;
-
-    int32_t y;
-    for(y = 0; y < ver_cnt; y++) {
-        int32_t x;
-        for(x = 0; x < hor_cnt; x++) {
-            lv_obj_t * card = card_create();
-            if(x == 0) lv_obj_add_flag(card, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-            shake_anim(card, 30);
-        }
-    }
-}
-
-static void containers_with_overlay_cb(void)
+static void containers_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -311,7 +413,29 @@ static void containers_with_overlay_cb(void)
         for(x = 0; x < hor_cnt; x++) {
             lv_obj_t * card = card_create();
             if(x == 0) lv_obj_add_flag(card, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-            shake_anim(card, 30);
+            shake_anim(context, card, 30);
+        }
+    }
+}
+
+static void containers_with_overlay_cb(benchmark_context_t * context)
+{
+    lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+
+    int32_t hor_cnt = ((int32_t)lv_display_get_horizontal_resolution(NULL) - 16) / 300;
+    int32_t ver_cnt = ((int32_t)lv_display_get_vertical_resolution(NULL) - 16) / 150;
+
+    if(hor_cnt < 1) hor_cnt = 1;
+    if(ver_cnt < 1) ver_cnt = 1;
+
+    int32_t y;
+    for(y = 0; y < ver_cnt; y++) {
+        int32_t x;
+        for(x = 0; x < hor_cnt; x++) {
+            lv_obj_t * card = card_create();
+            if(x == 0) lv_obj_add_flag(card, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
+            shake_anim(context, card, 30);
         }
     }
 
@@ -319,7 +443,7 @@ static void containers_with_overlay_cb(void)
     color_anim(lv_layer_top());
 }
 
-static void containers_with_opa_cb(void)
+static void containers_with_opa_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -337,12 +461,12 @@ static void containers_with_opa_cb(void)
             lv_obj_t * card = card_create();
             if(x == 0) lv_obj_add_flag(card, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
             lv_obj_set_style_opa(card, LV_OPA_50, 0);
-            shake_anim(card, 30);
+            shake_anim(context, card, 30);
         }
     }
 }
 
-static void containers_with_opa_layer_cb(void)
+static void containers_with_opa_layer_cb(benchmark_context_t * context)
 {
     lv_obj_set_flex_flow(lv_screen_active(), LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(lv_screen_active(), LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -360,13 +484,15 @@ static void containers_with_opa_layer_cb(void)
             lv_obj_t * card = card_create();
             lv_obj_set_style_opa_layered(card, LV_OPA_50, 0);
             if(x == 0) lv_obj_add_flag(card, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-            shake_anim(card, 30);
+            shake_anim(context, card, 30);
         }
     }
 }
 
-static void containers_with_scrolling_cb(void)
+static void containers_with_scrolling_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     lv_obj_t * scr = lv_screen_active();
 
     lv_obj_set_flex_flow(scr, LV_FLEX_FLOW_ROW_WRAP);
@@ -381,14 +507,15 @@ static void containers_with_scrolling_cb(void)
     scroll_anim(scr, lv_obj_get_scroll_bottom(scr));
 }
 
-static void widgets_demo_cb(void)
+static void widgets_demo_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
+
     lv_obj_t * scr = lv_screen_active();
     lv_obj_set_style_pad_hor(scr, 0, 0);
     lv_obj_set_style_pad_bottom(scr, 0, 0);
     lv_demo_widgets();
     lv_demo_widgets_start_slideshow();
-
 }
 
 /**********************
@@ -396,32 +523,42 @@ static void widgets_demo_cb(void)
  **********************/
 
 static scene_dsc_t scenes[] = {
-    {.name = "Empty screen",               .scene_time = 3000, .create_cb = empty_screen_cb},
-    {.name = "Moving wallpaper",           .scene_time = 3000, .create_cb = moving_wallpaper_cb},
-    {.name = "Single rectangle",           .scene_time = 3000, .create_cb = single_rectangle_cb},
-    {.name = "Multiple rectangles",        .scene_time = 3000, .create_cb = multiple_rectangles_cb},
-    {.name = "Multiple RGB images",        .scene_time = 3000, .create_cb = multiple_rgb_images_cb},
-    {.name = "Multiple ARGB images",       .scene_time = 3000, .create_cb = multiple_argb_images_cb},
-    {.name = "Rotated ARGB images",        .scene_time = 3000, .create_cb = rotated_argb_image_cb},
-    {.name = "Multiple labels",            .scene_time = 3000, .create_cb = multiple_labels_cb},
-    {.name = "Screen sized text",          .scene_time = 5000, .create_cb = screen_sized_text_cb},
-    {.name = "Multiple arcs",              .scene_time = 3000, .create_cb = multiple_arcs_cb},
+    {.name = "Empty screen",                    .scene_time = 3000,  .create_cb = empty_screen_cb},
+    {.name = "Moving wallpaper",                .scene_time = 3000,  .create_cb = moving_wallpaper_cb},
+    {.name = "Single rectangle",                .scene_time = 3000,  .create_cb = single_rectangle_cb},
+    {.name = "Multiple rectangles",             .scene_time = 3000,  .create_cb = multiple_rectangles_cb},
+    {.name = "Multiple RGB images",             .scene_time = 3000,  .create_cb = multiple_rgb_images_cb},
+    {.name = "Multiple ARGB images",            .scene_time = 3000,  .create_cb = multiple_argb_images_cb},
+    {.name = "Rotated ARGB images",             .scene_time = 3000,  .create_cb = rotated_argb_image_cb},
+    {.name = "Multiple labels",                 .scene_time = 3000,  .create_cb = multiple_labels_cb},
+    {.name = "Screen sized text",               .scene_time = 5000,  .create_cb = screen_sized_text_cb},
+    {.name = "Multiple arcs",                   .scene_time = 3000,  .create_cb = multiple_arcs_cb},
 
-    {.name = "Containers",                 .scene_time = 3000, .create_cb = containers_cb},
-    {.name = "Containers with overlay",    .scene_time = 3000, .create_cb = containers_with_overlay_cb},
-    {.name = "Containers with opa",        .scene_time = 3000, .create_cb = containers_with_opa_cb},
-    {.name = "Containers with opa_layer",  .scene_time = 3000, .create_cb = containers_with_opa_layer_cb},
-    {.name = "Containers with scrolling",  .scene_time = 5000, .create_cb = containers_with_scrolling_cb},
+    {.name = "Span text",                       .scene_time = 3000,  .create_cb = span_text_cb},
+#if LV_USE_FREETYPE
+    {.name = "FreeType span text(bitmap)",      .scene_time = 3000,  .create_cb = freetype_span_text_bitmap_cb},
+    {.name = "FreeType span text(outline)",     .scene_time = 3000,  .create_cb = freetype_span_text_outline_cb},
+    {.name = "FreeType label text(bitmap)",     .scene_time = 3000,  .create_cb = freetype_label_text_bitmap_cb},
+    {.name = "FreeType label text(outline)",    .scene_time = 3000,  .create_cb = freetype_label_text_outline_cb},
+#endif
 
-    {.name = "Widgets demo",               .scene_time = 20000,           .create_cb = widgets_demo_cb},
+#if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
+    {.name = "TinyTTF span text",               .scene_time = 3000,  .create_cb = span_tiny_ttf_text_cb},
+    {.name = "TinyTTF label text",              .scene_time = 3000,  .create_cb = label_tiny_ttf_text_cb},
+#endif
+
+    {.name = "Containers",                      .scene_time = 3000,  .create_cb = containers_cb},
+    {.name = "Containers with overlay",         .scene_time = 3000,  .create_cb = containers_with_overlay_cb},
+    {.name = "Containers with opa",             .scene_time = 3000,  .create_cb = containers_with_opa_cb},
+    {.name = "Containers with opa_layer",       .scene_time = 3000,  .create_cb = containers_with_opa_layer_cb},
+    {.name = "Containers with scrolling",       .scene_time = 5000,  .create_cb = containers_with_scrolling_cb},
+
+    {.name = "Widgets demo",                    .scene_time = 20000, .create_cb = widgets_demo_cb},
 
     {.name = "", .create_cb = NULL}
 };
 
 #define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf.object.common
-
-static uint32_t scene_act;
-static uint32_t rnd_act;
 
 /**********************
  *      MACROS
@@ -431,9 +568,66 @@ static uint32_t rnd_act;
  *   GLOBAL FUNCTIONS
  **********************/
 
+static benchmark_context_t * benchmark_context_init(void)
+{
+    benchmark_context_t * context = lv_malloc_zeroed(sizeof(benchmark_context_t));
+    LV_ASSERT_MALLOC(context);
+
+#if LV_USE_FREETYPE
+    context->freetype_font_bitmap = lv_freetype_font_create(LV_DEMO_BENCHMARK_FREETYPE_FONT_PATH,
+                                                            LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
+                                                            LV_TEST_FONT_SIZE,
+                                                            LV_FREETYPE_FONT_STYLE_NORMAL);
+    if(context->freetype_font_bitmap == NULL) {
+        LV_LOG_ERROR("freetype font creation failed!");
+    }
+    context->freetype_font_outline = lv_freetype_font_create(LV_DEMO_BENCHMARK_FREETYPE_FONT_PATH,
+                                                             LV_FREETYPE_FONT_RENDER_MODE_OUTLINE,
+                                                             LV_TEST_FONT_SIZE,
+                                                             LV_FREETYPE_FONT_STYLE_NORMAL);
+    if(context->freetype_font_outline == NULL) {
+        LV_LOG_ERROR("freetype font creation failed!");
+    }
+#endif
+#if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
+    context->tinyttf_font = lv_tiny_ttf_create_file(LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH, LV_TEST_FONT_SIZE);
+    if(context->tinyttf_font == NULL) {
+        LV_LOG_ERROR("tinyTTF font creation failed!");
+    }
+#endif
+
+    context->scene_act = 0;
+    context->label_perf = lv_label_create(lv_layer_top());
+    lv_obj_set_style_bg_opa(context->label_perf, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_color(context->label_perf, lv_color_white(), 0);
+    lv_obj_set_style_text_color(context->label_perf, lv_color_black(), 0);
+    lv_obj_set_width(context->label_perf, lv_pct(100));
+
+    return context;
+}
+
+static void benchmark_context_deinit(benchmark_context_t * context)
+{
+#if LV_USE_FREETYPE
+    if(context->freetype_font_bitmap != NULL) {
+        lv_freetype_font_delete(context->freetype_font_bitmap);
+    }
+    if(context->freetype_font_outline != NULL) {
+        lv_freetype_font_delete(context->freetype_font_outline);
+    }
+#endif
+#if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
+    if(context->tinyttf_font != NULL) {
+        lv_tiny_ttf_destroy(context->tinyttf_font);
+    }
+#endif
+    lv_obj_delete(context->label_perf);
+    lv_free(context);
+}
+
 void lv_demo_benchmark(void)
 {
-    scene_act = 0;
+    benchmark_context_t * context = benchmark_context_init();
 
     lv_obj_t * scr = lv_screen_active();
     lv_obj_remove_style_all(scr);
@@ -444,20 +638,14 @@ void lv_demo_benchmark(void)
     lv_obj_set_style_pad_top(lv_screen_active(), 48, 0);
     lv_obj_set_style_pad_gap(lv_screen_active(), 8, 0);
 
-    lv_obj_t * title = lv_label_create(lv_layer_top());
-    lv_obj_set_style_bg_opa(title, LV_OPA_COVER, 0);
-    lv_obj_set_style_bg_color(title, lv_color_white(), 0);
-    lv_obj_set_style_text_color(title, lv_color_black(), 0);
-    lv_obj_set_width(title, lv_pct(100));
+    load_scene(context);
 
-    load_scene(scene_act);
-
-    lv_timer_create(next_scene_timer_cb, scenes[0].scene_time, NULL);
+    lv_timer_create(next_scene_timer_cb, scenes[0].scene_time, context);
 
 #if LV_USE_PERF_MONITOR
-    lv_subject_add_observer_obj(&sysmon_perf.subject, sysmon_perf_observer_cb, title, NULL);
+    lv_subject_add_observer_obj(&sysmon_perf.subject, sysmon_perf_observer_cb, context->label_perf, context);
 #else
-    lv_label_set_text(title, "LV_USE_PERF_MONITOR is not enabled");
+    lv_label_set_text(context->label_perf, "LV_USE_PERF_MONITOR is not enabled");
 #endif
 }
 
@@ -465,7 +653,7 @@ void lv_demo_benchmark(void)
  *   STATIC FUNCTIONS
  **********************/
 
-static void load_scene(uint32_t scene)
+static void load_scene(benchmark_context_t * context)
 {
     lv_obj_t * scr = lv_screen_active();
     lv_obj_clean(scr);
@@ -484,23 +672,26 @@ static void load_scene(uint32_t scene)
     lv_anim_delete(lv_layer_top(), color_anim_cb);
     lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_TRANSP, 0);
 
-    rnd_reset();
-    if(scenes[scene].create_cb) scenes[scene].create_cb();
+    rnd_reset(context);
+    if(scenes[context->scene_act].create_cb) {
+        scenes[context->scene_act].create_cb(context);
+    }
 }
 
 static void next_scene_timer_cb(lv_timer_t * timer)
 {
-    LV_UNUSED(timer);
+    benchmark_context_t * context = lv_timer_get_user_data(timer);
 
-    scene_act++;
+    context->scene_act++;
 
-    load_scene(scene_act);
-    if(scenes[scene_act].scene_time == 0) {
+    load_scene(context);
+    if(scenes[context->scene_act].scene_time == 0) {
+        benchmark_context_deinit(context);
         lv_timer_delete(timer);
         summary_create();
     }
     else {
-        lv_timer_set_period(timer, scenes[scene_act].scene_time);
+        lv_timer_set_period(timer, scenes[context->scene_act].scene_time);
     }
 }
 
@@ -509,10 +700,12 @@ static void sysmon_perf_observer_cb(lv_observer_t * observer, lv_subject_t * sub
 {
     const lv_sysmon_perf_info_t * info = lv_subject_get_pointer(subject);
     lv_obj_t * label = lv_observer_get_target(observer);
+    /*LVGL version 9.0 does not support function lv_observer_get_user_data()*/
+    benchmark_context_t * context = (benchmark_context_t *)observer->user_data;
 
     char scene_name[64];
-    if(scenes[scene_act].name[0] != '\0') {
-        lv_snprintf(scene_name, sizeof(scene_name), "%s: ", scenes[scene_act].name);
+    if(scenes[context->scene_act].name[0] != '\0') {
+        lv_snprintf(scene_name, sizeof(scene_name), "%s: ", scenes[context->scene_act].name);
     }
     else {
         scene_name[0] = '\0';
@@ -528,14 +721,13 @@ static void sysmon_perf_observer_cb(lv_observer_t * observer, lv_subject_t * sub
                           info->calculated.render_avg_time, info->calculated.flush_avg_time);
 
     /*Ignore the first call as it contains data from the previous scene*/
-    if(scenes[scene_act].measurement_cnt != 0) {
-        scenes[scene_act].cpu_avg_usage += info->calculated.cpu;
-        scenes[scene_act].fps_avg += info->calculated.fps;
-        scenes[scene_act].render_avg_time += info->calculated.render_avg_time;
-        scenes[scene_act].flush_avg_time += info->calculated.flush_avg_time;
+    if(scenes[context->scene_act].measurement_cnt != 0) {
+        scenes[context->scene_act].cpu_avg_usage += info->calculated.cpu;
+        scenes[context->scene_act].fps_avg += info->calculated.fps;
+        scenes[context->scene_act].render_avg_time += info->calculated.render_avg_time;
+        scenes[context->scene_act].flush_avg_time += info->calculated.flush_avg_time;
     }
-    scenes[scene_act].measurement_cnt++;
-
+    scenes[context->scene_act].measurement_cnt++;
 }
 #endif
 
@@ -568,7 +760,6 @@ static void table_draw_task_event_cb(lv_event_t * e)
             draw_dsc_label->color = lv_palette_darken(LV_PALETTE_BLUE_GREY, 4);
         }
     }
-
 }
 
 static void summary_create(void)
@@ -699,10 +890,10 @@ static void arc_anim_cb(void * var, int32_t v)
     lv_arc_set_value(var, v);
 }
 
-static void arc_anim(lv_obj_t * obj)
+static void arc_anim(benchmark_context_t * context, lv_obj_t * obj)
 {
-    uint32_t t1 = rnd_next(1000, 3000);
-    uint32_t t2 = rnd_next(1000, 3000);
+    uint32_t t1 = rnd_next(context, 1000, 3000);
+    uint32_t t2 = rnd_next(context, 1000, 3000);
     lv_anim_t a;
     lv_anim_init(&a);
     lv_anim_set_exec_cb(&a, arc_anim_cb);
@@ -732,17 +923,17 @@ static void scroll_anim(lv_obj_t * obj, int32_t y_max)
     lv_anim_set_playback_duration(&a, t);
     lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
     lv_anim_start(&a);
-
 }
+
 static void shake_anim_y_cb(void * var, int32_t v)
 {
     lv_obj_set_style_translate_y(var, v, 0);
 }
 
-static void shake_anim(lv_obj_t * obj, int32_t y_max)
+static void shake_anim(benchmark_context_t * context, lv_obj_t * obj, int32_t y_max)
 {
-    uint32_t t1 = rnd_next(300, 3000);
-    uint32_t t2 = rnd_next(300, 3000);
+    uint32_t t1 = rnd_next(context, 300, 3000);
+    uint32_t t2 = rnd_next(context, 300, 3000);
 
     lv_anim_t a;
     lv_anim_init(&a);
@@ -785,12 +976,32 @@ static lv_obj_t * card_create(void)
     return panel;
 }
 
-static void rnd_reset(void)
+#if LV_USE_FREETYPE || TEST_TINY_TTF
+static void spans_init(lv_obj_t * spans)
 {
-    rnd_act = 0;
+    lv_obj_set_width(spans, LV_PCT(100));
+    lv_obj_set_style_text_align(spans, LV_TEXT_ALIGN_LEFT, 0);
+    lv_spangroup_set_mode(spans, LV_SPAN_MODE_BREAK);
+    lv_spangroup_set_overflow(spans, LV_SPAN_OVERFLOW_CLIP);
+    lv_obj_set_style_y(spans, lv_display_get_vertical_resolution(NULL) / 6, 0);
 }
 
-static int32_t rnd_next(int32_t min, int32_t max)
+static void spans_text_add(lv_obj_t * spans, const lv_font_t * font, const char * text)
+{
+    lv_span_t * span = lv_spangroup_new_span(spans);
+    lv_span_set_text(span, text);
+    if(font) {
+        lv_style_set_text_font(&span->style, font);
+    }
+}
+#endif
+
+static void rnd_reset(benchmark_context_t * context)
+{
+    context->rnd_act = 0;
+}
+
+static int32_t rnd_next(benchmark_context_t * context, int32_t min, int32_t max)
 {
     static const uint32_t rnd_map[] = {
         0xbd13204f, 0x67d8167f, 0x20211c99, 0xb0a7cc05,
@@ -820,10 +1031,10 @@ static int32_t rnd_next(int32_t min, int32_t max)
     }
 
     int32_t d = max - min;
-    int32_t r = (rnd_map[rnd_act] % d) + min;
+    int32_t r = (rnd_map[context->rnd_act] % d) + min;
 
-    rnd_act++;
-    if(rnd_act >= sizeof(rnd_map) / sizeof(rnd_map[0])) rnd_act = 0;
+    context->rnd_act++;
+    if(context->rnd_act >= sizeof(rnd_map) / sizeof(rnd_map[0])) context->rnd_act = 0;
 
     return r;
 }
