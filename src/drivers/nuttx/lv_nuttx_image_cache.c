@@ -172,10 +172,6 @@ static void heap_memdump(struct mm_heap_s * heap)
 {
     struct mm_memdump_s dump = {
         PID_MM_ALLOC,
-#if CONFIG_MM_BACKTRACE >= 0
-        0,
-        ULONG_MAX
-#endif
     };
 
     mm_memdump(heap, &dump);
