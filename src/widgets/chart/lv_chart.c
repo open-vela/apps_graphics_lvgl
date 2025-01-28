@@ -322,10 +322,15 @@ void lv_chart_get_point_pos_by_id(lv_obj_t * obj, lv_chart_series_t * ser, uint3
         }
 
         p_out->x = (int32_t)((int32_t)(w + block_gap) * id) / chart->point_cnt;
-        p_out->x += block_w * ser_idx / ser_cnt;
+        if(ser_cnt > 0) {
+            p_out->x += block_w * ser_idx / ser_cnt;
 
-        int32_t col_w = (block_w - (ser_gap * (ser_cnt - 1))) / ser_cnt;
-        p_out->x += col_w / 2;
+            int32_t col_w = (block_w - (ser_gap * (ser_cnt - 1))) / ser_cnt;
+            p_out->x += col_w / 2;
+        }
+        else {
+            LV_LOG_WARN("bar chart series count is zero");
+        }
     }
 
     int32_t border_width = lv_obj_get_style_border_width(obj, LV_PART_MAIN);
