@@ -1379,6 +1379,7 @@ static void indev_proc_release(lv_indev_t * indev)
             if(indev->mode == LV_INDEV_MODE_EVENT && indev->longpr_timer) {
                 lv_timer_pause(indev->longpr_timer);
             }
+            indev->wait_until_release = 0;
             return;
         }
 
