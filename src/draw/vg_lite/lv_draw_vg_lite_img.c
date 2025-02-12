@@ -100,10 +100,6 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
     bool no_transform = lv_matrix_is_identity_or_translation((const lv_matrix_t *)&matrix);
     vg_lite_filter_t filter = no_transform ? VG_LITE_FILTER_POINT : VG_LITE_FILTER_BI_LINEAR;
 
-    LV_VG_LITE_ASSERT_SRC_BUFFER(&src_buf);
-    LV_VG_LITE_ASSERT_DEST_BUFFER(&u->target_buffer);
-    LV_VG_LITE_ASSERT_MATRIX(&matrix);
-
     if(dsc->colorkey) {
         lv_vg_lite_set_color_key(dsc->colorkey);
     }
@@ -118,16 +114,14 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
             .height = lv_area_get_height(coords),
         };
 
-        LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_blit_rect");
-        LV_VG_LITE_CHECK_ERROR(vg_lite_blit_rect(
-                                   &u->target_buffer,
-                                   &src_buf,
-                                   &rect,
-                                   &matrix,
-                                   blend,
-                                   color,
-                                   filter));
-        LV_PROFILER_DRAW_END_TAG("vg_lite_blit_rect");
+        lv_vg_lite_blit_rect(
+            &u->target_buffer,
+            &src_buf,
+            &rect,
+            &matrix,
+            blend,
+            color,
+            filter);
     }
     else {
         lv_vg_lite_path_t * path = lv_vg_lite_path_get(u, VG_LITE_FP32);
@@ -154,26 +148,20 @@ void lv_draw_vg_lite_img(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t *
         lv_vg_lite_path_set_bounding_box_area(path, &clip_area);
         lv_vg_lite_path_end(path);
 
-        vg_lite_path_t * vg_lite_path = lv_vg_lite_path_get_path(path);
-        LV_VG_LITE_ASSERT_PATH(vg_lite_path);
-
         vg_lite_matrix_t path_matrix = u->global_matrix;
-        LV_VG_LITE_ASSERT_MATRIX(&path_matrix);
 
-        LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_draw_pattern");
-        LV_VG_LITE_CHECK_ERROR(vg_lite_draw_pattern(
-                                   &u->target_buffer,
-                                   vg_lite_path,
-                                   VG_LITE_FILL_EVEN_ODD,
-                                   &path_matrix,
-                                   &src_buf,
-                                   &matrix,
-                                   blend,
-                                   VG_LITE_PATTERN_COLOR,
-                                   0,
-                                   color,
-                                   filter));
-        LV_PROFILER_DRAW_END_TAG("vg_lite_draw_pattern");
+        lv_vg_lite_draw_pattern(
+            &u->target_buffer,
+            lv_vg_lite_path_get_path(path),
+            VG_LITE_FILL_EVEN_ODD,
+            &path_matrix,
+            &src_buf,
+            &matrix,
+            blend,
+            VG_LITE_PATTERN_COLOR,
+            0,
+            color,
+            filter);
 
         lv_vg_lite_path_drop(u, path);
     }
