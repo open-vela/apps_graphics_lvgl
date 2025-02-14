@@ -20,6 +20,11 @@
 #define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
 #define font_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->font_draw_buf_handlers)
 
+#ifdef CONFIG_BUILD_KERNEL
+    #define up_invalidate_dcache(start,end)
+    #define up_flush_dcache(start,end)
+#endif
+
 /**********************
  *      TYPEDEFS
  **********************/
