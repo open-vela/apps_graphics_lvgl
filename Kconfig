@@ -1875,10 +1875,10 @@ menu "LVGL configuration"
 			default "./lvgl/demos/benchmark/assets/NotoSansSC-Regular.ttf"
 			depends on LV_USE_DEMO_BENCHMARK && LV_USE_FREETYPE
 
-		config LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH
-			string "Path to TinyTTF font file which is used in benchmark test"
-			default "A:lvgl/demos/benchmark/assets/NotoSansSC-Regular.ttf"
-			depends on LV_USE_DEMO_BENCHMARK && LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
+		config LV_DEMO_BENCHMARK_ASSETS_PATH
+			string "Path to asset files which are used in benchmark test"
+			default "A:lvgl/demos/benchmark/assets/"
+			depends on LV_USE_DEMO_BENCHMARK
 
 		config LV_USE_DEMO_RENDER
 			bool "Render test for each primitives. Requires at least 480x272 display"

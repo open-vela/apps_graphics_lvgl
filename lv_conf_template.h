@@ -1085,8 +1085,8 @@
     /** Path to FreeType font file which is used in benchmark test */
     #define LV_DEMO_BENCHMARK_FREETYPE_FONT_PATH "./lvgl/demos/benchmark/assets/NotoSansSC-Regular.ttf"
 
-    /** "Path to TinyTTF font file which is used in benchmark test" */
-    #define LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH "A:lvgl/demos/benchmark/assets/NotoSansSC-Regular.ttf"
+    /** "Path to asset files which are used in benchmark test" */
+    #define LV_DEMO_BENCHMARK_ASSETS_PATH "A:lvgl/demos/benchmark/assets/"
 #endif
 
 /*Render test for each primitives. Requires at least 480x272 display*/
