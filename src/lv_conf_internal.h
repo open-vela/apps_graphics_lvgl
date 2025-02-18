@@ -3555,12 +3555,12 @@
         #endif
     #endif
 
-    /** "Path to TinyTTF font file which is used in benchmark test" */
-    #ifndef LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH
-        #ifdef CONFIG_LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH
-            #define LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH CONFIG_LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH
+    /** "Path to asset files which are used in benchmark test" */
+    #ifndef LV_DEMO_BENCHMARK_ASSETS_PATH
+        #ifdef CONFIG_LV_DEMO_BENCHMARK_ASSETS_PATH
+            #define LV_DEMO_BENCHMARK_ASSETS_PATH CONFIG_LV_DEMO_BENCHMARK_ASSETS_PATH
         #else
-            #define LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH "A:lvgl/demos/benchmark/assets/NotoSansSC-Regular.ttf"
+            #define LV_DEMO_BENCHMARK_ASSETS_PATH "A:lvgl/demos/benchmark/assets/"
         #endif
     #endif
 #endif

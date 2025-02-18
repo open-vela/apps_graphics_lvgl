@@ -187,6 +187,70 @@ static void span_text_cb(benchmark_context_t * context)
     shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
 }
 
+static void img_fs_bin_origin_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "bin_demo.bin");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void img_fs_bin_I8_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "bin_demo_I8.bin");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+static void img_fs_bin_A8_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "bin_demo_A8.bin");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+
+#if LV_USE_RLE
+static void img_fs_rle_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "rle_demo.bin");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
+#if LV_USE_TJPGD || LV_USE_LIBJPEG_TURBO
+static void img_fs_jpg_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "jpg_demo.jpg");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
+#if (LV_USE_LODEPNG || LV_USE_LIBPNG)
+static void img_fs_png_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "png_demo.png");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
+#if LV_USE_GIF
+static void img_fs_gif_cb(benchmark_context_t * context)
+{
+    lv_obj_t * img = lv_gif_create(lv_screen_active());
+    lv_gif_set_src(img, LV_DEMO_BENCHMARK_ASSETS_PATH "gif_demo.gif");
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
+}
+#endif
+
 static void empty_screen_cb(benchmark_context_t * context)
 {
     color_anim(lv_screen_active());
@@ -547,6 +611,26 @@ static scene_dsc_t scenes[] = {
     {.name = "TinyTTF label text",              .scene_time = 3000,  .create_cb = label_tiny_ttf_text_cb},
 #endif
 
+#if LV_USE_GIF
+    {.name = "GIF image",                       .scene_time = 3000,  .create_cb = img_fs_gif_cb},
+#endif
+
+    {.name = "BIN image",                       .scene_time = 3000,  .create_cb = img_fs_bin_origin_cb},
+    {.name = "BIN I8 image",                    .scene_time = 3000,  .create_cb = img_fs_bin_I8_cb},
+    {.name = "BIN A8 image",                    .scene_time = 3000,  .create_cb = img_fs_bin_A8_cb},
+
+#if LV_USE_RLE
+    {.name = "RLE image",                       .scene_time = 3000,  .create_cb = img_fs_rle_cb},
+#endif
+
+#if (LV_USE_LODEPNG || LV_USE_LIBPNG)
+    {.name = "PNG image",                       .scene_time = 3000,  .create_cb = img_fs_png_cb},
+#endif
+
+#if (LV_USE_TJPGD || LV_USE_LIBJPEG_TURBO)
+    {.name = "JPG image",                       .scene_time = 3000,  .create_cb = img_fs_jpg_cb},
+#endif
+
     {.name = "Containers",                      .scene_time = 3000,  .create_cb = containers_cb},
     {.name = "Containers with overlay",         .scene_time = 3000,  .create_cb = containers_with_overlay_cb},
     {.name = "Containers with opa",             .scene_time = 3000,  .create_cb = containers_with_opa_cb},
@@ -590,7 +674,8 @@ static benchmark_context_t * benchmark_context_init(void)
     }
 #endif
 #if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
-    context->tinyttf_font = lv_tiny_ttf_create_file(LV_DEMO_BENCHMARK_TINY_TTF_FONT_PATH, LV_TEST_FONT_SIZE);
+    context->tinyttf_font = lv_tiny_ttf_create_file(LV_DEMO_BENCHMARK_ASSETS_PATH "../font/MiSans-Regular.ttf",
+                                                    LV_TEST_FONT_SIZE);
     if(context->tinyttf_font == NULL) {
         LV_LOG_ERROR("tinyTTF font creation failed!");
     }
