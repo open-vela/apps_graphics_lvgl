@@ -11,6 +11,8 @@
 #if LV_USE_SPAN != 0
 
 #include "../../misc/lv_assert.h"
+#include "../../misc/lv_bidi.h"
+#include "../../misc/lv_text_ap.h"
 #include "../../misc/lv_text_private.h"
 #include "../../core/lv_global.h"
 #include "../../misc/lv_text_line_process.h"
@@ -201,8 +203,6 @@ void lv_span_set_text(lv_span_t * span, const char * text)
 #else
     lv_memcpy(span->txt, text, text_alloc_len);
 #endif
-
-    refresh_self_size(span->spangroup);
 }
 
 void lv_span_set_text_static(lv_span_t * span, const char * text)
@@ -226,8 +226,6 @@ void lv_span_set_text_static(lv_span_t * span, const char * text)
 #else
     span->txt = (char *)text;
 #endif
-
-    refresh_self_size(span->spangroup);
 }
 
 void lv_spangroup_set_align(lv_obj_t * obj, lv_text_align_t align)
@@ -561,15 +559,14 @@ int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width)
 
 lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, lv_span_t * span)
 {
-    lv_span_coords_t coords = { 0 };
-    if(obj == NULL) return coords;
-
     /* find previous span */
     lv_spangroup_t * spangroup = (lv_spangroup_t *)obj;
     lv_ll_t * spans = &spangroup->child_ll;
     int32_t width = lv_obj_get_content_width(obj);
 
-    if(span == NULL || _lv_ll_get_head(spans) == NULL) return coords;
+    lv_span_coords_t coords = { 0 };
+
+    if(obj == NULL || span == NULL || _lv_ll_get_head(spans) == NULL) return coords;
 
     lv_span_t * prev_span = NULL;
     lv_span_t * curr_span;
@@ -1173,7 +1170,7 @@ static void lv_draw_span(lv_obj_t * obj, lv_layer_t * layer)
                                     LV_TEXT_FLAG_BREAK_ALL, &pinfo->txt_w, &n_ofs);
                 pinfo->bytes = n_ofs;
             }
-            txts_w = txts_w + pinfo->txt_w + pinfo->letter_space;
+            txts_w = txts_w + pinfo->txt_w;
         }
         txts_w -= lv_get_snippet(item_cnt - 1)->letter_space;
         align_ofs = max_width > txts_w ? max_width - txts_w : 0;

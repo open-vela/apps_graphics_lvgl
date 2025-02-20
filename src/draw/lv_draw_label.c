@@ -380,13 +380,14 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         LV_ASSERT_MALLOC(bidi_txt);
 
         /**
-          * has_bided = 1: already executed _lv_bidi_process_paragraph.
-          * has_bided = 0: has not been executed _lv_bidi_process_paragraph.*/
+          * has_bided = 1: already executed lv_bidi_process_paragraph.
+          * has_bided = 0: has not been executed lv_bidi_process_paragraph.*/
         if(dsc->has_bided) {
             lv_memcpy(bidi_txt, &dsc->text[line_start], bidi_size);
         }
         else {
-            _lv_bidi_process_paragraph(dsc->text + real_line_start, bidi_txt, line_end - line_start, base_dir, NULL, 0);
+            _lv_bidi_process_paragraph(dsc->text + real_line_start, bidi_txt,
+                                       line_end - line_start, base_dir, NULL, 0);
         }
 
 #else
@@ -398,10 +399,10 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
             if(sel_start != 0xFFFF && sel_end != 0xFFFF) {
 #if LV_USE_BIDI
                 if(dsc->has_bided) {
-                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start + i);
+                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start);
                 }
                 else {
-                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, real_line_start);
+                    logical_char_pos = lv_text_encoded_get_char_id(dsc->text, line_start);
                     uint32_t t = lv_text_encoded_get_char_id(bidi_txt, i);
                     logical_char_pos += _lv_bidi_get_logical_pos(bidi_txt, NULL, line_end - line_start, base_dir, t, NULL);
                 }
