@@ -246,7 +246,7 @@ static void flush_no_lock(void)
 
 #if LV_USE_OS
         lv_snprintf(buf, sizeof(buf),
-                    "   LVGL-%d [%d] %" LV_PRIu32 ".%09" LV_PRIu32 ": tracing_mark_write: %c|1|%s\n",
+                    "   LVGL-%d [%d] %" LV_PRIu64 ".%09" LV_PRIu64 ": tracing_mark_write: %c|1|%s\n",
                     item->tid,
                     item->cpu,
                     sec,
@@ -255,7 +255,7 @@ static void flush_no_lock(void)
                     item->func);
 #else
         lv_snprintf(buf, sizeof(buf),
-                    "   LVGL-1 [0] %llu.%09llu" ": tracing_mark_write: %c|1|%s\n",
+                    "   LVGL-1 [0] %" LV_PRIu64 ".%09" LV_PRIu64 ": tracing_mark_write: %c|1|%s\n",
                     sec,
                     nsec,
                     item->tag,
