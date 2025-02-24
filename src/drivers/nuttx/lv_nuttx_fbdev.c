@@ -285,6 +285,7 @@ static int fbdev_init_mem2(lv_nuttx_fb_t * dsc)
 {
     uintptr_t buf_offset;
     struct fb_planeinfo_s pinfo;
+    void * mem2;
     int ret;
 
     lv_memzero(&pinfo, sizeof(pinfo));
@@ -295,6 +296,13 @@ static int fbdev_init_mem2(lv_nuttx_fb_t * dsc)
 
     if((ret = fbdev_get_pinfo(dsc->fd, &pinfo)) < 0) {
         return ret;
+    }
+
+    mem2 = mmap(NULL, pinfo.fblen, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FILE, dsc->fd, 0);
+
+    if(mem2 == MAP_FAILED) {
+        LV_LOG_ERROR("ERROR: mmap failed: %d\n", errno);
+        return -errno;
     }
 
     /* Check bpp */
@@ -308,7 +316,7 @@ static int fbdev_init_mem2(lv_nuttx_fb_t * dsc)
      * It needs to be divisible by pinfo.stride
      */
 
-    buf_offset = pinfo.fbmem - dsc->mem;
+    buf_offset = mem2 - dsc->mem;
 
     if((buf_offset % dsc->pinfo.stride) != 0) {
         LV_LOG_WARN("It is detected that buf_offset(%" PRIuPTR ") "
@@ -321,13 +329,13 @@ static int fbdev_init_mem2(lv_nuttx_fb_t * dsc)
 
     if(buf_offset == 0) {
         dsc->mem2_yoffset = dsc->vinfo.yres;
-        dsc->mem2 = pinfo.fbmem + dsc->mem2_yoffset * pinfo.stride;
+        dsc->mem2 = mem2 + dsc->mem2_yoffset * pinfo.stride;
         LV_LOG_USER("Use consecutive mem2 = %p, yoffset = %" LV_PRIu32,
                     dsc->mem2, dsc->mem2_yoffset);
     }
     else {
         dsc->mem2_yoffset = buf_offset / dsc->pinfo.stride;
-        dsc->mem2 = pinfo.fbmem;
+        dsc->mem2 = mem2;
         LV_LOG_USER("Use non-consecutive mem2 = %p, yoffset = %" LV_PRIu32,
                     dsc->mem2, dsc->mem2_yoffset);
     }
