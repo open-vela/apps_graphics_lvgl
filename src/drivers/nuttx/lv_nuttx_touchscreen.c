@@ -14,6 +14,7 @@
 #if LV_USE_NUTTX_TOUCHSCREEN
 
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,6 +28,9 @@
  *      DEFINES
  *********************/
 
+#define VALID_TOUCH_FLAGS(flags) \
+    (flags) && (!(flags & TOUCH_UP)) \
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -34,10 +38,17 @@
 typedef struct {
     /* fd should be defined at the beginning */
     int fd;
-    struct touch_sample_s last_sample;
+    uint8_t maxpoint; /* Maximal point supported by the touchscreen */
+    struct touch_sample_s * sample;
+    struct touch_sample_s * last_sample;
     bool has_last_sample;
     lv_indev_state_t last_state;
     lv_indev_t * indev_drv;
+#if LV_USE_GESTURE_RECOGNITION
+    lv_indev_gesture_recognizer_t recognizer;
+    lv_indev_touch_data_t * touch_data;
+    uint8_t active_points;
+#endif
 } lv_nuttx_touchscreen_t;
 
 /**********************
@@ -46,7 +57,7 @@ typedef struct {
 static void indev_set_cursor(lv_indev_t * indev, int32_t size);
 static void touchscreen_read(lv_indev_t * drv, lv_indev_data_t * data);
 static void touchscreen_delete_cb(lv_event_t * e);
-static lv_indev_t * touchscreen_init(int fd);
+static lv_indev_t * touchscreen_init(int fd, uint8_t maxpoint);
 
 /**********************
  *  STATIC VARIABLES
@@ -63,22 +74,36 @@ static lv_indev_t * touchscreen_init(int fd);
 lv_indev_t * lv_nuttx_touchscreen_create(const char * dev_path)
 {
     lv_indev_t * indev;
+    uint8_t maxpoint;
     int fd;
 
     LV_ASSERT_NULL(dev_path);
     LV_LOG_USER("touchscreen %s opening", dev_path);
     fd = open(dev_path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
     if(fd < 0) {
-        perror("Error: cannot open touchscreen device");
+        LV_LOG_ERROR("cannot open touchscreen device %s, (errno=%d)", dev_path, errno);
         return NULL;
     }
 
-    LV_LOG_USER("touchscreen %s open success", dev_path);
+    if(ioctl(fd, TSIOC_GETMAXPOINTS, &maxpoint) < 0) {
+        LV_LOG_ERROR("get touch maxpoints failed (errno=%d)", errno);
+        close(fd);
+        return NULL;
+    }
 
-    indev = touchscreen_init(fd);
+    if(maxpoint == 0) {
+        LV_LOG_ERROR("touchscreen %s unsupported maxpoint %d", dev_path, maxpoint);
+        close(fd);
+        return NULL;
+    }
+
+    LV_LOG_USER("touchscreen %s open success, maxpoint %d", dev_path, maxpoint);
+
+    indev = touchscreen_init(fd, maxpoint);
 
     if(indev == NULL) {
         close(fd);
+        return NULL;
     }
 
     indev_set_cursor(indev, LV_NUTTX_TOUCHSCREEN_CURSOR_SIZE);
@@ -116,9 +141,9 @@ static void indev_set_cursor(lv_indev_t * indev, int32_t size)
     }
 }
 
-static void conv_touch_sample(lv_indev_t * drv,
-                              lv_indev_data_t * data,
-                              struct touch_sample_s * sample)
+static void process_single_touch(lv_indev_t * drv,
+                                 lv_indev_data_t * data,
+                                 struct touch_sample_s * sample)
 {
     lv_nuttx_touchscreen_t * touchscreen = drv->driver_data;
     uint8_t touch_flags = sample->point[0].flags;
@@ -137,16 +162,74 @@ static void conv_touch_sample(lv_indev_t * drv,
     }
 }
 
-static bool touchscreen_read_sample(int fd, struct touch_sample_s * sample)
+#if LV_USE_GESTURE_RECOGNITION
+static void process_multi_touch(lv_indev_t * indev,
+                                lv_indev_data_t * data,
+                                struct touch_sample_s * sample)
 {
-    int nbytes = read(fd, sample, sizeof(struct touch_sample_s));
-    return nbytes == sizeof(struct touch_sample_s);
+    lv_nuttx_touchscreen_t * touchscreen = lv_indev_get_driver_data(indev);
+    lv_indev_touch_data_t * touch_data_tmp = touchscreen->touch_data;
+
+    for(int i = 0; i < sample->npoints; i++) {
+        touch_data_tmp->id = sample->point[i].id;
+        uint8_t touch_flags = sample->point[i].flags;
+        if(touch_flags & (TOUCH_DOWN | TOUCH_MOVE)) {
+            lv_display_t * disp = lv_indev_get_display(indev);
+            int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
+            int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
+            touch_data_tmp->point.x = LV_CLAMP(0, sample->point[i].x, hor_max);
+            touch_data_tmp->point.y = LV_CLAMP(0, sample->point[i].y, ver_max);
+            touch_data_tmp->state = LV_INDEV_STATE_PRESSED;
+            touch_data_tmp++;
+        }
+        else if(touch_flags & TOUCH_UP) {
+            touch_data_tmp->state = LV_INDEV_STATE_RELEASED;
+            touch_data_tmp++;
+        }
+    }
+
+    lv_indev_gesture_detect_pinch(&touchscreen->recognizer,
+                                  touchscreen->touch_data,
+                                  touchscreen->active_points);
+    lv_indev_set_gesture_data(data, &touchscreen->recognizer);
+}
+#endif
+
+static void conv_touch(lv_indev_t * drv,
+                       lv_indev_data_t * data,
+                       struct touch_sample_s * sample)
+{
+#if LV_USE_GESTURE_RECOGNITION
+    if(sample->npoints > 1) {
+        lv_nuttx_touchscreen_t * touchscreen = drv->driver_data;
+        touchscreen->active_points = 0;
+
+        for(int i = 0; i < sample->npoints; i++) {
+            if(VALID_TOUCH_FLAGS(sample->point[i].flags)) {
+                ++touchscreen->active_points;
+            }
+        }
+
+        if(touchscreen->active_points > 1) {
+            process_multi_touch(drv, data, sample);
+            return;
+        }
+    }
+
+#endif
+    process_single_touch(drv, data, sample);
+}
+static bool touchscreen_read_sample(lv_nuttx_touchscreen_t * touchscreen)
+{
+    int nbytes = read(touchscreen->fd,
+                      touchscreen->sample,
+                      SIZEOF_TOUCH_SAMPLE_S(touchscreen->maxpoint));
+    return nbytes == SIZEOF_TOUCH_SAMPLE_S(touchscreen->maxpoint);
 }
 
 static void touchscreen_read(lv_indev_t * drv, lv_indev_data_t * data)
 {
     lv_nuttx_touchscreen_t * touchscreen = drv->driver_data;
-    struct touch_sample_s sample;
 
     /* Note: Since it is necessary to avoid multi-processing click events
     * caused by redundant continue_reading, a two-unit sample sliding window
@@ -156,23 +239,29 @@ static void touchscreen_read(lv_indev_t * drv, lv_indev_data_t * data)
 
     /* If has last sample, use it first */
     if(touchscreen->has_last_sample) {
-        conv_touch_sample(drv, data, &touchscreen->last_sample);
+        conv_touch(drv, data, touchscreen->last_sample);
     }
     else {
         /* Read first sample */
-        if(!touchscreen_read_sample(touchscreen->fd, &sample)) {
+        if(!touchscreen_read_sample(touchscreen)) {
             /* No sample available, return last state */
+#if LV_USE_GESTURE_RECOGNITION
+            if(touchscreen->active_points > 1) {
+                return;
+            }
+#endif
             data->state = touchscreen->last_state;
             return;
         }
 
-        conv_touch_sample(drv, data, &sample);
+        conv_touch(drv, data, touchscreen->sample);
     }
 
     /* Try to read next sample */
-    if(touchscreen_read_sample(touchscreen->fd, &sample)) {
+    if(touchscreen_read_sample(touchscreen)) {
         /* Save last sample and let lvgl continue reading */
-        touchscreen->last_sample = sample;
+        lv_memcpy(touchscreen->last_sample, touchscreen->sample,
+                  SIZEOF_TOUCH_SAMPLE_S(touchscreen->maxpoint));
         touchscreen->has_last_sample = true;
         data->continue_reading = true;
     }
@@ -181,6 +270,11 @@ static void touchscreen_read(lv_indev_t * drv, lv_indev_data_t * data)
         touchscreen->has_last_sample = false;
     }
 
+#if LV_USE_GESTURE_RECOGNITION
+    if(touchscreen->active_points > 1) {
+        return;
+    }
+#endif
     data->state = touchscreen->last_state;
 }
 
@@ -189,6 +283,23 @@ static void touchscreen_delete_cb(lv_event_t * e)
     lv_indev_t * indev = (lv_indev_t *) lv_event_get_user_data(e);
     lv_nuttx_touchscreen_t * touchscreen = lv_indev_get_driver_data(indev);
     if(touchscreen) {
+        if(touchscreen->sample) {
+            lv_free(touchscreen->sample);
+            touchscreen->sample = NULL;
+        }
+
+        if(touchscreen->last_sample) {
+            lv_free(touchscreen->last_sample);
+            touchscreen->last_sample = NULL;
+        }
+
+#if LV_USE_GESTURE_RECOGNITION
+        if(touchscreen->touch_data) {
+            lv_free(touchscreen->touch_data);
+            touchscreen->touch_data = NULL;
+        }
+#endif
+
         lv_indev_set_driver_data(indev, NULL);
         lv_indev_set_read_cb(indev, NULL);
         indev_set_cursor(indev, -1);
@@ -201,7 +312,7 @@ static void touchscreen_delete_cb(lv_event_t * e)
     }
 }
 
-static lv_indev_t * touchscreen_init(int fd)
+static lv_indev_t * touchscreen_init(int fd, uint8_t maxpoint)
 {
     lv_nuttx_touchscreen_t * touchscreen;
     lv_indev_t * indev = NULL;
@@ -213,8 +324,22 @@ static lv_indev_t * touchscreen_init(int fd)
     }
 
     touchscreen->fd = fd;
+    touchscreen->maxpoint = maxpoint;
     touchscreen->last_state = LV_INDEV_STATE_RELEASED;
     touchscreen->indev_drv = indev = lv_indev_create();
+    touchscreen->sample =
+        lv_malloc_zeroed(SIZEOF_TOUCH_SAMPLE_S(touchscreen->maxpoint));
+    LV_ASSERT_MALLOC(touchscreen->sample);
+
+    touchscreen->last_sample =
+        lv_malloc_zeroed(SIZEOF_TOUCH_SAMPLE_S(touchscreen->maxpoint));
+    LV_ASSERT_MALLOC(touchscreen->last_sample);
+
+#if LV_USE_GESTURE_RECOGNITION
+    touchscreen->touch_data =
+        lv_malloc_zeroed(sizeof(lv_indev_touch_data_t) * touchscreen->maxpoint);
+    LV_ASSERT_MALLOC(touchscreen->touch_data);
+#endif
 
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev, touchscreen_read);
