@@ -351,6 +351,18 @@ static void display_release_cb(lv_event_t * e)
         lv_display_set_driver_data(disp, NULL);
         lv_display_set_flush_cb(disp, NULL);
 
+        if(dsc->mem != NULL && dsc->mem != MAP_FAILED) {
+            /* Unmap the framebuffer memory */
+            munmap(dsc->mem, dsc->pinfo.fblen);
+            dsc->mem = NULL;
+        }
+
+        if(dsc->mem2 != NULL && dsc->mem2 != MAP_FAILED) {
+            /* Unmap the second framebuffer memory if double buffering is used */
+            munmap(dsc->mem2, dsc->pinfo.fblen);
+            dsc->mem2 = NULL;
+        }
+
         if(dsc->fd >= 0) {
             close(dsc->fd);
             dsc->fd = -1;
