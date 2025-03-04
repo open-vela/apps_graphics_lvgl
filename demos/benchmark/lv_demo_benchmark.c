@@ -729,7 +729,7 @@ static benchmark_context_t * benchmark_context_init(void)
     }
 #endif
 #if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
-    context->tinyttf_font = lv_tiny_ttf_create_file(LV_DEMO_BENCHMARK_ASSETS_PATH "../font/MiSans-Regular.ttf",
+    context->tinyttf_font = lv_tiny_ttf_create_file(LV_DEMO_BENCHMARK_ASSETS_PATH "NotoSansSC-Regular.ttf",
                                                     LV_TEST_FONT_SIZE);
     if(context->tinyttf_font == NULL) {
         LV_LOG_ERROR("tinyTTF font creation failed!");
@@ -1181,7 +1181,7 @@ static void svg_create(benchmark_context_t * context, const char * src)
 {
     if(context->svg_buffer) {
         lv_obj_set_layout(lv_screen_active(), 0);
-        context->svg = lv_svg_load_data(LV_TEST_SVG_FILL_SOLID, lv_strlen(LV_TEST_SVG_FILL_SOLID));
+        context->svg = lv_svg_load_data(src, lv_strlen(src));
         svg_canvas_init(context);
         return;
     }
