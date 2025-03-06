@@ -94,7 +94,7 @@ static void draw_buf_to_region(
     uint32_t palette_size_bytes = 0;
     /** Jump pattern color table */
     if (LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
-        palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(lv_color_t);
+        palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(lv_color32_t);
     }
 
     void * buf = draw_buf->data + palette_size_bytes;
@@ -110,7 +110,7 @@ static void draw_buf_pattern_region(const lv_draw_buf_t* draw_buf, lv_uintptr_t 
     LV_ASSERT_NULL(start);
     LV_ASSERT_NULL(end);
 
-    uint32_t palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(lv_color_t);
+    uint32_t palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(lv_color32_t);
     void * buf = draw_buf->data;
     *start = (lv_uintptr_t)buf;
     *end = *start + palette_size_bytes;
