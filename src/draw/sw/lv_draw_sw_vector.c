@@ -429,6 +429,39 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
+
+#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
+{
+    lv_draw_buf_t * draw_buf = layer->draw_buf;
+    if(draw_buf == NULL)
+        return;
+
+    lv_color_format_t cf = draw_buf->header.cf;
+
+    if(cf != LV_COLOR_FORMAT_ARGB8888 && \
+       cf != LV_COLOR_FORMAT_XRGB8888) {
+        LV_LOG_ERROR("unsupported layer color: %d", cf);
+        return;
+    }
+
+    void * buf = draw_buf->data;
+    int32_t width = lv_area_get_width(&layer->buf_area) - 1;
+    int32_t height = lv_area_get_height(&layer->buf_area) - 1;
+    uint32_t stride = draw_buf->header.stride;
+    Tvg_Canvas * canvas = tvg_swcanvas_create();
+    tvg_swcanvas_set_target(canvas, buf, stride / 4, width, height, TVG_COLORSPACE_ARGB8888);
+
+    _task_draw_cb(canvas, path, dsc);
+
+    if(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS) {
+        tvg_canvas_sync(canvas);
+    }
+
+    tvg_canvas_destroy(canvas);
+}
+#endif
+
 void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc_t * dsc)
 {
     LV_UNUSED(draw_unit);

@@ -1197,6 +1197,13 @@
     #endif
 #endif
 
+#ifndef LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+    #ifdef CONFIG_LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+        #define LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING CONFIG_LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+    #else
+        #define LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING 0
+    #endif
+#endif
 /*==================
  *   FONT USAGE
  *===================*/

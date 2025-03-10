@@ -83,6 +83,44 @@ static vg_lite_color_t lv_color32_to_vg(lv_color32_t color, lv_opa_t opa)
     return (uint32_t)a << 24 | (uint32_t)color.blue << 16 | (uint32_t)color.green << 8 | color.red;
 }
 
+#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+
+#define _draw_info LV_GLOBAL_DEFAULT()->draw_info
+
+void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
+{
+    lv_draw_global_info_t * info = &_draw_info;
+
+    lv_draw_vg_lite_unit_t * u = (lv_draw_vg_lite_unit_t *)info->unit_head;
+
+    u->base_unit.target_layer = layer;
+    u->base_unit.clip_area = &layer->_clip_area;
+
+    lv_vg_lite_buffer_from_draw_buf(&u->target_buffer, layer->draw_buf);
+    lv_draw_buf_set_flag(layer->draw_buf, LV_IMAGE_FLAGS_PREMULTIPLIED);
+
+    vg_lite_identity(&u->global_matrix);
+    if(layer->buf_area.x1 || layer->buf_area.y1) {
+        vg_lite_translate(-layer->buf_area.x1, -layer->buf_area.y1, &u->global_matrix);
+    }
+
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    vg_lite_matrix_t layer_matrix;
+    lv_vg_lite_matrix(&layer_matrix, &dsc->matrix);
+    lv_vg_lite_matrix_multiply(&u->global_matrix, &layer_matrix);
+
+    /* Crop out extra pixels drawn due to scaling accuracy issues */
+    if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
+        lv_area_t scissor_area = layer->phy_clip_area;
+        lv_area_move(&scissor_area, -layer->buf_area.x1, -layer->buf_area.y1);
+        lv_vg_lite_set_scissor_area(&scissor_area);
+    }
+#endif
+
+    task_draw_cb(u, path, dsc);
+}
+#endif
+
 static void draw_fill(lv_draw_vg_lite_unit_t * u,
                       lv_vg_lite_path_t * lv_vg_path,
                       const lv_vector_draw_dsc_t * dsc,

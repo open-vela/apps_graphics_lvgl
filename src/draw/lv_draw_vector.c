@@ -89,6 +89,7 @@ typedef struct {
 *  STATIC PROTOTYPES
  **********************/
 
+#if !LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
 static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_t * src)
 {
     lv_memcpy(&(dst->fill_dsc), &(src->fill_dsc), sizeof(lv_vector_fill_dsc_t));
@@ -113,6 +114,7 @@ static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_
     lv_memcpy(&(dst->matrix), &(src->matrix), sizeof(lv_matrix_t));
     lv_area_copy(&(dst->scissor_area), &(src->scissor_area));
 }
+#endif
 /**********************
 *   GLOBAL FUNCTIONS
  **********************/
@@ -739,6 +741,13 @@ void lv_vector_dsc_add_path(lv_vector_dsc_t * dsc, const lv_vector_path_t * path
         return;
     }
 
+#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+    lv_area_t scissor_store = dsc->current_dsc.scissor_area;
+    dsc->current_dsc.scissor_area = rect;
+    lv_draw_vector_immediable(dsc->layer, path, &dsc->current_dsc);
+    dsc->current_dsc.scissor_area = scissor_store;
+#else
+
     if(!dsc->tasks.task_list) {
         dsc->tasks.task_list = lv_malloc(sizeof(lv_ll_t));
         LV_ASSERT_MALLOC(dsc->tasks.task_list);
@@ -753,6 +762,7 @@ void lv_vector_dsc_add_path(lv_vector_dsc_t * dsc, const lv_vector_path_t * path
     _copy_draw_dsc(&(new_task->dsc), &(dsc->current_dsc));
     lv_vector_path_copy(new_task->path, path);
     new_task->dsc.scissor_area = rect;
+#endif
 }
 
 void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
@@ -762,6 +772,13 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
         return;
     }
 
+#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+    lv_area_t scissor_store = dsc->current_dsc.scissor_area;
+    dsc->current_dsc.scissor_area = *rect;
+    lv_draw_vector_immediable(dsc->layer, NULL, &dsc->current_dsc);
+    dsc->current_dsc.scissor_area = scissor_store;
+
+#else
     if(!dsc->tasks.task_list) {
         dsc->tasks.task_list = lv_malloc(sizeof(lv_ll_t));
         LV_ASSERT_MALLOC(dsc->tasks.task_list);
@@ -774,10 +791,12 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
     new_task->dsc.fill_dsc.color = dsc->current_dsc.fill_dsc.color;
     new_task->dsc.fill_dsc.opa = dsc->current_dsc.fill_dsc.opa;
     lv_area_copy(&(new_task->dsc.scissor_area), rect);
+#endif
 }
 
 void lv_draw_vector(lv_vector_dsc_t * dsc)
 {
+#if !LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
     if(!dsc->tasks.task_list) {
         return;
     }
@@ -790,6 +809,7 @@ void lv_draw_vector(lv_vector_dsc_t * dsc)
     lv_memcpy(t->draw_dsc, &(dsc->tasks), sizeof(lv_draw_vector_task_dsc_t));
     lv_draw_finalize_task_creation(layer, t);
     dsc->tasks.task_list = NULL;
+#endif
 }
 
 /* draw dsc transform */
