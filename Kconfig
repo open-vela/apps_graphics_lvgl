@@ -412,6 +412,11 @@ menu "LVGL configuration"
 		config LV_DECODER_IMG_SIZE_EXPAND
 			int "Default image expend size."
 			default 0
+
+		config LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+			bool "Use vector graphic direct rendering"
+			default n
+			depends on LV_OS_NONE
 	endmenu
 
 	menu "Feature Configuration"

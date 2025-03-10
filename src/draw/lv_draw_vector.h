@@ -574,6 +574,10 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect);
  */
 void lv_draw_vector(lv_vector_dsc_t * dsc);
 
+#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
+void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc);
+#endif
+
 /* Traverser for task list */
 typedef void (*vector_draw_task_cb)(void * ctx, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc);
 

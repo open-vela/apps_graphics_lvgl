@@ -419,6 +419,7 @@
 /*Enable matrix support*/
 #define LV_USE_MATRIX           0
 
+#define LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING 0
 /*==================
  *   FONT USAGE
  *===================*/
