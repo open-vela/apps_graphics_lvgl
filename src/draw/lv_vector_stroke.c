@@ -513,7 +513,7 @@ static bool stroke_line_generated(struct _base_generator * gen, lv_fpoint_t * po
             case LV_LINE_GEN_INITIAL: {
                     gen->reset(gen);
                 }
-                /* fall through */
+            /* fall through */
             case LV_LINE_GEN_READY: {
                     size_t size = lv_array_size(array);
                     if(size < 2 + (line_gen->closed ? 1 : 0)) {
@@ -583,7 +583,7 @@ static bool stroke_line_generated(struct _base_generator * gen, lv_fpoint_t * po
                     line_gen->state = LV_LINE_GEN_SECOND_OUTLINE;
                     cmd = LV_VECTOR_PATH_OP_MOVE_TO;
                 }
-                /* fall through */
+            /* fall through */
             case LV_LINE_GEN_SECOND_OUTLINE: {
                     if(line_gen->dist_idx <= (line_gen->closed ? 0 : 1)) {
                         line_gen->state = LV_LINE_GEN_END_POLYGON;
@@ -686,7 +686,7 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
             case LV_LINE_GEN_INITIAL: {
                     gen->reset(gen);
                 }
-                /* fall through */
+            /* fall through */
             case LV_LINE_GEN_READY: {
                     size_t size = lv_array_size(array);
                     if(size < 2 || lv_array_size(dash_array) < 2) {
@@ -778,7 +778,7 @@ start:
                 gen->start_point = *pt;
                 gen->state = LV_BASE_GEN_START_ACCUMULATE;
             }
-            /* fall through */
+        /* fall through */
         case LV_BASE_GEN_START_ACCUMULATE: {
                 if(gen->last_op == LV_VECTOR_POLYGON_STOP) {
                     gen->cb(gen->last_op, NULL, gen->user_data);
@@ -809,7 +809,7 @@ start:
                     }
                 }
             }
-            /* fall through */
+        /* fall through */
         case LV_BASE_GEN_GENERATE: {
                 gen->reset(gen);
                 lv_fpoint_t p = {0};

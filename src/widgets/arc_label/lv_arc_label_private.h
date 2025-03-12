@@ -15,7 +15,7 @@ extern "C" {
  *********************/
 
 #include "../../core/lv_obj.h"
-    
+
 #if LV_USE_ARC_LABEL != 0
 #include "lv_arc_label.h"
 
