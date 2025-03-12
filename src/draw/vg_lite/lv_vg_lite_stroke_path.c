@@ -13,6 +13,7 @@
 
 #include "lv_draw_vg_lite_type.h"
 #include "lv_vg_lite_path.h"
+#include <float.h>
 
 /*********************
  *      DEFINES
@@ -64,6 +65,7 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_u
     LV_ASSERT_NULL(unit->stroke_path);
     LV_ASSERT(!unit->stroke_path_in_use);
     lv_vg_lite_path_reset(unit->stroke_path, VG_LITE_FP32);
+    lv_vg_lite_path_set_bounding_box(unit->stroke_path, __FLT_MAX__, __FLT_MAX__, __FLT_MIN__, __FLT_MIN__);
 
     if(!lv_vector_stroke_generate(path, dsc, vg_path_generate_cb, unit->stroke_path)) {
         LV_PROFILER_DRAW_END;
@@ -93,11 +95,24 @@ static void vg_path_generate_cb(lv_vector_path_op_t op, const lv_fpoint_t * pt, 
 {
     lv_vg_lite_path_t * path = data;
 
+    float min_x, min_y, max_x, max_y;
+    lv_vg_lite_path_get_bounding_box(path, &min_x, &min_y, &max_x, &max_y);
+
+#define CMP_BOUNDS(point)                           \
+    do {                                            \
+        if((point)->x < min_x) min_x = (point)->x;  \
+        if((point)->y < min_y) min_y = (point)->y;  \
+        if((point)->x > max_x) max_x = (point)->x;  \
+        if((point)->y > max_y) max_y = (point)->y;  \
+    } while(0)
+
     switch(op) {
         case LV_VECTOR_PATH_OP_MOVE_TO:
+            CMP_BOUNDS(pt);
             lv_vg_lite_path_move_to(path, pt->x, pt->y);
             break;
         case LV_VECTOR_PATH_OP_LINE_TO:
+            CMP_BOUNDS(pt);
             lv_vg_lite_path_line_to(path, pt->x, pt->y);
             break;
         case LV_VECTOR_PATH_OP_CLOSE:
@@ -106,6 +121,8 @@ static void vg_path_generate_cb(lv_vector_path_op_t op, const lv_fpoint_t * pt, 
         default:
             break;
     }
+
+    lv_vg_lite_path_set_bounding_box(path, min_x, min_y, max_x, max_y);
 }
 
 #endif /*LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC*/
