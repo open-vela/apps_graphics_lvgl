@@ -63,7 +63,7 @@ typedef enum {
 
 /**< Crown scroll param, Check if the object can be scrolled*/
 typedef struct {
-    lv_indev_t* indev;     /**< Crown scroll indev */
+    lv_indev_t * indev;    /**< Crown scroll indev */
     lv_crown_scroll_t res; /**< Check result */
 } lv_crown_scroll_check_t;
 
