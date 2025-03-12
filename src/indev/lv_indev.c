@@ -1165,7 +1165,7 @@ static void indev_proc_long_press(lv_indev_t * indev)
             /*Save the long press time stamp for the long press repeat handler*/
             indev->longpr_rep_timestamp = lv_tick_get();
 
-            if (indev->mode == LV_INDEV_MODE_EVENT && indev->longpr_timer) {
+            if(indev->mode == LV_INDEV_MODE_EVENT && indev->longpr_timer) {
                 lv_timer_set_period(indev->longpr_timer, LV_INDEV_DEF_LONG_PRESS_REP_TIME);
             }
         }
