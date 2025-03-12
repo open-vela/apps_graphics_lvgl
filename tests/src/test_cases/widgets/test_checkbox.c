@@ -26,6 +26,17 @@ static void event_handler(lv_event_t * e)
     }
 }
 
+void setUp(void)
+{
+    /* Function run before every test */
+}
+
+void tearDown(void)
+{
+    /* Function run after every test */
+    lv_obj_clean(lv_screen_active());
+}
+
 void test_checkbox_creation_successful(void)
 {
     test_checkbox_active_screen = lv_screen_active();
@@ -122,5 +133,14 @@ void test_checkbox_rtl(void)
     LV_LOG_WARN("Font `lv_font_dejavu_16_persian_hebrew` not enabled");
 }
 #endif
+
+void test_checkbox_style_opa(void)
+{
+    lv_obj_t * obj = lv_checkbox_create(lv_screen_active());
+    lv_obj_set_style_opa(obj, LV_OPA_0, LV_PART_INDICATOR);
+    lv_obj_center(obj);
+
+    TEST_ASSERT_EQUAL_SCREENSHOT("widgets/checkbox_1.png");
+}
 
 #endif
