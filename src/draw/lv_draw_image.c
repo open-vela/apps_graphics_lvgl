@@ -122,7 +122,7 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
         t->type = LV_DRAW_TASK_TYPE_IMAGE;
 
         _lv_image_buf_get_transformed_area(&t->_real_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
-                                          dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+                                           dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
         lv_area_move(&t->_real_area, image_coords->x1, image_coords->y1);
 
         lv_draw_finalize_task_creation(layer, t);
@@ -158,11 +158,11 @@ void lv_draw_image(lv_layer_t * layer, const lv_draw_image_dsc_t * dsc, const lv
                 if(_lv_area_intersect(&clip_area, &clip_area, &coords_area)) {
 
                     _lv_image_buf_get_transformed_area(&coords_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
-                                                      dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+                                                       dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
                     lv_area_move(&coords_area, image_coords->x1, image_coords->y1);
 
                     _lv_image_buf_get_transformed_area(&clip_area, lv_area_get_width(image_coords), lv_area_get_height(image_coords),
-                                                      dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
+                                                       dsc->rotation, dsc->scale_x, dsc->scale_y, &dsc->pivot);
                     lv_area_move(&clip_area, image_coords->x1, image_coords->y1);
 
                     if(_lv_area_intersect(&clip_area, &clip_area, &obj_area)) {
