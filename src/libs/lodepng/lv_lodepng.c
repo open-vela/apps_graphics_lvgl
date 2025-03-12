@@ -110,7 +110,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 
             size = (uint32_t *)&buf[16];
         }
-         /*If it's a PNG file in a  C array...*/
+        /*If it's a PNG file in a  C array...*/
         else {
             const lv_image_dsc_t * img_dsc = dsc->src;
             const uint32_t data_size = img_dsc->data_size;
