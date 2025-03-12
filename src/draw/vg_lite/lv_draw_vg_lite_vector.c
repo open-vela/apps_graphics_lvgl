@@ -24,20 +24,6 @@
  *      DEFINES
  *********************/
 
-#if LV_USE_VG_LITE_THORVG
-    /**
-    * It is found that thorvg cannot handle large coordinates well.
-    * When the coordinates are larger than 4096, the calculation of tvgSwRle module will overflow in 32-bit system.
-    * So we use FLT_MAX and FLT_MIN to write the mark to bounding_box to tell vg_lite_tvg not to add clip path to the current path.
-    */
-    #define PATH_COORD_MAX FLT_MAX
-    #define PATH_COORD_MIN FLT_MIN
-#else
-    /*  18 bits is enough to represent the coordinates of path bounding box */
-    #define PATH_COORD_MAX (1 << 18)
-    #define PATH_COORD_MIN (-PATH_COORD_MAX)
-#endif
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -327,11 +313,6 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
         lv_vg_lite_set_scissor_area(&dsc->scissor_area);
         LV_LOG_TRACE("Set scissor area: X1:%" LV_PRId32 ", Y1:%" LV_PRId32 ", X2:%" LV_PRId32 ", Y2:%" LV_PRId32,
                      dsc->scissor_area.x1, dsc->scissor_area.y1, dsc->scissor_area.x2, dsc->scissor_area.y2);
-
-        /* no bounding box */
-        lv_vg_lite_path_set_bounding_box(lv_vg_path,
-                                         (float)PATH_COORD_MIN, (float)PATH_COORD_MIN,
-                                         (float)PATH_COORD_MAX, (float)PATH_COORD_MAX);
     }
     else {
         /* calc inverse matrix */
@@ -399,11 +380,15 @@ static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src
 
     float min_x = __FLT_MAX__;
     float min_y = __FLT_MAX__;
+    float max_x = __FLT_MIN__;
+    float max_y = __FLT_MIN__;
 
 #define CMP_BOUNDS(point)                           \
     do {                                            \
         if((point)->x < min_x) min_x = (point)->x;  \
         if((point)->y < min_y) min_y = (point)->y;  \
+        if((point)->x > max_x) max_x = (point)->x;  \
+        if((point)->y > max_y) max_y = (point)->y;  \
     } while(0)
 
 #define COPY_POINT_NEXT()        \
@@ -462,6 +447,8 @@ static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src
     }
 
     LV_ASSERT_MSG((lv_uintptr_t)path_data - (lv_uintptr_t)vg_path->path == path_length, "path length overflow");
+
+    lv_vg_lite_path_set_bounding_box(dest, min_x, min_y, max_x, max_y);
 
     offset->x = min_x;
     offset->y = min_y;
