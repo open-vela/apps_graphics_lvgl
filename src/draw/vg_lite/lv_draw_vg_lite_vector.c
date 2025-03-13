@@ -19,6 +19,7 @@
 #include "lv_vg_lite_stroke.h"
 #include "lv_vg_lite_stroke_path.h"
 #include <float.h>
+#include <math.h>
 
 /*********************
  *      DEFINES
@@ -36,7 +37,8 @@ typedef void (*path_drop_func_t)(struct _lv_draw_vg_lite_unit_t *, path_drop_dat
  **********************/
 
 static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc);
-static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src, lv_fpoint_t * offset);
+static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src, lv_fpoint_t * offset,
+                          float expand_bound);
 static vg_lite_blend_t lv_blend_to_vg(lv_vector_blend_t blend);
 static vg_lite_fill_t lv_fill_to_vg(lv_vector_fill_t fill_rule);
 
@@ -221,12 +223,13 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
     vg_stroke_path->stroke_color = lv_color32_to_vg(dsc->stroke_dsc.color, dsc->stroke_dsc.opa);
     const vg_lite_color_t vg_color = 0;
 
+    /* set stroke path bounding box */
+    lv_memcpy(vg_stroke_path->bounding_box, vg_path->bounding_box, sizeof(vg_path->bounding_box));
+
 #define STROKE_DROP() lv_vg_lite_stroke_drop(u, stroke_cache_entey)
 
 #endif
 
-    /* set stroke path bounding box */
-    lv_memcpy(vg_stroke_path->bounding_box, vg_path->bounding_box, sizeof(vg_path->bounding_box));
     LV_VG_LITE_ASSERT_PATH(vg_stroke_path);
 
     const vg_lite_blend_t blend = lv_blend_to_vg(dsc->blend_mode);
@@ -300,13 +303,19 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
         return;
     }
 
-    /* convert path */
-    lv_vg_lite_path_t * lv_vg_path = lv_vg_lite_path_get(u, VG_LITE_FP32);
-
     /* transform matrix */
     vg_lite_matrix_t matrix;
     lv_vg_lite_matrix(&matrix, &dsc->matrix);
     LV_VG_LITE_ASSERT_MATRIX(&matrix);
+
+    /* convert path */
+    lv_vg_lite_path_t * lv_vg_path = lv_vg_lite_path_get(u, VG_LITE_FP32);
+
+    /* When stroke to path conversion is enabled and there is no fill, there is no need to convert to vg_lite path */
+    lv_fpoint_t offset = {0, 0};
+    if(!LV_VG_LITE_USE_STROKE_TO_PATH || dsc->fill_dsc.opa) {
+        lv_path_to_vg(lv_vg_path, path, &offset, dsc->stroke_dsc.opa ? dsc->stroke_dsc.width : 0);
+    }
 
     if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
         /* set scissor area */
@@ -334,12 +343,6 @@ static void task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vec
         lv_point_precise_t p2_res = lv_vg_lite_matrix_transform_point(&result, &p2);
 
         lv_vg_lite_path_set_bounding_box(lv_vg_path, p1_res.x, p1_res.y, p2_res.x, p2_res.y);
-    }
-
-    /* When stroke to path conversion is enabled and there is no fill, there is no need to convert to vg_lite path */
-    lv_fpoint_t offset = {0, 0};
-    if(!LV_VG_LITE_USE_STROKE_TO_PATH || dsc->fill_dsc.opa) {
-        lv_path_to_vg(lv_vg_path, path, &offset);
     }
 
     if(dsc->fill_dsc.opa) {
@@ -373,7 +376,8 @@ static vg_lite_quality_t lv_quality_to_vg(lv_vector_path_quality_t quality)
     }
 }
 
-static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src, lv_fpoint_t * offset)
+static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src, lv_fpoint_t * offset,
+                          float expand_bound)
 {
     LV_PROFILER_DRAW_BEGIN;
     lv_vg_lite_path_set_quality(dest, lv_quality_to_vg(src->quality));
@@ -448,10 +452,14 @@ static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src
 
     LV_ASSERT_MSG((lv_uintptr_t)path_data - (lv_uintptr_t)vg_path->path == path_length, "path length overflow");
 
-    lv_vg_lite_path_set_bounding_box(dest, min_x, min_y, max_x, max_y);
+    lv_vg_lite_path_set_bounding_box(dest,
+                                     min_x - expand_bound,
+                                     min_y - expand_bound,
+                                     max_x + expand_bound + 1,
+                                     max_y + expand_bound + 1);
 
-    offset->x = min_x;
-    offset->y = min_y;
+    offset->x = lroundf(min_x);
+    offset->y = lroundf(min_y);
     LV_PROFILER_DRAW_END;
 }
 
