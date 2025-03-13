@@ -35,28 +35,6 @@
 
 #define LV_TEST_FONT_SIZE 24
 
-#define LV_TEST_SVG_FILL_SOLID "<svg width=\"170\" height=\"170\">" \
-    "<circle cx=\"85\" cy=\"85\" r=\"75\" fill=\"red\">" \
-    "<animate attributeName=\"cy\" begin=\"0s\" dur=\"1.5s\" from=\"85\" to=\"225\" fill=\"freeze\" />" \
-    "</circle>" \
-    "</svg>"
-
-#define LV_TEST_SVG_FILL_GRADIENT "<svg width=\"170\" height=\"170\">" \
-    "<radialGradient id=\"r1\" cx=\".3\" cy=\".3\" r=\".7\">" \
-    "<stop offset=\"0\" stop-color=\"#ffffff\"/>" \
-    "<stop offset=\".3\" stop-color=\"#99ff99\"/>" \
-    "<stop offset=\".7\" stop-color=\"#337733\"/>" \
-    "<stop offset=\"1\" stop-color=\"#000000\"/>" \
-    "</radialGradient>" \
-    "<circle cx=\"85\" cy=\"85\" r=\"75\" fill=\"url(#r1)\"> "\
-    "</circle>" \
-    "</svg>"
-
-#define LV_TEST_SVG_FILL_SOLID_WITH_STROKE "<svg width=\"170\" height=\"170\">" \
-    "<circle cx=\"85\" cy=\"85\" r=\"75\" fill=\"red\"  stroke=\"blue\" stroke-width=\"3\"> "\
-    "</circle>" \
-    "</svg>"
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -68,11 +46,6 @@ typedef struct benchmark_context {
     lv_obj_t * label_perf;
     uint32_t scene_act;
     uint32_t rnd_act;
-#if LV_USE_SVG
-    lv_svg_node_t * svg;
-    lv_draw_buf_t * svg_buffer;
-#endif
-
 } benchmark_context_t;
 
 typedef struct scene_dsc {
@@ -115,7 +88,6 @@ static void spans_init(lv_obj_t * spans);
 static void spans_text_add(lv_obj_t * spans, const lv_font_t * font, const char * text);
 
 #if LV_USE_SVG
-    static void svg_canvas_init(benchmark_context_t * context);
     static void svg_create(benchmark_context_t * context, const char * src);
 #endif
 
@@ -220,19 +192,19 @@ static void span_text_cb(benchmark_context_t * context)
 }
 
 #if LV_USE_SVG
-static void svg_fill_solid_cb(benchmark_context_t * context)
+static void svg_tiger_cb(benchmark_context_t * context)
 {
-    svg_create(context, LV_TEST_SVG_FILL_SOLID);
+    svg_create(context, LV_DEMO_BENCHMARK_ASSETS_PATH "svg_tiger.svg");
 }
 
-static void svg_fill_gradient_cb(benchmark_context_t * context)
+static void svg_linear_gradient_cb(benchmark_context_t * context)
 {
-    svg_create(context, LV_TEST_SVG_FILL_GRADIENT);
+    svg_create(context, LV_DEMO_BENCHMARK_ASSETS_PATH "svg_lineargradient.svg");
 }
 
-static void svg_fill_and_stroke_cb(benchmark_context_t * context)
+static void svg_radial_gradient_cb(benchmark_context_t * context)
 {
-    svg_create(context, LV_TEST_SVG_FILL_SOLID_WITH_STROKE);
+    svg_create(context, LV_DEMO_BENCHMARK_ASSETS_PATH "svg_radialgradient.svg");
 }
 #endif
 
@@ -681,9 +653,9 @@ static scene_dsc_t scenes[] = {
 #endif
 
 #if LV_USE_SVG
-    {.name = "SVG fill solid",               .scene_time = 3000,  .create_cb = svg_fill_solid_cb},
-    {.name = "SVG fill gradient",            .scene_time = 3000,  .create_cb = svg_fill_gradient_cb},
-    {.name = "SVG fill and stroke ",         .scene_time = 3000,  .create_cb = svg_fill_and_stroke_cb},
+    {.name = "SVG tiger",                       .scene_time = 3000,  .create_cb = svg_tiger_cb},
+    {.name = "SVG linear gradient",             .scene_time = 3000,  .create_cb = svg_linear_gradient_cb},
+    {.name = "SVG radial gradient ",            .scene_time = 3000,  .create_cb = svg_radial_gradient_cb},
 #endif
 
     {.name = "Containers",                      .scene_time = 3000,  .create_cb = containers_cb},
@@ -736,14 +708,6 @@ static benchmark_context_t * benchmark_context_init(void)
     }
 #endif
 
-#if LV_USE_SVG
-    context->svg_buffer = lv_draw_buf_create(lv_obj_get_content_width(lv_screen_active()),
-                                             lv_obj_get_content_height(lv_screen_active()), LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
-    if(context->svg_buffer == NULL) {
-        LV_LOG_WARN("SVG buffer creation failed! SVG test cases will be ignored");
-    }
-#endif
-
     context->scene_act = 0;
     context->label_perf = lv_label_create(lv_layer_top());
     lv_obj_set_style_bg_opa(context->label_perf, LV_OPA_COVER, 0);
@@ -767,11 +731,6 @@ static void benchmark_context_deinit(benchmark_context_t * context)
 #if LV_USE_TINY_TTF && LV_TINY_TTF_FILE_SUPPORT
     if(context->tinyttf_font != NULL) {
         lv_tiny_ttf_destroy(context->tinyttf_font);
-    }
-#endif
-#if LV_USE_SVG
-    if(context->svg_buffer) {
-        lv_draw_buf_destroy(context->svg_buffer);
     }
 #endif
     lv_obj_delete(context->label_perf);
@@ -825,12 +784,6 @@ static void load_scene(benchmark_context_t * context)
     lv_anim_delete(lv_layer_top(), color_anim_cb);
     lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_TRANSP, 0);
 
-#if LV_USE_SVG
-    if(context->svg) {
-        lv_svg_node_delete(context->svg);
-        context->svg = NULL;
-    }
-#endif
     rnd_reset(context);
     if(scenes[context->scene_act].create_cb) {
         scenes[context->scene_act].create_cb(context);
@@ -1156,39 +1109,16 @@ static void spans_text_add(lv_obj_t * spans, const lv_font_t * font, const char 
 #endif
 
 #if LV_USE_SVG
-static void svg_event_cb(lv_event_t * e)
-{
-    lv_svg_node_t * svg = lv_event_get_user_data(e);
-    lv_layer_t * layer = lv_event_get_layer(e);
-    lv_vector_dsc_t * dsc = lv_vector_dsc_create(layer);
-    lv_svg_render_obj_t * list = lv_svg_render_create(svg);
-    lv_matrix_translate(&(list->matrix), 0, 50);
-    lv_draw_svg_render(dsc, list);
-    lv_draw_vector(dsc);
-    lv_svg_render_delete(list);
-    lv_vector_dsc_delete(dsc);
-}
-
-static void svg_canvas_init(benchmark_context_t * context)
-{
-    lv_obj_t * canvas = lv_canvas_create(lv_screen_active());
-    lv_canvas_set_draw_buf(canvas, context->svg_buffer);
-    lv_canvas_fill_bg(canvas, lv_palette_lighten(LV_PALETTE_GREY, 3), LV_OPA_COVER);
-    lv_obj_add_event_cb(canvas, svg_event_cb, LV_EVENT_DRAW_MAIN, context->svg);
-}
-
 static void svg_create(benchmark_context_t * context, const char * src)
 {
-    if(context->svg_buffer) {
-        lv_obj_set_layout(lv_screen_active(), 0);
-        context->svg = lv_svg_load_data(src, lv_strlen(src));
-        svg_canvas_init(context);
-        return;
-    }
+    lv_obj_set_layout(lv_screen_active(), 0);
 
-    lv_obj_t * label = lv_label_create(lv_screen_active());
-    lv_label_set_text(label, "SVG rendering skipped due to missing buffer");
-    lv_obj_set_width(label, lv_pct(100));
+    lv_obj_t * img = lv_image_create(lv_screen_active());
+    lv_image_set_src(img, src);
+    lv_image_set_scale(img, 128);
+    lv_obj_center(img);
+
+    shake_anim(context, img, lv_display_get_vertical_resolution(NULL) / 3);
 }
 #endif
 
