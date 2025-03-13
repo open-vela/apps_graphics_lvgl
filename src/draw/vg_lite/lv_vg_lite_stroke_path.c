@@ -65,7 +65,7 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_u
     LV_ASSERT_NULL(unit->stroke_path);
     LV_ASSERT(!unit->stroke_path_in_use);
     lv_vg_lite_path_reset(unit->stroke_path, VG_LITE_FP32);
-    lv_vg_lite_path_set_bounding_box(unit->stroke_path, __FLT_MAX__, __FLT_MAX__, __FLT_MIN__, __FLT_MIN__);
+    lv_vg_lite_path_set_bounding_box(unit->stroke_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
 
     if(!lv_vector_stroke_generate(path, dsc, vg_path_generate_cb, unit->stroke_path)) {
         LV_PROFILER_DRAW_END;
