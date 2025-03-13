@@ -1,0 +1,47 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_20">
+   <stop offset="0" stop-color="#FFFF91"/>
+   <stop offset="1" stop-color="#00006e"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_26">
+   <stop offset="0" stop-color="#559E84"/>
+   <stop offset="1" stop-color="#aa617b"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_32">
+   <stop offset="0" stop-color="#1A333F"/>
+   <stop offset="1" stop-color="#e5ccc0"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_38">
+   <stop offset="0" stop-color="#083734"/>
+   <stop offset="1" stop-color="#f7c8cb"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_44">
+   <stop offset="0" stop-color="#7DD8B5"/>
+   <stop offset="1" stop-color="#82274a"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_56">
+   <stop offset="0" stop-color="#FFA9A2"/>
+   <stop offset="1" stop-color="#00565d"/>
+  </linearGradient>
+  <linearGradient y2="0.0125" x2="0.73438" y1="0" x1="0" id="svg_62">
+   <stop offset="0" stop-color="#6D97AB"/>
+   <stop offset="1" stop-color="#926854"/>
+  </linearGradient>
+  <linearGradient y2="0" x2="1" y1="0" x1="0" id="svg_87">
+   <stop offset="0" stop-color="#A4FFFF"/>
+   <stop offset="1" stop-opacity="0.99609" stop-color="#e50000"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_1" d="m112,66l204,0l0,69l-204,0l0,-69z" opacity="undefined" stroke="#000000" fill="url(#svg_20)"/>
+  <rect id="svg_2" height="69" width="204" y="189" x="112" stroke="#000" fill="url(#svg_32)"/>
+  <rect id="svg_3" height="69" width="204" y="315" x="112" stroke="#000" fill="url(#svg_44)"/>
+  <rect id="svg_4" height="69" width="204" y="438" x="112" stroke="#000" fill="url(#svg_62)"/>
+  <rect id="svg_5" height="69" width="204" y="66" x="472" stroke="#000" fill="url(#svg_26)"/>
+  <rect id="svg_6" height="69" width="204" y="189" x="473" stroke="#000" fill="url(#svg_38)"/>
+  <rect id="svg_7" height="69" width="204" y="315" x="472" stroke="#000" fill="url(#svg_56)"/>
+  <rect id="svg_8" height="69" width="204" y="438" x="472" stroke="#000" fill="url(#svg_87)"/>
+ </g>
+</svg>
