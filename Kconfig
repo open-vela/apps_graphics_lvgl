@@ -1326,7 +1326,7 @@ menu "LVGL configuration"
 
 		config LV_USE_RLOTTIE
 			bool "Lottie library"
-	
+
 		config LV_USE_THORVG
 			bool "ThorVG library"
 			choice
@@ -1520,6 +1520,9 @@ menu "LVGL configuration"
 		config LV_USE_OBSERVER
 			bool "Observer"
 			default y
+		config LV_USE_COLOR_FILTER
+			bool "Enable color filter style"
+			default n
 
 		config LV_USE_IME_PINYIN
 			bool "Enable Pinyin input method"
