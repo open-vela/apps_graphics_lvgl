@@ -962,6 +962,9 @@
 /*1: Enable remote control*/
 #define LV_USE_REMOTE_CTRL 0
 
+/*1: Enable color filter style*/
+#define LV_USE_COLOR_FILTER     0
+
 /*==================
  * DEVICES
  *==================*/

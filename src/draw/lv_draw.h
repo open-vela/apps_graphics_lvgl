@@ -198,6 +198,9 @@ struct _lv_layer_t  {
     /** Opacity of the layer */
     lv_opa_t opa;
 
+    /*Recolor of the layer*/
+    lv_color32_t recolor;
+
     /** Linked list of draw tasks */
     lv_draw_task_t * draw_task_head;
 

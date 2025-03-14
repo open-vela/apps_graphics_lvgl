@@ -306,6 +306,8 @@ enum _lv_style_prop_t {
     LV_STYLE_TRANSFORM_SKEW_Y       = 114,
     LV_STYLE_BITMAP_MASK_SRC        = 115,
     LV_STYLE_ROTARY_SENSITIVITY     = 116,
+    LV_STYLE_RECOLOR                = 118,
+    LV_STYLE_RECOLOR_OPA            = 119,
 
 #if LV_USE_FLEX
     LV_STYLE_FLEX_FLOW              = 125,
