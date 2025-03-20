@@ -93,7 +93,7 @@ static void draw_buf_to_region(
 
     uint32_t palette_size_bytes = 0;
     /** Jump pattern color table */
-    if (LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
+    if(LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
         palette_size_bytes = LV_COLOR_INDEXED_PALETTE_SIZE(draw_buf->header.cf) * sizeof(lv_color32_t);
     }
 
@@ -104,7 +104,7 @@ static void draw_buf_to_region(
     *end = *start + h * stride;
 }
 
-static void draw_buf_pattern_region(const lv_draw_buf_t* draw_buf, lv_uintptr_t * start, lv_uintptr_t * end)
+static void draw_buf_pattern_region(const lv_draw_buf_t * draw_buf, lv_uintptr_t * start, lv_uintptr_t * end)
 {
     LV_ASSERT_NULL(draw_buf);
     LV_ASSERT_NULL(start);
@@ -124,7 +124,7 @@ static void invalidate_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * a
     up_invalidate_dcache(start, end);
 
     /** Need to invalidate the pattern color table */
-    if (LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
+    if(LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
         draw_buf_pattern_region(draw_buf, &start, &end);
         up_invalidate_dcache(start, end);
     }
@@ -138,7 +138,7 @@ static void flush_cache(const lv_draw_buf_t * draw_buf, const lv_area_t * area)
     up_flush_dcache(start, end);
 
     /** Need to flush the pattern color table */
-    if (LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
+    if(LV_COLOR_FORMAT_IS_INDEXED(draw_buf->header.cf)) {
         draw_buf_pattern_region(draw_buf, &start, &end);
         up_flush_dcache(start, end);
     }
