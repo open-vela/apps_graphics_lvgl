@@ -89,6 +89,11 @@ static vg_lite_color_t lv_color32_to_vg(lv_color32_t color, lv_opa_t opa)
 
 void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
 {
+    void * buf = lv_draw_layer_alloc_buf(layer);
+    if(!buf) {
+        return ;
+    }
+    LV_PROFILER_DRAW_BEGIN;
     lv_draw_global_info_t * info = &_draw_info;
 
     lv_draw_vg_lite_unit_t * u = (lv_draw_vg_lite_unit_t *)info->unit_head;
@@ -118,6 +123,7 @@ void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path
 #endif
 
     task_draw_cb(u, path, dsc);
+    LV_PROFILER_DRAW_END;
 }
 #endif
 

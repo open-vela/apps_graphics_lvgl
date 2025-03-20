@@ -433,9 +433,11 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
 #if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
 void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
 {
-    lv_draw_buf_t * draw_buf = layer->draw_buf;
-    if(draw_buf == NULL)
+    void * buf = lv_draw_layer_alloc_buf(layer);
+    if(buf == NULL) {
         return;
+    }
+    lv_draw_buf_t * draw_buf = layer->draw_buf;
 
     lv_color_format_t cf = draw_buf->header.cf;
 
@@ -445,7 +447,7 @@ void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path
         return;
     }
 
-    void * buf = draw_buf->data;
+    buf = draw_buf->data;
     int32_t width = lv_area_get_width(&layer->buf_area) - 1;
     int32_t height = lv_area_get_height(&layer->buf_area) - 1;
     uint32_t stride = draw_buf->header.stride;
