@@ -351,10 +351,16 @@ static inline void lv_draw_buf_clear_flag(lv_draw_buf_t * draw_buf, lv_image_fla
  * And is interchangeable with `lv_image_dsc_t`.
  */
 
-static inline void lv_draw_buf_from_image(lv_draw_buf_t * buf, const lv_image_dsc_t * img)
+static inline lv_result_t lv_draw_buf_from_image(lv_draw_buf_t * buf, const lv_image_dsc_t * img)
 {
-    lv_memcpy(buf, img, sizeof(lv_image_dsc_t));
-    buf->unaligned_data = buf->data;
+    const lv_result_t res = lv_draw_buf_init(buf, img->header.w, img->header.h, img->header.cf, img->header.stride,
+                                             (void *)img->data, img->data_size);
+    if(res != LV_RESULT_OK) {
+        return res;
+    }
+
+    buf->header.flags = img->header.flags;
+    return LV_RESULT_OK;
 }
 
 static inline void lv_draw_buf_to_image(const lv_draw_buf_t * buf, lv_image_dsc_t * img)
