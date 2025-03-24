@@ -973,7 +973,7 @@ static lv_result_t decode_compressed(lv_image_decoder_t * decoder, lv_image_deco
 
     /*Depends on the cf, need to further decode image like an C-array image*/
     lv_image_dsc_t * image = (lv_image_dsc_t *)dsc->src;
-    if(image->data == NULL) {
+    if(dsc->src_type == LV_IMAGE_SRC_VARIABLE && image->data == NULL) {
         return LV_RESULT_INVALID;
     }
 
@@ -1085,14 +1085,22 @@ static lv_result_t decompress_image(lv_image_decoder_dsc_t * dsc, const lv_image
     LV_UNUSED(input_len);
     LV_UNUSED(out_len);
 
+    /**
+     * @todo
+     * FIXME, RLE compressed image needs extra memory because decompression operates on
+     * pixel unit not byte unit. Should optimize RLE decompress to not write to extra memory.
+     */
+    dsc->header.h += 1;
     lv_draw_buf_t * decompressed = lv_draw_buf_create_user(image_cache_draw_buf_handlers, dsc->header.w, dsc->header.h,
                                                            dsc->header.cf,
                                                            dsc->header.stride);
+
     if(decompressed == NULL) {
         LV_LOG_WARN("No memory for decompressed image, input: %" LV_PRIu32 ", output: %" LV_PRIu32, input_len, out_len);
         return LV_RESULT_INVALID;
     }
 
+    dsc->header.h -= 1; /*Change it back*/
     if(out_len > decompressed->data_size) {
         LV_LOG_ERROR("Decompressed size mismatch: %" LV_PRIu32 " > %" LV_PRIu32, out_len, decompressed->data_size);
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decompressed);
@@ -1148,6 +1156,7 @@ static lv_result_t decompress_image(lv_image_decoder_dsc_t * dsc, const lv_image
         return LV_RESULT_INVALID;
     }
 
+    lv_draw_buf_reshape(decompressed, dsc->header.cf, dsc->header.w, dsc->header.h, dsc->header.stride);
     decoder_data->decompressed = decompressed; /*Free on decoder close*/
     return LV_RESULT_OK;
 }
