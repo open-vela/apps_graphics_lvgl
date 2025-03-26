@@ -28,9 +28,6 @@
  *      DEFINES
  *********************/
 
-#define VALID_TOUCH_FLAGS(flags) \
-    (flags) && (!(flags & TOUCH_UP)) \
-
 /**********************
  *      TYPEDEFS
  **********************/
@@ -205,7 +202,7 @@ static void conv_touch(lv_indev_t * drv,
         touchscreen->active_points = 0;
 
         for(int i = 0; i < sample->npoints; i++) {
-            if(VALID_TOUCH_FLAGS(sample->point[i].flags)) {
+            if((sample->point[i].flags)) {
                 ++touchscreen->active_points;
             }
         }
