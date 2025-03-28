@@ -736,9 +736,6 @@
 /*RLE decompress library*/
 #define LV_USE_RLE 0
 
-/*Decode bin images to RAM*/
-#define LV_BIN_DECODER_RAM_LOAD 0
-
 /*ETC2 decoder library*/
 #define LV_USE_ETC2 0
 
