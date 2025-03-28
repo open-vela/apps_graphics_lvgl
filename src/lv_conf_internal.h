@@ -2418,15 +2418,6 @@
     #endif
 #endif
 
-/*Decode bin images to RAM*/
-#ifndef LV_BIN_DECODER_RAM_LOAD
-    #ifdef CONFIG_LV_BIN_DECODER_RAM_LOAD
-        #define LV_BIN_DECODER_RAM_LOAD CONFIG_LV_BIN_DECODER_RAM_LOAD
-    #else
-        #define LV_BIN_DECODER_RAM_LOAD 0
-    #endif
-#endif
-
 /*ETC2 decoder library*/
 #ifndef LV_USE_ETC2
     #ifdef CONFIG_LV_USE_ETC2
