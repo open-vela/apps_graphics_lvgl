@@ -47,7 +47,6 @@
 #include "../../stdlib/lv_sprintf.h"
 #include "../../stdlib/lv_string.h"
 #include "../lv_ll.h"
-#include "../lv_rb_private.h"
 #include "../lv_rb.h"
 #include "../lv_iter.h"
 
@@ -480,8 +479,8 @@ static lv_result_t cache_iter_next_cb(void * instance, void * context, void * el
 
     LV_ASSERT_NULL(ll_node);
 
-    if(*ll_node == NULL) *ll_node = lv_ll_get_head(&lru->ll);
-    else *ll_node = lv_ll_get_next(&lru->ll, *ll_node);
+    if(*ll_node == NULL) *ll_node = _lv_ll_get_head(&lru->ll);
+    else *ll_node = _lv_ll_get_next(&lru->ll, *ll_node);
 
     lv_rb_node_t ** node = *ll_node;
 
