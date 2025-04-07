@@ -18,6 +18,7 @@
  *      DEFINES
  *********************/
 #define image_cache_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->image_cache_draw_buf_handlers)
+#define font_draw_buf_handlers &(LV_GLOBAL_DEFAULT()->font_draw_buf_handlers)
 
 /**********************
  *      TYPEDEFS
@@ -51,6 +52,10 @@ void lv_nuttx_cache_init(void)
     handlers = image_cache_draw_buf_handlers;
     handlers->invalidate_cache_cb = invalidate_cache;
     handlers->flush_cache_cb = flush_cache;
+
+    handlers = font_draw_buf_handlers;
+    handlers->invalidate_cache_cb = invalidate_cache;
+    handlers->flush_cache_cb = flush_cache;
 }
 
 void lv_nuttx_cache_deinit(void)
@@ -60,6 +65,10 @@ void lv_nuttx_cache_deinit(void)
     handlers->flush_cache_cb = NULL;
 
     handlers = image_cache_draw_buf_handlers;
+    handlers->invalidate_cache_cb = NULL;
+    handlers->flush_cache_cb = NULL;
+
+    handlers = font_draw_buf_handlers;
     handlers->invalidate_cache_cb = NULL;
     handlers->flush_cache_cb = NULL;
 }
