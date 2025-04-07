@@ -372,6 +372,7 @@ static bool tiny_ttf_cache_create_cb(tiny_ttf_cache_data_t * node, void * user_d
     uint32_t stride = draw_buf->header.stride;
     stbtt_MakeGlyphBitmap(info, draw_buf->data, w, h, stride, dsc->scale, dsc->scale, g1);
 
+    lv_draw_buf_flush_cache(draw_buf, NULL);
     node->draw_buf = draw_buf;
     return true;
 }
