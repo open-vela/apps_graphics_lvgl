@@ -1010,6 +1010,12 @@
     /*NuttX VSYNC timer period in milliseconds*/
     #define LV_NUTTX_VSYNC_TIMER_PERIOD     33
 
+    /*NuttX trace file and its path*/
+    #define LV_USE_NUTTX_TRACE_FILE 0
+    #if LV_USE_NUTTX_TRACE_FILE
+        #define LV_NUTTX_TRACE_FILE_PATH "/data/lvgl-trace.log"
+    #endif
+
 #endif
 
 /*Driver for /dev/dri/card*/
