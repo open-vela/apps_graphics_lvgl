@@ -190,7 +190,7 @@ typedef struct _lv_global_t {
 #endif
 
 #if LV_USE_SYSMON && LV_USE_PERF_MONITOR
-    lv_sysmon_backend_data_t sysmon_perf;
+    lv_sysmon_perf_backend_data_t sysmon_perf;
 #endif
 
 #if LV_USE_SYSMON && LV_USE_MEM_MONITOR

@@ -105,7 +105,7 @@ static const uint32_t time_list[] = {
 };
 
 #if LV_USE_PERF_MONITOR || LV_DEMO_MUSIC_AUTO_PLAY
-    #define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf
+    #define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf.object
 #endif
 
 /**********************
@@ -230,8 +230,7 @@ static void auto_step_cb(lv_timer_t * t)
                 lv_obj_t * num = lv_label_create(bg);
                 lv_obj_set_style_text_font(num, font_large, 0);
 #if LV_USE_PERF_MONITOR
-                const lv_sysmon_perf_info_t * info = lv_subject_get_pointer(&sysmon_perf.subject);
-                lv_label_set_text_fmt(num, "%" LV_PRIu32, info->calculated.fps_avg_total);
+                lv_label_set_text_fmt(num, "%" LV_PRIu32, sysmon_perf.fps_avg_total);
 #endif
                 lv_obj_align(num, LV_ALIGN_TOP_MID, 0, 120);
 

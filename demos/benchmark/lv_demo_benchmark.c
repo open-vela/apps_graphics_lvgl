@@ -418,7 +418,7 @@ static scene_dsc_t scenes[] = {
     {.name = "", .create_cb = NULL}
 };
 
-#define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf
+#define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf.object.common
 
 static uint32_t scene_act;
 static uint32_t rnd_act;
