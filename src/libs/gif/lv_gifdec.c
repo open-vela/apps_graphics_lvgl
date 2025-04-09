@@ -89,6 +89,7 @@ void lv_gifdec_start(void * ctx, const void * src)
     dec_ctx->imgdsc.header.cf = LV_COLOR_FORMAT_ARGB8888;
     dec_ctx->imgdsc.header.h = dec_ctx->gif->height;
     dec_ctx->imgdsc.header.w = dec_ctx->gif->width;
+    dec_ctx->imgdsc.data_size = dec_ctx->gif->height * dec_ctx->gif->width * 4;
     dec_ctx->last_call = lv_tick_get();
 
     lv_image_set_src(dec_ctx->obj, &dec_ctx->imgdsc);
