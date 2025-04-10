@@ -108,11 +108,9 @@ void LV_ATTRIBUTE_FAST_MEM lv_draw_label(lv_layer_t * layer, const lv_draw_label
     }
 
     LV_PROFILER_DRAW_BEGIN;
-    lv_draw_task_t * t = lv_draw_add_task(layer, coords);
+    lv_draw_task_t * t = lv_draw_add_task(layer, coords, LV_DRAW_TASK_TYPE_LABEL);
 
-    t->draw_dsc = lv_malloc(sizeof(*dsc));
     lv_memcpy(t->draw_dsc, dsc, sizeof(*dsc));
-    t->type = LV_DRAW_TASK_TYPE_LABEL;
 
     /*The text is stored in a local variable so malloc memory for it*/
     if(dsc->text_local) {

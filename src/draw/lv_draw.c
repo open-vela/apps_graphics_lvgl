@@ -7,6 +7,7 @@
  *      INCLUDES
  *********************/
 #include "lv_draw.h"
+#include "../misc/lv_assert.h"
 #include "sw/lv_draw_sw.h"
 #include "../display/lv_display_private.h"
 #include "../core/lv_global.h"
@@ -26,6 +27,7 @@
  *  STATIC PROTOTYPES
  **********************/
 static bool is_independent(lv_layer_t * layer, lv_draw_task_t * t_check);
+static inline size_t get_draw_dsc_size(lv_draw_task_type_t type);
 
 static inline uint32_t get_layer_size_kb(uint32_t size_byte)
 {
@@ -81,11 +83,13 @@ void * lv_draw_create_unit(size_t size)
     return new_unit;
 }
 
-lv_draw_task_t * lv_draw_add_task(lv_layer_t * layer, const lv_area_t * coords)
+lv_draw_task_t * lv_draw_add_task(lv_layer_t * layer, const lv_area_t * coords, lv_draw_task_type_t type)
 {
     LV_PROFILER_DRAW_BEGIN;
-    lv_draw_task_t * new_task = lv_malloc_zeroed(sizeof(lv_draw_task_t));
-
+    size_t dsc_size = get_draw_dsc_size(type);
+    LV_ASSERT_FORMAT_MSG(dsc_size > 0, "Draw task size is 0 for type %d", type);
+    lv_draw_task_t * new_task = lv_malloc_zeroed(LV_ALIGN_UP(sizeof(lv_draw_task_t), 8) + dsc_size);
+    LV_ASSERT_MALLOC(new_task);
     new_task->area = *coords;
     new_task->_real_area = *coords;
     new_task->clip_area = layer->_clip_area;
@@ -93,6 +97,8 @@ lv_draw_task_t * lv_draw_add_task(lv_layer_t * layer, const lv_area_t * coords)
     new_task->matrix = layer->matrix;
 #endif
     new_task->state = LV_DRAW_TASK_STATE_QUEUED;
+    new_task->type = type;
+    new_task->draw_dsc = (uint8_t *)new_task + LV_ALIGN_UP(sizeof(lv_draw_task_t), 8);
 
     /*Find the tail*/
     if(layer->draw_task_head == NULL) {
@@ -243,7 +249,6 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
                 }
             }
 
-            lv_free(t->draw_dsc);
             lv_free(t);
             LV_PROFILER_DRAW_END_TAG("draw_task_cleanup");
             remove_task = true;
@@ -490,4 +495,48 @@ static bool is_independent(lv_layer_t * layer, lv_draw_task_t * t_check)
     LV_PROFILER_DRAW_END;
 
     return true;
+}
+
+/**
+ * Get the size of the draw descriptor of a draw task
+ * @param type      type of the draw task
+ * @return          size of the draw descriptor in bytes
+ */
+static inline size_t get_draw_dsc_size(lv_draw_task_type_t type)
+{
+    switch(type) {
+        case LV_DRAW_TASK_TYPE_FILL:
+            return sizeof(lv_draw_fill_dsc_t);
+        case LV_DRAW_TASK_TYPE_BORDER:
+            return sizeof(lv_draw_border_dsc_t);
+        case LV_DRAW_TASK_TYPE_BOX_SHADOW:
+            return sizeof(lv_draw_box_shadow_dsc_t);
+        case LV_DRAW_TASK_TYPE_LABEL:
+            return sizeof(lv_draw_label_dsc_t);
+        case LV_DRAW_TASK_TYPE_IMAGE:
+            return sizeof(lv_draw_image_dsc_t);
+        case LV_DRAW_TASK_TYPE_LAYER:
+            return sizeof(lv_draw_image_dsc_t);
+        case LV_DRAW_TASK_TYPE_LINE:
+            return sizeof(lv_draw_line_dsc_t);
+        case LV_DRAW_TASK_TYPE_ARC:
+            return sizeof(lv_draw_arc_dsc_t);
+        case LV_DRAW_TASK_TYPE_TRIANGLE:
+            return sizeof(lv_draw_triangle_dsc_t);
+        case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
+            return sizeof(lv_draw_mask_rect_dsc_t);
+
+        /* no struct match for LV_DRAW_TASK_TYPE_MASK_BITMAP, set it to zero now */
+        case LV_DRAW_TASK_TYPE_MASK_BITMAP:
+            return 0;
+#if LV_USE_VECTOR_GRAPHIC
+        case LV_DRAW_TASK_TYPE_VECTOR:
+            return sizeof(lv_draw_vector_task_dsc_t);
+#endif
+            /* Note that default is not added here because when adding new draw task type,
+             * if forget to add case, the compiler will automatically report a warning.
+             */
+    }
+
+    return 0;
 }
