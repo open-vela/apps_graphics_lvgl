@@ -151,7 +151,7 @@ class LVGL:
         if not ll:
             return
 
-        for disp in LVList(ll, "lv_disp_t"):
+        for disp in LVList(ll, "lv_display_t"):
             yield LVDisplay(disp)
 
     def screen_active(self):
