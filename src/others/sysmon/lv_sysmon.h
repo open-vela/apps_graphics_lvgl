@@ -14,7 +14,7 @@ extern "C" {
  *      INCLUDES
  *********************/
 
-#include "../../misc/lv_timer.h"
+#include "../../misc/lv_types.h"
 #include "../../others/observer/lv_observer.h"
 
 #if LV_USE_SYSMON
@@ -49,8 +49,8 @@ typedef struct {
     struct {
         lv_sysmon_backend_data_t common;
         lv_sysmon_perf_t * backend;
-        uint32_t cpu_avg_total;
-        uint32_t fps_avg_total;
+        lv_value_precise_t cpu_avg_total;
+        lv_value_precise_t fps_avg_total;
         uint32_t run_cnt;
     } object;
 
@@ -83,11 +83,11 @@ typedef struct {
 
     struct {
         uint32_t duration;
-        uint32_t fps;
+        lv_value_precise_t fps;
         uint32_t cpu;
-        uint32_t refr_avg_time;
-        uint32_t render_avg_time;       /**< Pure rendering time without flush time*/
-        uint32_t flush_avg_time;        /**< Pure flushing time without rendering time*/
+        lv_value_precise_t refr_avg_time;
+        lv_value_precise_t render_avg_time;       /**< Pure rendering time without flush time*/
+        lv_value_precise_t flush_avg_time;        /**< Pure flushing time without rendering time*/
     } calculated;
 
 } lv_sysmon_perf_info_t;

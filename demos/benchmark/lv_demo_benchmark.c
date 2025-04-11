@@ -520,8 +520,8 @@ static void sysmon_perf_observer_cb(lv_observer_t * observer, lv_subject_t * sub
 
     lv_label_set_text_fmt(label,
                           "%s"
-                          "%" LV_PRIu32" FPS, %" LV_PRIu32 "%% CPU\n"
-                          "refr. %" LV_PRIu32" ms = %" LV_PRIu32 "ms render + %" LV_PRIu32" ms flush",
+                          "%" LV_PRFv32(".2f")" FPS, %" LV_PRIu32 "%% CPU\n"
+                          "refr. %" LV_PRFv32(".2f")" ms = %" LV_PRFv32(".2f") "ms render + %" LV_PRFv32(".2f")" ms flush",
                           scene_name,
                           info->calculated.fps, info->calculated.cpu,
                           info->calculated.render_avg_time + info->calculated.flush_avg_time,
