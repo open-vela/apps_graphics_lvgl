@@ -3079,6 +3079,15 @@
     #endif
 #endif
 
+/*1: Enable remote control*/
+#ifndef LV_USE_REMOTE_CTRL
+    #ifdef CONFIG_LV_USE_REMOTE_CTRL
+        #define LV_USE_REMOTE_CTRL CONFIG_LV_USE_REMOTE_CTRL
+    #else
+        #define LV_USE_REMOTE_CTRL 0
+    #endif
+#endif
+
 /*==================
  * DEVICES
  *==================*/
@@ -3274,6 +3283,15 @@
             #define LV_USE_NUTTX_LIBUV CONFIG_LV_USE_NUTTX_LIBUV
         #else
             #define LV_USE_NUTTX_LIBUV    0
+        #endif
+    #endif
+    #if LV_USE_NUTTX_LIBUV && LV_USE_REMOTE_CTRL
+        #ifndef LV_NUTTX_CONTROL_PIPE_NAME
+            #ifdef CONFIG_LV_NUTTX_CONTROL_PIPE_NAME
+                #define LV_NUTTX_CONTROL_PIPE_NAME CONFIG_LV_NUTTX_CONTROL_PIPE_NAME
+            #else
+                #define LV_NUTTX_CONTROL_PIPE_NAME "/tmp/lvgl-control"
+            #endif
         #endif
     #endif
 

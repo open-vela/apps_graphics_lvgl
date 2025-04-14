@@ -96,6 +96,7 @@ extern "C" {
 #include "src/others/observer/lv_observer.h"
 #include "src/others/ime/lv_ime_pinyin.h"
 #include "src/others/file_explorer/lv_file_explorer.h"
+#include "src/others/remote_ctrl/lv_remote_ctrl.h"
 
 #include "src/draw/lv_draw.h"
 #include "src/draw/lv_draw_vector.h"
