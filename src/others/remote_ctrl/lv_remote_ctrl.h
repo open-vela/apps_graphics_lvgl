@@ -17,7 +17,9 @@ extern "C" {
 
 #if LV_USE_REMOTE_CTRL
 
-#include <stddef.h>
+#if !LV_USE_ARGPARSE
+#error "lv_remote_ctrl requires lv_conf.h: LV_USE_ARGPARSE 1"
+#endif
 
 #include "../../misc/lv_types.h"
 
@@ -25,61 +27,25 @@ extern "C" {
  *      DEFINES
  *********************/
 
-#define LV_REMOTE_CTRL_CMD_STR_LEN 128
+#define LV_REMOTE_CTRL_ARGC_MAX 16
+#define LV_REMOTE_CTRL_ARGV_BUF_LEN 512
 
 /**********************
  *      TYPEDEFS
  **********************/
 
-typedef struct {
-    enum {
-        LV_REMOTE_CTRL_CMD_NONE,
-        /* Sysmon commands begin */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE, /**< Create sysmon performance monitor */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_DESTROY, /**< Destroy sysmon performance monitor */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_START, /**< Start sysmon performance monitor */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_STOP, /**< Stop sysmon performance monitor */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_RESET, /**< Reset sysmon performance monitor */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_DATA, /**< Get sysmon performance monitor data */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_TRACE, /**< Write sysmon performance monitor data to file */
-        LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV, /**< Write sysmon performance monitor data to CSV file */
-        LV_REMOTE_CTRL_CMD_SYSMON_MIN = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE,
-        LV_REMOTE_CTRL_CMD_SYSMON_MAX = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV,
-        /* Sysmon commands end */
-        /* Snapshot commands begin */
-        LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE, /**< Take a snapshot */
-        LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE, /**< Save a snapshot */
-        LV_REMOTE_CTRL_CMD_SNAPSHOT_MIN = LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE,
-        LV_REMOTE_CTRL_CMD_SNAPSHOT_MAX = LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE,
-        /* Snapshot commands end */
-    } cmd;
-    union {
-        struct {
-            size_t max_events;
-            size_t max_scrolls;
-            char tag[LV_REMOTE_CTRL_CMD_STR_LEN];
-        } sysmon_perf_create;
-        struct {
-            bool immediate;
-        } sysmon_perf_start;
-        struct {
-            char file_name[LV_REMOTE_CTRL_CMD_STR_LEN];
-        } sysmon_perf_csv;
-        struct {
-            size_t count;
-            uint16_t offset;
-            bool by_x;
-        } snapshot_take;
-        struct {
-            char file_name[LV_REMOTE_CTRL_CMD_STR_LEN];
-        } snapshot_save;
-    } cfg;
-} lv_remote_ctrl_cmd_t;
+struct _lv_remote_ctrl_ctx_t;
+typedef struct _lv_remote_ctrl_ctx_t lv_remote_ctrl_ctx_t;
 
 typedef void (*lv_remote_ctrl_print_func_t)(const char * format, ...);
 
-struct _lv_remote_ctrl_ctx_t;
-typedef struct _lv_remote_ctrl_ctx_t lv_remote_ctrl_ctx_t;
+typedef struct {
+    int argc;                                       /**< Number of command arguments */
+    uint16_t argv_offsets[LV_REMOTE_CTRL_ARGC_MAX]; /**< Offsets from argv_buf start */
+    char argv_buf[LV_REMOTE_CTRL_ARGV_BUF_LEN];     /**< Buffer to store command arguments */
+} lv_remote_ctrl_args_t;
+
+typedef lv_remote_ctrl_args_t lv_remote_ctrl_cmd_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -98,6 +64,14 @@ lv_remote_ctrl_ctx_t * lv_remote_ctrl_create(void);
 void lv_remote_ctrl_destroy(lv_remote_ctrl_ctx_t * ctx);
 
 /**
+ * Execute a remote control command
+ * @param ctx Pointer to remote control context
+ * @param args Pointer to command arguments
+ * @return LV_RESULT_OK if the command is executed successfully, LV_RESULT_INVALID otherwise
+ */
+lv_result_t lv_remote_ctrl_execute(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_args_t * args);
+
+/**
  * Show help for remote control commands
  * @param cmd_name Name of the command to show help for
  * @param print_func Pointer to print function
@@ -105,21 +79,18 @@ void lv_remote_ctrl_destroy(lv_remote_ctrl_ctx_t * ctx);
 void lv_remote_ctrl_show_help(const char * cmd_name, lv_remote_ctrl_print_func_t print_func);
 
 /**
- * Parse a remote control command
- * @param cmd Pointer to remote control command to fill
- * @param info Pointer to command arguments
- * @param size Size of command arguments
- * @return LV_RESULT_OK if the command is parsed successfully, LV_RESULT_INVALID otherwise
+ * Initialize command arguments
+ * @param args Pointer to command arguments to initialize
+ * @param argc Number of command arguments
+ * @param argv Array of command arguments
+ * @return LV_RESULT_OK if the command arguments are initialized successfully, LV_RESULT_INVALID otherwise
  */
-lv_result_t lv_remote_ctrl_cmd_parse(lv_remote_ctrl_cmd_t * cmd, char * info[], int size);
+lv_result_t lv_remote_ctrl_args_init(lv_remote_ctrl_args_t * args, int argc, const char * argv[]);
 
-/**
- * Execute a remote control command
- * @param ctx Pointer to remote control context
- * @param cmd Pointer to remote control command to execute
- * @return LV_RESULT_OK if the command is executed successfully, LV_RESULT_INVALID otherwise
- */
-lv_result_t lv_remote_ctrl_cmd_execute(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd);
+static inline lv_result_t lv_remote_ctrl_cmd_parse(lv_remote_ctrl_args_t * args, char * argv[], int argc)
+{
+    return lv_remote_ctrl_args_init(args, argc, (const char **)argv);
+}
 
 /**********************
  *      MACROS

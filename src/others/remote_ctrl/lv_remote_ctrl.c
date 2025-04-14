@@ -10,49 +10,46 @@
 
 #if LV_USE_REMOTE_CTRL
 
-#include <stdlib.h>
-
-#include "../../misc/lv_circle_buf.h"
-#include "../../misc/lv_log.h"
-#include "../../misc/lv_utils.h"
+#include "lv_remote_ctrl_private.h"
 #include "../../stdlib/lv_string.h"
-#include "../sysmon/lv_sysmon.h"
+#include "../../misc/lv_assert.h"
 
 /*********************
  *      DEFINES
  *********************/
 
-#define SNAPSHOT_BORDER_SIZE 3
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
+/**********************
+*  STATIC VARIABLES
+**********************/
+
+#define LV_REMOTE_CTRL_CLASS_DEF(NAME) extern const lv_remote_ctrl_class_t lv_remote_ctrl_##NAME##_class;
+#include "lv_remote_class_defs.inc"
+#undef LV_REMOTE_CTRL_CLASS_DEF
+
+static const lv_remote_ctrl_class_t * class_table[] = {
+#define LV_REMOTE_CTRL_CLASS_DEF(NAME) &lv_remote_ctrl_##NAME##_class,
+#include "lv_remote_class_defs.inc"
+#undef LV_REMOTE_CTRL_CLASS_DEF
+};
 
 /**********************
  *      TYPEDEFS
  **********************/
 
+typedef struct {
+    void * ctx;
+    const lv_remote_ctrl_class_t * cls;
+} lv_remote_ctrl_sub_ctx_t;
+
 struct _lv_remote_ctrl_ctx_t {
-#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
-    struct {
-        lv_sysmon_perf_t * instance;
-        char tag[LV_REMOTE_CTRL_CMD_STR_LEN];
-    } perf;
-#endif
-    struct {
-        lv_draw_buf_t * buf;
-        size_t cnt;
-        size_t idx;
-        uint16_t offset;
-        bool by_x;
-        bool inited;
-    } snapshot;
+    lv_remote_ctrl_sub_ctx_t sub_ctx[ARRAY_SIZE(class_table)];
 };
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-
-static lv_result_t lv_remote_ctrl_fill_perf_cmd(lv_remote_ctrl_cmd_t * cmd, char * info[], int size);
-static lv_result_t lv_remote_ctrl_fill_snapshot_cmd(lv_remote_ctrl_cmd_t * cmd, char * info[], int size);
-static void lv_remote_ctrl_sysmon_handler(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd);
-static void lv_remote_ctrl_snapshot_handler(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd);
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -62,339 +59,135 @@ lv_remote_ctrl_ctx_t * lv_remote_ctrl_create(void)
 {
     lv_remote_ctrl_ctx_t * ctx = lv_malloc_zeroed(sizeof(lv_remote_ctrl_ctx_t));
     LV_ASSERT_MALLOC(ctx);
+
+    for(size_t i = 0; i < ARRAY_SIZE(ctx->sub_ctx); i++) {
+        lv_remote_ctrl_sub_ctx_t * sub_ctx = &ctx->sub_ctx[i];
+        sub_ctx->cls = class_table[i];
+
+        if(sub_ctx->cls->instance_size > 0) {
+            sub_ctx->ctx = lv_malloc_zeroed(sub_ctx->cls->instance_size);
+            LV_ASSERT_MALLOC(sub_ctx->ctx);
+        }
+
+        if(sub_ctx->cls->constructor_cb) {
+            sub_ctx->cls->constructor_cb(sub_ctx->ctx);
+        }
+    }
+
     return ctx;
 }
 
 void lv_remote_ctrl_destroy(lv_remote_ctrl_ctx_t * ctx)
 {
-#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
-    if(ctx->perf.instance) {
-        lv_sysmon_perf_destroy(ctx->perf.instance);
-        ctx->perf.instance = NULL;
+    LV_ASSERT_NULL(ctx);
+
+    for(size_t i = 0; i < ARRAY_SIZE(ctx->sub_ctx); i++) {
+        if(ctx->sub_ctx[i].cls->destructor_cb) {
+            ctx->sub_ctx[i].cls->destructor_cb(ctx->sub_ctx[i].ctx);
+        }
+
+        if(ctx->sub_ctx[i].ctx) {
+            lv_free(ctx->sub_ctx[i].ctx);
+            ctx->sub_ctx[i].ctx = NULL;
+        }
     }
-#endif
+
     lv_free(ctx);
+}
+
+lv_result_t lv_remote_ctrl_execute(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_args_t * args)
+{
+    LV_ASSERT_NULL(ctx);
+    LV_ASSERT_NULL(args);
+    LV_ASSERT(args->argc <= LV_REMOTE_CTRL_ARGC_MAX);
+
+    const char * cmd = &args->argv_buf[0];
+    if(!cmd[0]) {
+        LV_LOG_WARN("Command is empty");
+        return LV_RESULT_INVALID;
+    }
+
+    for(size_t i = 0; i < ARRAY_SIZE(ctx->sub_ctx); i++) {
+        lv_remote_ctrl_sub_ctx_t * sub_ctx = &ctx->sub_ctx[i];
+        if(lv_strcmp(cmd, sub_ctx->cls->name) != 0) {
+            continue;
+        }
+
+        const char * argv[LV_REMOTE_CTRL_ARGC_MAX];
+        for(int cnt = 0; cnt < args->argc; cnt++) {
+            /* Convert to argv format */
+            LV_ASSERT(args->argv_offsets[cnt] < sizeof(args->argv_buf));
+            argv[cnt] = &args->argv_buf[args->argv_offsets[cnt]];
+        }
+
+        if(!sub_ctx->cls->execute_cb) {
+            LV_LOG_ERROR("Command '%s' no execute callback", cmd);
+            return LV_RESULT_INVALID;
+        }
+
+        return sub_ctx->cls->execute_cb(sub_ctx->ctx, args->argc, argv);
+    }
+
+    LV_LOG_WARN("Command '%s' not found", cmd);
+    return LV_RESULT_INVALID;
 }
 
 void lv_remote_ctrl_show_help(const char * cmd_name, lv_remote_ctrl_print_func_t print_func)
 {
+    LV_ASSERT_NULL(print_func);
     print_func("Usage: %s <command> <subcommand> [parameters]\n", cmd_name);
-    print_func("Commands:\n");
-    print_func("  perf                                    Performance monitor\n");
-    print_func("  snapshot                                Take snapshots\n");
-    print_func("Subcommands for perf:\n");
-    print_func("  create <tag> <max_events> <max_scrolls> Create performance monitor\n");
-    print_func("  destroy                                 Destroy monitor\n");
-    print_func("  start [immediate]                       Start monitoring, immediate is 1 or 0, default 0 (delay start until the first render finished)\n");
-    print_func("  stop                                    Stop monitoring\n");
-    print_func("  reset                                   Reset monitoring data\n");
-    print_func("  data                                    Get monitoring data\n");
-    print_func("  trace                                   Generate trace data\n");
-    print_func("  csv <file_name>                         Generate CSV data to file (append)\n");
-    print_func("Subcommands for snapshot:\n");
-    print_func("  take <count> [by_x] [offset]            Take <count> snapshots into one image, whether the image is joint horizontally or vertically depends on the <by_x> parameter\n");
-    print_func("  save <file_name>                        Save snapshots to file\n");
+    print_func("Available commands:\n");
+
+    for(size_t i = 0; i < ARRAY_SIZE(class_table); i++) {
+        if(!class_table[i]->show_help_cb) {
+            continue;
+        }
+
+        class_table[i]->show_help_cb(print_func);
+    }
 }
 
-lv_result_t lv_remote_ctrl_cmd_parse(lv_remote_ctrl_cmd_t * cmd, char * info[], int size)
+lv_result_t lv_remote_ctrl_args_init(lv_remote_ctrl_args_t * args, int argc, const char * argv[])
 {
-    const char * command;
-    if(size < 1) {
+    LV_ASSERT_NULL(args);
+    LV_ASSERT_NULL(argv);
+    lv_memzero(args, sizeof(lv_remote_ctrl_args_t));
+
+    if(argc < 1 || argc > LV_REMOTE_CTRL_ARGC_MAX) {
+        LV_LOG_WARN("Invalid argument count: %d (must be between 1 and %d)",
+                    argc, LV_REMOTE_CTRL_ARGC_MAX);
         return LV_RESULT_INVALID;
     }
 
-    command = info[0];
+    size_t offset = 0;
+    const size_t max_size = sizeof(args->argv_buf);
 
-    if(lv_strcmp(command, "perf") == 0) {
-        return lv_remote_ctrl_fill_perf_cmd(cmd, info + 1, size - 1);
-    }
-    else if(lv_strcmp(command, "snapshot") == 0) {
-        return lv_remote_ctrl_fill_snapshot_cmd(cmd, info + 1, size - 1);
+    for(int i = 0; i < argc; i++) {
+        if(argv[i] == NULL) {
+            LV_LOG_WARN("Argument %d is NULL", i);
+            return LV_RESULT_INVALID;
+        }
+
+        const size_t remain = max_size - offset;
+        const size_t len = lv_strlen(argv[i]) + 1;
+
+        if(len >= remain) {
+            LV_LOG_WARN("Arguments(%s) too long: %zu (remain %zu bytes)", argv[i], len, remain);
+            return LV_RESULT_INVALID;
+        }
+
+        char * dst = &args->argv_buf[offset];
+        lv_strcpy(dst, argv[i]);
+        args->argv_offsets[i] = offset;
+        offset += len;
     }
 
-    return LV_RESULT_INVALID;
-}
-
-lv_result_t lv_remote_ctrl_cmd_execute(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd)
-{
-#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
-    if(cmd->cmd >= LV_REMOTE_CTRL_CMD_SYSMON_MIN && cmd->cmd <= LV_REMOTE_CTRL_CMD_SYSMON_MAX) {
-        lv_remote_ctrl_sysmon_handler(ctx, cmd);
-    }
-#endif /*LV_USE_PERF_MONITOR*/
-    if(cmd->cmd >= LV_REMOTE_CTRL_CMD_SNAPSHOT_MIN && cmd->cmd <= LV_REMOTE_CTRL_CMD_SNAPSHOT_MAX) {
-        lv_remote_ctrl_snapshot_handler(ctx, cmd);
-    }
+    args->argc = argc;
     return LV_RESULT_OK;
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-
-static lv_result_t lv_remote_ctrl_fill_perf_cmd(lv_remote_ctrl_cmd_t * cmd, char * info[], int size)
-{
-    const char * subcommand;
-    if(size < 1) {
-        return LV_RESULT_INVALID;
-    }
-
-    subcommand = info[0];
-    if(lv_strcmp(subcommand, "create") == 0) {
-        if(size < 4) {
-            return LV_RESULT_INVALID;
-        }
-
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE;
-        lv_strncpy(cmd->cfg.sysmon_perf_create.tag, info[1], sizeof(cmd->cfg.sysmon_perf_create.tag) - 1);
-        cmd->cfg.sysmon_perf_create.tag[sizeof(cmd->cfg.sysmon_perf_create.tag) - 1] = '\0';
-        cmd->cfg.sysmon_perf_create.max_events = atoi(info[2]);
-        cmd->cfg.sysmon_perf_create.max_scrolls = atoi(info[3]);
-    }
-    else if(lv_strcmp(subcommand, "destroy") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_DESTROY;
-    }
-    else if(lv_strcmp(subcommand, "start") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_START;
-        if(size > 1) {
-            cmd->cfg.sysmon_perf_start.immediate = atoi(info[1]) != 0;
-        }
-        else {
-            cmd->cfg.sysmon_perf_start.immediate = false;
-        }
-    }
-    else if(lv_strcmp(subcommand, "stop") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_STOP;
-    }
-    else if(lv_strcmp(subcommand, "reset") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_RESET;
-    }
-    else if(lv_strcmp(subcommand, "data") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_DATA;
-    }
-    else if(lv_strcmp(subcommand, "trace") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_TRACE;
-    }
-    else if(lv_strcmp(subcommand, "csv") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV;
-        lv_strncpy(cmd->cfg.sysmon_perf_csv.file_name, info[1], sizeof(cmd->cfg.sysmon_perf_csv.file_name) - 1);
-        cmd->cfg.sysmon_perf_csv.file_name[sizeof(cmd->cfg.sysmon_perf_csv.file_name) - 1] = '\0';
-    }
-    else {
-        return LV_RESULT_INVALID;
-    }
-
-    return LV_RESULT_OK;
-}
-
-static lv_result_t lv_remote_ctrl_fill_snapshot_cmd(lv_remote_ctrl_cmd_t * cmd, char * info[], int size)
-{
-    const char * subcommand;
-    if(size < 1) {
-        return LV_RESULT_INVALID;
-    }
-
-    subcommand = info[0];
-    if(lv_strcmp(subcommand, "take") == 0) {
-        if(size < 2) {
-            return LV_RESULT_INVALID;
-        }
-
-        lv_memset(&cmd->cfg.snapshot_take, 0, sizeof(cmd->cfg.snapshot_take));
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE;
-        cmd->cfg.snapshot_take.count = atoi(info[1]);
-        if(size > 2) {
-            cmd->cfg.snapshot_take.by_x = atoi(info[2]) != 0;
-        }
-        if(size > 3) {
-            cmd->cfg.snapshot_take.offset = atoi(info[3]);
-        }
-    }
-    else if(lv_strcmp(subcommand, "save") == 0) {
-        cmd->cmd = LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE;
-        lv_strncpy(cmd->cfg.snapshot_save.file_name, info[1], sizeof(cmd->cfg.snapshot_save.file_name) - 1);
-        cmd->cfg.snapshot_save.file_name[sizeof(cmd->cfg.snapshot_save.file_name) - 1] = '\0';
-    }
-    else {
-        return LV_RESULT_INVALID;
-    }
-
-    return LV_RESULT_OK;
-}
-
-#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
-static void lv_remote_ctrl_sysmon_perf_print_head(lv_fs_file_t * file)
-{
-    static const char * head =
-        "tag,id,start_ms,duration_ms,fps_redraw,fps_refr,refr_cnt,redraw_cnt,refr_avg_ms,render_avg_ms,flush_avg_ms\n";
-    if(file) {
-        uint32_t pos;
-        if(lv_fs_tell(file, &pos) != LV_FS_RES_OK) {
-            LV_LOG_ERROR("Failed to get file position");
-            return;
-        }
-        if(pos == 0) {
-            lv_fs_write(file, head, lv_strlen(head), NULL);
-        }
-    }
-    else {
-        LV_LOG("%s", head);
-    }
-}
-
-static void lv_remote_ctrl_sysmon_perf_print_line(lv_fs_file_t * file, const lv_sysmon_perf_info_t * info,
-                                                  const char * tag, const char * id)
-{
-    static const char * fmt = "%s,%s,%" LV_PRIu32 ",%" LV_PRIu32
-                              ",%" LV_PRFv32(".2f") ",%" LV_PRFv32(".2f") ",%" LV_PRIu32 ",%" LV_PRIu32
-                              ",%" LV_PRFv32(".2f") ",%" LV_PRFv32(".2f") ",%" LV_PRFv32(".2f")"\n";
-    char buf[LV_REMOTE_CTRL_CMD_STR_LEN];
-
-    lv_snprintf(buf, sizeof(buf), fmt, tag, id, info->measured.perf_start, info->calculated.duration,
-                info->calculated.fps, info->calculated.fps_refr, info->measured.refr_cnt, info->measured.render_cnt,
-                info->calculated.refr_avg_time, info->calculated.render_avg_time, info->calculated.flush_avg_time);
-    if(file) {
-        lv_fs_write(file, buf, lv_strlen(buf), NULL);
-    }
-    else {
-        LV_LOG("%s", buf);
-    }
-}
-
-static void lv_remote_ctrl_sysmon_handler(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd)
-{
-    const lv_sysmon_perf_data_t * data = NULL;
-    lv_fs_file_t * file = NULL;
-    lv_fs_file_t csv;
-
-    switch(cmd->cmd) {
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE:
-            if(ctx->perf.instance) {
-                LV_LOG_WARN("Sysmon perf has already been created, replace it");
-                lv_sysmon_perf_destroy(ctx->perf.instance);
-            }
-            lv_strncpy(ctx->perf.tag, cmd->cfg.sysmon_perf_create.tag, sizeof(ctx->perf.tag) - 1);
-            ctx->perf.instance = lv_sysmon_perf_create(ctx->perf.tag, cmd->cfg.sysmon_perf_create.max_events,
-                                                       cmd->cfg.sysmon_perf_create.max_scrolls);
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_DESTROY:
-            if(ctx->perf.instance) {
-                lv_sysmon_perf_destroy(ctx->perf.instance);
-                ctx->perf.instance = NULL;
-            }
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_START:
-            if(lv_sysmon_perf_start(ctx->perf.instance, cmd->cfg.sysmon_perf_start.immediate) == LV_RESULT_INVALID) {
-                LV_LOG_WARN("Sysmon perf is not created or already started");
-            }
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_STOP:
-            data = lv_sysmon_perf_stop(ctx->perf.instance);
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_RESET:
-            lv_sysmon_perf_reset_data(ctx->perf.instance, LV_SYSMON_PERF_TYPE_ALL);
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_DATA:
-            data = lv_sysmon_perf_get_data(ctx->perf.instance);
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_TRACE:
-            lv_sysmon_perf_generate_trace(ctx->perf.instance);
-            break;
-        case LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV:
-            data = lv_sysmon_perf_get_data(ctx->perf.instance);
-            if(lv_fs_open(&csv, cmd->cfg.sysmon_perf_csv.file_name, LV_FS_MODE_WR | LV_FS_MODE_RD) != LV_FS_RES_OK) {
-                LV_LOG_ERROR("Failed to open file %s", cmd->cfg.sysmon_perf_csv.file_name);
-                return;
-            }
-            if(lv_fs_seek(&csv, 0, LV_FS_SEEK_END) != LV_FS_RES_OK) {
-                LV_LOG_ERROR("Failed to seek to end of file %s", cmd->cfg.sysmon_perf_csv.file_name);
-                lv_fs_close(&csv);
-                return;
-            }
-            file = &csv;
-            break;
-        default:
-            break;
-    }
-
-    if(data) {
-        lv_remote_ctrl_sysmon_perf_print_head(file);
-        lv_remote_ctrl_sysmon_perf_print_line(file, &data->overall, ctx->perf.tag, "overall");
-        if(data->scrolls) {
-            uint32_t size = lv_circle_buf_size(data->scrolls);
-            lv_sysmon_perf_info_t info;
-            char id[16];
-            for(uint32_t i = 0; i < size; i++) {
-                lv_snprintf(id, sizeof(id), "scroll-%" LV_PRIu32, i);
-                lv_circle_buf_peek_at(data->scrolls, i, &info);
-                lv_remote_ctrl_sysmon_perf_print_line(file, &info, ctx->perf.tag, id);
-            }
-        }
-    }
-    if(file) {
-        lv_fs_close(file);
-    }
-}
-#endif /*LV_USE_PERF_MONITOR*/
-
-static void lv_snapshot_flush_event(lv_event_t * e)
-{
-    lv_remote_ctrl_ctx_t * ctx = lv_event_get_user_data(e);
-    if(ctx->snapshot.buf) {
-        lv_display_t * disp = lv_event_get_target(e);
-        if(!lv_display_flush_is_last(disp)) {
-            return;
-        }
-
-        lv_draw_buf_t * buf = lv_display_get_buf_active(NULL);
-        if(ctx->snapshot.by_x) {
-            uint16_t w = buf->header.w / ctx->snapshot.cnt;
-            uint16_t x = ctx->snapshot.idx * w;
-            lv_area_t dest_area = {x, 0, x + w - 1 - SNAPSHOT_BORDER_SIZE, buf->header.h - 1};
-            lv_area_t src_area = {ctx->snapshot.offset, 0, ctx->snapshot.offset + w - 1 - SNAPSHOT_BORDER_SIZE, buf->header.h - 1};
-            lv_draw_buf_copy(ctx->snapshot.buf, &dest_area, buf, &src_area);
-        }
-        else {
-            uint16_t h = buf->header.h / ctx->snapshot.cnt;
-            uint16_t y = ctx->snapshot.idx * h;
-            lv_area_t dest_area = {0, y, buf->header.w - 1, y + h - 1 - SNAPSHOT_BORDER_SIZE};
-            lv_area_t src_area = {0, ctx->snapshot.offset, buf->header.w - 1, ctx->snapshot.offset + h - 1 - SNAPSHOT_BORDER_SIZE};
-            lv_draw_buf_copy(ctx->snapshot.buf, &dest_area, buf, &src_area);
-        }
-
-        if(++ctx->snapshot.idx >= ctx->snapshot.cnt) {
-            ctx->snapshot.idx = 0;
-        }
-    }
-}
-
-static void lv_remote_ctrl_snapshot_handler(lv_remote_ctrl_ctx_t * ctx, const lv_remote_ctrl_cmd_t * cmd)
-{
-    lv_draw_buf_t * buf = NULL;
-
-    if(!ctx->snapshot.inited && lv_display_get_default()) {
-        lv_display_add_event_cb(lv_display_get_default(), lv_snapshot_flush_event, LV_EVENT_FLUSH_START, ctx);
-        ctx->snapshot.inited = true;
-    }
-
-    switch(cmd->cmd) {
-        case LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE:
-            buf = lv_display_get_buf_active(NULL);
-            ctx->snapshot.idx = 0;
-            ctx->snapshot.cnt = cmd->cfg.snapshot_take.count;
-            ctx->snapshot.offset = cmd->cfg.snapshot_take.offset;
-            ctx->snapshot.by_x = cmd->cfg.snapshot_take.by_x;
-            ctx->snapshot.buf = lv_draw_buf_create(buf->header.w, buf->header.h, buf->header.cf, buf->header.stride);
-            lv_draw_buf_clear(ctx->snapshot.buf, NULL);
-            break;
-        case LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE:
-            lv_draw_buf_save_to_file(ctx->snapshot.buf, cmd->cfg.snapshot_save.file_name);
-            lv_draw_buf_destroy(ctx->snapshot.buf);
-            ctx->snapshot.buf = NULL;
-            break;
-        default:
-            break;
-    }
-}
 
 #endif /*LV_USE_REMOTE_CTRL*/
