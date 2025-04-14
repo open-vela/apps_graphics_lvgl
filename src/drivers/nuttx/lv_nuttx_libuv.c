@@ -81,14 +81,14 @@ static void lv_nuttx_uv_input_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 static int lv_nuttx_uv_uinput_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
 static void lv_nuttx_uv_uinput_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 
+static int lv_nuttx_uv_control_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
+static void lv_nuttx_uv_control_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
+
 #ifdef CONFIG_LV_USE_NUTTX_MOUSE
     static void lv_nuttx_uv_mouse_poll_cb(uv_poll_t * handle, int status, int events);
     static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
     static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 #endif
-
-static int lv_nuttx_uv_control_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
-static void lv_nuttx_uv_control_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 
 /**********************
  *  STATIC VARIABLES
@@ -136,13 +136,6 @@ void * lv_nuttx_uv_init_partial(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_init_t part
         goto err_out;
     }
 
-#ifdef CONFIG_LV_USE_NUTTX_MOUSE
-    if((partial & LV_NUTTX_UV_INIT_MOUSE) && (ret = lv_nuttx_uv_mouse_init(uv_info, uv_ctx)) < 0) {
-        LV_LOG_ERROR("lv_nuttx_uv_mouse_init fail : %d", ret);
-        goto err_out;
-    }
-#endif
-
     if((partial & LV_NUTTX_UV_INIT_CONTROL) && (ret = lv_nuttx_uv_control_init(uv_info, uv_ctx)) < 0) {
         LV_LOG_ERROR("lv_nuttx_uv_control_init fail : %d", ret);
         goto err_out;
@@ -152,6 +145,13 @@ void * lv_nuttx_uv_init_partial(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_init_t part
         LV_LOG_ERROR("lv_nuttx_uv_vsync_init fail : %d", ret);
         goto err_out;
     }
+
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+    if((partial & LV_NUTTX_UV_INIT_MOUSE) && (ret = lv_nuttx_uv_mouse_init(uv_info, uv_ctx)) < 0) {
+        LV_LOG_ERROR("lv_nuttx_uv_mouse_init fail : %d", ret);
+        goto err_out;
+    }
+#endif
     uv_ctx->inited = partial;
 
     return uv_ctx;
@@ -178,17 +178,17 @@ void lv_nuttx_uv_deinit(void ** data)
     if(uv_ctx->inited & LV_NUTTX_UV_INIT_UINPUT) {
         lv_nuttx_uv_uinput_deinit(uv_ctx);
     }
-#ifdef CONFIG_LV_USE_NUTTX_MOUSE
-    if(uv_ctx->inited & LV_NUTTX_UV_INIT_MOUSE) {
-        lv_nuttx_uv_mouse_deinit(uv_ctx);
-    }
-#endif
     if(uv_ctx->inited & LV_NUTTX_UV_INIT_FB) {
         lv_nuttx_uv_fb_deinit(uv_ctx);
     }
     if(uv_ctx->inited & LV_NUTTX_UV_INIT_TIMER) {
         lv_nuttx_uv_timer_deinit(uv_ctx);
     }
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+    if(uv_ctx->inited & LV_NUTTX_UV_INIT_MOUSE) {
+        lv_nuttx_uv_mouse_deinit(uv_ctx);
+    }
+#endif
     *data = NULL;
     LV_LOG_USER("Done");
 }
@@ -641,10 +641,10 @@ static void lv_nuttx_uv_control_client_alloc_cb(uv_handle_t * client, size_t siz
 
 static void lv_nuttx_uv_control_client_read_cb(uv_stream_t * client, ssize_t nread, const uv_buf_t * buf)
 {
-    if(nread > 0) {
+    if(nread == sizeof(lv_remote_ctrl_args_t)) {
         lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data((uv_handle_t *)client);
-        lv_remote_ctrl_cmd_t * cmd = (lv_remote_ctrl_cmd_t *)buf->base;
-        lv_remote_ctrl_cmd_execute(uv_ctx->control_ctx.remote_ctrl_ctx, cmd);
+        const lv_remote_ctrl_args_t * args = (const lv_remote_ctrl_args_t *)buf->base;
+        lv_remote_ctrl_execute(uv_ctx->control_ctx.remote_ctrl_ctx, args);
         return;
     }
 
@@ -653,6 +653,9 @@ static void lv_nuttx_uv_control_client_read_cb(uv_stream_t * client, ssize_t nre
             LV_LOG_ERROR("uv_read failed: %s", uv_strerror(nread));
         }
         uv_close((uv_handle_t *)client, lv_nuttx_uv_control_client_deinit_cb);
+    }
+    else {
+        LV_LOG_WARN("unexpected data received: %zd", nread);
     }
 
     lv_free(buf->base);
