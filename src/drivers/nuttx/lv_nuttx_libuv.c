@@ -44,11 +44,21 @@ typedef struct {
 } lv_nuttx_uv_input_ctx_t;
 
 typedef struct {
+#if LV_USE_REMOTE_CTRL
+    bool client_connected;
+    uv_pipe_t server_pipe;
+    uv_pipe_t client_pipe;
+    lv_remote_ctrl_ctx_t * remote_ctrl_ctx;
+#endif
+} lv_nuttx_uv_control_ctx_t;
+
+typedef struct {
     uv_timer_t uv_timer;
     lv_nuttx_uv_fb_ctx_t fb_ctx;
     lv_nuttx_uv_input_ctx_t input_ctx;
     lv_nuttx_uv_input_ctx_t uinput_ctx;
     lv_nuttx_uv_input_ctx_t mouse_ctx;
+    lv_nuttx_uv_control_ctx_t control_ctx;
     lv_nuttx_uv_vsync_ctx_t * vsync_ctx;
     int32_t ref_count;
 } lv_nuttx_uv_ctx_t;
@@ -84,6 +94,9 @@ static void lv_nuttx_uv_mouse_poll_cb(uv_poll_t * handle, int status, int events
 static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
 static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 #endif
+
+static int lv_nuttx_uv_control_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
+static void lv_nuttx_uv_control_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 
 /**********************
  *  STATIC VARIABLES
@@ -133,6 +146,11 @@ void * lv_nuttx_uv_init(lv_nuttx_uv_t * uv_info)
     }
 #endif
 
+    if((ret = lv_nuttx_uv_control_init(uv_info, uv_ctx)) < 0) {
+        LV_LOG_ERROR("lv_nuttx_uv_control_init fail : %d", ret);
+        goto err_out;
+    }
+
     lv_nuttx_uv_vsync_t vsync_info;
     vsync_info.loop = uv_info->loop;
     vsync_info.disp = uv_info->disp;
@@ -156,6 +174,7 @@ void lv_nuttx_uv_deinit(void ** data)
     if(uv_ctx == NULL) return;
     lv_nuttx_uv_vsync_deinit((void **)&uv_ctx->vsync_ctx);
     --uv_ctx->ref_count;
+    lv_nuttx_uv_control_deinit(uv_ctx);
     lv_nuttx_uv_input_deinit(uv_ctx);
     lv_nuttx_uv_uinput_deinit(uv_ctx);
 #ifdef CONFIG_LV_USE_NUTTX_MOUSE
@@ -603,6 +622,115 @@ static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
 }
 
 #endif /*LV_USE_NUTTX_MOUSE*/
+
+#if LV_USE_REMOTE_CTRL
+static void lv_nuttx_uv_control_client_deinit_cb(uv_handle_t * client)
+{
+    lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data(client);
+    uv_ctx->control_ctx.client_connected = false;
+}
+
+static void lv_nuttx_uv_control_client_alloc_cb(uv_handle_t * client, size_t size, uv_buf_t * buf)
+{
+    buf->base = lv_malloc(size);
+    buf->len = size;
+}
+
+static void lv_nuttx_uv_control_client_read_cb(uv_stream_t * client, ssize_t nread, const uv_buf_t * buf)
+{
+    if(nread > 0) {
+        lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data((uv_handle_t *)client);
+        lv_remote_ctrl_cmd_t * cmd = (lv_remote_ctrl_cmd_t *)buf->base;
+        lv_remote_ctrl_cmd_execute(uv_ctx->control_ctx.remote_ctrl_ctx, cmd);
+        return;
+    }
+
+    if(nread < 0) {
+        if(nread != UV_EOF) {
+            LV_LOG_ERROR("uv_read failed: %s", uv_strerror(nread));
+        }
+        uv_close((uv_handle_t *)client, lv_nuttx_uv_control_client_deinit_cb);
+    }
+
+    lv_free(buf->base);
+}
+
+static void lv_nuttx_uv_control_server_accept_cb(uv_stream_t * server, int status)
+{
+    lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data((uv_handle_t *)server);
+    uv_pipe_t * client = &uv_ctx->control_ctx.client_pipe;
+    int ret;
+
+    if(status < 0) {
+        LV_LOG_ERROR("uv_accept failed: %s", uv_strerror(status));
+        return;
+    }
+
+    if(uv_ctx->control_ctx.client_connected) {
+        LV_LOG_ERROR("One client has already connected");
+        return;
+    }
+
+    if((ret = uv_pipe_init(server->loop, client, 0)) < 0) {
+        LV_LOG_ERROR("uv_pipe_init failed: %s", uv_strerror(ret));
+        return;
+    }
+
+    if((ret = uv_accept(server, (uv_stream_t *)client)) < 0) {
+        LV_LOG_ERROR("uv_accept failed: %s", uv_strerror(ret));
+        return;
+    }
+
+    uv_handle_set_data((uv_handle_t *)client, uv_ctx);
+    uv_ctx->control_ctx.client_connected = true;
+
+    uv_read_start((uv_stream_t *)client, lv_nuttx_uv_control_client_alloc_cb, lv_nuttx_uv_control_client_read_cb);
+}
+#endif
+
+static int lv_nuttx_uv_control_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx)
+{
+#if LV_USE_REMOTE_CTRL
+    uv_loop_t * loop = uv_info->loop;
+    uv_pipe_t * server = &uv_ctx->control_ctx.server_pipe;
+    int ret;
+
+    uv_ctx->control_ctx.remote_ctrl_ctx = lv_remote_ctrl_create();
+
+    if((ret = uv_pipe_init(loop, server, 0)) < 0) {
+        LV_LOG_ERROR("uv_pipe_init failed: %s", uv_strerror(ret));
+        return 0;
+    }
+
+    uv_handle_set_data((uv_handle_t *)server, uv_ctx);
+    uv_ctx->ref_count++;
+
+    if((ret = uv_pipe_bind(server, LV_NUTTX_CONTROL_PIPE_NAME)) < 0) {
+        LV_LOG_ERROR("uv_pipe_bind failed: %s", uv_strerror(ret));
+        return 0;
+    }
+
+    if((ret = uv_listen((uv_stream_t *)server, 8, lv_nuttx_uv_control_server_accept_cb)) < 0) {
+        LV_LOG_ERROR("uv_listen failed: %s", uv_strerror(ret));
+        return 0;
+    }
+
+    LV_LOG_USER("lvgl control server start OK");
+#endif
+
+    return 0;
+}
+
+static void lv_nuttx_uv_control_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
+{
+#if LV_USE_REMOTE_CTRL
+    lv_remote_ctrl_destroy(uv_ctx->control_ctx.remote_ctrl_ctx);
+
+    uv_close((uv_handle_t *)&uv_ctx->control_ctx.server_pipe, lv_nuttx_uv_deinit_cb);
+
+    LV_LOG_USER("Done");
+#endif
+}
 
 #endif /*LV_USE_NUTTX_LIBUV*/
 

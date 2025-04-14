@@ -1521,6 +1521,10 @@ menu "LVGL configuration"
 			default y
 			help
 				This can save some memory, but not much. After the quick access bar is created, it can be hidden by clicking the button at the top left corner of the browsing area, which is very useful for small screen devices.
+
+		config LV_USE_REMOTE_CTRL
+			bool "Enable remote control"
+			default n
 	endmenu
 
 	menu "Devices"
@@ -1711,6 +1715,12 @@ menu "LVGL configuration"
 			bool "Use uv loop to replace default timer loop and other fb/indev timers"
 			depends on LV_USE_NUTTX && LIBUV
 			default n
+
+		config LV_NUTTX_CONTROL_PIPE_NAME
+			depends on LV_USE_NUTTX_LIBUV
+			depends on LV_USE_REMOTE_CTRL
+			string "NuttX control pipe name"
+			default "/tmp/lvgl-control"
 
 		config LV_USE_NUTTX_CUSTOM_INIT
 			bool "Use Custom Nuttx init API to open window and handle touchscreen"
