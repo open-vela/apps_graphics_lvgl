@@ -416,7 +416,7 @@ menu "LVGL configuration"
 		config LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
 			bool "Use vector graphic direct rendering"
 			default n
-			depends on LV_OS_NONE
+			depends on LV_OS_NONE && !LV_USE_VG_LITE_THORVG
 	endmenu
 
 	menu "Feature Configuration"
