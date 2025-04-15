@@ -545,6 +545,11 @@ static void refr_sync_areas(void)
         if(!_lv_area_intersect(sync_area, sync_area, &disp_area)) {
             continue;
         }
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+        if(lv_display_get_matrix_rotation(disp_refr)) {
+            lv_display_rotate_area(disp_refr, sync_area);
+        }
+#endif
         lv_draw_buf_copy(off_screen, sync_area, on_screen, sync_area);
     }
 
@@ -617,23 +622,19 @@ static void refr_area(const lv_area_t * area_p)
     lv_layer_t * layer = disp_refr->layer_head;
     layer->draw_buf = disp_refr->buf_act;
 
-#if LV_DRAW_TRANSFORM_USE_MATRIX
-    lv_matrix_identity(&layer->matrix);
-#endif
-
     /*With full refresh just redraw directly into the buffer*/
     /*In direct mode draw directly on the absolute coordinates of the buffer*/
     if(disp_refr->render_mode != LV_DISPLAY_RENDER_MODE_PARTIAL) {
         layer->buf_area.x1 = 0;
         layer->buf_area.y1 = 0;
-        layer->buf_area.x2 = lv_display_get_horizontal_resolution(disp_refr) - 1;
-        layer->buf_area.y2 = lv_display_get_vertical_resolution(disp_refr) - 1;
+        layer->buf_area.x2 = lv_display_get_original_horizontal_resolution(disp_refr) - 1;
+        layer->buf_area.y2 = lv_display_get_original_vertical_resolution(disp_refr) - 1;
         layer_reshape_draw_buf(layer, layer->draw_buf->header.stride);
-        lv_area_t disp_area;
-        lv_area_set(&disp_area, 0, 0, lv_display_get_horizontal_resolution(disp_refr) - 1,
-                    lv_display_get_vertical_resolution(disp_refr) - 1);
 
         if(disp_refr->render_mode == LV_DISPLAY_RENDER_MODE_FULL) {
+            lv_area_t disp_area;
+            lv_area_set(&disp_area, 0, 0, lv_display_get_original_horizontal_resolution(disp_refr) - 1,
+                        lv_display_get_original_vertical_resolution(disp_refr) - 1);
             disp_refr->last_part = 1;
             layer->_clip_area = disp_area;
             layer->phy_clip_area = disp_area;
@@ -702,6 +703,37 @@ static void refr_area_part(lv_layer_t * layer)
     disp_refr->refreshed_area = layer->_clip_area;
 
     lv_layer_reset(layer);
+
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    if(lv_display_get_matrix_rotation(disp_refr)) {
+        const lv_display_rotation_t rotation = lv_display_get_rotation(disp_refr);
+        if(rotation != LV_DISPLAY_ROTATION_0) {
+            lv_display_rotate_area(disp_refr, &layer->phy_clip_area);
+
+            /* The screen rotation direction defined by LVGL is opposite to the drawing angle */
+            switch(rotation) {
+                case LV_DISPLAY_ROTATION_90:
+                    lv_matrix_rotate(&layer->matrix, 270);
+                    lv_matrix_translate(&layer->matrix, -disp_refr->ver_res, 0);
+                    break;
+
+                case LV_DISPLAY_ROTATION_180:
+                    lv_matrix_rotate(&layer->matrix, 180);
+                    lv_matrix_translate(&layer->matrix, -disp_refr->hor_res, -disp_refr->ver_res);
+                    break;
+
+                case LV_DISPLAY_ROTATION_270:
+                    lv_matrix_rotate(&layer->matrix, 90);
+                    lv_matrix_translate(&layer->matrix, 0, -disp_refr->hor_res);
+                    break;
+
+                default:
+                    LV_LOG_WARN("Invalid rotation: %d", rotation);
+                    break;
+            }
+        }
+    }
+#endif /* LV_DRAW_TRANSFORM_USE_MATRIX */
 
     /* In single buffered mode wait here until the buffer is freed.
      * Else we would draw into the buffer while it's still being transferred to the display*/

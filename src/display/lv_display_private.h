@@ -137,6 +137,8 @@ struct _lv_display_t {
     uint32_t sw_rotate : 1; /**< 1: use software rotation (slower)*/
     uint32_t rotation  : 2; /**< Element of  @lv_display_rotation_t*/
 
+    uint32_t matrix_rotation : 1; /**< 1: Use matrix for display rotation*/
+
     /**< The theme assigned to the screen*/
     lv_theme_t * theme;
 

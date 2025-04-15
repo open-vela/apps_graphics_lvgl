@@ -298,6 +298,26 @@ int32_t lv_display_get_vertical_resolution(const lv_display_t * disp)
     }
 }
 
+int32_t lv_display_get_original_horizontal_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        return 0;
+    }
+
+    return disp->hor_res;
+}
+
+int32_t lv_display_get_original_vertical_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) {
+        return 0;
+    }
+
+    return disp->ver_res;
+}
+
 int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
 {
     if(disp == NULL) disp = lv_display_get_default();
@@ -402,8 +422,8 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
 {
     LV_ASSERT_MSG(buf1 != NULL, "Null buffer");
     lv_color_format_t cf = lv_display_get_color_format(disp);
-    uint32_t w = lv_display_get_horizontal_resolution(disp);
-    uint32_t h = lv_display_get_vertical_resolution(disp);
+    uint32_t w = lv_display_get_original_horizontal_resolution(disp);
+    uint32_t h = lv_display_get_original_vertical_resolution(disp);
 
     LV_ASSERT_MSG(w != 0 && h != 0, "display resolution is 0");
 
@@ -799,6 +819,32 @@ lv_display_rotation_t lv_display_get_rotation(lv_display_t * disp)
     return disp->rotation;
 }
 
+void lv_display_set_matrix_rotation(lv_display_t * disp, bool enable)
+{
+#if LV_DRAW_TRANSFORM_USE_MATRIX
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return;
+
+    if(!(disp->render_mode == LV_DISPLAY_RENDER_MODE_DIRECT || disp->render_mode == LV_DISPLAY_RENDER_MODE_FULL)) {
+        LV_LOG_WARN("Unsupported rendering mode: %d", disp->render_mode);
+        return;
+    }
+
+    disp->matrix_rotation = enable;
+#else
+    (void)disp;
+    (void)enable;
+    LV_LOG_WARN("LV_DRAW_TRANSFORM_USE_MATRIX was not enabled");
+#endif
+}
+
+bool lv_display_get_matrix_rotation(lv_display_t * disp)
+{
+    if(disp == NULL) disp = lv_display_get_default();
+    if(disp == NULL) return false;
+    return disp->matrix_rotation;
+}
+
 void lv_display_set_theme(lv_display_t * disp, lv_theme_t * th)
 {
     if(!disp) disp = lv_display_get_default();
@@ -998,6 +1044,39 @@ bool lv_display_get_dirty_area(lv_display_t * disp, lv_area_t * dirty_area)
         }
     }
     return area_joined;
+}
+
+void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area)
+{
+    lv_display_rotation_t rotation = lv_display_get_rotation(disp);
+
+    if(rotation == LV_DISPLAY_ROTATION_0) return;
+
+    int32_t w = lv_area_get_width(area);
+    int32_t h = lv_area_get_height(area);
+
+    switch(rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            area->y2 = disp->ver_res - area->x1 - 1;
+            area->x1 = area->y1;
+            area->x2 = area->x1 + h - 1;
+            area->y1 = area->y2 - w + 1;
+            break;
+        case LV_DISPLAY_ROTATION_180:
+            area->y2 = disp->ver_res - area->y1 - 1;
+            area->y1 = area->y2 - h + 1;
+            area->x2 = disp->hor_res - area->x1 - 1;
+            area->x1 = area->x2 - w + 1;
+            break;
+        case LV_DISPLAY_ROTATION_270:
+            area->x1 = disp->hor_res - area->y2 - 1;
+            area->y2 = area->x2;
+            area->x2 = area->x1 + h - 1;
+            area->y1 = area->y2 - w + 1;
+            break;
+        default:
+            break;
+    }
 }
 
 /**********************
