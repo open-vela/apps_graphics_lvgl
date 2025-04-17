@@ -23,7 +23,7 @@
 
 #define SYSMON_REFR_PERIOD_DEF 300 /* ms */
 
-#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
+#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR && !LV_PERF_MONITOR_SERVICE_ONLY
     #define sysmon_perf LV_GLOBAL_DEFAULT()->sysmon_perf.object
     #define _USE_PERF_MONITOR   1
 #else
@@ -69,8 +69,10 @@
 
 void _lv_sysmon_builtin_init(void)
 {
-#if _USE_PERF_MONITOR
+#if defined(LV_USE_PERF_MONITOR) && LV_USE_PERF_MONITOR
     _lv_sysmon_perf_builtin_init();
+#endif
+#if _USE_PERF_MONITOR
     sysmon_perf.backend = lv_sysmon_perf_create("lv_sysmon_builtin", 0, 0);
     LV_ASSERT_NULL(sysmon_perf.backend);
     lv_subject_init_pointer(&sysmon_perf.common.subject, NULL);
