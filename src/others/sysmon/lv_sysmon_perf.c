@@ -149,9 +149,11 @@ const lv_sysmon_perf_data_t * lv_sysmon_perf_get_data(lv_sysmon_perf_t * perf)
         return NULL;
     }
 
-    lv_sysmon_perf_calculate_info(&perf->data.overall, perf->start_on_render);
-    if(perf->current_scroll) {
-        lv_sysmon_perf_calculate_info(perf->current_scroll, perf->start_on_render);
+    if(perf->running) {
+        lv_sysmon_perf_calculate_info(&perf->data.overall, perf->start_on_render);
+        if(perf->current_scroll) {
+            lv_sysmon_perf_calculate_info(perf->current_scroll, perf->start_on_render);
+        }
     }
 
     return &perf->data;
@@ -163,8 +165,9 @@ const lv_sysmon_perf_data_t * lv_sysmon_perf_stop(lv_sysmon_perf_t * perf)
         return NULL;
     }
 
+    const lv_sysmon_perf_data_t * data = lv_sysmon_perf_get_data(perf);
     perf->running = false;
-    return lv_sysmon_perf_get_data(perf);
+    return data;
 }
 
 void lv_sysmon_perf_generate_trace(lv_sysmon_perf_t * perf)

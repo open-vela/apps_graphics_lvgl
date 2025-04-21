@@ -25,6 +25,8 @@ extern "C" {
  *      DEFINES
  *********************/
 
+#define LV_REMOTE_CTRL_CMD_STR_LEN 128
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -40,18 +42,23 @@ typedef struct {
         LV_REMOTE_CTRL_CMD_SYSMON_PERF_RESET, /**< Reset sysmon performance monitor */
         LV_REMOTE_CTRL_CMD_SYSMON_PERF_DATA, /**< Get sysmon performance monitor data */
         LV_REMOTE_CTRL_CMD_SYSMON_PERF_TRACE, /**< Write sysmon performance monitor data to file */
+        LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV, /**< Write sysmon performance monitor data to CSV file */
         LV_REMOTE_CTRL_CMD_SYSMON_MIN = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE,
-        LV_REMOTE_CTRL_CMD_SYSMON_MAX = LV_REMOTE_CTRL_CMD_SYSMON_PERF_TRACE,
+        LV_REMOTE_CTRL_CMD_SYSMON_MAX = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV,
         /* Sysmon commands end */
     } cmd;
     union {
         struct {
             size_t max_events;
             size_t max_scrolls;
+            char tag[LV_REMOTE_CTRL_CMD_STR_LEN];
         } sysmon_perf_create;
         struct {
             bool immediate;
         } sysmon_perf_start;
+        struct {
+            char file_name[LV_REMOTE_CTRL_CMD_STR_LEN];
+        } sysmon_perf_csv;
     } cfg;
 } lv_remote_ctrl_cmd_t;
 
