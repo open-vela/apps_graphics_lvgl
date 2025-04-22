@@ -56,9 +56,10 @@ typedef struct {
 
     struct {
         lv_ll_t instances_ll;
-        uint32_t last_refr_start;
-        uint32_t last_render_start;
+        uint32_t refr_start;
+        uint32_t render_start;
         bool scrolling;
+        bool rendering;
         bool inited;
     } backend;
 } lv_sysmon_perf_backend_data_t;
@@ -66,11 +67,10 @@ typedef struct {
 typedef struct {
     struct {
         bool inited;
-        uint32_t refr_start;
+        uint32_t prev_refr_start;  /* Used for calculating refr_interval_sum */
         uint32_t refr_interval_sum;
         uint32_t refr_elaps_sum;
         uint32_t refr_cnt;
-        uint32_t render_start;
         uint32_t render_elaps_sum; /*Contains the flush time too*/
         uint32_t render_cnt;
         uint32_t flush_in_render_start;
@@ -78,7 +78,6 @@ typedef struct {
         uint32_t flush_not_in_render_start;
         uint32_t flush_not_in_render_elaps_sum;
         uint32_t perf_start;
-        uint32_t render_in_progress : 1;
     } measured;
 
     struct {
