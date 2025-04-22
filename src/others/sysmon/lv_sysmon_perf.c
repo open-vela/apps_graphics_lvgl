@@ -234,16 +234,14 @@ static void lv_sysmon_perf_update_global(lv_event_code_t code)
 {
     switch(code) {
         case LV_EVENT_REFR_START:
-            perf_global.last_refr_start = lv_tick_get();
-            break;
-        case LV_EVENT_REFR_READY:
-            perf_global.last_refr_start = 0;
+            perf_global.refr_start = lv_tick_get();
             break;
         case LV_EVENT_RENDER_START:
-            perf_global.last_render_start = lv_tick_get();
+            perf_global.rendering = true;
+            perf_global.render_start = lv_tick_get();
             break;
         case LV_EVENT_RENDER_READY:
-            perf_global.last_render_start = 0;
+            perf_global.rendering = false;
             break;
         case LV_EVENT_SCROLL_BEGIN:
             perf_global.scrolling = true;
@@ -269,32 +267,27 @@ static void lv_sysmon_perf_init_info(lv_sysmon_perf_info_t * info)
 {
     lv_memzero(info, sizeof(lv_sysmon_perf_info_t));
     info->measured.perf_start = lv_tick_get();
-    info->measured.refr_start = perf_global.last_refr_start;
+    info->measured.prev_refr_start = perf_global.refr_start;
 }
 
 static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_code_t code)
 {
     switch(code) {
         case LV_EVENT_REFR_START:
-            info->measured.refr_interval_sum += lv_tick_elaps(info->measured.refr_start);
-            info->measured.refr_start = perf_global.last_refr_start;
+            info->measured.refr_interval_sum += lv_tick_elaps(info->measured.prev_refr_start);
+            info->measured.prev_refr_start = perf_global.refr_start;
             break;
         case LV_EVENT_REFR_READY:
-            info->measured.refr_elaps_sum += lv_tick_elaps(info->measured.refr_start);
+            info->measured.refr_elaps_sum += lv_tick_elaps(perf_global.refr_start);
             info->measured.refr_cnt++;
             break;
-        case LV_EVENT_RENDER_START:
-            info->measured.render_in_progress = 1;
-            info->measured.render_start = perf_global.last_render_start;
-            break;
         case LV_EVENT_RENDER_READY:
-            info->measured.render_in_progress = 0;
-            info->measured.render_elaps_sum += lv_tick_elaps(info->measured.render_start);
+            info->measured.render_elaps_sum += lv_tick_elaps(perf_global.render_start);
             info->measured.render_cnt++;
             break;
         case LV_EVENT_FLUSH_START:
         case LV_EVENT_FLUSH_WAIT_START:
-            if(info->measured.render_in_progress) {
+            if(perf_global.rendering) {
                 info->measured.flush_in_render_start = lv_tick_get();
             }
             else {
@@ -303,7 +296,7 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
             break;
         case LV_EVENT_FLUSH_FINISH:
         case LV_EVENT_FLUSH_WAIT_FINISH:
-            if(info->measured.render_in_progress) {
+            if(perf_global.rendering) {
                 info->measured.flush_in_render_elaps_sum += lv_tick_elaps(info->measured.flush_in_render_start);
             }
             else {
@@ -323,8 +316,8 @@ static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info)
     uint32_t disp_refr_period = disp_refr_timer ? disp_refr_timer->period : LV_DEF_REFR_PERIOD;
 
     info->calculated.duration = lv_tick_elaps(info->measured.perf_start);
-    info->calculated.fps = info->measured.refr_interval_sum ? ((lv_value_precise_t)1000 * info->measured.refr_cnt /
-                                                               info->calculated.duration) : 0;
+    info->calculated.fps = info->calculated.duration ? ((lv_value_precise_t)1000 * info->measured.refr_cnt /
+                                                        info->calculated.duration) : 0;
     info->calculated.fps = LV_MIN(info->calculated.fps,
                                   (lv_value_precise_t)1000 / disp_refr_period);   /*Limit due to possible off-by-one error*/
 
