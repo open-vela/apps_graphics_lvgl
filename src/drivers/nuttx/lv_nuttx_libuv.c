@@ -45,9 +45,7 @@ typedef struct {
 
 typedef struct {
 #if LV_USE_REMOTE_CTRL
-    bool client_connected;
     uv_pipe_t server_pipe;
-    uv_pipe_t client_pipe;
     lv_remote_ctrl_ctx_t * remote_ctrl_ctx;
 #endif
 } lv_nuttx_uv_control_ctx_t;
@@ -626,8 +624,7 @@ static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
 #if LV_USE_REMOTE_CTRL
 static void lv_nuttx_uv_control_client_deinit_cb(uv_handle_t * client)
 {
-    lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data(client);
-    uv_ctx->control_ctx.client_connected = false;
+    lv_free(client);
 }
 
 static void lv_nuttx_uv_control_client_alloc_cb(uv_handle_t * client, size_t size, uv_buf_t * buf)
@@ -658,7 +655,6 @@ static void lv_nuttx_uv_control_client_read_cb(uv_stream_t * client, ssize_t nre
 static void lv_nuttx_uv_control_server_accept_cb(uv_stream_t * server, int status)
 {
     lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data((uv_handle_t *)server);
-    uv_pipe_t * client = &uv_ctx->control_ctx.client_pipe;
     int ret;
 
     if(status < 0) {
@@ -666,10 +662,8 @@ static void lv_nuttx_uv_control_server_accept_cb(uv_stream_t * server, int statu
         return;
     }
 
-    if(uv_ctx->control_ctx.client_connected) {
-        LV_LOG_ERROR("One client has already connected");
-        return;
-    }
+    uv_pipe_t * client = lv_malloc(sizeof(uv_pipe_t));
+    LV_ASSERT_MALLOC(client);
 
     if((ret = uv_pipe_init(server->loop, client, 0)) < 0) {
         LV_LOG_ERROR("uv_pipe_init failed: %s", uv_strerror(ret));
@@ -682,8 +676,6 @@ static void lv_nuttx_uv_control_server_accept_cb(uv_stream_t * server, int statu
     }
 
     uv_handle_set_data((uv_handle_t *)client, uv_ctx);
-    uv_ctx->control_ctx.client_connected = true;
-
     uv_read_start((uv_stream_t *)client, lv_nuttx_uv_control_client_alloc_cb, lv_nuttx_uv_control_client_read_cb);
 }
 #endif
