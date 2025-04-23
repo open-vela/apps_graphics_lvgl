@@ -72,7 +72,7 @@ void lv_draw_vg_lite_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle
     if(dsc->bg_grad.dir != LV_GRAD_DIR_NONE) {
 #if LV_USE_VECTOR_GRAPHIC
         lv_vg_lite_draw_grad_helper(
-            u,
+            u->grad_ctx,
             &u->target_buffer,
             lv_vg_lite_path_get_path(path),
             &tri_area,
