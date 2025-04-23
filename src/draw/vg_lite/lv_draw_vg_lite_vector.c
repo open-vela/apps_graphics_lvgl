@@ -230,7 +230,7 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
                 }
 
                 lv_vg_lite_draw_grad(
-                    u,
+                    u->grad_ctx,
                     &u->target_buffer,
                     vg_path,
                     gradient,
@@ -320,7 +320,7 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
                 lv_vg_lite_matrix_multiply(&grad_matrix, &fill_matrix);
 
                 lv_vg_lite_draw_grad(
-                    u,
+                    u->grad_ctx,
                     &u->target_buffer,
                     vg_stroke_path,
                     &dsc->stroke_dsc.gradient,
