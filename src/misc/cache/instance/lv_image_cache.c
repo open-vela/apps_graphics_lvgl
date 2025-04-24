@@ -7,12 +7,11 @@
  *      INCLUDES
  *********************/
 
-#include "../lv_assert.h"
-#include "../../core/lv_global.h"
-#include "../../misc/lv_iter.h"
+#include "../../lv_assert.h"
+#include "../../../core/lv_global.h"
+#include "../../../misc/lv_iter.h"
 
 #include "lv_image_cache.h"
-#include "lv_image_header_cache.h"
 
 /*********************
  *      DEFINES

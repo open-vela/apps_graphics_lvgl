@@ -17,6 +17,7 @@
 
 #include "../../misc/lv_timer.h"
 #include "lv_lottie.h"
+#include "../../misc/cache/lv_cache.h"
 
 /*********************
  *      DEFINES

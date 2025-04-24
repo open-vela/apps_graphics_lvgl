@@ -15,6 +15,7 @@
 #else
     #include "lv_gifdec.h"
 #endif
+#include "../../misc/cache/lv_cache.h"
 
 /*********************
  *      DEFINES
