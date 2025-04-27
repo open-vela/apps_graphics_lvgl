@@ -409,6 +409,14 @@ menu "LVGL configuration"
 			help
 				Enable drawing support vector graphic APIs.
 
+		config LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+			bool "Use Vector Graphic APIs optimizated"
+			default n
+			select LV_USE_MATRIX
+			depends on !LV_USE_VECTOR_GRAPHIC
+			help
+				Enable drawing support vector graphic optimizated APIs.
+
 		config LV_DECODER_IMG_SIZE_EXPAND
 			int "Default image expend size."
 			default 0
@@ -416,7 +424,7 @@ menu "LVGL configuration"
 		config LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
 			bool "Use vector graphic direct rendering"
 			default n
-			depends on LV_OS_NONE && !LV_USE_VG_LITE_THORVG
+			depends on LV_OS_NONE && !LV_USE_VG_LITE_THORVG && LV_USE_VECTOR_GRAPHIC
 	endmenu
 
 	menu "Feature Configuration"
@@ -1020,9 +1028,9 @@ menu "LVGL configuration"
 		config LV_USE_LOTTIE
 			bool "Lottie"
 			default n
-			depends on LV_USE_VECTOR_GRAPHIC && (LV_USE_THORVG_INTERNAL || LV_USE_THORVG_EXTERNAL)
+			depends on (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE) && (LV_USE_THORVG_INTERNAL || LV_USE_THORVG_EXTERNAL)
 			help
-				Enable Lottie animations. Requires LV_USE_VECTOR_GRAPHIC and LV_USE_THORVG_INTERNAL or LV_USE_THORVG_EXTERNAL.
+				Enable Lottie animations. Requires LV_USE_VECTOR_GRAPHIC or LV_USE_VECTOR_GRAPHIC_OPTIMIZE and LV_USE_THORVG_INTERNAL or LV_USE_THORVG_EXTERNAL.
 		config LV_USE_MENU
 			bool "Menu"
 			default y if !LV_CONF_MINIMAL
@@ -1258,7 +1266,7 @@ menu "LVGL configuration"
 
 		config LV_USE_SVG
 			bool "SVG library"
-			depends on LV_USE_VECTOR_GRAPHIC
+			depends on LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
 		config LV_USE_SVG_ANIMATION
 			bool "SVG animation"
@@ -1939,11 +1947,11 @@ menu "LVGL configuration"
 		config LV_USE_DEMO_VECTOR_GRAPHIC
 			bool "vector graphic demo"
 			default n
-			depends on LV_USE_VECTOR_GRAPHIC
+			depends on LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 		config LV_USE_DEMO_POLYGON_CLIPPER
 			bool "polygon clipper demo"
 			default n
-			depends on LV_USE_VECTOR_GRAPHIC
+			depends on LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 	endmenu
 
 	menuconfig LVGL_UNITTESTS

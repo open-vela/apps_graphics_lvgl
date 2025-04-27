@@ -60,7 +60,12 @@ COMPONENT_SRCDIRS := . \
                   src/extra/widgets/win
 
 ifeq ($(CONFIG_LV_USE_THORVG_INTERNAL),y)
-COMPONENT_SRCDIRS += src/extra/libs/thorvg 
+COMPONENT_SRCDIRS += src/extra/libs/thorvg
+endif
+
+ifeq ($(CONFIG_LV_USE_VECTOR_GRAPHIC_OPTIMIZE),y)
+COMPONENT_SRCDIRS += src/draw/vector_optimize
+COMPONENT_SRCDIRS += src/draw/vg_lite_vector_optimize
 endif
 
 COMPONENT_ADD_INCLUDEDIRS := $(COMPONENT_SRCDIRS) .
