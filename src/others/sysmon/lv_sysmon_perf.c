@@ -45,7 +45,9 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
 static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info, bool start_on_render);
 static void lv_sysmon_perf_update_scrolls(lv_sysmon_perf_t * perf, lv_event_code_t code);
 static void lv_sysmon_perf_update_events(lv_sysmon_perf_t * perf, lv_event_code_t code);
-static uint16_t lv_sysmon_perf_gen_tid(const char * tag);
+#if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
+    static uint16_t lv_sysmon_perf_gen_tid(const char * tag);
+#endif
 
 /**********************
  *  STATIC VARIABLES
@@ -444,6 +446,7 @@ static void lv_sysmon_perf_update_events(lv_sysmon_perf_t * perf, lv_event_code_
     }
 }
 
+#if LV_USE_PROFILER && LV_USE_PROFILER_BUILTIN
 static uint16_t lv_sysmon_perf_gen_tid(const char * tag)
 {
     /* Simple hash function to generate a constant tid from a tag, to make the trace more readable */
@@ -455,5 +458,6 @@ static uint16_t lv_sysmon_perf_gen_tid(const char * tag)
     }
     return tid;
 }
+#endif
 
 #endif /*LV_USE_PERF_MONITOR*/
