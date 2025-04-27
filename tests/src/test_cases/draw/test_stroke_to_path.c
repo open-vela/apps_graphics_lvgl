@@ -6,7 +6,7 @@
 
 #include "unity/unity.h"
 
-#if LV_USE_VECTOR_GRAPHIC
+#if (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)
 
 static void canvas_draw(const char * name, void (*draw_cb)(lv_layer_t *))
 {
