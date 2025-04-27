@@ -21,6 +21,11 @@
 #include "lv_vg_lite_stroke.h"
 #include "lv_vg_lite_stroke_path.h"
 
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    #include "../vg_lite_vector_optimize/lv_vg_lite_grad_opt.h"
+    #include "../vg_lite_vector_optimize/lv_vg_lite_stroke_opt.h"
+    #include "../vg_lite_vector_optimize/lv_vg_lite_stroke_path_opt.h"
+#endif
 /*********************
  *      DEFINES
  *********************/
@@ -75,7 +80,7 @@ void lv_draw_vg_lite_init(void)
     unit->base_unit.name = "VG_LITE";
 
     lv_vg_lite_image_dsc_init(unit);
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
     lv_vg_lite_grad_init(unit, LV_VG_LITE_GRAD_CACHE_CNT);
     lv_vg_lite_stroke_init(unit, LV_VG_LITE_STROKE_CACHE_CNT);
     lv_vg_lite_stroke_path_init(unit);
@@ -188,7 +193,7 @@ static void draw_execute(lv_draw_vg_lite_unit_t * u)
         case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
             lv_draw_vg_lite_mask_rect(draw_unit, t->draw_dsc, &t->area);
             break;
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
         case LV_DRAW_TASK_TYPE_VECTOR:
             lv_draw_vg_lite_vector(draw_unit, t->draw_dsc);
             break;
@@ -266,7 +271,7 @@ static int32_t draw_evaluate(lv_draw_unit_t * draw_unit, lv_draw_task_t * task)
         case LV_DRAW_TASK_TYPE_TRIANGLE:
         case LV_DRAW_TASK_TYPE_MASK_RECTANGLE:
 
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
         case LV_DRAW_TASK_TYPE_VECTOR:
 #endif
             break;
@@ -308,7 +313,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
     lv_draw_vg_lite_unit_t * unit = (lv_draw_vg_lite_unit_t *)draw_unit;
 
     lv_vg_lite_image_dsc_deinit(unit);
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
     lv_vg_lite_grad_deinit(unit);
     lv_vg_lite_stroke_deinit(unit);
     lv_vg_lite_stroke_path_deinit(unit);

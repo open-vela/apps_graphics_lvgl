@@ -46,6 +46,14 @@ extern "C" {
 typedef struct _lv_vg_lite_path_t lv_vg_lite_path_t;
 typedef struct _lv_draw_vg_lite_unit_t lv_draw_vg_lite_unit_t;
 
+struct _lv_vg_lite_path_t {
+    vg_lite_path_t base;
+    vg_lite_matrix_t matrix;
+    size_t mem_size;
+    uint8_t format_len;
+    bool has_transform;
+};
+
 typedef void (*lv_vg_lite_path_iter_cb_t)(void * user_data, uint8_t op_code, const float * data, uint32_t len);
 
 /**********************
