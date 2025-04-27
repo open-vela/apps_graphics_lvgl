@@ -2562,6 +2562,16 @@
     #endif
 #endif
 
+/*Enable Vector Graphic APIs optimized version
+ *Requires `LV_USE_MATRIX = 1`*/
+#ifndef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    #ifdef CONFIG_LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+        #define LV_USE_VECTOR_GRAPHIC_OPTIMIZE CONFIG_LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    #else
+        #define LV_USE_VECTOR_GRAPHIC_OPTIMIZE  0
+    #endif
+#endif
+
 /*Enable the image decoder size expand feature*/
 #ifndef LV_DECODER_IMG_SIZE_EXPAND
     #ifdef CONFIG_LV_DECODER_IMG_SIZE_EXPAND

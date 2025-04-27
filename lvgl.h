@@ -101,11 +101,20 @@ extern "C" {
 #include "src/others/remote_ctrl/lv_remote_ctrl.h"
 
 #include "src/draw/lv_draw.h"
-#include "src/draw/lv_draw_vector.h"
 #include "src/draw/lv_draw_buf.h"
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#include "src/draw/vector_optimize/lv_draw_vector.h"
+#include "src/draw/vector_optimize/lv_draw_vector_private.h"
+#include "src/draw/vector_optimize/lv_vector_polygon.h"
+#include "src/draw/vector_optimize/lv_vector_clipper.h"
+#include "src/draw/vector_optimize/lv_vector_stroke.h"
+#elif LV_USE_VECTOR_GRAPHIC
+#include "src/draw/lv_draw_vector.h"
 #include "src/draw/lv_vector_polygon.h"
 #include "src/draw/lv_vector_clipper.h"
 #include "src/draw/lv_vector_stroke.h"
+#endif
 
 #include "src/libs/barcode/lv_barcode.h"
 #include "src/libs/bin_decoder/lv_bin_decoder.h"

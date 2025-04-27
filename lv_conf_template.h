@@ -782,6 +782,10 @@
  *Requires `LV_USE_MATRIX = 1`*/
 #define LV_USE_VECTOR_GRAPHIC  0
 
+/*Enable Vector Graphic APIs optimized version
+ *Requires `LV_USE_MATRIX = 1`*/
+#define LV_USE_VECTOR_GRAPHIC_OPTIMIZE  0
+
 /*Enable the image decoder size expand feature*/
 #define LV_DECODER_IMG_SIZE_EXPAND 0
 
