@@ -1061,6 +1061,15 @@
     #endif
 #endif
 
+/* Enable the linear allocator */
+#ifndef LV_USE_LINEAR_ALLOCATOR
+    #ifdef CONFIG_LV_USE_LINEAR_ALLOCATOR
+        #define LV_USE_LINEAR_ALLOCATOR CONFIG_LV_USE_LINEAR_ALLOCATOR
+    #else
+        #define LV_USE_LINEAR_ALLOCATOR 0
+    #endif
+#endif
+
 /*=====================
  *  COMPILER SETTINGS
  *====================*/

@@ -40,6 +40,7 @@ extern "C" {
 #include "src/misc/lv_iter.h"
 #include "src/misc/lv_circle_buf.h"
 #include "src/misc/cache/lv_cache.h"
+#include "src/misc/lv_linear_allocator.h"
 
 #include "src/tick/lv_tick.h"
 

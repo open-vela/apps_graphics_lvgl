@@ -371,6 +371,9 @@
 /* Gesture recognition requires the use of floats */
 #define LV_USE_GESTURE_RECOGNITION 0
 
+/* Enable the linear allocator */
+#define LV_USE_LINEAR_ALLOCATOR 0
+
 /*=====================
  *  COMPILER SETTINGS
  *====================*/
