@@ -39,14 +39,6 @@
  *      TYPEDEFS
  **********************/
 
-struct _lv_vg_lite_path_t {
-    vg_lite_path_t base;
-    vg_lite_matrix_t matrix;
-    size_t mem_size;
-    uint8_t format_len;
-    bool has_transform;
-};
-
 typedef struct {
     float min_x;
     float min_y;

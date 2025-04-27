@@ -1,0 +1,53 @@
+/**
+ * @file lv_vg_lite_path_opt.h
+ *
+ */
+
+#ifndef LV_VG_LITE_PATH_OPT_H
+#define LV_VG_LITE_PATH_OPT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*********************
+ *      INCLUDES
+ *********************/
+#include "../../lv_conf_internal.h"
+#include "../vg_lite/lv_vg_lite_utils.h"
+
+#if LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+
+#include "../vector_optimize/lv_draw_vector_private.h"
+#include "../vg_lite/lv_vg_lite_path.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+typedef struct _lv_vg_lite_path_t lv_vg_lite_path_t;
+typedef struct _lv_draw_vg_lite_unit_t lv_draw_vg_lite_unit_t;
+
+typedef struct _lv_platform_vg_lite_path_t {
+    lv_platform_path_base_t base;
+    lv_vg_lite_path_t * vg_path;
+} lv_platform_vg_lite_path_t;
+
+/**********************
+ * GLOBAL PROTOTYPES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+#endif /*LV_USE_DRAW_VG_LITE*/
+
+#ifdef __cplusplus
+} /*extern "C"*/
+#endif
+
+#endif /*LV_VG_LITE_PATH_OPT_H*/

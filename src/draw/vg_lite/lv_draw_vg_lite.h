@@ -19,7 +19,11 @@ extern "C" {
 #if LV_USE_DRAW_VG_LITE
 
 #include "../lv_draw.h"
-#include "../../draw/lv_draw_vector.h"
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#include "../vector_optimize/lv_draw_vector_private.h"
+#elif LV_USE_VECTOR_GRAPHIC
+#include "../lv_draw_vector.h"
+#endif
 
 /*********************
  *      DEFINES
@@ -75,7 +79,7 @@ void lv_draw_vg_lite_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle
 void lv_draw_vg_lite_mask_rect(lv_draw_unit_t * draw_unit, const lv_draw_mask_rect_dsc_t * dsc,
                                const lv_area_t * coords);
 
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 void lv_draw_vg_lite_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc_t * dsc);
 #endif
 
