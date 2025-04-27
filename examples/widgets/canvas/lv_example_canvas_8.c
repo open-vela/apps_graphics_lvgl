@@ -1,7 +1,7 @@
 #include "../../lv_examples.h"
 #if LV_USE_CANVAS && LV_BUILD_EXAMPLES
 
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
 #define CANVAS_WIDTH  150
 #define CANVAS_HEIGHT 150
@@ -51,6 +51,6 @@ void lv_example_canvas_8(void)
     lv_obj_center(label);
 }
 
-#endif /*LV_USE_VECTOR_GRAPHIC*/
+#endif /*LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE*/
 
 #endif

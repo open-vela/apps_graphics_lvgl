@@ -1,5 +1,5 @@
 #include "../../lv_examples.h"
-#if LV_BUILD_EXAMPLES && LV_USE_VECTOR_GRAPHIC && LV_USE_SVG
+#if LV_BUILD_EXAMPLES && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE) && LV_USE_SVG
 
 void lv_example_svg_1(void)
 {

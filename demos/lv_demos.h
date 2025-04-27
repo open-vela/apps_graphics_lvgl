@@ -51,11 +51,11 @@ extern "C" {
 #include "multilang/lv_demo_multilang.h"
 #endif
 
-#if LV_USE_DEMO_VECTOR_GRAPHIC && LV_USE_VECTOR_GRAPHIC
+#if LV_USE_DEMO_VECTOR_GRAPHIC
 #include "vector_graphic/lv_demo_vector_graphic.h"
 #endif
 
-#if LV_USE_DEMO_POLYGON_CLIPPER && LV_USE_VECTOR_GRAPHIC
+#if LV_USE_DEMO_POLYGON_CLIPPER
 #include "clipper/lv_demo_clipper.h"
 #endif
 

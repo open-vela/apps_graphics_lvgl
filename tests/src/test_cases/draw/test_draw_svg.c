@@ -26,7 +26,7 @@ void tearDown(void)
     lv_obj_del(canvas);
 }
 
-#if LV_USE_VECTOR_GRAPHIC && LV_USE_SVG
+#if (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE) && LV_USE_SVG
 
 #define SNAPSHOT_NAME(n) (#n)
 

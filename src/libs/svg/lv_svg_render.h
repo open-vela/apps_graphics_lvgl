@@ -11,7 +11,7 @@
  *********************/
 #include "../../lv_conf_internal.h"
 
-#if LV_USE_SVG && LV_USE_VECTOR_GRAPHIC
+#if LV_USE_SVG && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)
 #include "lv_svg.h"
 
 /*********************
