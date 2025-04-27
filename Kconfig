@@ -668,6 +668,10 @@ menu "LVGL configuration"
 				bool "Enable the multi-touch gesture recognition feature"
 				depends on LV_USE_FLOAT
 				default n
+
+			config LV_USE_LINEAR_ALLOCATOR
+				bool "Enable the linear allocator"
+				default n
 		endmenu
 	endmenu
 
