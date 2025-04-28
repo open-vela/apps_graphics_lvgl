@@ -306,6 +306,13 @@ void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, f
 void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t * subpath);
 
 /**
+ * Check if vector path contains no drawing elements
+ * @param path Pointer to the vector path object to check
+ * @return true if path contains no points or commands, false otherwise
+ */
+bool lv_vector_path_is_empty(lv_vector_path_t * path);
+
+/**
  * Create a vector graphic descriptor
  * @param layer         pointer to a layer
  * @return              pointer to the created descriptor

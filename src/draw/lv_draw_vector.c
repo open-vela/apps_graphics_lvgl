@@ -500,6 +500,14 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
     path->points.size = point_size + npoint_size;
 }
 
+bool lv_vector_path_is_empty(lv_vector_path_t * path)
+{
+    if(lv_array_size(&path->points) == 0) {
+        return true;
+    }
+    return false;
+}
+
 /* draw dsc functions */
 
 lv_vector_dsc_t * lv_vector_dsc_create(lv_layer_t * layer)
