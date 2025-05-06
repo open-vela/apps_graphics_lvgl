@@ -299,6 +299,11 @@ lv_iter_t * lv_cache_iter_create(lv_cache_t * cache)
     return cache->clz->iter_create_cb(cache);
 }
 
+uint32_t lv_cache_utils_get_max_size_runtime(lv_cache_t * cache)
+{
+    return cache->max_size_runtime;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -351,5 +356,6 @@ static lv_cache_entry_t * cache_add_internal_no_lock(lv_cache_t * cache, const v
 
     lv_cache_entry_t * entry = cache->clz->add_cb(cache, key, user_data);
 
+    cache->max_size_runtime = cache->size > cache->max_size_runtime ? cache->size : cache->max_size_runtime;
     return entry;
 }

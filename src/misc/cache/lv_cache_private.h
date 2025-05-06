@@ -135,6 +135,8 @@ struct _lv_cache_t {
     uint32_t max_size;                /**< The maximum size of the cache */
     uint32_t size;                    /**< The current size of the cache */
 
+    uint32_t max_size_runtime;        /**< The maximum size of the cache used in runtime */
+
     lv_cache_ops_t ops;               /**< The cache operations struct @lv_cache_ops_t */
 
     lv_mutex_t lock;                  /**< The cache lock used to protect the cache in multithreading environments */

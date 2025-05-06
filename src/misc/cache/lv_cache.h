@@ -223,6 +223,13 @@ const char * lv_cache_get_name(lv_cache_t * cache);
  */
 lv_iter_t * lv_cache_iter_create(lv_cache_t * cache);
 
+/**
+ * Get the max used size of the cache in runtime.
+ * @param  cache        The cache instance you are interested.
+ * @return              The max used size of the cache.
+ */
+ uint32_t lv_cache_utils_get_max_size_runtime(lv_cache_t * cache);
+
 /*************************
  *    GLOBAL VARIABLES
  *************************/
