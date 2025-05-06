@@ -112,6 +112,8 @@ void test_cache_1(void)
      * */
     TEST_ASSERT_EQUAL(8, lv_cache_get_free_size(cache, NULL));
 
+    TEST_ASSERT_EQUAL(992, lv_cache_utils_get_max_size_runtime(cache));
+
     /*
      * Search entry {key1 = 32, key2 = 33}
      */
