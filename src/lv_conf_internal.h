@@ -30,6 +30,9 @@
 
 #define LV_ARRAY_DEFAULT_CAPACITY   4
 
+#define LV_DRAW_TASK_DEFAULT_ALLOCATOR  0
+#define LV_DRAW_TASK_LINEAR_ALLOCATOR   1
+
 /* Handle special Kconfig options */
 #ifndef LV_KCONFIG_IGNORE
     #include "lv_conf_kconfig.h"
@@ -1071,6 +1074,24 @@
         #define LV_USE_LINEAR_ALLOCATOR CONFIG_LV_USE_LINEAR_ALLOCATOR
     #else
         #define LV_USE_LINEAR_ALLOCATOR 0
+    #endif
+#endif
+
+/* Enable the allocator for the draw task */
+#ifndef LV_DRAW_TASK_USE_ALLOCATOR
+    #ifdef CONFIG_LV_DRAW_TASK_USE_ALLOCATOR
+        #define LV_DRAW_TASK_USE_ALLOCATOR CONFIG_LV_DRAW_TASK_USE_ALLOCATOR
+    #else
+        #define LV_DRAW_TASK_USE_ALLOCATOR 0
+    #endif
+#endif
+#if LV_DRAW_TASK_USE_ALLOCATOR
+    #ifndef LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE
+        #ifdef CONFIG_LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE
+            #define LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE CONFIG_LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE
+        #else
+            #define LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE (12 * 1024)
+        #endif
     #endif
 #endif
 

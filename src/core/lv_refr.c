@@ -15,6 +15,7 @@
 #include "../misc/lv_profiler.h"
 #include "../misc/lv_types.h"
 #include "../draw/lv_draw.h"
+#include "../draw/lv_draw_task.h"
 #include "../font/lv_font_fmt_txt.h"
 #include "../stdlib/lv_string.h"
 #include "lv_global.h"
@@ -425,6 +426,8 @@ refr_finish:
 #endif
 
     lv_display_send_event(disp_refr, LV_EVENT_REFR_READY, NULL);
+
+    LV_DRAW_TASK_RESET();
 
     LV_TRACE_REFR("finished");
     LV_PROFILER_REFR_END;

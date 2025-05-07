@@ -29,6 +29,7 @@ extern "C" {
 #include "../misc/lv_timer.h"
 #include "../others/sysmon/lv_sysmon.h"
 #include "../stdlib/builtin/lv_tlsf.h"
+#include "../draw/lv_draw_task.h"
 
 #if LV_USE_FONT_COMPRESSED
 #include "../font/lv_font_fmt_txt.h"
@@ -107,6 +108,8 @@ typedef struct _lv_global_t {
     lv_draw_buf_handlers_t font_draw_buf_handlers;
     lv_draw_buf_handlers_t image_cache_draw_buf_handlers;  /**< Ensure that all assigned draw buffers
                                                             * can be managed by image cache. */
+
+    void * draw_task_allocator_ctx;
 
     lv_ll_t img_decoder_ll;
 
