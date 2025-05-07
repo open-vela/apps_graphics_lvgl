@@ -52,6 +52,9 @@ fout.write(
 
 #define LV_ARRAY_DEFAULT_CAPACITY   4
 
+#define LV_DRAW_TASK_DEFAULT_ALLOCATOR  0
+#define LV_DRAW_TASK_LINEAR_ALLOCATOR   1
+
 /* Handle special Kconfig options */
 #ifndef LV_KCONFIG_IGNORE
     #include "lv_conf_kconfig.h"

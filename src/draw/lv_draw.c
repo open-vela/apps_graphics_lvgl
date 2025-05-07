@@ -54,6 +54,8 @@ void lv_draw_init(void)
 #if LV_USE_OS
     lv_thread_sync_init(&_draw_info.sync);
 #endif
+
+    LV_DRAW_TASK_INIT_ALLOCATOR();
 }
 
 void lv_draw_deinit(void)
@@ -71,6 +73,8 @@ void lv_draw_deinit(void)
         lv_free(cur_unit);
     }
     _draw_info.unit_head = NULL;
+
+    LV_DRAW_TASK_DESTROY_ALLOCATOR();
 }
 
 void * lv_draw_create_unit(size_t size)
@@ -88,7 +92,7 @@ lv_draw_task_t * lv_draw_add_task(lv_layer_t * layer, const lv_area_t * coords, 
     LV_PROFILER_DRAW_BEGIN;
     size_t dsc_size = get_draw_dsc_size(type);
     LV_ASSERT_FORMAT_MSG(dsc_size > 0, "Draw task size is 0 for type %d", type);
-    lv_draw_task_t * new_task = lv_malloc_zeroed(LV_ALIGN_UP(sizeof(lv_draw_task_t), 8) + dsc_size);
+    lv_draw_task_t * new_task = LV_DRAW_TASK_ZALLOC(LV_ALIGN_UP(sizeof(lv_draw_task_t), 8) + dsc_size);
     LV_ASSERT_MALLOC(new_task);
     new_task->area = *coords;
     new_task->_real_area = *coords;
@@ -250,7 +254,8 @@ bool lv_draw_dispatch_layer(lv_display_t * disp, lv_layer_t * layer)
                 }
             }
 
-            lv_free(t);
+            LV_DRAW_TASK_FREE(t);
+
             LV_PROFILER_DRAW_END_TAG("draw_task_cleanup");
             remove_task = true;
         }

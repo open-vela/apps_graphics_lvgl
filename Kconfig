@@ -680,6 +680,27 @@ menu "LVGL configuration"
 			config LV_USE_LINEAR_ALLOCATOR
 				bool "Enable the linear allocator"
 				default n
+
+			choice LV_DRAW_TASK_USE_ALLOCATOR
+				prompt "Use allocator for draw task"
+				default LV_DRAW_TASK_DEFAULT_ALLOCATOR
+				help
+					Use allocator for draw task
+
+				config LV_DRAW_TASK_DEFAULT_ALLOCATOR
+					bool "0: DEFAULT"
+				config LV_DRAW_TASK_LINEAR_ALLOCATOR
+					bool "1: LINEAR"
+			endchoice
+
+			config LV_DRAW_TASK_USE_ALLOCATOR
+				int
+				default 0 if LV_DRAW_TASK_DEFAULT_ALLOCATOR
+				default 1 if LV_DRAW_TASK_LINEAR_ALLOCATOR
+			config LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE
+				int "Default draw task linear allocator size in bytes"
+				depends on LV_DRAW_TASK_LINEAR_ALLOCATOR
+				default 12288
 		endmenu
 	endmenu
 

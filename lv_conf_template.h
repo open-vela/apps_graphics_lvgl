@@ -374,6 +374,12 @@
 /* Enable the linear allocator */
 #define LV_USE_LINEAR_ALLOCATOR 0
 
+/* Enable the allocator for the draw task */
+#define LV_DRAW_TASK_USE_ALLOCATOR 0
+#if LV_DRAW_TASK_USE_ALLOCATOR
+    #define LV_DRAW_TASK_LINEAR_ALLOCATOR_SIZE (12 * 1024)
+#endif
+
 /*=====================
  *  COMPILER SETTINGS
  *====================*/
