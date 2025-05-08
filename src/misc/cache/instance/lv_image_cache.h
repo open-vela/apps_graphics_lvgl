@@ -72,6 +72,12 @@ lv_iter_t * lv_image_cache_iter_create(void);
  */
 void lv_image_cache_dump(void);
 
+/**
+ * Get the max used size of the cache in runtime.
+ * @return The max used size of the image cache.
+ */
+uint32_t lv_image_cache_get_max_size_runtime(void);
+
 /*************************
  *    GLOBAL VARIABLES
  *************************/

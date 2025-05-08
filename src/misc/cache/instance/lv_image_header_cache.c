@@ -110,6 +110,14 @@ void lv_image_header_cache_dump(void)
     lv_iter_inspect(iter, iter_inspect_cb);
 }
 
+uint32_t lv_image_header_cache_get_max_size_runtime(void)
+{
+    if(img_header_cache_p) {
+        return lv_cache_utils_get_max_size_runtime(img_header_cache_p);
+    }
+    return 0;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
