@@ -68,6 +68,10 @@ lv_cache_t * lv_cache_create(const lv_cache_class_t * cache_class,
 void lv_cache_destroy(lv_cache_t * cache, void * user_data)
 {
     LV_ASSERT_NULL(cache);
+    LV_LOG_INFO("%s cache used max size: %" LV_PRIu32 ", class: %p",
+                cache->name,
+                lv_cache_utils_get_max_size_runtime(cache),
+                cache->clz);
 
     lv_mutex_lock(&cache->lock);
     cache->clz->destroy_cb(cache, user_data);
