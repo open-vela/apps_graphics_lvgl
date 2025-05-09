@@ -385,6 +385,10 @@ void lv_deinit(void)
     lv_theme_mono_deinit();
 #endif
 
+#if LV_USE_SVG
+    lv_svg_decoder_deinit();
+#endif
+
     _lv_image_decoder_deinit();
 
     _lv_refr_deinit();

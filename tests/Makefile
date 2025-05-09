@@ -165,6 +165,7 @@ endif
 ifeq ($(CONFIG_LV_USE_SVG), y)
 TEST_CASE_FILES += \
     ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_svg.c \
+    ${LVGL_PATH}/tests/src/test_cases/libs/test_svg_decoder.c \
     ${LVGL_PATH}/tests/src/test_cases/test_svg.c
 endif
 
