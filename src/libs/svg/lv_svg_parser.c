@@ -511,18 +511,18 @@ static const char * _parse_color(const char * str, const char * str_end, uint32_
     }
 
     uint32_t len = ptr - str;
-    uint8_t r = 0, g = 0, b = 0;
+    uint32_t r = 0, g = 0, b = 0;
 
     if(*str == '#') {
         if(len == 4) { // three digit hex format '#rgb'
             if(isxdigit(str[1]) && isxdigit(str[2]) && isxdigit(str[3])) {
                 char st[3] = {0};
                 st[0] = st[1] = str[1];
-                r = (uint8_t)strtol(st, NULL, 16);
+                r = (uint32_t)strtol(st, NULL, 16);
                 st[0] = st[1] = str[2];
-                g = (uint8_t)strtol(st, NULL, 16);
+                g = (uint32_t)strtol(st, NULL, 16);
                 st[0] = st[1] = str[3];
-                b = (uint8_t)strtol(st, NULL, 16);
+                b = (uint32_t)strtol(st, NULL, 16);
             }
         }
         else if(len == 7) {    // six digit hex format '#rrggbb'
@@ -531,13 +531,13 @@ static const char * _parse_color(const char * str, const char * str_end, uint32_
                 char st[3] = {0};
                 st[0] = str[1];
                 st[1] = str[2];
-                r = (uint8_t)strtol(st, NULL, 16);
+                r = (uint32_t)strtol(st, NULL, 16);
                 st[0] = str[3];
                 st[1] = str[4];
-                g = (uint8_t)strtol(st, NULL, 16);
+                g = (uint32_t)strtol(st, NULL, 16);
                 st[0] = str[5];
                 st[1] = str[6];
-                b = (uint8_t)strtol(st, NULL, 16);
+                b = (uint32_t)strtol(st, NULL, 16);
             }
         }
         // make color
@@ -547,7 +547,7 @@ static const char * _parse_color(const char * str, const char * str_end, uint32_
         str += 5;
         bool valid_color = true;
         float vals[3] = {0};
-        uint8_t alpha = 255;
+        uint32_t alpha = 255;
 
         for(int i = 0; i < 3; i++) {
             str = _parse_number(str, ptr, &vals[i]);
@@ -571,9 +571,9 @@ static const char * _parse_color(const char * str, const char * str_end, uint32_
         }
 
         if(valid_color) {
-            r = (uint8_t)vals[0];
-            g = (uint8_t)vals[1];
-            b = (uint8_t)vals[2];
+            r = (uint32_t)vals[0];
+            g = (uint32_t)vals[1];
+            b = (uint32_t)vals[2];
         }
         // make color
         *val = (alpha << 24) + (r << 16) + (g << 8) + b;
