@@ -68,6 +68,8 @@ typedef struct {
     } dot;
     uint32_t dot_end;  /*The real text length, used in dot mode*/
 
+    lv_point_t text_size;
+
 #if LV_LABEL_LONG_TXT_HINT
     lv_draw_label_hint_t hint;
 #endif
