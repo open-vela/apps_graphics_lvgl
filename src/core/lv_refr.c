@@ -797,9 +797,15 @@ static void refr_area(const lv_area_t * area_p)
     if(disp_refr->render_mode != LV_DISPLAY_RENDER_MODE_PARTIAL) {
         layer->buf_area.x1 = 0;
         layer->buf_area.y1 = 0;
-        layer->buf_area.x2 = lv_display_get_original_horizontal_resolution(disp_refr) - 1;
-        layer->buf_area.y2 = lv_display_get_original_vertical_resolution(disp_refr) - 1;
-        layer_reshape_draw_buf(layer, layer->draw_buf->header.stride);
+        if(lv_display_get_matrix_rotation(disp_refr)) {
+            layer->buf_area.x2 = lv_display_get_original_horizontal_resolution(disp_refr) - 1;
+            layer->buf_area.y2 = lv_display_get_original_vertical_resolution(disp_refr) - 1;
+        }
+        else {
+            layer->buf_area.x2 = lv_display_get_horizontal_resolution(disp_refr) - 1;
+            layer->buf_area.y2 = lv_display_get_vertical_resolution(disp_refr) - 1;
+        }
+        layer_reshape_draw_buf(layer, disp_refr->stride_is_auto ? LV_STRIDE_AUTO : layer->draw_buf->header.stride);
 
         if(disp_refr->render_mode == LV_DISPLAY_RENDER_MODE_FULL) {
             lv_area_t disp_area;

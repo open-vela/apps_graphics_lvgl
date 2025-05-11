@@ -415,6 +415,8 @@ void lv_display_set_draw_buffers(lv_display_t * disp, lv_draw_buf_t * buf1, lv_d
     disp->buf_1 = buf1;
     disp->buf_2 = buf2;
     disp->buf_act = disp->buf_1;
+
+    disp->stride_is_auto = 0;
 }
 
 void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
@@ -447,6 +449,9 @@ void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint3
     lv_draw_buf_init(&disp->_static_buf2, w, h, cf, stride, buf2, buf_size);
     lv_display_set_draw_buffers(disp, &disp->_static_buf1, buf2 ? &disp->_static_buf2 : NULL);
     lv_display_set_render_mode(disp, render_mode);
+
+    /* the stride was not set explicitly */
+    disp->stride_is_auto = 1;
 }
 
 void lv_display_set_render_mode(lv_display_t * disp, lv_display_render_mode_t render_mode)
