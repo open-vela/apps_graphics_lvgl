@@ -93,6 +93,10 @@ if(CONFIG_LVGL_UNITTESTS)
         list(APPEND TEST_CASE_FILES ${LVGL_PATH}/tests/src/test_cases/test_font_loader.c)
     endif()
 
+    if(CONFIG_LV_USE_LINEAR_ALLOCATOR)
+        list(APPEND TEST_CASE_FILES ${LVGL_PATH}/tests/src/test_cases/test_linear_allocator.c)
+    endif()
+
     if(CONFIG_LV_BUILD_EXAMPLES)
         list(APPEND TEST_CASE_FILES ${LVGL_PATH}/tests/src/test_cases/widgets/test_dropdown.c)
     endif()
