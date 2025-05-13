@@ -30,6 +30,7 @@ struct _lv_sysmon_perf_t {
     lv_sysmon_perf_info_t * current_scroll;
     const char * tag;
     bool running;
+    bool start_on_render;
 };
 
 /**********************
@@ -39,9 +40,9 @@ struct _lv_sysmon_perf_t {
 static void lv_sysmon_perf_check_display(void);
 static void lv_sysmon_perf_update_global(lv_event_code_t code);
 static void * lv_sysmon_perf_circle_buf_append(lv_circle_buf_t * circle_buf, void * data);
-static void lv_sysmon_perf_init_info(lv_sysmon_perf_info_t * info);
-static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_code_t code);
-static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info);
+static void lv_sysmon_perf_init_info(lv_sysmon_perf_info_t * info, bool start_on_render);
+static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_code_t code, bool start_on_render);
+static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info, bool start_on_render);
 static void lv_sysmon_perf_update_scrolls(lv_sysmon_perf_t * perf, lv_event_code_t code);
 static void lv_sysmon_perf_update_events(lv_sysmon_perf_t * perf, lv_event_code_t code);
 static uint16_t lv_sysmon_perf_gen_tid(const char * tag);
@@ -103,12 +104,13 @@ void lv_sysmon_perf_destroy(lv_sysmon_perf_t * perf)
     lv_free(perf);
 }
 
-lv_result_t lv_sysmon_perf_start(lv_sysmon_perf_t * perf)
+lv_result_t lv_sysmon_perf_start(lv_sysmon_perf_t * perf, bool immediate)
 {
     if(!perf || perf->running) {
         return LV_RESULT_INVALID;
     }
 
+    perf->start_on_render = !immediate;
     lv_sysmon_perf_reset_data(perf, LV_SYSMON_PERF_TYPE_ALL);
     perf->running = true;
 
@@ -124,7 +126,7 @@ void lv_sysmon_perf_reset_data(lv_sysmon_perf_t * perf, lv_sysmon_perf_type_t ty
     lv_sysmon_perf_check_display();
 
     if(types & LV_SYSMON_PERF_TYPE_OVERALL) {
-        lv_sysmon_perf_init_info(&perf->data.overall);
+        lv_sysmon_perf_init_info(&perf->data.overall, perf->start_on_render);
     }
 
     if(perf->data.events && (types & LV_SYSMON_PERF_TYPE_EVENTS)) {
@@ -147,9 +149,9 @@ const lv_sysmon_perf_data_t * lv_sysmon_perf_get_data(lv_sysmon_perf_t * perf)
         return NULL;
     }
 
-    lv_sysmon_perf_calculate_info(&perf->data.overall);
+    lv_sysmon_perf_calculate_info(&perf->data.overall, perf->start_on_render);
     if(perf->current_scroll) {
-        lv_sysmon_perf_calculate_info(perf->current_scroll);
+        lv_sysmon_perf_calculate_info(perf->current_scroll, perf->start_on_render);
     }
 
     return &perf->data;
@@ -211,7 +213,7 @@ void lv_sysmon_perf_event(lv_event_t * e)
 
     _LV_LL_READ(&perf_global.instances_ll, perf) {
         if(perf->running) {
-            lv_sysmon_perf_update_info(&perf->data.overall, code);
+            lv_sysmon_perf_update_info(&perf->data.overall, code, perf->start_on_render);
             lv_sysmon_perf_update_scrolls(perf, code);
             lv_sysmon_perf_update_events(perf, code);
         }
@@ -263,15 +265,23 @@ static void * lv_sysmon_perf_circle_buf_append(lv_circle_buf_t * circle_buf, voi
     return lv_circle_buf_latest(circle_buf);
 }
 
-static void lv_sysmon_perf_init_info(lv_sysmon_perf_info_t * info)
+static void lv_sysmon_perf_init_info(lv_sysmon_perf_info_t * info, bool start_on_render)
 {
     lv_memzero(info, sizeof(lv_sysmon_perf_info_t));
-    info->measured.perf_start = lv_tick_get();
+    if(!start_on_render) {
+        info->measured.perf_start = lv_tick_get();
+    }
     info->measured.prev_refr_start = perf_global.refr_start;
 }
 
-static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_code_t code)
+static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_code_t code, bool start_on_render)
 {
+    if(start_on_render) {
+        if(!info->measured.perf_start && code != LV_EVENT_RENDER_READY) {
+            return;
+        }
+    }
+
     switch(code) {
         case LV_EVENT_REFR_START:
             info->measured.refr_interval_sum += lv_tick_elaps(info->measured.prev_refr_start);
@@ -282,6 +292,13 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
             info->measured.refr_cnt++;
             break;
         case LV_EVENT_RENDER_READY:
+            if(start_on_render) {
+                if(!info->measured.perf_start) {
+                    /* Log current timestamp as the perf start */
+                    info->measured.perf_start = lv_tick_get();
+                }
+                info->calculated.duration = lv_tick_elaps(info->measured.perf_start);
+            }
             info->measured.render_elaps_sum += lv_tick_elaps(perf_global.render_start);
             info->measured.render_cnt++;
             break;
@@ -308,18 +325,34 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
     }
 }
 
-static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info)
+static lv_value_precise_t lv_sysmon_perf_calculate_fps(uint32_t duration, uint32_t cnt, uint32_t disp_refr_period,
+                                                       bool start_on_render)
+{
+    lv_value_precise_t fps;
+    if(start_on_render) {
+        /* -1 because the first frame is not included in the duration */
+        fps = duration ? ((lv_value_precise_t)1000 * (cnt - 1) / duration) : 0;
+    }
+    else {
+        fps = duration ? ((lv_value_precise_t)1000 * cnt / duration) : 0;
+    }
+    return LV_MIN(fps, (lv_value_precise_t)1000 / disp_refr_period);   /*Limit due to possible off-by-one error*/
+}
+
+static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info, bool start_on_render)
 {
     uint32_t LV_SYSMON_GET_IDLE(void);
 
     lv_timer_t * disp_refr_timer = lv_display_get_refr_timer(NULL);
     uint32_t disp_refr_period = disp_refr_timer ? disp_refr_timer->period : LV_DEF_REFR_PERIOD;
 
-    info->calculated.duration = lv_tick_elaps(info->measured.perf_start);
-    info->calculated.fps = info->calculated.duration ? ((lv_value_precise_t)1000 * info->measured.refr_cnt /
-                                                        info->calculated.duration) : 0;
-    info->calculated.fps = LV_MIN(info->calculated.fps,
-                                  (lv_value_precise_t)1000 / disp_refr_period);   /*Limit due to possible off-by-one error*/
+    if(!start_on_render) {
+        info->calculated.duration = lv_tick_elaps(info->measured.perf_start);
+    }
+    info->calculated.fps = lv_sysmon_perf_calculate_fps(info->calculated.duration, info->measured.render_cnt,
+                                                        disp_refr_period, start_on_render);
+    info->calculated.fps_refr = lv_sysmon_perf_calculate_fps(info->calculated.duration, info->measured.refr_cnt,
+                                                             disp_refr_period, start_on_render);
 
     info->calculated.cpu = 100 - LV_SYSMON_GET_IDLE();
     info->calculated.refr_avg_time = info->measured.refr_cnt ? ((lv_value_precise_t)info->measured.refr_elaps_sum /
@@ -345,18 +378,18 @@ static void lv_sysmon_perf_update_scrolls(lv_sysmon_perf_t * perf, lv_event_code
             if(!perf->current_scroll) {
                 perf->current_scroll = lv_sysmon_perf_circle_buf_append(perf->data.scrolls, NULL);
                 LV_ASSERT_NULL(perf->current_scroll);
-                lv_sysmon_perf_init_info(perf->current_scroll);
+                lv_sysmon_perf_init_info(perf->current_scroll, perf->start_on_render);
             }
             break;
         case LV_EVENT_SCROLL_END:
             if(perf->current_scroll) {
-                lv_sysmon_perf_calculate_info(perf->current_scroll);
+                lv_sysmon_perf_calculate_info(perf->current_scroll, perf->start_on_render);
                 perf->current_scroll = NULL;
             }
             break;
         default:
             if(perf->current_scroll) {
-                lv_sysmon_perf_update_info(perf->current_scroll, code);
+                lv_sysmon_perf_update_info(perf->current_scroll, code, perf->start_on_render);
             }
             break;
     }

@@ -49,6 +49,9 @@ typedef struct {
             size_t max_events;
             size_t max_scrolls;
         } sysmon_perf_create;
+        struct {
+            bool immediate;
+        } sysmon_perf_start;
     } cfg;
 } lv_remote_ctrl_cmd_t;
 
