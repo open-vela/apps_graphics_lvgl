@@ -68,7 +68,7 @@ void lv_remote_ctrl_show_help(const char * cmd_name, lv_remote_ctrl_print_func_t
     print_func("Subcommands for perf:\n");
     print_func("  create <max_events> <max_scrolls> Create performance monitor\n");
     print_func("  destroy                           Destroy monitor\n");
-    print_func("  start                             Start monitoring\n");
+    print_func("  start [immediate]                 Start monitoring, immediate is 1 or 0, default 0 (delay start until the first render finished)\n");
     print_func("  stop                              Stop monitoring\n");
     print_func("  reset                             Reset monitoring data\n");
     print_func("  data                              Get monitoring data\n");
@@ -127,6 +127,12 @@ static lv_result_t lv_remote_ctrl_fill_perf_cmd(lv_remote_ctrl_cmd_t * cmd, char
     }
     else if(lv_strcmp(subcommand, "start") == 0) {
         cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_START;
+        if(size > 1) {
+            cmd->cfg.sysmon_perf_start.immediate = atoi(info[1]) != 0;
+        }
+        else {
+            cmd->cfg.sysmon_perf_start.immediate = false;
+        }
     }
     else if(lv_strcmp(subcommand, "stop") == 0) {
         cmd->cmd = LV_REMOTE_CTRL_CMD_SYSMON_PERF_STOP;
@@ -179,7 +185,7 @@ static void lv_remote_ctrl_sysmon_handler(lv_remote_ctrl_ctx_t * ctx, const lv_r
             }
             break;
         case LV_REMOTE_CTRL_CMD_SYSMON_PERF_START:
-            if(lv_sysmon_perf_start(ctx->perf) == LV_RESULT_INVALID) {
+            if(lv_sysmon_perf_start(ctx->perf, cmd->cfg.sysmon_perf_start.immediate) == LV_RESULT_INVALID) {
                 LV_LOG_WARN("Sysmon perf is not created or already started");
             }
             break;
