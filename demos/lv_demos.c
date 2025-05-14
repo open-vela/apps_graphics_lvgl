@@ -109,7 +109,7 @@ bool lv_demos_create(char * info[], int size)
     }
 
     if(entry_info == NULL) {
-        LV_LOG_ERROR("lv_demos create(%s) failure!", size > 0 ? info[0] : "");
+        LV_LOG_ERROR("lv_demos create(%s) failure!", size > 0 && info ? info[0] : "");
         return false;
     }
 
