@@ -1591,7 +1591,7 @@
 #endif
 
 #ifndef LV_USE_ARC_LABEL
-    #ifdef LV_KCONFIG_PRESENT
+    #ifdef _LV_KCONFIG_PRESENT
         #ifdef CONFIG_LV_USE_ARC_LABEL
             #define LV_USE_ARC_LABEL CONFIG_LV_USE_ARC_LABEL
         #else
@@ -3251,6 +3251,7 @@
         #endif
     #endif
 
+    /** Use independent image heap for default draw buffer */
     #ifndef LV_NUTTX_DEFAULT_DRAW_BUF_USE_INDEPENDENT_IMAGE_HEAP
         #ifdef CONFIG_LV_NUTTX_DEFAULT_DRAW_BUF_USE_INDEPENDENT_IMAGE_HEAP
             #define LV_NUTTX_DEFAULT_DRAW_BUF_USE_INDEPENDENT_IMAGE_HEAP CONFIG_LV_NUTTX_DEFAULT_DRAW_BUF_USE_INDEPENDENT_IMAGE_HEAP
