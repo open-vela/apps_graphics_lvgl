@@ -75,7 +75,11 @@ void _lv_sysmon_builtin_init(void)
 #if _USE_PERF_MONITOR
     sysmon_perf.backend = lv_sysmon_perf_create("lv_sysmon_builtin", 0, 0);
     LV_ASSERT_NULL(sysmon_perf.backend);
-    lv_subject_init_pointer(&sysmon_perf.common.subject, NULL);
+
+    const lv_sysmon_perf_data_t * data = lv_sysmon_perf_get_data(sysmon_perf.backend);
+    const lv_sysmon_perf_info_t * info = &data->overall;
+    lv_subject_init_pointer(&sysmon_perf.common.subject, (void *)info);
+
     sysmon_perf.common.timer = lv_timer_create(perf_update_timer_cb, SYSMON_REFR_PERIOD_DEF, NULL);
 #endif
 
@@ -147,9 +151,7 @@ static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     lv_obj_t * label = lv_observer_get_target(observer);
     const lv_sysmon_perf_info_t * perf = lv_subject_get_pointer(subject);
-    if(!perf) {
-        return;
-    }
+    LV_ASSERT_NULL(perf);
 
 #if LV_USE_PERF_MONITOR_LOG_MODE
     LV_UNUSED(label);
