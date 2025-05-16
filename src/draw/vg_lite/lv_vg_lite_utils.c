@@ -1128,7 +1128,7 @@ bool lv_vg_lite_16px_align(void)
 
 void lv_vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_t * mult)
 {
-    vg_lite_matrix_t temp;
+    lv_matrix_t temp;
     int row, column;
     vg_lite_float_t (*m)[3] = matrix->m;
 
@@ -1143,8 +1143,8 @@ void lv_vg_lite_matrix_multiply(vg_lite_matrix_t * matrix, const vg_lite_matrix_
         }
     }
 
-    /* Copy temporary matrix into result. */
-    *matrix = temp;
+    /* Copy temporary 3x3 matrix into result. */
+    *(lv_matrix_t *)matrix = temp;
 }
 
 bool lv_vg_lite_matrix_inverse(vg_lite_matrix_t * result, const vg_lite_matrix_t * matrix)
