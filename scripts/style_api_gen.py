@@ -265,6 +265,10 @@ props = [
  'style_type': 'num',   'var_type': 'lv_opa_t' ,  'default':0, 'inherited': 0, 'layout': 0, 'ext_draw': 0,
  'dsc': "Set the intensity of the color mixing. Value 0, `LV_OPA_0` or `LV_OPA_TRANSP` means fully transparent, 255, `LV_OPA_100` or `LV_OPA_COVER` means fully covering, other values or LV_OPA_10, LV_OPA_20, etc means semi transparency."},
 
+{'name': 'IMAGE_COLORKEY',
+ 'style_type': 'ptr',   'var_type': 'const lv_image_colorkey_t *' ,  'default':0, 'inherited': 0, 'layout': 0, 'ext_draw': 0,
+ 'dsc': "Set image color key. It enables to replace a color with transparency."},
+
 {'section': 'Line', 'dsc':'Properties to describe line-like objects' },
 {'name': 'LINE_WIDTH',
  'style_type': 'num',   'var_type': 'int32_t' ,  'default':0, 'inherited': 0, 'layout': 0, 'ext_draw': 1,
