@@ -6,6 +6,7 @@
  **********************************************************************
  */
 
+
 #ifndef LV_STYLE_GEN_H
 #define LV_STYLE_GEN_H
 
@@ -101,8 +102,6 @@ void lv_style_set_bg_image_recolor(lv_style_t * style, lv_color_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_BG_IMAGE_RECOLOR;
 void lv_style_set_bg_image_recolor_opa(lv_style_t * style, lv_opa_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_BG_IMAGE_RECOLOR_OPA;
-void lv_style_set_image_colorkey(lv_style_t * style, const lv_image_colorkey_t * value);
-LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_IMAGE_COLORKEY;
 void lv_style_set_bg_image_tiled(lv_style_t * style, bool value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_BG_IMAGE_TILED;
 void lv_style_set_border_color(lv_style_t * style, lv_color_t value);
@@ -141,6 +140,8 @@ void lv_style_set_image_recolor(lv_style_t * style, lv_color_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_IMAGE_RECOLOR;
 void lv_style_set_image_recolor_opa(lv_style_t * style, lv_opa_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_IMAGE_RECOLOR_OPA;
+void lv_style_set_image_colorkey(lv_style_t * style, const lv_image_colorkey_t * value);
+LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_IMAGE_COLORKEY;
 void lv_style_set_line_width(lv_style_t * style, int32_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_LINE_WIDTH;
 void lv_style_set_line_dash_width(lv_style_t * style, int32_t value);
@@ -240,6 +241,7 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GR
 void lv_style_set_grid_cell_row_span(lv_style_t * style, int32_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GRID_CELL_ROW_SPAN;
 #endif /*LV_USE_GRID*/
+
 
 #define LV_STYLE_CONST_WIDTH(val) \
     { \
@@ -461,11 +463,6 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GR
         .prop_ptr = &_lv_style_const_prop_id_BG_IMAGE_RECOLOR_OPA, .value = { .num = (int32_t)val } \
     }
 
-#define LV_STYLE_CONST_IMAGE_COLORKEY(val) \
-    { \
-        .prop_ptr = &_lv_style_const_prop_id_IMAGE_COLORKEY, .value = { .ptr = val } \
-    }
-
 #define LV_STYLE_CONST_BG_IMAGE_TILED(val) \
     { \
         .prop_ptr = &_lv_style_const_prop_id_BG_IMAGE_TILED, .value = { .num = (int32_t)val } \
@@ -559,6 +556,11 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GR
 #define LV_STYLE_CONST_IMAGE_RECOLOR_OPA(val) \
     { \
         .prop_ptr = &_lv_style_const_prop_id_IMAGE_RECOLOR_OPA, .value = { .num = (int32_t)val } \
+    }
+
+#define LV_STYLE_CONST_IMAGE_COLORKEY(val) \
+    { \
+        .prop_ptr = &_lv_style_const_prop_id_IMAGE_COLORKEY, .value = { .ptr = val } \
     }
 
 #define LV_STYLE_CONST_LINE_WIDTH(val) \
@@ -800,6 +802,7 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GR
         .prop_ptr = &_lv_style_const_prop_id_GRID_CELL_ROW_SPAN, .value = { .num = (int32_t)val } \
     }
 #endif /*LV_USE_GRID*/
+
 
 #ifdef __cplusplus
 } /* extern "C" */
