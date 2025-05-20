@@ -1212,13 +1212,13 @@ static void _init_gradient(lv_svg_render_obj_t * obj, const lv_svg_node_t * node
 
 static void _setup_matrix(lv_matrix_t * matrix, lv_vector_dsc_t * dsc, const lv_svg_render_obj_t * obj)
 {
-    lv_memcpy(matrix, &dsc->current_dsc.matrix, sizeof(lv_matrix_t));
-    lv_matrix_multiply(&dsc->current_dsc.matrix, &obj->matrix);
+    lv_memcpy(matrix, &(lv_vector_dsc_get_current_dsc(dsc)->matrix), sizeof(lv_matrix_t));
+    lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), &obj->matrix);
 }
 
 static void _restore_matrix(lv_matrix_t * matrix, lv_vector_dsc_t * dsc)
 {
-    lv_memcpy(&dsc->current_dsc.matrix, matrix, sizeof(lv_matrix_t));
+    lv_memcpy(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix, sizeof(lv_matrix_t));
 }
 
 static void _prepare_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc)
@@ -1279,7 +1279,7 @@ static void _render_viewport(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * 
     LV_UNUSED(matrix);
 
     lv_svg_render_viewport_t * view = (lv_svg_render_viewport_t *)obj;
-    lv_matrix_multiply(&dsc->current_dsc.matrix, &obj->matrix);
+    lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), &obj->matrix);
     if(view->viewport_fill) {
         lv_area_t rc = {0, 0, (int32_t)view->width, (int32_t)view->height};
         lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
@@ -1295,7 +1295,7 @@ static void _render_rect(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     _setup_matrix(&mtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_rect_t * rect = (lv_svg_render_rect_t *)obj;
@@ -1320,7 +1320,7 @@ static void _render_circle(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * ds
     _setup_matrix(&mtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_circle_t * circle = (lv_svg_render_circle_t *)obj;
@@ -1341,7 +1341,7 @@ static void _render_ellipse(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     _setup_matrix(&mtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_ellipse_t * ellipse = (lv_svg_render_ellipse_t *)obj;
@@ -1362,7 +1362,7 @@ static void _render_line(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     _setup_matrix(&mtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_line_t * line = (lv_svg_render_line_t *)obj;
@@ -1385,7 +1385,7 @@ static void _render_poly(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     _setup_matrix(&mtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_poly_t * poly = (lv_svg_render_poly_t *)obj;
@@ -1425,7 +1425,7 @@ static void _render_image(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc
     _setup_matrix(&imtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     lv_svg_render_image_t * image = (lv_svg_render_image_t *)obj;
@@ -1587,7 +1587,7 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     _setup_matrix(&tmtx, dsc, obj);
 
     if(matrix) {
-        lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
+        lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
     bool build_path = false;
