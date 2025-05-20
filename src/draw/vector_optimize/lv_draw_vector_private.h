@@ -74,7 +74,7 @@ struct lv_platform_path_base_t {
 
 typedef struct {
     lv_platform_path_base_t * path_impl;
-    lv_vector_draw_dsc_t dsc;
+    lv_vector_draw_dsc_t * dsc;
 } _lv_vector_draw_task;
 
 /**
@@ -122,7 +122,8 @@ bool lv_vector_path_impl_is_empty(const lv_platform_path_base_t * impl);
 /* Traverser for task list */
 typedef void (*vector_draw_task_cb)(void * ctx, const lv_platform_path_base_t * path, const lv_vector_draw_dsc_t * dsc);
 
-void _lv_vector_for_each_destroy_tasks(lv_ll_t * task_list, vector_draw_task_cb cb, void * data);
+void _lv_vector_for_each_destroy_tasks(lv_vector_draw_task_list_t * draw_task_list, vector_draw_task_cb cb,
+                                       void * data);
 
 #endif /* LV_USE_VECTOR_GRAPHIC_OPTIMIZE */
 

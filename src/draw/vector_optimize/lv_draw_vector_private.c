@@ -66,28 +66,29 @@ bool lv_vector_path_impl_is_empty(const lv_platform_path_base_t * impl)
     return impl->handlers->is_empty((lv_platform_path_base_t *)impl);
 }
 
-void _lv_vector_for_each_destroy_tasks(lv_ll_t * task_list, vector_draw_task_cb cb, void * data)
+void _lv_vector_for_each_destroy_tasks(lv_vector_draw_task_list_t * draw_task_list, vector_draw_task_cb cb, void * data)
 {
-    _lv_vector_draw_task * task = _lv_ll_get_head(task_list);
+    _lv_vector_draw_task * task = _lv_ll_get_head(draw_task_list->task_list);
     _lv_vector_draw_task * next_task = NULL;
 
     while(task != NULL) {
-        next_task = _lv_ll_get_next(task_list, task);
-        _lv_ll_remove(task_list, task);
+        next_task = _lv_ll_get_next(draw_task_list->task_list, task);
+        _lv_ll_remove(draw_task_list->task_list, task);
 
         if(cb) {
-            cb(data, task->path_impl, &(task->dsc));
+            cb(data, task->path_impl, task->dsc);
         }
 
         if(task->path_impl) {
             lv_vector_path_unref(task->path_impl);
         }
-        lv_array_deinit(&(task->dsc.stroke_dsc.dash_pattern));
-
-        lv_free(task);
         task = next_task;
     }
-    lv_free(task_list);
+
+    if(draw_task_list->allocator) {
+        lv_linear_allocator_delete(draw_task_list->allocator);
+        draw_task_list->allocator = NULL;
+    }
 }
 
 #endif
