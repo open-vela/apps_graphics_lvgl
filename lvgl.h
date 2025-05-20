@@ -102,6 +102,7 @@ extern "C" {
 
 #include "src/draw/lv_draw.h"
 #include "src/draw/lv_draw_buf.h"
+#include "src/draw/lv_draw_buf_blur.h"
 
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 #include "src/draw/vector_optimize/lv_draw_vector.h"
