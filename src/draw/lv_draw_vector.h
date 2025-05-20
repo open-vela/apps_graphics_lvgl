@@ -310,7 +310,7 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
  * @param path Pointer to the vector path object to check
  * @return true if path contains no points or commands, false otherwise
  */
-bool lv_vector_path_is_empty(lv_vector_path_t * path);
+bool lv_vector_path_is_empty(const lv_vector_path_t * path);
 
 /**
  * Create a vector graphic descriptor
@@ -560,6 +560,16 @@ void lv_vector_dsc_translate(lv_vector_dsc_t * dsc, float tx, float ty);
  * @param skew_y        the skew factor for y direction
  */
 void lv_vector_dsc_skew(lv_vector_dsc_t * dsc, float skew_x, float skew_y);
+
+/**
+ * Get the current drawing descriptor from the vector graphic descriptor
+ * @param dsc       pointer to a vector graphic descriptor
+ * @return          pointer to the current active drawing descriptor (contains style properties like stroke/fill color)
+ */
+static inline lv_vector_draw_dsc_t * lv_vector_dsc_get_current_dsc(lv_vector_dsc_t * dsc)
+{
+    return &(dsc->current_dsc);
+}
 
 /**
  * Add a graphic path to the draw list
