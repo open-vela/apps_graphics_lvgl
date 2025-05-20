@@ -19,6 +19,8 @@ extern "C" {
 
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
+#include "../../misc/lv_linear_allocator.h"
+
 #if !LV_USE_MATRIX
 #error "lv_draw_vector needs LV_USE_MATRIX = 1"
 #endif
@@ -130,46 +132,57 @@ typedef struct {
     lv_vector_gradient_spread_t spread;
 } lv_vector_gradient_t;
 
-typedef struct {
-    lv_vector_draw_style_t style;
+typedef union {
     lv_color32_t color;
+    lv_draw_image_dsc_t img_dsc;
+    lv_vector_gradient_t gradient;
+} lv_vector_draw_style_attrs_t;
+
+typedef struct {
+    int32_t use_count;
     lv_opa_t opa;
     lv_vector_fill_t fill_rule;
     lv_vector_fill_units_t fill_units;
-    lv_draw_image_dsc_t img_dsc;
-    lv_vector_gradient_t gradient;
+    lv_vector_draw_style_t style;
+    lv_vector_draw_style_attrs_t draw_attrs;
     lv_matrix_t matrix;
 } lv_vector_fill_dsc_t;
 
 typedef struct {
-    lv_vector_draw_style_t style;
-    lv_color32_t color;
+    int32_t use_count;
     lv_opa_t opa;
     float width;
-    lv_array_t dash_pattern;
+    uint16_t dash_count;
+    float * dash_pattern;
     lv_vector_stroke_cap_t cap;
     lv_vector_stroke_join_t join;
     uint16_t miter_limit;
-    lv_vector_gradient_t gradient;
+    lv_vector_draw_style_t style;
+    lv_vector_draw_style_attrs_t draw_attrs;
     lv_matrix_t matrix;
 } lv_vector_stroke_dsc_t;
 
 typedef struct {
-    lv_vector_fill_dsc_t fill_dsc;
-    lv_vector_stroke_dsc_t stroke_dsc;
+    lv_vector_fill_dsc_t * fill_dsc;
+    lv_vector_stroke_dsc_t * stroke_dsc;
     lv_matrix_t matrix;
     lv_vector_blend_t blend_mode;
     lv_area_t scissor_area;
 } lv_vector_draw_dsc_t;
 
 typedef struct {
-    lv_draw_dsc_base_t base;
     lv_ll_t * task_list; /*draw task list.*/
+    lv_linear_allocator * allocator;
+} lv_vector_draw_task_list_t;
+
+typedef struct {
+    lv_draw_dsc_base_t base;
+    lv_vector_draw_task_list_t draw_task_list;
 } lv_draw_vector_task_dsc_t;
 
 typedef struct {
     lv_layer_t * layer;
-    lv_vector_draw_dsc_t current_dsc;
+    lv_vector_draw_dsc_t * current_dsc;
     /* private data */
     lv_draw_vector_task_dsc_t tasks;
 } lv_vector_dsc_t;
@@ -555,6 +568,13 @@ void lv_vector_dsc_translate(lv_vector_dsc_t * dsc, float tx, float ty);
  * @param skew_y        the skew factor for y direction
  */
 void lv_vector_dsc_skew(lv_vector_dsc_t * dsc, float skew_x, float skew_y);
+
+/**
+ * Get the current drawing descriptor from the vector graphic descriptor
+ * @param dsc       pointer to a vector graphic descriptor
+ * @return          pointer to the current active drawing descriptor (contains style properties like stroke/fill color)
+ */
+lv_vector_draw_dsc_t * lv_vector_dsc_get_current_dsc(const lv_vector_dsc_t * dsc);
 
 /**
  * Add a graphic path to the draw list

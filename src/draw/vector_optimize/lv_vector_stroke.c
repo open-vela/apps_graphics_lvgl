@@ -101,7 +101,8 @@ typedef struct {
 /* dash line generator */
 typedef struct {
     lv_line_generator gen;
-    lv_array_t * dash_arr;
+    const float * dash_arr;
+    uint32_t dash_cnt;
     float dash_offset;
     /* dash calc */
     lv_distance_point_t * p1;
@@ -652,14 +653,14 @@ static void calc_dash_offset(lv_dash_generator * gen, float offset)
     gen->cur_dash_offset = 0.0f;
 
     while(offset > 0.0f) {
-        float dash = *((float *)lv_array_at(gen->dash_arr, gen->cur_dash_idx));
+        float dash = gen->dash_arr[gen->cur_dash_idx];
 
         if(offset > dash) {
             offset -= dash;
             gen->cur_dash_idx++;
             gen->cur_dash_offset = 0.0f;
 
-            if(gen->cur_dash_idx >= lv_array_size(gen->dash_arr)) {
+            if(gen->cur_dash_idx >= gen->dash_cnt) {
                 gen->cur_dash_idx = 0;
             }
         }
@@ -676,7 +677,6 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
 
     uint8_t cmd = LV_VECTOR_PATH_OP_MOVE_TO;
     lv_array_t * array = &LINE_GEN(gen)->dist_arr;
-    lv_array_t * dash_array = dash_gen->dash_arr;
 
     lv_line_generator * line_gen = LINE_GEN(gen);
 
@@ -689,7 +689,7 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
             /* fall through */
             case LV_LINE_GEN_READY: {
                     size_t size = lv_array_size(array);
-                    if(size < 2 || lv_array_size(dash_array) < 2) {
+                    if(size < 2 || dash_gen->dash_cnt < 2) {
                         *op = LV_VECTOR_POLYGON_STOP;
                         return false;
                     }
@@ -710,7 +710,7 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
                     return true;
                 }
             case LV_LINE_GEN_FIRST_OUTLINE: {
-                    float dash_distance = *((float *)lv_array_at(dash_array, dash_gen->cur_dash_idx));
+                    float dash_distance = dash_gen->dash_arr[dash_gen->cur_dash_idx];
                     dash_distance -= dash_gen->cur_dash_offset;
 
                     lv_vector_path_op_t opt = (dash_gen->cur_dash_idx & 0x1) ? LV_VECTOR_PATH_OP_MOVE_TO : LV_VECTOR_PATH_OP_LINE_TO;
@@ -719,7 +719,7 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
                         dash_gen->distance -= dash_distance;
                         dash_gen->cur_dash_idx++;
 
-                        if(dash_gen->cur_dash_idx >= lv_array_size(dash_array)) {
+                        if(dash_gen->cur_dash_idx >= dash_gen->dash_cnt) {
                             dash_gen->cur_dash_idx = 0;
                         }
                         dash_gen->cur_dash_offset = 0.0f;
@@ -868,7 +868,8 @@ static void lv_dash_generator_init(lv_dash_generator * gen, const lv_vector_stro
     BASE_GEN(gen)->cb = path_to_stroke_cb;
     BASE_GEN(gen)->user_data = (void *)line_gen;
 
-    gen->dash_arr = (lv_array_t *)(&stroke_dsc->dash_pattern);
+    gen->dash_arr = stroke_dsc->dash_pattern;
+    gen->dash_cnt = stroke_dsc->dash_count;
     gen->dash_offset = 0.0f;
     gen->p1 = NULL;
     gen->p2 = NULL;
@@ -905,9 +906,7 @@ bool lv_vector_stroke_generate(const lv_platform_path_base_t * impl, const lv_ve
     BASE_GEN(&line_gen)->cb = cb;
     BASE_GEN(&line_gen)->user_data = user_data;
 
-    lv_array_t * dash_array = (lv_array_t *)(&(stroke_dsc->dash_pattern));
-
-    if(lv_array_size(dash_array) > 0) { /* dash line */
+    if(stroke_dsc->dash_count > 0) { /* dash line */
         lv_dash_generator dash_gen;
         lv_dash_generator_init(&dash_gen, stroke_dsc, &line_gen);
         ret = lv_vector_path_flatten(impl, path_to_stroke_cb, &dash_gen);

@@ -1,24 +1,41 @@
 /**
- * @file lv_draw_img.c
+ * @file lv_draw_sw_vector.c
  *
  */
 
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_draw_sw.h"
+#include "../sw/lv_draw_sw.h"
 
-#if LV_USE_VECTOR_GRAPHIC && LV_USE_THORVG
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_USE_THORVG
 #if LV_USE_THORVG_EXTERNAL
     #include <thorvg_capi.h>
 #else
     #include "../../libs/thorvg/thorvg_capi.h"
 #endif
 #include "../../stdlib/lv_string.h"
+#include "lv_vector_polygon.h"
 
 /*********************
  *      DEFINES
  *********************/
+
+#define LV_SW_PATH_CAST(ptr) \
+    (assert(ptr != NULL), \
+     (lv_platform_sw_path_t *)(ptr))
+
+#define LV_SW_PATH_ARRAY_DEFAULT_SIZE 8
+
+#define CHECK_AND_RESIZE_PATH_CONTAINER(P, N) \
+    do { \
+        if ((lv_array_size(&(P)->ops) + (N)) > lv_array_capacity(&(P)->ops)) { \
+            lv_array_resize(&(P)->ops, ((P)->ops.capacity << 1)); \
+        } \
+        if ((lv_array_size(&(P)->points) + (N)) > lv_array_capacity(&(P)->points)) { \
+            lv_array_resize(&(P)->points, ((P)->points.capacity << 1)); \
+        } \
+    } while(0)
 
 /**********************
  *      TYPEDEFS
@@ -36,6 +53,12 @@ typedef struct {
     uint8_t b;
     uint8_t a;
 } _tvg_color;
+
+typedef struct _lv_platform_sw_path_t {
+    lv_platform_path_base_t base;
+    lv_array_t ops;
+    lv_array_t points;
+} lv_platform_sw_path_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -83,7 +106,7 @@ static void _set_paint_matrix(Tvg_Paint * obj, const Tvg_Matrix * m)
     tvg_paint_set_transform(obj, m);
 }
 
-static void _set_paint_shape(Tvg_Paint * obj, const lv_vector_path_t * p)
+static void _set_paint_shape(Tvg_Paint * obj, const lv_platform_sw_path_t * p)
 {
     uint32_t pidx = 0;
     lv_vector_path_op_t * op = lv_array_front(&p->ops);
@@ -222,11 +245,11 @@ static void _set_paint_stroke(Tvg_Paint * obj, const lv_vector_stroke_dsc_t * ds
 {
     if(dsc->style == LV_VECTOR_DRAW_STYLE_SOLID) {
         _tvg_color c;
-        _lv_color_to_tvg(&c, &dsc->color, dsc->opa);
+        _lv_color_to_tvg(&c, &dsc->draw_attrs.color, dsc->opa);
         tvg_shape_set_stroke_color(obj, c.r, c.g, c.b, c.a);
     }
     else {   /*gradient*/
-        _set_paint_stroke_gradient(obj, &dsc->gradient, &dsc->matrix);
+        _set_paint_stroke_gradient(obj, &dsc->draw_attrs.gradient, &dsc->matrix);
     }
 
     tvg_shape_set_stroke_width(obj, dsc->width);
@@ -234,9 +257,8 @@ static void _set_paint_stroke(Tvg_Paint * obj, const lv_vector_stroke_dsc_t * ds
     tvg_shape_set_stroke_cap(obj, _lv_stroke_cap_to_tvg(dsc->cap));
     tvg_shape_set_stroke_join(obj, _lv_stroke_join_to_tvg(dsc->join));
 
-    if(!lv_array_is_empty(&dsc->dash_pattern)) {
-        float * dash_array = lv_array_front(&dsc->dash_pattern);
-        tvg_shape_set_stroke_dash(obj, dash_array, dsc->dash_pattern.size);
+    if(dsc->dash_count > 0) {
+        tvg_shape_set_stroke_dash(obj, dsc->dash_pattern, dsc->dash_count);
     }
 }
 
@@ -316,24 +338,29 @@ static void _set_paint_fill(Tvg_Paint * obj, Tvg_Canvas * canvas, const lv_vecto
 
     if(dsc->style == LV_VECTOR_DRAW_STYLE_SOLID) {
         _tvg_color c;
-        _lv_color_to_tvg(&c, &dsc->color, dsc->opa);
+        _lv_color_to_tvg(&c, &dsc->draw_attrs.color, dsc->opa);
         tvg_shape_set_fill_color(obj, c.r, c.g, c.b, c.a);
     }
     else if(dsc->style == LV_VECTOR_DRAW_STYLE_PATTERN) {
-        lv_matrix_t imx = *matrix;
+        lv_matrix_t imx;
 
         if(dsc->fill_units == LV_VECTOR_FILL_UNITS_OBJECT_BOUNDING_BOX) {
             /* Convert to object bounding box coordinates */
+            imx = *matrix;
+
             float x, y, w, h;
             tvg_paint_get_bounds(obj, &x, &y, &w, &h, false);
             lv_matrix_translate(&imx, x, y);
+            lv_matrix_multiply(&imx, &dsc->matrix);
         }
-
-        lv_matrix_multiply(&imx, &dsc->matrix);
-        _set_paint_fill_pattern(obj, canvas, &dsc->img_dsc, &imx);
+        else {
+            /* Copy fill matrix directly, no need to convert */
+            imx = dsc->matrix;
+        }
+        _set_paint_fill_pattern(obj, canvas, &dsc->draw_attrs.img_dsc, &imx);
     }
     else if(dsc->style == LV_VECTOR_DRAW_STYLE_GRADIENT) {
-        _set_paint_fill_gradient(obj, &dsc->gradient, &dsc->matrix);
+        _set_paint_fill_gradient(obj, &dsc->draw_attrs.gradient, &dsc->matrix);
     }
 }
 
@@ -383,8 +410,9 @@ static void _set_paint_blend_mode(Tvg_Paint * obj, lv_vector_blend_t blend)
     tvg_paint_set_blend_method(obj, _lv_blend_to_tvg(blend));
 }
 
-static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
+static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, const lv_vector_draw_dsc_t * dsc)
 {
+    lv_platform_sw_path_t * path = (lv_platform_sw_path_t *)path_impl;
     Tvg_Canvas * canvas = (Tvg_Canvas *)ctx;
 
     Tvg_Paint * obj = tvg_shape_new();
@@ -394,7 +422,7 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
         _lv_area_to_tvg(&rc, &dsc->scissor_area);
 
         _tvg_color c;
-        _lv_color_to_tvg(&c, &dsc->fill_dsc.color, dsc->fill_dsc.opa);
+        _lv_color_to_tvg(&c, &dsc->fill_dsc->draw_attrs.color, dsc->fill_dsc->opa);
 
         Tvg_Matrix mtx = {
             1.0f, 0.0f, 0.0f,
@@ -411,8 +439,14 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
         _set_paint_matrix(obj, &mtx);
 
         _set_paint_shape(obj, path);
-        _set_paint_fill(obj, canvas, &dsc->fill_dsc, &dsc->matrix);
-        _set_paint_stroke(obj, &dsc->stroke_dsc);
+
+        if(dsc->fill_dsc->opa > 0) {
+            _set_paint_fill(obj, canvas, dsc->fill_dsc, &dsc->matrix);
+        }
+
+        if(dsc->stroke_dsc->opa > 0) {
+            _set_paint_stroke(obj, dsc->stroke_dsc);
+        }
         _set_paint_blend_mode(obj, dsc->blend_mode);
     }
 
@@ -423,44 +457,11 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
  *   GLOBAL FUNCTIONS
  **********************/
 
-#if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
-void lv_draw_vector_immediable(lv_layer_t * layer, const lv_vector_path_t * path, const lv_vector_draw_dsc_t * dsc)
-{
-    void * buf = lv_draw_layer_alloc_buf(layer);
-    if(buf == NULL) {
-        return;
-    }
-    lv_draw_buf_t * draw_buf = layer->draw_buf;
-
-    lv_color_format_t cf = draw_buf->header.cf;
-
-    if(cf != LV_COLOR_FORMAT_ARGB8888 && \
-       cf != LV_COLOR_FORMAT_XRGB8888) {
-        LV_LOG_ERROR("unsupported layer color: %d", cf);
-        return;
-    }
-
-    buf = draw_buf->data;
-    int32_t width = lv_area_get_width(&layer->buf_area) - 1;
-    int32_t height = lv_area_get_height(&layer->buf_area) - 1;
-    uint32_t stride = draw_buf->header.stride;
-    Tvg_Canvas * canvas = tvg_swcanvas_create();
-    tvg_swcanvas_set_target(canvas, buf, stride / 4, width, height, TVG_COLORSPACE_ARGB8888);
-
-    _task_draw_cb(canvas, path, dsc);
-    if(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS) {
-        tvg_canvas_sync(canvas);
-    }
-
-    tvg_canvas_destroy(canvas);
-}
-#endif
-
 void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc_t * dsc)
 {
     LV_UNUSED(draw_unit);
 
-    if(dsc->task_list == NULL)
+    if(dsc->draw_task_list.task_list == NULL)
         return;
 
     lv_layer_t * layer = dsc->base.layer;
@@ -483,13 +484,202 @@ void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc
     Tvg_Canvas * canvas = tvg_swcanvas_create();
     tvg_swcanvas_set_target(canvas, buf, stride / 4, width, height, TVG_COLORSPACE_ARGB8888);
 
-    _lv_vector_for_each_destroy_tasks(dsc->task_list, _task_draw_cb, canvas);
+    _lv_vector_for_each_destroy_tasks((lv_vector_draw_task_list_t *)&dsc->draw_task_list, _task_draw_cb, canvas);
 
     if(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS) {
         tvg_canvas_sync(canvas);
     }
 
     tvg_canvas_destroy(canvas);
+}
+
+static struct lv_platform_path_base_t * lv_sw_path_create_cb(lv_vector_path_quality_t quality)
+{
+    LV_UNUSED(quality);
+    lv_platform_sw_path_t * path = lv_malloc_zeroed(sizeof(lv_platform_sw_path_t));
+    LV_ASSERT_MALLOC(path);
+    lv_array_init(&path->ops, LV_SW_PATH_ARRAY_DEFAULT_SIZE, sizeof(uint8_t));
+    lv_array_init(&path->points, LV_SW_PATH_ARRAY_DEFAULT_SIZE, sizeof(lv_fpoint_t));
+    return (lv_platform_path_base_t *)path;
+}
+
+static void lv_sw_path_destroy_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    lv_array_deinit(&path->ops);
+    lv_array_deinit(&path->points);
+    lv_free(path);
+}
+
+static struct lv_platform_path_base_t * lv_sw_path_clone_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * src = LV_SW_PATH_CAST(self);
+    lv_platform_sw_path_t * dst = (lv_platform_sw_path_t *)lv_sw_path_create_cb(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
+    lv_array_copy(&dst->ops, &src->ops);
+    lv_array_copy(&dst->points, &src->points);
+    return (lv_platform_path_base_t *)dst;
+}
+
+static void lv_sw_path_concat_cb(struct lv_platform_path_base_t * self, struct lv_platform_path_base_t * other)
+{
+    lv_platform_sw_path_t * dst = LV_SW_PATH_CAST(self);
+    lv_platform_sw_path_t * src = LV_SW_PATH_CAST(other);
+    lv_array_concat(&dst->ops, &src->ops);
+    lv_array_concat(&dst->points, &src->points);
+}
+
+static void lv_sw_path_move_to_cb(struct lv_platform_path_base_t * self, const lv_fpoint_t * p)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
+
+    uint8_t op = LV_VECTOR_PATH_OP_MOVE_TO;
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT_PUSH_BACK(&path->points, p);
+}
+
+static void lv_sw_path_line_to_cb(struct lv_platform_path_base_t * self, const lv_fpoint_t * p)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    if(lv_array_is_empty(&path->ops)) {
+        return;
+    }
+
+    CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
+    uint8_t op = LV_VECTOR_PATH_OP_LINE_TO;
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT_PUSH_BACK(&path->points, p);
+}
+
+static void lv_sw_path_quad_to_cb(struct lv_platform_path_base_t * self, const lv_fpoint_t * p1, const lv_fpoint_t * p2)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    if(lv_array_is_empty(&path->ops)) {
+        /*first op must be move_to*/
+        return;
+    }
+
+    CHECK_AND_RESIZE_PATH_CONTAINER(path, 2);
+
+    uint8_t op = LV_VECTOR_PATH_OP_QUAD_TO;
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT2_PUSH_BACK(&path->points, p1, p2);
+}
+
+static void lv_sw_path_cubic_to_cb(struct lv_platform_path_base_t * self,
+                                   const lv_fpoint_t * p1, const lv_fpoint_t * p2,
+                                   const lv_fpoint_t * p3)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    if(lv_array_is_empty(&path->ops)) {
+        /*first op must be move_to*/
+        return;
+    }
+
+    CHECK_AND_RESIZE_PATH_CONTAINER(path, 3);
+
+    uint8_t op = LV_VECTOR_PATH_OP_CUBIC_TO;
+    OP_PUSH_BACK(&path->ops, &op);
+    POINT3_PUSH_BACK(&path->points, p1, p2, p3);
+}
+
+
+static void lv_sw_path_close_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    if(lv_array_is_empty(&path->ops)) {
+        /*first op must be move_to*/
+        return;
+    }
+
+    CHECK_AND_RESIZE_PATH_CONTAINER(path, 1);
+
+    uint8_t op = LV_VECTOR_PATH_OP_CLOSE;
+    OP_PUSH_BACK(&path->ops, &op);
+}
+
+static void lv_sw_path_clear_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    lv_array_clear(&path->ops);
+    lv_array_clear(&path->points);
+}
+
+static void lv_sw_path_get_bounds_cb(struct lv_platform_path_base_t * self, lv_area_t * area)
+{
+    LV_LOG_WARN("not implemented");
+}
+
+static lv_vector_path_quality_t lv_sw_path_get_quality_cb(struct lv_platform_path_base_t * self)
+{
+    LV_LOG_WARN("not implemented");
+    return LV_VECTOR_PATH_QUALITY_MEDIUM;
+}
+
+void lv_sw_matrix_transform_point(const lv_matrix_t * matrix, lv_fpoint_t * point)
+{
+    float x = point->x;
+    float y = point->y;
+
+    point->x = x * matrix->m[0][0] + y * matrix->m[1][0] + matrix->m[0][2];
+    point->y = x * matrix->m[0][1] + y * matrix->m[1][1] + matrix->m[1][2];
+}
+
+static void lv_sw_path_transform_cb(struct lv_platform_path_base_t * self, const lv_matrix_t * matrix)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+
+    lv_fpoint_t * pt = lv_array_front(&path->points);
+    uint32_t size = lv_array_size(&path->points);
+    for(uint32_t i = 0; i < size; i++) {
+        lv_sw_matrix_transform_point(matrix, &pt[i]);
+    }
+}
+
+static void lv_sw_path_get_data_cb(struct lv_platform_path_base_t * self, lv_vector_path_data_t * data)
+{
+    LV_LOG_WARN("not implemented");
+}
+
+static void lv_sw_path_transform_path_cb(struct lv_platform_path_base_t * self,
+                                         lv_vector_path_transform_data_t * transform_data)
+{
+    LV_LOG_WARN("not implemented");
+}
+
+static bool lv_sw_path_is_empty_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+
+    if(lv_array_size(&path->points) == 0) {
+        return true;
+    }
+    return false;
+}
+
+static const lv_platform_path_handlers sw_path_handlers = {
+    .create         = lv_sw_path_create_cb,
+    .destroy        = lv_sw_path_destroy_cb,
+    .clone          = lv_sw_path_clone_cb,
+    .concat         = lv_sw_path_concat_cb,
+    .move_to        = lv_sw_path_move_to_cb,
+    .line_to        = lv_sw_path_line_to_cb,
+    .quad_to        = lv_sw_path_quad_to_cb,
+    .cubic_to       = lv_sw_path_cubic_to_cb,
+    .close_path     = lv_sw_path_close_cb,
+    .clear          = lv_sw_path_clear_cb,
+    .get_bounding   = lv_sw_path_get_bounds_cb,
+    .get_quality    = lv_sw_path_get_quality_cb,
+    .transform      = lv_sw_path_transform_cb,
+    .get_data       = lv_sw_path_get_data_cb,
+    .is_empty       = lv_sw_path_is_empty_cb,
+    .transform_path = lv_sw_path_transform_path_cb,
+};
+
+const lv_platform_path_handlers * lv_vector_get_platform_handlers(void)
+{
+    return &sw_path_handlers;
 }
 
 #endif /*LV_USE_DRAW_SW*/

@@ -413,7 +413,7 @@ menu "LVGL configuration"
 			bool "Use Vector Graphic APIs optimizated"
 			default n
 			select LV_USE_MATRIX
-			depends on !LV_USE_VECTOR_GRAPHIC
+			depends on !LV_USE_VECTOR_GRAPHIC && LV_USE_LINEAR_ALLOCATOR
 			help
 				Enable drawing support vector graphic optimizated APIs.
 
