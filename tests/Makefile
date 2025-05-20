@@ -169,6 +169,11 @@ TEST_CASE_FILES += \
     ${LVGL_PATH}/tests/src/test_cases/test_svg.c
 endif
 
+ifeq ($(CONFIG_LV_USE_PERF_MONITOR), y)
+TEST_CASE_FILES += \
+    ${LVGL_PATH}/tests/src/test_cases/test_perf_monitor.c
+endif
+
 
 $(foreach TEST_CASE_FILE, ${TEST_CASE_FILES}, \
     $(eval include ${LVGL_PATH}/tests/Makefile_Tests) \

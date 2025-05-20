@@ -137,6 +137,10 @@ if(CONFIG_LVGL_UNITTESTS)
         list(APPEND TEST_CASE_FILES ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_svg.c ${LVGL_PATH}/tests/src/test_cases/test_svg.c ${LVGL_PATH}/tests/src/test_cases/libs/test_svg_decoder.c)
     endif()
 
+    if(CONFIG_LV_USE_PERF_MONITOR)
+        list(APPEND TEST_CASE_FILES ${LVGL_PATH}/tests/src/test_cases/test_perf_monitor.c)
+    endif()
+
     # Include each test case file
     foreach(TEST_CASE_FILE ${TEST_CASE_FILES})
         include(${LVGL_PATH}/tests/cmake_nuttx/Makefile_Tests)
