@@ -304,7 +304,8 @@ static void draw_letter_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_
         vg_lite_scale(scale, scale, &matrix);
     }
 
-    if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
+    /* FIXME: workaround clip issue */
+    if(0 && vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
         /* set scissor area */
         lv_vg_lite_set_scissor_area(u->base_unit.clip_area);
 
