@@ -5,7 +5,7 @@
 #include "unity/unity.h"
 
 /*Bypassing resolution check*/
-#define TEST_DISPLAY_ROTATION_ASSERT_EQUAL_SCREENSHOT(path) TEST_ASSERT_MESSAGE(lv_test_screenshot_compare(path), path);
+#define TEST_DISPLAY_ROTATION_ASSERT_EQUAL_SCREENSHOT(path) TEST_ASSERT_MESSAGE(lv_test_assert_image_eq(path), path);
 
 #ifndef NON_AMD64_BUILD
     #define EXT_NAME ".lp64.png"
