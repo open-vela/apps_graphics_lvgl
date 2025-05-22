@@ -74,6 +74,7 @@ if(CONFIG_LVGL_UNITTESTS)
         ${LVGL_PATH}/tests/src/test_cases/test_demo_stress.c
         ${LVGL_PATH}/tests/src/test_cases/cache/test_cache.c
         ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_vector.c
+        ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_vector_detail.c
         ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_label.c
         ${LVGL_PATH}/tests/src/test_cases/draw/test_draw_sw_rotate.c
         ${LVGL_PATH}/tests/src/test_cases/draw/test_image_formats.c
