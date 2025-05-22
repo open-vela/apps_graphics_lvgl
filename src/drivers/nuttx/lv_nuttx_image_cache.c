@@ -13,6 +13,7 @@
 #if LV_USE_NUTTX
 
 #include <nuttx/mm/mm.h>
+#include <unistd.h>
 
 /*********************
  *      DEFINES
