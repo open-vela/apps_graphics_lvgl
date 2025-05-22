@@ -780,9 +780,14 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
         return;
     }
 
+    lv_area_t final_rect;
+    if(!_lv_area_intersect(&final_rect, &r, rect)) {
+        return;
+    }
+
 #if LV_USE_VECTOR_GRAPHIC_DIRECT_RENDERING
     lv_area_t scissor_store = dsc->current_dsc.scissor_area;
-    dsc->current_dsc.scissor_area = *rect;
+    dsc->current_dsc.scissor_area = final_rect;
     lv_draw_vector_immediable(dsc->layer, NULL, &dsc->current_dsc);
     dsc->current_dsc.scissor_area = scissor_store;
 
@@ -798,7 +803,7 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
 
     new_task->dsc.fill_dsc.color = dsc->current_dsc.fill_dsc.color;
     new_task->dsc.fill_dsc.opa = dsc->current_dsc.fill_dsc.opa;
-    lv_area_copy(&(new_task->dsc.scissor_area), rect);
+    lv_area_copy(&(new_task->dsc.scissor_area), &final_rect);
 #endif
 }
 
