@@ -48,6 +48,7 @@ typedef struct {
     lv_nuttx_uv_fb_ctx_t fb_ctx;
     lv_nuttx_uv_input_ctx_t input_ctx;
     lv_nuttx_uv_input_ctx_t uinput_ctx;
+    lv_nuttx_uv_input_ctx_t mouse_ctx;
     lv_nuttx_uv_vsync_ctx_t * vsync_ctx;
     int32_t ref_count;
 } lv_nuttx_uv_ctx_t;
@@ -77,6 +78,12 @@ static void lv_nuttx_uv_input_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 static void lv_nuttx_uv_uinput_poll_cb(uv_poll_t * handle, int status, int events);
 static int lv_nuttx_uv_uinput_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
 static void lv_nuttx_uv_uinput_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
+
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+static void lv_nuttx_uv_mouse_poll_cb(uv_poll_t * handle, int status, int events);
+static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
+static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
+#endif
 
 /**********************
  *  STATIC VARIABLES
@@ -119,6 +126,13 @@ void * lv_nuttx_uv_init(lv_nuttx_uv_t * uv_info)
         goto err_out;
     }
 
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+    if((ret = lv_nuttx_uv_mouse_init(uv_info, uv_ctx)) < 0) {
+        LV_LOG_ERROR("lv_nuttx_uv_mouse_init fail : %d", ret);
+        goto err_out;
+    }
+#endif
+
     lv_nuttx_uv_vsync_t vsync_info;
     vsync_info.loop = uv_info->loop;
     vsync_info.disp = uv_info->disp;
@@ -144,6 +158,9 @@ void lv_nuttx_uv_deinit(void ** data)
     --uv_ctx->ref_count;
     lv_nuttx_uv_input_deinit(uv_ctx);
     lv_nuttx_uv_uinput_deinit(uv_ctx);
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+    lv_nuttx_uv_mouse_deinit(uv_ctx);
+#endif
     lv_nuttx_uv_fb_deinit(uv_ctx);
     lv_nuttx_uv_timer_deinit(uv_ctx);
     *data = NULL;
@@ -521,6 +538,71 @@ static void lv_nuttx_uv_uinput_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
     }
     LV_LOG_USER("Done");
 }
+
+#ifdef CONFIG_LV_USE_NUTTX_MOUSE
+
+static void lv_nuttx_uv_mouse_poll_cb(uv_poll_t * handle, int status, int events)
+{
+    lv_indev_t * indev = ((lv_nuttx_uv_ctx_t *)(handle->data))->mouse_ctx.indev;
+
+    if(status < 0) {
+        LV_LOG_WARN("mouse poll error: %s ", uv_strerror(status));
+        return;
+    }
+
+    if(events & UV_READABLE) {
+        lv_indev_read(indev);
+    }
+}
+
+static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx)
+{
+    uv_loop_t * loop = uv_info->loop;
+    lv_indev_t * mouse = uv_info->mouse_indev;
+
+    if(mouse == NULL) {
+        LV_LOG_USER("skip uv mouse init.");
+        return 0;
+    }
+
+    LV_ASSERT_NULL(uv_ctx);
+    LV_ASSERT_NULL(loop);
+
+    if(lv_indev_get_mode(mouse) == LV_INDEV_MODE_EVENT) {
+        LV_LOG_ERROR("mouse device has been running in event-driven mode");
+        return -EINVAL;
+    }
+
+    lv_nuttx_uv_input_ctx_t * mouse_ctx = &uv_ctx->mouse_ctx;
+    mouse_ctx->fd = *(int *)lv_indev_get_driver_data(mouse);
+    if(mouse_ctx->fd <= 0) {
+        LV_LOG_ERROR("can't get valid mouse fd");
+        return 0;
+    }
+
+    mouse_ctx->indev = mouse;
+    lv_indev_set_mode(mouse, LV_INDEV_MODE_EVENT);
+
+    mouse_ctx->input_poll.data = uv_ctx;
+    uv_poll_init(loop, &mouse_ctx->input_poll, mouse_ctx->fd);
+    uv_ctx->ref_count++;
+    uv_poll_start(&mouse_ctx->input_poll, UV_READABLE, lv_nuttx_uv_mouse_poll_cb);
+
+    LV_LOG_USER("lvgl mouse loop start OK");
+
+    return 0;
+}
+
+static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx)
+{
+    lv_nuttx_uv_input_ctx_t * mouse_ctx = &uv_ctx->mouse_ctx;
+    if(mouse_ctx->fd > 0) {
+        uv_close((uv_handle_t *)&mouse_ctx->input_poll, lv_nuttx_uv_deinit_cb);
+    }
+    LV_LOG_USER("Done");
+}
+
+#endif /*LV_USE_NUTTX_MOUSE*/
 
 #endif /*LV_USE_NUTTX_LIBUV*/
 

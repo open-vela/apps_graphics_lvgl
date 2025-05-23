@@ -1768,7 +1768,7 @@ menu "LVGL configuration"
 		if LV_USE_NUTTX_MOUSE
 			config LV_MOUSE_RATE
 				int "Mouse default rate"
-				default 3
+				default 1
 		endif
 
 		config LV_USE_LINUX_DRM
