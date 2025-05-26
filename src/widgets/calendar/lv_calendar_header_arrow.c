@@ -112,7 +112,7 @@ static void month_event_cb(lv_event_t * e)
     d = lv_calendar_get_showed_date(calendar);
     lv_calendar_date_t newd = *d;
 
-    LV_ASSERT_FORMAT_MSG(newd.year >= 0 && newd.month >= 1 && newd.month <= 12,
+    LV_ASSERT_FORMAT_MSG(newd.year > 0 && newd.month >= 1 && newd.month <= 12,
                          "Invalid date: %d-%d", newd.year, newd.month);
 
     /*The last child is the right button*/
@@ -147,7 +147,7 @@ static void value_changed_event_cb(lv_event_t * e)
     lv_obj_t * calendar = lv_obj_get_parent(header);
 
     const lv_calendar_date_t * date = lv_calendar_get_showed_date(calendar);
-    LV_ASSERT_FORMAT_MSG(date->year >= 0 && date->month >= 1 && date->month <= 12,
+    LV_ASSERT_FORMAT_MSG(date->year > 0 && date->month >= 1 && date->month <= 12,
                          "Invalid date: %d-%d", date->year, date->month);
 
     lv_obj_t * label = lv_obj_get_child(header, 1);
