@@ -109,18 +109,18 @@ void lv_tabview_set_active(lv_obj_t * obj, uint32_t idx, lv_anim_enable_t anim_e
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_tabview_t * tabview = (lv_tabview_t *)obj;
 
+    tabview->tab_cur = idx;
+
     lv_obj_t * cont = lv_tabview_get_content(obj);
     lv_obj_t * tab_bar = lv_tabview_get_tab_bar(obj);
 
     uint32_t tab_cnt = lv_tabview_get_tab_count(obj);
-    if(idx >= tab_cnt) {
-        idx = tab_cnt - 1;
-    }
+    if(idx >= tab_cnt) return;
 
     /*To be sure lv_obj_get_content_width will return valid value*/
-    lv_obj_update_layout(obj);
-
     if(cont == NULL) return;
+
+    lv_obj_update_layout(obj);
 
     if((tabview->tab_pos & LV_DIR_VER) != 0) {
         int32_t gap = lv_obj_get_style_pad_column(cont, LV_PART_MAIN);
@@ -146,8 +146,6 @@ void lv_tabview_set_active(lv_obj_t * obj, uint32_t idx, lv_anim_enable_t anim_e
         i++;
         button = lv_obj_get_child_by_type(tab_bar, (int32_t)i, &lv_button_class);
     }
-
-    tabview->tab_cur = idx;
 }
 
 void lv_tabview_set_tab_bar_position(lv_obj_t * obj, lv_dir_t dir)
