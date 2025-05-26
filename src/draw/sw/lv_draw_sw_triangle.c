@@ -128,6 +128,7 @@ void lv_draw_sw_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle_dsc_
     blend_dsc.mask_buf = mask_buf;
     blend_dsc.blend_area = &blend_area;
     blend_dsc.mask_area = &blend_area;
+    blend_dsc.mask_stride = 0;
     blend_dsc.blend_mode = LV_BLEND_MODE_NORMAL;
     blend_dsc.src_buf = NULL;
 
