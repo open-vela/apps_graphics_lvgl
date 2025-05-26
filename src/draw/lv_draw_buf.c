@@ -238,6 +238,8 @@ void lv_draw_buf_copy(lv_draw_buf_t * dest, const lv_area_t * dest_area,
         dest_bufc += dest_stride;
         src_bufc += src_stride;
     }
+
+    lv_draw_buf_flush_cache(dest, dest_area);
     LV_PROFILER_DRAW_END;
 }
 
@@ -343,6 +345,7 @@ lv_draw_buf_t * lv_draw_buf_dup_ex(const lv_draw_buf_handlers_t * handlers, cons
 
     /*Copy image data*/
     lv_memcpy(new_buf->data, draw_buf->data, size);
+    lv_draw_buf_flush_cache(new_buf, NULL);
     LV_PROFILER_DRAW_END;
     return new_buf;
 }
@@ -476,7 +479,7 @@ lv_result_t lv_draw_buf_adjust_stride(lv_draw_buf_t * src, uint32_t stride)
     }
 
     src->header.stride = stride;
-
+    lv_draw_buf_flush_cache(src, NULL);
     LV_PROFILER_DRAW_END;
     return LV_RESULT_OK;
 }
@@ -556,6 +559,7 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
     }
 
     draw_buf->header.flags |= LV_IMAGE_FLAGS_PREMULTIPLIED;
+    lv_draw_buf_flush_cache(draw_buf, NULL);
 
     LV_PROFILER_DRAW_END;
     return LV_RESULT_OK;
@@ -573,6 +577,8 @@ void lv_draw_buf_set_palette(lv_draw_buf_t * draw_buf, uint8_t index, lv_color32
 
     uint8_t * buf = (uint8_t *)draw_buf->data;
     lv_memcpy(&buf[index * sizeof(color)], &color, sizeof(color));
+
+    lv_draw_buf_flush_cache(draw_buf, NULL);
 }
 
 void lv_draw_buf_copy_palette(lv_draw_buf_t * dest, lv_draw_buf_t * src)
@@ -588,6 +594,8 @@ void lv_draw_buf_copy_palette(lv_draw_buf_t * dest, lv_draw_buf_t * src)
     }
 
     lv_memcpy(dest->data, src->data, size * sizeof(lv_color32_t));
+
+    lv_draw_buf_flush_cache(dest, NULL);
 }
 
 lv_draw_buf_t * lv_draw_buf_fill_expand(lv_draw_buf_t * draw_buff, uint32_t expand_size)
@@ -675,6 +683,8 @@ void lv_draw_buf_color_convert(lv_draw_buf_t * dst, lv_draw_buf_t * src, uint32_
             LV_LOG_WARN("color convert not implemented yet");
         }
     }
+
+    lv_draw_buf_flush_cache(dst, NULL);
 }
 
 lv_draw_buf_t * lv_draw_buf_expand(lv_draw_buf_t * decoded, uint32_t expand_size)
