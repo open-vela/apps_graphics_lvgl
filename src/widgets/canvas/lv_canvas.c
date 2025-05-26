@@ -310,7 +310,7 @@ void lv_canvas_fill_bg(lv_obj_t * obj, lv_color_t color, lv_opa_t opa)
             }
         }
     }
-
+    lv_draw_buf_flush_cache(draw_buf, NULL);
     lv_obj_invalidate(obj);
 }
 
