@@ -485,7 +485,7 @@ static void rb_insert_color(lv_rb_t * tree, lv_rb_node_t * node)
 static void rb_delete_color(lv_rb_t * tree, lv_rb_node_t * node1, lv_rb_node_t * node2)
 {
     LV_ASSERT_NULL(tree);
-    if(tree == NULL) {
+    if(tree == NULL || node2 == NULL) {
         return;
     }
 
