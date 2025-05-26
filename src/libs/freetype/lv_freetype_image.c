@@ -158,6 +158,13 @@ static bool freetype_image_create_cb(lv_freetype_image_cache_data_t * data, void
 
     uint32_t stride = lv_draw_buf_width_to_stride(box_w, LV_COLOR_FORMAT_A8);
     data->draw_buf = lv_draw_buf_create_ex(font_draw_buf_handlers, box_w, box_h, LV_COLOR_FORMAT_A8, stride);
+    if(!data->draw_buf) {
+        LV_LOG_WARN("Could not create draw buffer");
+        FT_Done_Glyph(glyph);
+        LV_PROFILER_FONT_END;
+        return false;
+    }
+
     lv_draw_buf_clear(data->draw_buf, NULL);
 
     for(int y = 0; y < box_h; ++y) {
