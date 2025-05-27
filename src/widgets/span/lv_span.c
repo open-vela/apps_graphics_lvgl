@@ -561,14 +561,15 @@ int32_t lv_spangroup_get_expand_height(lv_obj_t * obj, int32_t width)
 
 lv_span_coords_t lv_spangroup_get_span_coords(lv_obj_t * obj, lv_span_t * span)
 {
+    lv_span_coords_t coords = { 0 };
+    if(obj == NULL) return coords;
+
     /* find previous span */
     lv_spangroup_t * spangroup = (lv_spangroup_t *)obj;
     lv_ll_t * spans = &spangroup->child_ll;
     int32_t width = lv_obj_get_content_width(obj);
 
-    lv_span_coords_t coords = { 0 };
-
-    if(obj == NULL || span == NULL || _lv_ll_get_head(spans) == NULL) return coords;
+    if(span == NULL || _lv_ll_get_head(spans) == NULL) return coords;
 
     lv_span_t * prev_span = NULL;
     lv_span_t * curr_span;
