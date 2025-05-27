@@ -40,6 +40,7 @@ typedef struct _mem_block {
 typedef struct {
     lv_linear_allocator base;
     lv_mem_block_t * blocks;
+    lv_mem_block_t * pre_block;
     lv_mem_block_t * cur_block;
     void * next_ptr;
     lv_mem_align_type_t align;
@@ -65,6 +66,28 @@ static inline bool fits_block(lv_linear_allocator_private * mem, size_t size)
 
 static bool ensure_next(lv_linear_allocator_private * mem, size_t size)
 {
+    while(!fits_block(mem, size) && mem->cur_block && mem->cur_block->next) {
+        if(mem->next_ptr == (void *)(&mem->cur_block->data)) {
+            lv_mem_block_t * drop_block = mem->cur_block;
+            size_t drop_block_size = drop_block->block_size;
+            mem->cur_block = mem->cur_block->next;
+            if(mem->pre_block) {
+                mem->pre_block->next = mem->cur_block;
+            }
+            else {
+                mem->blocks = mem->cur_block;
+            }
+            lv_free(drop_block);
+            mem->base.total_memory -= drop_block_size;
+        }
+        else {
+            mem->pre_block = mem->cur_block;
+            mem->cur_block = mem->cur_block->next;
+        }
+        mem->next_ptr = (void *)(&mem->cur_block->data);
+        mem->next_ptr = (void *)MEM_ALIGN((uintptr_t)mem->next_ptr, (uintptr_t)mem->align);
+    }
+
     if(fits_block(mem, size)) {
         return true;
     }
@@ -95,6 +118,7 @@ static bool ensure_next(lv_linear_allocator_private * mem, size_t size)
 
     if(mem->cur_block) {
         mem->cur_block->next = block;
+        mem->pre_block = mem->cur_block;
     }
 
     mem->cur_block = block;
@@ -156,6 +180,18 @@ lv_linear_allocator * lv_linear_allocator_create(lv_mem_align_type_t align, size
     mem->init_block_size = MEM_ALIGN(block_size, LV_MEM_DEFAULT_ALIGN_4);
 
     return (lv_linear_allocator *)mem;
+}
+
+void lv_linear_allocator_reset(lv_linear_allocator * mem)
+{
+    LV_ASSERT_NULL(mem);
+
+    lv_linear_allocator_private * p = (lv_linear_allocator_private *)mem;
+    if(p->blocks) {
+        p->cur_block = p->blocks;
+        p->next_ptr = (void *)(p->blocks->data);
+        p->next_ptr = (void *)MEM_ALIGN((uintptr_t)p->next_ptr, (uintptr_t)p->align);
+    }
 }
 
 void lv_linear_allocator_delete(lv_linear_allocator * mem)
