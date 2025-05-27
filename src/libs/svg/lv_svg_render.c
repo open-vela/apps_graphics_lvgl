@@ -1131,6 +1131,13 @@ static void _init_tspan(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
 }
 #endif
 
+static void _init_solid(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
+{
+    _init_obj(obj, node);
+    lv_svg_render_solid_t * solid = (lv_svg_render_solid_t *)obj;
+    solid->opacity = 1.0f;
+}
+
 static void _init_gradient(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
 {
     _init_obj(obj, node);
@@ -2066,7 +2073,7 @@ static lv_svg_render_class svg_use_class = {
 };
 
 static lv_svg_render_class svg_solid_class = {
-    .init = _init_obj,
+    .init = _init_solid,
     .set_attr = _set_solid_attr,
     .set_paint_ref = _set_solid_ref,
     .get_size = _get_solid_size,
