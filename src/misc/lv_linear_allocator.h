@@ -56,6 +56,13 @@ typedef struct _linear_allocator {
 lv_linear_allocator * lv_linear_allocator_create(lv_mem_align_type_t align, size_t block_size);
 
 /**
+ * @brief Reset linear allocator to the initial state
+ * @param mem Target allocator instance pointer. After reset,
+ *            the pointer should be explicitly set to the head of the first block
+ */
+void lv_linear_allocator_reset(lv_linear_allocator * mem);
+
+/**
  * @brief Destroy linear allocator and release all memory blocks
  * @param mem Target allocator instance pointer. After deletion,
  *            the pointer should be explicitly set to NULL
