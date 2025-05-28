@@ -914,6 +914,17 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
         mtx = &dsc->stroke_dsc.matrix;
     }
 
+    if(grad->units == LV_SVG_GRADIENT_UNITS_USER_SPACE) {
+        lv_svg_render_obj_t * list = obj->head;
+        while(list) {
+            if(list->tag == LV_SVG_TAG_SVG) {
+                target_obj = list; /* viewport */
+                break;
+            }
+            list = list->next;
+        }
+    }
+
     lv_memcpy(grad_dsc, &grad->dsc, sizeof(lv_vector_gradient_t));
 
     lv_area_t bounds = {0, 0, 0, 0};
@@ -922,19 +933,19 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
     int32_t w = bounds.x2 - bounds.x1;
     int32_t h = bounds.y2 - bounds.y1;
     if(grad->dsc.style == LV_VECTOR_GRADIENT_STYLE_RADIAL) {
+        grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
+        grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
+        grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
-            grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
-            grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
-            grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
     else {   // LV_VECTOR_GRADIENT_STYLE_LINEAR
+        grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
+        grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
+        grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
+        grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
-            grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
-            grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
-            grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
-            grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
