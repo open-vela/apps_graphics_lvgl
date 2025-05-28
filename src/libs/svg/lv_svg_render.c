@@ -1531,6 +1531,7 @@ static void _render_use(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc, 
                 if(list->clz->render) {
                     _prepare_render(list, dsc);
                     _special_render(obj, dsc);
+                    _copy_draw_dsc_from_ref(dsc, obj);
                     list->clz->render(list, dsc, &mtx);
                 }
                 break;
@@ -1739,6 +1740,51 @@ static void _get_poly_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
 {
     lv_svg_render_poly_t * poly = (lv_svg_render_poly_t *)obj;
     lv_area_copy(area, &poly->bounds);
+}
+
+static void _get_group_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
+{
+    lv_svg_render_group_t * group = (lv_svg_render_group_t *)obj;
+
+    float x1 = 0;
+    float y1 = 0;
+    float x2 = 0;
+    float y2 = 0;
+
+    for(uint32_t i = 0; i < group->items.size; i++) {
+        lv_svg_render_obj_t * list = *((lv_svg_render_obj_t **)lv_array_at(&group->items, i));
+
+        lv_area_t tc = {0};
+        if(list->clz->get_bounds) {
+            list->clz->get_bounds(list, &tc);
+
+            x1 = MIN(tc.x1, x1);
+            y1 = MIN(tc.y1, y1);
+            x2 = MAX(tc.x2, x2);
+            y2 = MAX(tc.y2, y2);
+        }
+    }
+
+    area->x1 = x1;
+    area->y1 = y1;
+    area->x2 = x2;
+    area->y2 = y2;
+}
+
+static void _get_use_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
+{
+    lv_svg_render_use_t * use = (lv_svg_render_use_t *)obj;
+
+    lv_svg_render_obj_t * list = obj->head;
+    while(list) {
+        if(list->id && strcmp(use->xlink, list->id) == 0) {
+            if(list->clz->get_bounds) {
+                list->clz->get_bounds(list, area);
+            }
+            break;
+        }
+        list = list->next;
+    }
 }
 
 #if LV_USE_FREETYPE
@@ -2069,6 +2115,7 @@ static lv_svg_render_class svg_use_class = {
     .set_attr = _set_use_attr,
     .render = _render_use,
     .destroy = _destroy_use,
+    .get_bounds = _get_use_bounds,
     .get_size = _get_use_size,
 };
 
@@ -2091,6 +2138,7 @@ static lv_svg_render_class svg_group_class = {
     .set_attr = _set_attr,
     .render = _render_group,
     .destroy = _destroy_group,
+    .get_bounds = _get_group_bounds,
     .get_size = _get_group_size,
 };
 
