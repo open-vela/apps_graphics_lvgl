@@ -1612,6 +1612,15 @@
 
 /*Documentation of the widgets: https://docs.lvgl.io/latest/en/html/widgets/index.html*/
 
+/** 1: Causes these widgets to be given default values at creation time.
+ *  - lv_buttonmatrix_t:  Get default maps:  {"Btn1", "Btn2", "Btn3", "\n", "Btn4", "Btn5", ""}, else map not set.
+ *  - lv_checkbox_t    :  String label set to "Check box", else set to empty string.
+ *  - lv_dropdown_t    :  Options set to "Option 1", "Option 2", "Option 3", else no values are set.
+ *  - lv_roller_t      :  Options set to "Option 1", "Option 2", "Option 3", "Option 4", "Option 5", else no values are set.
+ *  - lv_label_t       :  Text set to "Text", else empty string.
+ *  - lv_arc_label_t   :  Text set to "Arced Text", else empty string.
+ * */
+
 #ifndef LV_WIDGETS_HAS_DEFAULT_VALUE
     #ifdef _LV_KCONFIG_PRESENT
         #ifdef CONFIG_LV_WIDGETS_HAS_DEFAULT_VALUE
