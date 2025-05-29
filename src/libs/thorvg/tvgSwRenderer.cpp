@@ -489,7 +489,7 @@ bool SwRenderer::renderImage(RenderData data)
     auto task = static_cast<SwImageTask*>(data);
     task->done();
 
-    if (task->opacity == 0) return true;
+    if (task->opacity == 0 || task->image.w == 0 || task->image.h == 0 ) return true;
 
     return rasterImage(surface, &task->image, task->mesh, task->transform, task->bbox, task->opacity);
 }
