@@ -9,6 +9,7 @@ Widgets
 
     obj
     arc
+    arc_label
     animimg
     bar
     button
