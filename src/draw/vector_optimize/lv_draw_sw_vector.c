@@ -16,6 +16,8 @@
 #endif
 #include "../../stdlib/lv_string.h"
 #include "lv_vector_polygon.h"
+#include <math.h>
+#include <float.h>
 
 /*********************
  *      DEFINES
@@ -608,7 +610,33 @@ static void lv_sw_path_clear_cb(struct lv_platform_path_base_t * self)
 
 static void lv_sw_path_get_bounds_cb(struct lv_platform_path_base_t * self, lv_area_t * area)
 {
-    LV_LOG_WARN("not implemented");
+    LV_ASSERT_NULL(self);
+    LV_ASSERT_NULL(area);
+
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    uint32_t len = lv_array_size(&path->points);
+    if(len == 0) {
+        lv_memzero(area, sizeof(lv_area_t));
+        return;
+    }
+
+    lv_fpoint_t * p = lv_array_at(&path->points, 0);
+    float x1 = p[0].x;
+    float x2 = p[0].x;
+    float y1 = p[0].y;
+    float y2 = p[0].y;
+
+    for(uint32_t i = 1; i < len; i++) {
+        if(p[i].x < x1) x1 = p[i].x;
+        if(p[i].y < y1) y1 = p[i].y;
+        if(p[i].x > x2) x2 = p[i].x;
+        if(p[i].y > y2) y2 = p[i].y;
+    }
+
+    area->x1 = lroundf(x1);
+    area->y1 = lroundf(y1);
+    area->x2 = lroundf(x2);
+    area->y2 = lroundf(y2);
 }
 
 static lv_vector_path_quality_t lv_sw_path_get_quality_cb(struct lv_platform_path_base_t * self)
@@ -658,6 +686,16 @@ static bool lv_sw_path_is_empty_cb(struct lv_platform_path_base_t * self)
     return false;
 }
 
+size_t lv_sw_path_get_mem_size_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+    size_t size = 0;
+    size += sizeof(lv_platform_sw_path_t);
+    size += path->ops.capacity * path->ops.element_size;
+    size += path->points.capacity * path->points.element_size;
+    return size;
+}
+
 static const lv_platform_path_handlers sw_path_handlers = {
     .create         = lv_sw_path_create_cb,
     .destroy        = lv_sw_path_destroy_cb,
@@ -675,6 +713,7 @@ static const lv_platform_path_handlers sw_path_handlers = {
     .get_data       = lv_sw_path_get_data_cb,
     .is_empty       = lv_sw_path_is_empty_cb,
     .transform_path = lv_sw_path_transform_path_cb,
+    .get_mem_size   = lv_sw_path_get_mem_size_cb,
 };
 
 const lv_platform_path_handlers * lv_vector_get_platform_handlers(void)

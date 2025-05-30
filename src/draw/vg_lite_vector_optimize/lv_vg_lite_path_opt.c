@@ -37,6 +37,26 @@
 /**********************
  *   GLOBAL FUNCTIONS
  **********************/
+
+void lv_vg_lite_path_try_end(lv_vg_lite_path_t * path)
+{
+    LV_ASSERT_NULL(path);
+
+    vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(path);
+    const uint8_t * cur = vg_path->path;
+    const uint8_t * end = cur + vg_path->path_length;
+    uint8_t fmt_len = lv_vg_lite_path_format_len(vg_path->format);
+
+    uint8_t end_op_code = LV_VG_LITE_PATH_GET_OP_CODE(end - fmt_len);
+    if(end_op_code != VLC_OP_END) {
+        lv_vg_lite_path_end(path);
+    }
+}
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+
 static void lv_vg_lite_path_update_bounding_box_by_point(lv_vg_lite_path_t * path, const lv_fpoint_t * point)
 {
     LV_ASSERT_NULL(point);
@@ -219,7 +239,6 @@ static void get_path_data_cb(void * user_data, uint8_t op_code, const float * da
             POINT3_PUSH_BACK(&parser->points, (lv_fpoint_t *)data, (lv_fpoint_t *)(data + 2), (lv_fpoint_t *)(data + 4));
             break;
         default:
-            LV_LOG_ERROR("Invalid opcode: %d", op_code);
             break;
     }
 }
@@ -266,7 +285,6 @@ static void transform_path_cb(void * user_data, uint8_t op_code, const float * d
             transform_data->last_point.y = data[5];
             break;
         default:
-            LV_LOG_ERROR("Invalid opcode: %d", op_code);
             break;
     }
 }
@@ -295,6 +313,13 @@ static bool lv_vg_lite_path_is_empty_cb(struct lv_platform_path_base_t * self)
     return false;
 }
 
+static size_t lv_vg_lite_path_get_mem_size(struct lv_platform_path_base_t * self)
+{
+    lv_platform_vg_lite_path_t * path = LV_VG_LITE_PATH_CAST(self);
+    return path->vg_path->mem_size;
+}
+
+
 static const lv_platform_path_handlers vg_lite_path_handlers = {
     .create         = lv_vg_lite_path_create_cb,
     .destroy        = lv_vg_lite_path_destroy_cb,
@@ -312,15 +337,12 @@ static const lv_platform_path_handlers vg_lite_path_handlers = {
     .get_data       = lv_vg_lite_path_get_data_cb,
     .is_empty       = lv_vg_lite_path_is_empty_cb,
     .transform_path = lv_vg_lite_path_transform_path_cb,
+    .get_mem_size   = lv_vg_lite_path_get_mem_size,
 };
 
 const lv_platform_path_handlers * lv_vector_get_platform_handlers(void)
 {
     return &vg_lite_path_handlers;
 }
-
-/**********************
- *   STATIC FUNCTIONS
- **********************/
 
 #endif /*LV_USE_DRAW_VG_LITE*/

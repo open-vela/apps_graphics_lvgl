@@ -137,7 +137,7 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
     const vg_lite_fill_t fill = lv_fill_to_vg(dsc->fill_dsc->fill_rule);
 
     /* If it is fill mode, the end op code should be added */
-    lv_vg_lite_path_end(lv_vg_path);
+    lv_vg_lite_path_try_end(lv_vg_path);
 
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
     LV_VG_LITE_ASSERT_PATH(vg_path);

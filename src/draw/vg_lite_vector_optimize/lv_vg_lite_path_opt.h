@@ -44,6 +44,8 @@ typedef struct _lv_platform_vg_lite_path_t {
  *      MACROS
  **********************/
 
+void lv_vg_lite_path_try_end(lv_vg_lite_path_t * path);
+
 #endif /*LV_USE_DRAW_VG_LITE*/
 
 #ifdef __cplusplus

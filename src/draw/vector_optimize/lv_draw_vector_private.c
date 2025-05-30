@@ -68,6 +68,11 @@ bool lv_vector_path_impl_is_empty(const lv_platform_path_base_t * impl)
 
 void _lv_vector_for_each_destroy_tasks(lv_vector_draw_task_list_t * draw_task_list, vector_draw_task_cb cb, void * data)
 {
+    if(!draw_task_list || !draw_task_list->task_list) {
+        LV_LOG_WARN("Invalid task list");
+        return;
+    }
+
     _lv_vector_draw_task * task = _lv_ll_get_head(draw_task_list->task_list);
     _lv_vector_draw_task * next_task = NULL;
 
@@ -80,8 +85,15 @@ void _lv_vector_for_each_destroy_tasks(lv_vector_draw_task_list_t * draw_task_li
         }
 
         if(task->path_impl) {
-            lv_vector_path_unref(task->path_impl);
+            if(task->path_impl->ref_count <= 0) {
+                LV_LOG_ERROR("Invalid path refcount: %d", task->path_impl->ref_count);
+            }
+            else {
+                lv_vector_path_unref(task->path_impl);
+            }
         }
+
+        lv_free(task);
         task = next_task;
     }
 
@@ -89,6 +101,7 @@ void _lv_vector_for_each_destroy_tasks(lv_vector_draw_task_list_t * draw_task_li
         lv_linear_allocator_delete(draw_task_list->allocator);
         draw_task_list->allocator = NULL;
     }
+    lv_free(draw_task_list->task_list);
 }
 
 #endif

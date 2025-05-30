@@ -340,7 +340,7 @@ static void svg_draw(lv_layer_t * layer, const lv_image_decoder_dsc_t * dsc, con
     lv_matrix_t matrix;
     lv_matrix_identity(&matrix);
     lv_matrix_translate(&matrix, coords->x1, coords->y1);
-    ctx->current_dsc.scissor_area = *clip_area;
+    lv_vector_dsc_get_current_dsc(ctx)->scissor_area = *clip_area;
     if(image_dsc) {
         int32_t off_x = (lv_area_get_width(coords) - image_dsc->header.w - 1) / 2;
         int32_t off_y = (lv_area_get_height(coords) - image_dsc->header.h - 1) / 2;

@@ -64,6 +64,7 @@ struct _lv_platform_path_handlers {
     void (*get_data)(struct lv_platform_path_base_t * self, lv_vector_path_data_t * data);
     void (*transform_path)(struct lv_platform_path_base_t * self, lv_vector_path_transform_data_t * transform_data);
     bool (*is_empty)(struct lv_platform_path_base_t * self);
+    size_t (*get_mem_size)(struct lv_platform_path_base_t * self);
 };
 
 struct lv_platform_path_base_t {
