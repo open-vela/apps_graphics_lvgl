@@ -1,5 +1,5 @@
 /**
- * @file lv_svg_render.c
+ * @file lv_svg_render_optimize.c
  *
  */
 
@@ -8,8 +8,8 @@
  *********************/
 
 #include "../../../lvgl.h"
-#include "lv_svg_render.h"
-#if LV_USE_SVG && LV_USE_VECTOR_GRAPHIC
+#include "../svg/lv_svg_render.h"
+#if LV_USE_SVG && LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
 #include "../../misc/lv_text_private.h"
 #include <math.h>
@@ -237,11 +237,25 @@ static void _lv_svg_draw_dsc_delete(struct _lv_svg_draw_dsc * dsc)
     }
 }
 
+static void _alloc_draw_dsc(lv_vector_draw_dsc_t * dsc)
+{
+    dsc->fill_dsc = lv_zalloc(sizeof(lv_vector_fill_dsc_t));
+    LV_ASSERT_MALLOC(dsc->fill_dsc);
+    dsc->stroke_dsc = lv_zalloc(sizeof(lv_vector_stroke_dsc_t));
+    LV_ASSERT_MALLOC(dsc->stroke_dsc);
+    if(dsc->stroke_dsc->dash_count > 0) {
+        dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * dsc->stroke_dsc->dash_count);
+        LV_ASSERT_MALLOC(dsc->stroke_dsc->dash_pattern);
+    }
+}
+
 static struct _lv_svg_draw_dsc * _lv_svg_draw_dsc_push(struct _lv_svg_draw_dsc * dsc)
 {
     if(!dsc) return NULL;
     struct _lv_svg_draw_dsc * cur = lv_zalloc(sizeof(struct _lv_svg_draw_dsc));
     LV_ASSERT_MALLOC(cur);
+    _alloc_draw_dsc(&(cur->dsc));
+
     _copy_draw_dsc(&(cur->dsc), &(dsc->dsc));
     cur->fill_ref = dsc->fill_ref;
     cur->stroke_ref = dsc->stroke_ref;
@@ -253,6 +267,7 @@ static struct _lv_svg_draw_dsc * _lv_svg_draw_dsc_pop(struct _lv_svg_draw_dsc * 
 {
     if(!dsc) return NULL;
     struct _lv_svg_draw_dsc * cur = dsc->next;
+    _deinit_draw_dsc(&(dsc->dsc));
     lv_free(dsc);
     return cur;
 }
@@ -292,7 +307,7 @@ static void _set_viewport_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t *
         case LV_SVG_ATTR_VIEWPORT_FILL: {
                 if(attr->class_type == LV_SVG_ATTR_VALUE_INITIAL
                    && attr->val_type == LV_SVG_ATTR_VALUE_DATA) {
-                    dsc->fill_dsc.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
+                    dsc->fill_dsc->draw_attrs.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
                     view->viewport_fill = true;
                 }
                 else if(attr->class_type == LV_SVG_ATTR_VALUE_NONE) {
@@ -302,7 +317,7 @@ static void _set_viewport_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t *
             break;
         case LV_SVG_ATTR_VIEWPORT_FILL_OPACITY: {
                 if(attr->class_type == LV_SVG_ATTR_VALUE_INITIAL) {
-                    dsc->fill_dsc.opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                    dsc->fill_dsc->opa = (lv_opa_t)(attr->value.fval * 255.0f);
                 }
             }
             break;
@@ -705,7 +720,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
     switch(attr->id) {
         case LV_SVG_ATTR_FILL: {
                 if(attr->class_type == LV_SVG_ATTR_VALUE_NONE) {
-                    dsc->fill_dsc.opa = LV_OPA_0;
+                    dsc->fill_dsc->opa = LV_OPA_0;
                     obj->flags |= _RENDER_ATTR_FILL_OPACITY;
                     obj->flags |= _RENDER_ATTR_FILL;
                     return;
@@ -723,12 +738,12 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                         obj->fill_ref = lv_strdup(attr->value.sval);
                     }
                     else {   // color
-                        dsc->fill_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
-                        dsc->fill_dsc.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
+                        dsc->fill_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
+                        dsc->fill_dsc->draw_attrs.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
                     }
                     obj->flags |= _RENDER_ATTR_FILL;
-                    if(obj->dsc.fill_dsc.opa == LV_OPA_0) {
-                        dsc->fill_dsc.opa = LV_OPA_COVER;
+                    if(obj->dsc.fill_dsc->opa == LV_OPA_0) {
+                        dsc->fill_dsc->opa = LV_OPA_COVER;
                         obj->flags |= _RENDER_ATTR_FILL_OPACITY;
                     }
                 }
@@ -736,7 +751,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
             break;
         case LV_SVG_ATTR_STROKE: {
                 if(attr->class_type == LV_SVG_ATTR_VALUE_NONE) {
-                    dsc->stroke_dsc.opa = LV_OPA_0;
+                    dsc->stroke_dsc->opa = LV_OPA_0;
                     obj->flags |= _RENDER_ATTR_STROKE_OPACITY;
                     obj->flags |= _RENDER_ATTR_STROKE;
                     return;
@@ -754,14 +769,14 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                         obj->stroke_ref = lv_strdup(attr->value.sval);
                     }
                     else {   // color
-                        dsc->stroke_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
-                        dsc->stroke_dsc.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
+                        dsc->stroke_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
+                        dsc->stroke_dsc->draw_attrs.color = lv_color_to_32(lv_color_hex(attr->value.uval), 0xFF);
                     }
                 }
 
                 obj->flags |= _RENDER_ATTR_STROKE;
-                if(obj->dsc.stroke_dsc.opa == LV_OPA_0) {
-                    dsc->stroke_dsc.opa = LV_OPA_COVER;
+                if(obj->dsc.stroke_dsc->opa == LV_OPA_0) {
+                    dsc->stroke_dsc->opa = LV_OPA_COVER;
                     obj->flags |= _RENDER_ATTR_STROKE_OPACITY;
                 }
             }
@@ -771,7 +786,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_FILL_OPACITY;
                     return;
                 }
-                dsc->fill_dsc.opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                dsc->fill_dsc->opa = (lv_opa_t)(attr->value.fval * 255.0f);
                 obj->flags |= _RENDER_ATTR_FILL_OPACITY;
             }
             break;
@@ -780,7 +795,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_STROKE_OPACITY;
                     return;
                 }
-                dsc->stroke_dsc.opa = (lv_opa_t)(attr->value.fval * 255.0f);
+                dsc->stroke_dsc->opa = (lv_opa_t)(attr->value.fval * 255.0f);
                 obj->flags |= _RENDER_ATTR_STROKE_OPACITY;
             }
             break;
@@ -789,7 +804,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_FILL_RULE;
                     return;
                 }
-                dsc->fill_dsc.fill_rule = attr->value.ival;
+                dsc->fill_dsc->fill_rule = attr->value.ival;
                 obj->flags |= _RENDER_ATTR_FILL_RULE;
             }
             break;
@@ -798,7 +813,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_STROKE_WIDTH;
                     return;
                 }
-                dsc->stroke_dsc.width = attr->value.fval;
+                dsc->stroke_dsc->width = attr->value.fval;
                 obj->flags |= _RENDER_ATTR_STROKE_WIDTH;
             }
             break;
@@ -807,7 +822,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_STROKE_LINECAP;
                     return;
                 }
-                dsc->stroke_dsc.cap = attr->value.ival;
+                dsc->stroke_dsc->cap = attr->value.ival;
                 obj->flags |= _RENDER_ATTR_STROKE_LINECAP;
             }
             break;
@@ -816,7 +831,7 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_STROKE_LINEJOIN;
                     return;
                 }
-                dsc->stroke_dsc.join = attr->value.ival;
+                dsc->stroke_dsc->join = attr->value.ival;
                 obj->flags |= _RENDER_ATTR_STROKE_LINEJOIN;
             }
             break;
@@ -825,13 +840,13 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     obj->flags &= ~_RENDER_ATTR_STROKE_MITER_LIMIT;
                     return;
                 }
-                dsc->stroke_dsc.miter_limit = attr->value.ival;
+                dsc->stroke_dsc->miter_limit = attr->value.ival;
                 obj->flags |= _RENDER_ATTR_STROKE_MITER_LIMIT;
             }
             break;
         case LV_SVG_ATTR_STROKE_DASH_ARRAY: {
                 if(attr->class_type == LV_SVG_ATTR_VALUE_NONE) {
-                    lv_array_clear(&(dsc->stroke_dsc.dash_pattern));
+                    dsc->stroke_dsc->dash_count = 0;
                     obj->flags |= _RENDER_ATTR_STROKE_DASH_ARRAY;
                     return;
                 }
@@ -840,7 +855,21 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     return;
                 }
                 else {
-                    lv_array_t * dash_array = &(dsc->stroke_dsc.dash_pattern);
+                    lv_array_t * dash_array  = (lv_array_t *)lv_malloc(sizeof(lv_array_t));
+                    if(dash_array == NULL) {
+                        LV_LOG_ERROR("Memory allocation failed for dash_arr");
+                        return;
+                    }
+                    if(dsc->stroke_dsc->dash_pattern && dsc->stroke_dsc->dash_count > 0) {
+                        lv_array_init(dash_array, dsc->stroke_dsc->dash_count, sizeof(float));
+
+                        for(uint16_t i = 0; i < dsc->stroke_dsc->dash_count; i++) {
+                            lv_array_push_back(dash_array, &dsc->stroke_dsc->dash_pattern[i]);
+                        }
+                    }
+                    else {
+                        lv_array_clear(dash_array);
+                    }
 
                     lv_svg_attr_values_list_t * vals = (lv_svg_attr_values_list_t *)(attr->value.val);
                     uint32_t len = vals->length;
@@ -881,14 +910,14 @@ static void _set_solid_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc
     LV_UNUSED(target_obj);
     lv_svg_render_solid_t * solid = (lv_svg_render_solid_t *)obj;
     if(fill) {
-        dsc->fill_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
-        dsc->fill_dsc.color = lv_color_to_32(solid->color, 0xFF);
-        dsc->fill_dsc.opa = (lv_opa_t)(solid->opacity * 255.0f);
+        dsc->fill_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
+        dsc->fill_dsc->draw_attrs.color = lv_color_to_32(solid->color, 0xFF);
+        dsc->fill_dsc->opa = (lv_opa_t)(solid->opacity * 255.0f);
     }
     else {
-        dsc->stroke_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
-        dsc->stroke_dsc.color = lv_color_to_32(solid->color, 0xFF);
-        dsc->stroke_dsc.opa = (lv_opa_t)(solid->opacity * 255.0f);
+        dsc->stroke_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
+        dsc->stroke_dsc->draw_attrs.color = lv_color_to_32(solid->color, 0xFF);
+        dsc->stroke_dsc->opa = (lv_opa_t)(solid->opacity * 255.0f);
     }
 }
 
@@ -904,25 +933,14 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
     lv_matrix_t * mtx = NULL;
 
     if(fill) {
-        dsc->fill_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
-        grad_dsc = &dsc->fill_dsc.gradient;
-        mtx = &dsc->fill_dsc.matrix;
+        dsc->fill_dsc->style = LV_VECTOR_DRAW_STYLE_GRADIENT;
+        grad_dsc = &dsc->fill_dsc->draw_attrs.gradient;
+        mtx = &dsc->fill_dsc->matrix;
     }
     else {
-        dsc->stroke_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
-        grad_dsc = &dsc->stroke_dsc.gradient;
-        mtx = &dsc->stroke_dsc.matrix;
-    }
-
-    if(grad->units == LV_SVG_GRADIENT_UNITS_USER_SPACE) {
-        lv_svg_render_obj_t * list = obj->head;
-        while(list) {
-            if(list->tag == LV_SVG_TAG_SVG) {
-                target_obj = list; /* viewport */
-                break;
-            }
-            list = list->next;
-        }
+        dsc->stroke_dsc->style = LV_VECTOR_DRAW_STYLE_GRADIENT;
+        grad_dsc = &dsc->stroke_dsc->draw_attrs.gradient;
+        mtx = &dsc->stroke_dsc->matrix;
     }
 
     lv_memcpy(grad_dsc, &grad->dsc, sizeof(lv_vector_gradient_t));
@@ -933,19 +951,19 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
     int32_t w = bounds.x2 - bounds.x1;
     int32_t h = bounds.y2 - bounds.y1;
     if(grad->dsc.style == LV_VECTOR_GRADIENT_STYLE_RADIAL) {
-        grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
-        grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
-        grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            grad_dsc->cx = PCT_TO_PX(grad_dsc->cx, w);
+            grad_dsc->cy = PCT_TO_PX(grad_dsc->cy, h);
+            grad_dsc->cr = PCT_TO_PX(grad_dsc->cr, MAX(w, h));
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
     else {   // LV_VECTOR_GRADIENT_STYLE_LINEAR
-        grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
-        grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
-        grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
-        grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
         if(grad->units == LV_SVG_GRADIENT_UNITS_OBJECT) {
+            grad_dsc->x1 = PCT_TO_PX(grad_dsc->x1, w);
+            grad_dsc->y1 = PCT_TO_PX(grad_dsc->y1, h);
+            grad_dsc->x2 = PCT_TO_PX(grad_dsc->x2, w);
+            grad_dsc->y2 = PCT_TO_PX(grad_dsc->y2, h);
             lv_matrix_translate(mtx, bounds.x1, bounds.y1);
         }
     }
@@ -953,21 +971,29 @@ static void _set_gradient_ref(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * 
 
 static void _init_draw_dsc(lv_vector_draw_dsc_t * dsc)
 {
-    lv_vector_fill_dsc_t * fill_dsc = &(dsc->fill_dsc);
+    dsc->fill_dsc = lv_zalloc(sizeof(lv_vector_fill_dsc_t));
+    dsc->stroke_dsc = lv_zalloc(sizeof(lv_vector_stroke_dsc_t));
+    dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * 32);
+
+    lv_vector_fill_dsc_t * fill_dsc = dsc->fill_dsc;
     fill_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
-    fill_dsc->color = lv_color_to_32(lv_color_black(), 0xFF);
+    fill_dsc->draw_attrs.color = lv_color_to_32(lv_color_black(), 0xFF);
     fill_dsc->opa = LV_OPA_COVER;
     fill_dsc->fill_rule = LV_VECTOR_FILL_NONZERO;
+    fill_dsc->fill_units = LV_VECTOR_FILL_UNITS_OBJECT_BOUNDING_BOX;
+    fill_dsc->use_count = 0;
     lv_matrix_identity(&(fill_dsc->matrix)); // identity matrix
 
-    lv_vector_stroke_dsc_t * stroke_dsc = &(dsc->stroke_dsc);
+    lv_vector_stroke_dsc_t * stroke_dsc = dsc->stroke_dsc;
     stroke_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
-    stroke_dsc->color = lv_color_to_32(lv_color_black(), 0xFF);
+    stroke_dsc->draw_attrs.color = lv_color_to_32(lv_color_black(), 0xFF);
     stroke_dsc->opa = LV_OPA_0; // default no stroke
     stroke_dsc->width = 1.0f;
     stroke_dsc->cap = LV_VECTOR_STROKE_CAP_BUTT;
     stroke_dsc->join = LV_VECTOR_STROKE_JOIN_MITER;
     stroke_dsc->miter_limit = 4.0f;
+    stroke_dsc->dash_count = 0;
+    stroke_dsc->use_count = 0;
     lv_matrix_identity(&(stroke_dsc->matrix)); // identity matrix
 
     dsc->blend_mode = LV_VECTOR_BLEND_SRC_OVER;
@@ -976,30 +1002,62 @@ static void _init_draw_dsc(lv_vector_draw_dsc_t * dsc)
 
 static void _deinit_draw_dsc(lv_vector_draw_dsc_t * dsc)
 {
-    lv_array_deinit(&(dsc->stroke_dsc.dash_pattern));
+    lv_free(dsc->stroke_dsc->dash_pattern);
+    lv_free(dsc->fill_dsc);
+    lv_free(dsc->stroke_dsc);
 }
 
+static void _copy_draw_attrs(lv_vector_draw_style_t style, lv_vector_draw_style_attrs_t * dst_attrs,
+                             const lv_vector_draw_style_attrs_t * src_attrs)
+{
+    switch(style) {
+        case LV_VECTOR_DRAW_STYLE_SOLID:
+            dst_attrs->color = src_attrs->color;
+            break;
+        case LV_VECTOR_DRAW_STYLE_PATTERN:
+            lv_memcpy(&dst_attrs->img_dsc, &src_attrs->img_dsc, sizeof(lv_draw_image_dsc_t));
+            break;
+        case LV_VECTOR_DRAW_STYLE_GRADIENT:
+            lv_memcpy(&dst_attrs->gradient, &src_attrs->gradient, sizeof(lv_vector_gradient_t));
+            break;
+    }
+}
+
+static void _copy_fill_dsc(lv_vector_fill_dsc_t * fill_dsc, const lv_vector_fill_dsc_t * fill_src)
+{
+    fill_dsc->style = fill_src->style;
+    fill_dsc->opa = fill_src->opa;
+    fill_dsc->fill_rule = fill_src->fill_rule;
+    fill_dsc->fill_units = fill_src->fill_units;
+    lv_memcpy(&(fill_dsc->matrix), &(fill_src->matrix), sizeof(lv_matrix_t));
+    _copy_draw_attrs(fill_dsc->style, &fill_dsc->draw_attrs, &fill_src->draw_attrs);
+}
+
+static void _copy_stroke_dsc(lv_vector_stroke_dsc_t * stroke_dsc, const lv_vector_stroke_dsc_t * stroke_src)
+{
+    stroke_dsc->style = stroke_src->style;
+    stroke_dsc->opa = stroke_src->opa;
+    stroke_dsc->width = stroke_src->width;
+    stroke_dsc->cap = stroke_src->cap;
+    stroke_dsc->join = stroke_src->join;
+    stroke_dsc->miter_limit = stroke_src->miter_limit;
+    stroke_dsc->dash_count = stroke_src->dash_count;
+    if(stroke_src->dash_count > 0) {
+        lv_memcpy(stroke_dsc->dash_pattern, stroke_src->dash_pattern, sizeof(float) * stroke_src->dash_count);
+    }
+    lv_memcpy(&(stroke_dsc->matrix), &(stroke_src->matrix), sizeof(lv_matrix_t));
+    _copy_draw_attrs(stroke_dsc->style, &stroke_dsc->draw_attrs, &stroke_src->draw_attrs);
+}
 static void _copy_draw_dsc(lv_vector_draw_dsc_t * dst, const lv_vector_draw_dsc_t * src)
 {
-    lv_memcpy(&dst->fill_dsc, &src->fill_dsc, sizeof(lv_vector_fill_dsc_t));
-
-    dst->stroke_dsc.style = src->stroke_dsc.style;
-    dst->stroke_dsc.color = src->stroke_dsc.color;
-    dst->stroke_dsc.opa = src->stroke_dsc.opa;
-    dst->stroke_dsc.width = src->stroke_dsc.width;
-    dst->stroke_dsc.cap = src->stroke_dsc.cap;
-    dst->stroke_dsc.join = src->stroke_dsc.join;
-    dst->stroke_dsc.miter_limit = src->stroke_dsc.miter_limit;
-    lv_array_copy(&(dst->stroke_dsc.dash_pattern), &(src->stroke_dsc.dash_pattern));
-    lv_memcpy(&(dst->stroke_dsc.gradient), &(src->stroke_dsc.gradient), sizeof(lv_vector_gradient_t));
-    lv_memcpy(&(dst->stroke_dsc.matrix), &(src->stroke_dsc.matrix), sizeof(lv_matrix_t));
-
+    _copy_fill_dsc(dst->fill_dsc, src->fill_dsc);
+    _copy_stroke_dsc(dst->stroke_dsc, src->stroke_dsc);
     dst->blend_mode = src->blend_mode;
 }
 
 static void _copy_draw_dsc_from_ref(lv_vector_dsc_t * dsc, const lv_svg_render_obj_t * obj)
 {
-    lv_vector_draw_dsc_t * dst = &(dsc->current_dsc);
+    lv_vector_draw_dsc_t * dst = dsc->current_dsc;
     if(obj->fill_ref) {
         lv_svg_render_obj_t * list = obj->head;
         while(list) {
@@ -1062,6 +1120,7 @@ static void _init_obj(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
 {
     LV_UNUSED(node);
     lv_matrix_identity(&obj->matrix);
+    _alloc_draw_dsc(&obj->dsc);
 }
 
 static void _init_viewport(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
@@ -1091,7 +1150,7 @@ static void _init_poly(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
     _init_obj(obj, node);
     lv_svg_render_poly_t * poly = (lv_svg_render_poly_t *)obj;
     poly->path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-    lv_area_set(&poly->bounds, INT_MAX, INT_MAX, INT_MIN, INT_MIN);
+    lv_area_set(&poly->bounds, 0, 0, 0, 0);
 }
 
 #if LV_USE_FREETYPE
@@ -1141,13 +1200,6 @@ static void _init_tspan(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
     _init_content(obj, content_node);
 }
 #endif
-
-static void _init_solid(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
-{
-    _init_obj(obj, node);
-    lv_svg_render_solid_t * solid = (lv_svg_render_solid_t *)obj;
-    solid->opacity = 1.0f;
-}
 
 static void _init_gradient(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
 {
@@ -1223,53 +1275,58 @@ static void _restore_matrix(lv_matrix_t * matrix, lv_vector_dsc_t * dsc)
 
 static void _prepare_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc)
 {
-    _copy_draw_dsc(&(dsc->current_dsc), &(obj->dsc));
+    lv_vector_dsc_set_current_dsc(dsc, (lv_vector_draw_dsc_t *) & (obj->dsc));
 }
 
 static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc)
 {
     const lv_vector_draw_dsc_t * src = &(obj->dsc);
-    lv_vector_draw_dsc_t * dst = &(dsc->current_dsc);
+    lv_vector_draw_dsc_t * dst = dsc->current_dsc;
 
     if(obj->flags & _RENDER_ATTR_FILL) {
-        lv_memcpy(&(dst->fill_dsc), &(src->fill_dsc), sizeof(lv_vector_fill_dsc_t));
+        lv_memcpy(dst->fill_dsc, src->fill_dsc, sizeof(lv_vector_fill_dsc_t));
         dst->blend_mode = src->blend_mode;
     }
 
     if(obj->flags & _RENDER_ATTR_FILL_OPACITY) {
-        dst->fill_dsc.opa = src->fill_dsc.opa;
+        dst->fill_dsc->opa = src->fill_dsc->opa;
     }
 
     if(obj->flags & _RENDER_ATTR_FILL_RULE) {
-        dst->fill_dsc.fill_rule = src->fill_dsc.fill_rule;
+        dst->fill_dsc->fill_rule = src->fill_dsc->fill_rule;
     }
 
     if(obj->flags & _RENDER_ATTR_STROKE) {
-        dst->stroke_dsc.style = src->stroke_dsc.style;
-        dst->stroke_dsc.color = src->stroke_dsc.color;
-        lv_memcpy(&(dst->stroke_dsc.gradient), &(src->stroke_dsc.gradient), sizeof(lv_vector_gradient_t));
-        lv_memcpy(&(dst->stroke_dsc.matrix), &(src->stroke_dsc.matrix), sizeof(lv_matrix_t));
+        dst->stroke_dsc->style = src->stroke_dsc->style;
+        dst->stroke_dsc->draw_attrs.color = src->stroke_dsc->draw_attrs.color;
+        lv_memcpy(&(dst->stroke_dsc->draw_attrs.gradient), &(src->stroke_dsc->draw_attrs.gradient),
+                  sizeof(lv_vector_gradient_t));
+        lv_memcpy(&(dst->stroke_dsc->matrix), &(src->stroke_dsc->matrix), sizeof(lv_matrix_t));
         dst->blend_mode = src->blend_mode;
     }
 
     if(obj->flags & _RENDER_ATTR_STROKE_OPACITY) {
-        dst->stroke_dsc.opa = src->stroke_dsc.opa;
+        dst->stroke_dsc->opa = src->stroke_dsc->opa;
     }
 
     if(obj->flags & _RENDER_ATTR_STROKE_WIDTH) {
-        dst->stroke_dsc.width = src->stroke_dsc.width;
+        dst->stroke_dsc->width = src->stroke_dsc->width;
     }
     if(obj->flags & _RENDER_ATTR_STROKE_LINECAP) {
-        dst->stroke_dsc.cap = src->stroke_dsc.cap;
+        dst->stroke_dsc->cap = src->stroke_dsc->cap;
     }
     if(obj->flags & _RENDER_ATTR_STROKE_LINEJOIN) {
-        dst->stroke_dsc.join = src->stroke_dsc.join;
+        dst->stroke_dsc->join = src->stroke_dsc->join;
     }
     if(obj->flags & _RENDER_ATTR_STROKE_MITER_LIMIT) {
-        dst->stroke_dsc.miter_limit = src->stroke_dsc.miter_limit;
+        dst->stroke_dsc->miter_limit = src->stroke_dsc->miter_limit;
     }
     if(obj->flags & _RENDER_ATTR_STROKE_DASH_ARRAY) {
-        lv_array_copy(&(dst->stroke_dsc.dash_pattern), &(src->stroke_dsc.dash_pattern));
+        dst->stroke_dsc->dash_count = src->stroke_dsc->dash_count;
+        if(src->stroke_dsc->dash_count > 0) {
+            lv_memcpy(&(dst->stroke_dsc->dash_pattern), &(src->stroke_dsc->dash_pattern),
+                      sizeof(float) * src->stroke_dsc->dash_count);
+        }
     }
 }
 
@@ -1282,10 +1339,7 @@ static void _render_viewport(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * 
     lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), &obj->matrix);
     if(view->viewport_fill) {
         lv_area_t rc = {0, 0, (int32_t)view->width, (int32_t)view->height};
-        lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-        lv_vector_path_append_rect(path, &rc, 0, 0);
-        lv_vector_dsc_add_path(dsc, path);
-        lv_vector_path_delete(path);
+        lv_vector_clear_area(dsc, &rc);
     }
 }
 
@@ -1404,18 +1458,20 @@ static void _render_group(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc
 
     struct _lv_svg_draw_dsc save_dsc;
     lv_memzero(&save_dsc, sizeof(struct _lv_svg_draw_dsc));
+    _alloc_draw_dsc(&(save_dsc.dsc));
 
     for(uint32_t i = 0; i < group->items.size; i++) {
         lv_svg_render_obj_t * list = *((lv_svg_render_obj_t **)lv_array_at(&group->items, i));
 
         if(list->clz->render && (list->flags & _RENDER_IN_GROUP)) {
-            _copy_draw_dsc(&(save_dsc.dsc), &(dsc->current_dsc));
+            _copy_draw_dsc(&(save_dsc.dsc), dsc->current_dsc);
             _special_render(list, dsc);
             list->clz->render(list, dsc, matrix);
-            _copy_draw_dsc(&(dsc->current_dsc), &(save_dsc.dsc));
+            lv_vector_dsc_set_current_dsc(dsc, &(save_dsc.dsc));
         }
     }
 
+    _deinit_draw_dsc(&(save_dsc.dsc));
     _restore_matrix(&mtx, dsc);
 }
 
@@ -1545,7 +1601,6 @@ static void _render_use(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc, 
                 if(list->clz->render) {
                     _prepare_render(list, dsc);
                     _special_render(obj, dsc);
-                    _copy_draw_dsc_from_ref(dsc, obj);
                     list->clz->render(list, dsc, &mtx);
                 }
                 break;
@@ -1558,11 +1613,6 @@ static void _render_use(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc, 
 }
 
 #if LV_USE_FREETYPE
-static bool _is_control_character(uint32_t ch)
-{
-    return ch == '\n' || ch == '\t' || ch == '\r';
-}
-
 static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc, const lv_matrix_t * matrix)
 {
     lv_svg_render_text_t * text = (lv_svg_render_text_t *)obj;
@@ -1590,33 +1640,24 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
         lv_matrix_multiply(&(lv_vector_dsc_get_current_dsc(dsc)->matrix), matrix);
     }
 
-    bool build_path = false;
-    if(lv_array_size(&text->path->ops) == 0) { /* empty path */
-        build_path = true;
-    }
+    if(lv_vector_path_is_empty(text->path)) { /* empty path */
+        lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+        // draw text contents and spans
+        lv_matrix_t mtx;
+        lv_matrix_identity(&mtx);
+        lv_matrix_translate(&mtx, text->x, text->y);
+        for(uint32_t i = 0; i < lv_array_size(&text->contents); i++) {
+            lv_svg_render_obj_t * ptext = *((lv_svg_render_obj_t **)lv_array_at(&text->contents, i));
+            lv_svg_render_content_t * content = (lv_svg_render_content_t *)ptext;
 
-    // draw text contents and spans
-    lv_matrix_t mtx;
-    lv_matrix_identity(&mtx);
-    lv_matrix_translate(&mtx, text->x, text->y);
-    for(uint32_t i = 0; i < lv_array_size(&text->contents); i++) {
-        lv_svg_render_obj_t * ptext = *((lv_svg_render_obj_t **)lv_array_at(&text->contents, i));
-        lv_svg_render_content_t * content = (lv_svg_render_content_t *)ptext;
-
-        if(content->render_content) {
-            content->render_content(content, dsc, &mtx);
-        }
-        else {
-            if(build_path) {
-                lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-
+            if(content->render_content) {
+                content->render_content(content, dsc, &mtx);
+            }
+            else {
                 float scale = text->size / 128.0f;
                 for(uint32_t j = 0; j < content->count; j++) {
                     uint32_t letter = content->letters[j];
-                    if(_is_control_character(letter)) {
-                        continue;
-                    }
-                    lv_font_glyph_dsc_t g = {0};
+                    lv_font_glyph_dsc_t g;
                     lv_font_get_glyph_dsc(text->font, &g, letter, '\0');
                     lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap(&g, NULL);
                     lv_vector_path_clear(glyph_path);
@@ -1632,11 +1673,10 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
                     text->font->release_glyph(text->font, &g);
                     lv_matrix_translate(&mtx, letter_w, 0);
                 }
-
-                lv_vector_path_delete(glyph_path);
-                lv_vector_path_get_bounding(text->path, &text->bounds);
             }
         }
+        lv_vector_path_delete(glyph_path);
+        lv_vector_path_get_bounding(text->path, &text->bounds);
     }
 
     _copy_draw_dsc_from_ref(dsc, obj);
@@ -1669,11 +1709,12 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
 
     struct _lv_svg_draw_dsc save_dsc;
     lv_memzero(&save_dsc, sizeof(struct _lv_svg_draw_dsc));
-    _copy_draw_dsc(&(save_dsc.dsc), &(dsc->current_dsc));
+    _alloc_draw_dsc(&(save_dsc.dsc));
+    _copy_draw_dsc(&(save_dsc.dsc), dsc->current_dsc);
 
-    _copy_draw_dsc(&(dsc->current_dsc), &(obj->dsc));
+    lv_vector_dsc_set_current_dsc(dsc, &(obj->dsc));
 
-    if(lv_array_size(&span->path->ops) == 0) { /* empty path */
+    if(lv_vector_path_is_empty(span->path)) { /* empty path */
         lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
         // draw text contents and spans
         lv_matrix_t * mtx = matrix;
@@ -1681,9 +1722,6 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
         float scale = span->size / 128.0f;
         for(uint32_t j = 0; j < content->count; j++) {
             uint32_t letter = content->letters[j];
-            if(_is_control_character(letter)) {
-                continue;
-            }
             lv_font_glyph_dsc_t g;
             lv_font_get_glyph_dsc(span->font, &g, letter, '\0');
             lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap(&g, NULL);
@@ -1706,7 +1744,8 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
     _copy_draw_dsc_from_ref(dsc, obj);
     lv_vector_dsc_add_path(dsc, span->path);
 
-    _copy_draw_dsc(&(dsc->current_dsc), &(save_dsc.dsc));
+    lv_vector_dsc_set_current_dsc(dsc, &(save_dsc.dsc));
+    _deinit_draw_dsc(&(save_dsc.dsc));
 }
 #endif
 
@@ -1763,51 +1802,6 @@ static void _get_poly_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
     lv_area_copy(area, &poly->bounds);
 }
 
-static void _get_group_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
-{
-    lv_svg_render_group_t * group = (lv_svg_render_group_t *)obj;
-
-    float x1 = 0;
-    float y1 = 0;
-    float x2 = 0;
-    float y2 = 0;
-
-    for(uint32_t i = 0; i < group->items.size; i++) {
-        lv_svg_render_obj_t * list = *((lv_svg_render_obj_t **)lv_array_at(&group->items, i));
-
-        lv_area_t tc = {0};
-        if(list->clz->get_bounds) {
-            list->clz->get_bounds(list, &tc);
-
-            x1 = MIN(tc.x1, x1);
-            y1 = MIN(tc.y1, y1);
-            x2 = MAX(tc.x2, x2);
-            y2 = MAX(tc.y2, y2);
-        }
-    }
-
-    area->x1 = x1;
-    area->y1 = y1;
-    area->x2 = x2;
-    area->y2 = y2;
-}
-
-static void _get_use_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
-{
-    lv_svg_render_use_t * use = (lv_svg_render_use_t *)obj;
-
-    lv_svg_render_obj_t * list = obj->head;
-    while(list) {
-        if(list->id && strcmp(use->xlink, list->id) == 0) {
-            if(list->clz->get_bounds) {
-                list->clz->get_bounds(list, area);
-            }
-            break;
-        }
-        list = list->next;
-    }
-}
-
 #if LV_USE_FREETYPE
 static void _get_text_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
 {
@@ -1825,10 +1819,7 @@ static void _get_tspan_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
 // get size fucctions
 static uint32_t _calc_path_data_size(lv_vector_path_t * path)
 {
-    uint32_t size = 0;
-    size += path->ops.capacity * path->ops.element_size;
-    size += path->points.capacity * path->points.element_size;
-    size += sizeof(int32_t);
+    uint32_t size = (uint32_t)lv_vector_path_get_mem_size(path);
     return size;
 }
 
@@ -2136,12 +2127,11 @@ static lv_svg_render_class svg_use_class = {
     .set_attr = _set_use_attr,
     .render = _render_use,
     .destroy = _destroy_use,
-    .get_bounds = _get_use_bounds,
     .get_size = _get_use_size,
 };
 
 static lv_svg_render_class svg_solid_class = {
-    .init = _init_solid,
+    .init = _init_obj,
     .set_attr = _set_solid_attr,
     .set_paint_ref = _set_solid_ref,
     .get_size = _get_solid_size,
@@ -2159,7 +2149,6 @@ static lv_svg_render_class svg_group_class = {
     .set_attr = _set_attr,
     .render = _render_group,
     .destroy = _destroy_group,
-    .get_bounds = _get_group_bounds,
     .get_size = _get_group_size,
 };
 

@@ -321,6 +321,13 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
 bool lv_vector_path_is_empty(const lv_vector_path_t * path);
 
 /**
+ * Get the memory size of a vector path object
+ * @param path              pointer to a path
+ * @return                  the memory size of the path object in bytes
+ */
+size_t lv_vector_path_get_mem_size(const lv_vector_path_t * path);
+
+/**
  * Create a vector graphic descriptor
  * @param layer         pointer to a layer
  * @return              pointer to the created descriptor
@@ -575,6 +582,13 @@ void lv_vector_dsc_skew(lv_vector_dsc_t * dsc, float skew_x, float skew_y);
  * @return          pointer to the current active drawing descriptor (contains style properties like stroke/fill color)
  */
 lv_vector_draw_dsc_t * lv_vector_dsc_get_current_dsc(const lv_vector_dsc_t * dsc);
+
+/**
+ * Set the current drawing descriptor to the vector graphic descriptor
+ * @param dsc           pointer to a vector graphic descriptor
+ * @param draw_dsc      pointer to the new active drawing descriptor
+ */
+void lv_vector_dsc_set_current_dsc(const lv_vector_dsc_t * dsc, lv_vector_draw_dsc_t * draw_dsc);
 
 /**
  * Add a graphic path to the draw list
