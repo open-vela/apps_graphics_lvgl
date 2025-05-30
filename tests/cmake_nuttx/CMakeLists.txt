@@ -151,7 +151,7 @@ if(CONFIG_LVGL_UNITTESTS)
     endforeach()
 
     # Add test case runners
-    file(GLOB TEST_CASE_RUNNERS ${LVGL_PATH}/tests/build_test_nuttx/*.c)
+    file(GLOB TEST_CASE_RUNNERS ${CMAKE_CURRENT_BINARY_DIR}/../build_test_nuttx/*.c)
 
     # Add test case runners to Unity sources
     list(APPEND UNITY_CSRCS ${TEST_CASE_RUNNERS})
@@ -176,7 +176,7 @@ if(CONFIG_LVGL_UNITTESTS)
         COMPILE_FLAGS
         ${CMAKE_C_FLAGS} -DLV_TEST_OPTION=7 -DLV_BUILD_TEST=1 -DTEST_FONT_PATH="/data/font/MiSans-Regular.ttf" -DREF_IMGS_PATH="/data/ref_imgs/"
         INCLUDE_DIRECTORIES
-        "${LVGL_PATH}/tests/unity" "${LVGL_PATH}/tests" "${LVGL_PATH}/tests/src"
+        "${LVGL_PATH}/tests/unity" "${LVGL_PATH}/tests" "${LVGL_PATH}/tests/src" "${CMAKE_CURRENT_BINARY_DIR}"
         MODULE
         ${CONFIG_LVGL_UNITTESTS}
         DEPENDS
@@ -188,5 +188,5 @@ if(CONFIG_LVGL_UNITTESTS)
     file(COPY ${RESOURCE_DIR} DESTINATION ${LVGL_PATH}/tests/ref_imgs)
 
     # Create lock file
-    file(TOUCH ${LVGL_PATH}/tests/build_test_nuttx/test_entries.lock)
+    file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/../build_test_nuttx/test_entries.lock)
 endif()
