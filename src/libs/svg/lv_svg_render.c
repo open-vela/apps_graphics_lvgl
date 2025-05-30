@@ -1282,7 +1282,10 @@ static void _render_viewport(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * 
     lv_matrix_multiply(&dsc->current_dsc.matrix, &obj->matrix);
     if(view->viewport_fill) {
         lv_area_t rc = {0, 0, (int32_t)view->width, (int32_t)view->height};
-        lv_vector_clear_area(dsc, &rc);
+        lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+        lv_vector_path_append_rect(path, &rc, 0, 0);
+        lv_vector_dsc_add_path(dsc, path);
+        lv_vector_path_delete(path);
     }
 }
 
