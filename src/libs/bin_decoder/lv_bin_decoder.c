@@ -341,6 +341,11 @@ lv_result_t lv_bin_decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     }
     dsc->decoded = adjusted;
 
+    /* Copy user flags to the decoded image */
+    if(dsc->header.flags & LV_IMAGE_FLAGS_USER_MASK) {
+        lv_draw_buf_set_flag((lv_draw_buf_t *)dsc->decoded, dsc->header.flags & LV_IMAGE_FLAGS_USER_MASK);
+    }
+
     /*Do not put image to cache if it can be used directly.*/
     if(use_directly || dsc->args.no_cache) {
         if(dsc->args.flush_cache && use_directly) {
