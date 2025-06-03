@@ -1091,7 +1091,7 @@ static void _init_poly(lv_svg_render_obj_t * obj, const lv_svg_node_t * node)
     _init_obj(obj, node);
     lv_svg_render_poly_t * poly = (lv_svg_render_poly_t *)obj;
     poly->path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-    lv_area_set(&poly->bounds, 0, 0, 0, 0);
+    lv_area_set(&poly->bounds, INT_MAX, INT_MAX, INT_MIN, INT_MIN);
 }
 
 #if LV_USE_FREETYPE
