@@ -39,7 +39,7 @@ typedef struct {
  **********************/
 
 lv_iter_t * lv_text_line_process_iter_create(const char * txt, uint32_t text_len,
-                                             const lv_font_t * font, uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break);
+                                             const lv_font_t * font, uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break, int8_t flag);
 
 void lv_text_line_process_iter_destroy(lv_iter_t * iter);
 
