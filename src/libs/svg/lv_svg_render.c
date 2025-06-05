@@ -1590,20 +1590,26 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
         lv_matrix_multiply(&dsc->current_dsc.matrix, matrix);
     }
 
+    bool build_path = false;
     if(lv_array_size(&text->path->ops) == 0) { /* empty path */
-        lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
-        // draw text contents and spans
-        lv_matrix_t mtx;
-        lv_matrix_identity(&mtx);
-        lv_matrix_translate(&mtx, text->x, text->y);
-        for(uint32_t i = 0; i < lv_array_size(&text->contents); i++) {
-            lv_svg_render_obj_t * ptext = *((lv_svg_render_obj_t **)lv_array_at(&text->contents, i));
-            lv_svg_render_content_t * content = (lv_svg_render_content_t *)ptext;
+        build_path = true;
+    }
 
-            if(content->render_content) {
-                content->render_content(content, dsc, &mtx);
-            }
-            else {
+    // draw text contents and spans
+    lv_matrix_t mtx;
+    lv_matrix_identity(&mtx);
+    lv_matrix_translate(&mtx, text->x, text->y);
+    for(uint32_t i = 0; i < lv_array_size(&text->contents); i++) {
+        lv_svg_render_obj_t * ptext = *((lv_svg_render_obj_t **)lv_array_at(&text->contents, i));
+        lv_svg_render_content_t * content = (lv_svg_render_content_t *)ptext;
+
+        if(content->render_content) {
+            content->render_content(content, dsc, &mtx);
+        }
+        else {
+            if(build_path) {
+                lv_vector_path_t * glyph_path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
                 float scale = text->size / 128.0f;
                 for(uint32_t j = 0; j < content->count; j++) {
                     uint32_t letter = content->letters[j];
@@ -1626,10 +1632,11 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
                     text->font->release_glyph(text->font, &g);
                     lv_matrix_translate(&mtx, letter_w, 0);
                 }
+
+                lv_vector_path_delete(glyph_path);
+                lv_vector_path_get_bounding(text->path, &text->bounds);
             }
         }
-        lv_vector_path_delete(glyph_path);
-        lv_vector_path_get_bounding(text->path, &text->bounds);
     }
 
     _copy_draw_dsc_from_ref(dsc, obj);
