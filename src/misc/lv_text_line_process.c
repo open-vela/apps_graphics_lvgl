@@ -9,6 +9,7 @@
 
 #include "lv_text_line_process.h"
 #include "lv_iter.h"
+#include "lv_text.h"
 
 /*********************
  *      DEFINES
@@ -29,6 +30,7 @@ typedef struct {
     uint32_t letter_space;
     uint8_t tab_width;
     bool long_break;
+    int8_t flag;
 } lv_text_line_process_t;
 
 /**********************
@@ -54,7 +56,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
  **********************/
 
 lv_iter_t * lv_text_line_process_iter_create(const char * txt, uint32_t text_len,
-                                             const lv_font_t * font, uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break)
+                                             const lv_font_t * font, uint16_t max_width, uint32_t letter_space, uint8_t tab_width, bool long_break, int8_t flag)
 {
     lv_iter_t * iter = lv_iter_create((void *)txt, sizeof(lv_text_line_process_line_info_t), sizeof(lv_text_line_process_t),
                                       line_iter_next_cb);
@@ -70,6 +72,7 @@ lv_iter_t * lv_text_line_process_iter_create(const char * txt, uint32_t text_len
     ctx->letter_space = letter_space;
     ctx->tab_width = tab_width;
     ctx->long_break = long_break;
+    ctx->flag = flag;
 
     return iter;
 }
@@ -108,6 +111,8 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
 
     lv_iter_make_peekable(word_iter, 2);
 
+    bool break_all = (ctx->flag & LV_TEXT_FLAG_BREAK_ALL) == LV_TEXT_FLAG_BREAK_ALL;
+
     uint32_t end;
     uint32_t brk;
     bool is_line_leading = true;
@@ -128,6 +133,28 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
 
         real_width += word.real_width;
         ideal_width += word.ideal_width;
+
+        if(break_all) {
+            lv_iter_next(word_iter, NULL);
+
+            lv_text_word_process_word_info_t word_next;
+            res = lv_iter_peek(word_iter, &word_next);
+            if(res == LV_RESULT_INVALID) {
+                end = word.pos.end;
+                brk = word.pos.end;
+                break;
+            }
+
+            if(word_next.pos.brk != UINT32_MAX) {
+                end = word_next.pos.end;
+                brk = word_next.pos.brk;
+                real_width += word_next.real_width;
+                ideal_width += word_next.ideal_width;
+                break;
+            }
+
+            continue;
+        }
 
         if(word.type == LV_TEXT_WORD_PROCESS_NEWLINE || word.type == LV_TEXT_WORD_PROCESS_RETURN) {
             end = word.pos.end;
