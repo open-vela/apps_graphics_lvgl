@@ -206,7 +206,9 @@ static lv_vector_path_quality_t lv_vg_lite_path_get_quality_cb(struct lv_platfor
 static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, const lv_matrix_t * matrix)
 {
     lv_platform_vg_lite_path_t * path = LV_VG_LITE_PATH_CAST(self);
-    lv_vg_lite_path_set_transform(path->vg_path, (const vg_lite_matrix_t *)matrix);
+    vg_lite_matrix_t vg_matrix = {0};
+    lv_vg_lite_matrix(&vg_matrix, matrix);
+    lv_vg_lite_path_set_transform(path->vg_path, &vg_matrix);
 }
 
 static void get_path_data_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
