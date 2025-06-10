@@ -179,19 +179,19 @@ void lv_draw_finalize_task_creation(lv_layer_t * layer, lv_draw_task_t * t)
 void lv_draw_dispatch(void)
 {
     LV_PROFILER_DRAW_BEGIN;
-    bool render_running = false;
-    lv_display_t * disp = lv_display_get_next(NULL);
-    while(disp) {
+    bool task_dispatched = false;
+    lv_display_t * disp = _lv_refr_get_disp_refreshing();
+    if(disp != NULL) {
         lv_layer_t * layer = disp->layer_head;
         while(layer) {
             if(lv_draw_dispatch_layer(disp, layer))
-                render_running = true;
+                task_dispatched = true;
             layer = layer->next;
         }
-        if(!render_running) {
-            lv_draw_dispatch_request();
-        }
-        disp = lv_display_get_next(disp);
+    }
+    if(!task_dispatched) {
+        lv_draw_dispatch_request();
+
     }
     LV_PROFILER_DRAW_END;
 }
