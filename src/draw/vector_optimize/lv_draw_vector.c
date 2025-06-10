@@ -144,16 +144,11 @@ void lv_vector_path_copy(lv_vector_path_t * target_path, const lv_vector_path_t 
 {
     LV_ASSERT_NULL(target_path);
     LV_ASSERT_NULL(path);
-
     if(target_path == path) return;
-    lv_vector_path_unref(target_path->impl);
 
-    target_path->impl = path->impl->handlers->clone(path->impl);
-    if(target_path->impl) {
-        target_path->impl->ref_count = 1;
-        target_path->impl->flags = path->impl->flags;
-        target_path->impl->handlers = path->impl->handlers;
-    }
+    lv_vector_ensure_write_access(target_path);
+    target_path->impl->handlers->clear(target_path->impl);
+    target_path->impl->handlers->concat(target_path->impl, path->impl);
 }
 
 void lv_vector_path_clear(lv_vector_path_t * path)

@@ -105,6 +105,7 @@ static void lv_vg_lite_path_destroy_cb(struct lv_platform_path_base_t * self)
     if(path->vg_path) {
         lv_vg_lite_path_destroy(path->vg_path);
     }
+    lv_free(path);
 }
 
 static struct lv_platform_path_base_t * lv_vg_lite_path_clone_cb(struct lv_platform_path_base_t * self)
