@@ -333,11 +333,13 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
 
     lv_area_t bg_coords;
     lv_draw_glyph_dsc_t draw_letter_dsc;
+    lv_font_glyph_dsc_t glyph_dsc;
     lv_draw_glyph_dsc_init(&draw_letter_dsc);
     draw_letter_dsc.opa = dsc->opa;
     draw_letter_dsc.bg_coords = &bg_coords;
     draw_letter_dsc.color = dsc->color;
     draw_letter_dsc.rotation = dsc->rotation;
+    draw_letter_dsc.g = &glyph_dsc;
 
     lv_draw_fill_dsc_t fill_dsc;
     lv_draw_fill_dsc_init(&fill_dsc);
@@ -465,7 +467,8 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
                 }
             }
 
-            letter_w = lv_font_get_glyph_width(font, letter, letter_next);
+            lv_font_get_glyph_dsc(font, &glyph_dsc, letter, letter_next);
+            letter_w = lv_text_is_marker(letter) ? 0 : glyph_dsc.adv_w;
 
             /*Always set the bg_coordinates for placeholder drawing*/
             bg_coords.x1 = pos.x - dsc->letter_space / 2;
@@ -586,16 +589,23 @@ void lv_draw_unit_draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * 
         return;
 
     LV_PROFILER_DRAW_BEGIN;
-    bool g_ret = lv_font_get_glyph_dsc(font, &g, letter, '\0');
-    if(g_ret == false) {
-        /*Add warning if the dsc is not found*/
-        LV_LOG_WARN("lv_draw_letter: glyph dsc. not found for U+%" LV_PRIX32, letter);
+    if(dsc->g == NULL) {
+        dsc->g = &g;
+        /*If the glyph dsc is not set then get it from the font*/
+        bool g_ret = lv_font_get_glyph_dsc(font, &g, letter, '\0');
+        if(g_ret == false) {
+            /*Add warning if the dsc is not found*/
+            LV_LOG_WARN("lv_draw_letter: glyph dsc. not found for U+%" LV_PRIX32, letter);
+        }
+    }
+    else {
+        /*If the glyph dsc is set then use it*/
+        g = *dsc->g;
     }
 
     /*Don't draw anything if the character is empty. E.g. space*/
     if((g.box_h == 0) || (g.box_w == 0)) {
-        LV_PROFILER_DRAW_END;
-        return;
+        goto exit;
     }
 
     /* workaround function center emoji mandatory, https://github.com/lvgl/lvgl/pull/3668 */
@@ -619,8 +629,7 @@ void lv_draw_unit_draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * 
     if(_lv_area_is_out(&letter_coords, draw_unit->clip_area, 0) &&
        dsc->bg_coords &&
        _lv_area_is_out(dsc->bg_coords, draw_unit->clip_area, 0)) {
-        LV_PROFILER_DRAW_END;
-        return;
+        goto exit;
     }
 
     if(g.resolved_font) {
@@ -640,7 +649,7 @@ void lv_draw_unit_draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * 
             }
         }
 
-        dsc->glyph_data = (void *) lv_font_get_glyph_bitmap(&g, draw_buf);
+        dsc->glyph_data = (void *) lv_font_get_glyph_bitmap(dsc->g, draw_buf);
         dsc->format = dsc->glyph_data ? g.format : LV_FONT_GLYPH_FORMAT_NONE;
     }
     else {
@@ -651,7 +660,14 @@ void lv_draw_unit_draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * 
     dsc->g = &g;
     cb(draw_unit, dsc, NULL, NULL);
 
-    lv_font_glyph_release_draw_data(&g);
+    lv_font_glyph_release_draw_data(dsc->g);
+
+exit:
+    if(dsc->g == &g) {
+        /* If the glyph was created locally, we don't need to keep it */
+        dsc->g = NULL;
+    }
+
 
     LV_PROFILER_DRAW_END;
 }
