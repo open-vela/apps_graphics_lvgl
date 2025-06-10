@@ -132,7 +132,7 @@ static void lv_base_generator_init(lv_base_generator * gen)
 static void remove_last_distance_point(lv_array_t * array)
 {
     if(!lv_array_is_empty(array)) {
-        lv_array_remove(array, lv_array_size(array) - 1); // remove previous last
+        array->size--;
     }
 }
 
