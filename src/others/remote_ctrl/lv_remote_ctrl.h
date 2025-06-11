@@ -46,6 +46,12 @@ typedef struct {
         LV_REMOTE_CTRL_CMD_SYSMON_MIN = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CREATE,
         LV_REMOTE_CTRL_CMD_SYSMON_MAX = LV_REMOTE_CTRL_CMD_SYSMON_PERF_CSV,
         /* Sysmon commands end */
+        /* Snapshot commands begin */
+        LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE, /**< Take a snapshot */
+        LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE, /**< Save a snapshot */
+        LV_REMOTE_CTRL_CMD_SNAPSHOT_MIN = LV_REMOTE_CTRL_CMD_SNAPSHOT_TAKE,
+        LV_REMOTE_CTRL_CMD_SNAPSHOT_MAX = LV_REMOTE_CTRL_CMD_SNAPSHOT_SAVE,
+        /* Snapshot commands end */
     } cmd;
     union {
         struct {
@@ -59,6 +65,14 @@ typedef struct {
         struct {
             char file_name[LV_REMOTE_CTRL_CMD_STR_LEN];
         } sysmon_perf_csv;
+        struct {
+            size_t count;
+            uint16_t offset;
+            bool by_x;
+        } snapshot_take;
+        struct {
+            char file_name[LV_REMOTE_CTRL_CMD_STR_LEN];
+        } snapshot_save;
     } cfg;
 } lv_remote_ctrl_cmd_t;
 
