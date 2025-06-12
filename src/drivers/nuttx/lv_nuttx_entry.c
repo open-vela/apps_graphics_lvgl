@@ -103,7 +103,7 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
     dsc->utouch_path = "/dev/utouch";
 #endif
 
-#ifdef LV_USE_NUTTX_MOUSE
+#if LV_USE_NUTTX_MOUSE
     dsc->mouse_path = "/dev/mouse0";
 #endif
 
