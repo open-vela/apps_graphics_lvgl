@@ -657,7 +657,6 @@ void lv_draw_unit_draw_letter(lv_draw_unit_t * draw_unit, lv_draw_glyph_dsc_t * 
     }
 
     dsc->letter_coords = &letter_coords;
-    dsc->g = &g;
     cb(draw_unit, dsc, NULL, NULL);
 
     lv_font_glyph_release_draw_data(dsc->g);
