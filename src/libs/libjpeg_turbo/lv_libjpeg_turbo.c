@@ -139,7 +139,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         }
 
         /*Save the data in the header*/
-        header->cf = LV_COLOR_FORMAT_RGB888;
+        header->cf = LV_COLOR_FORMAT_ARGB8888;
         header->w = (orientation % 180) ? height : width;
         header->h = (orientation % 180) ? width : height;
 
