@@ -11,7 +11,7 @@ ifneq ($(HAVE_TEST_FILE), yes)
 $(shell echo "extern void ${TEST_APP_NAME}_lvgl_main(void);" >> ${LVGL_PATH}/tests/build_test_nuttx/test_entries.h)
 $(shell echo "if ((strcmp(test_name, \"${TEST_APP_NAME}\") == 0) || (strcmp(test_name, \"all\") == 0)) {${TEST_APP_NAME}_lvgl_main();}" >> ${LVGL_PATH}/tests/build_test_nuttx/test_entries_list.h)
 
-$(shell sed -e 's/setUp/${TEST_APP_NAME}_setUp/g' -e 's/tearDown/${TEST_APP_NAME}_tearDown/g' ${TEST_CASE_FILE} > ${LVGL_PATH}/tests/build_test_nuttx/${TEST_CASE_NAME})
+$(shell sed -e 's/setUp/${TEST_APP_NAME}_setUp/g' -e 's/tearDown/${TEST_APP_NAME}_tearDown/g' -e 's/A:/\/data\/lvgl_assets\//g' -e 's/B:/\/data\/lvgl_assets\//g' ${TEST_CASE_FILE} > ${LVGL_PATH}/tests/build_test_nuttx/${TEST_CASE_NAME})
 
 $(shell ruby ${LVGL_PATH}/tests/unity/generate_test_runner.rb ${LVGL_PATH}/tests/build_test_nuttx/config.yml --main_name=${TEST_APP_NAME}_lvgl_main --test_reset_name=${TEST_APP_NAME}_resetTest --test_verify_name=${TEST_APP_NAME}_verifyTest --setup_name=${TEST_APP_NAME}_setUp --teardown_name=${TEST_APP_NAME}_tearDown ${TEST_CASE_FILE} ${TEST_APP_RUNNER})
 

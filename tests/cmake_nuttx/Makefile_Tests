@@ -11,8 +11,11 @@ if(NOT ${TEST_APP_NAME} STREQUAL "_test_template")
         file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/../build_test_nuttx/test_entries_list.h "if ((strcmp(test_name, \"${TEST_APP_NAME}\") == 0) || (strcmp(test_name, \"all\") == 0)) {${TEST_APP_NAME}_lvgl_main();}\n")
 
         file(READ ${TEST_CASE_FILE} TEST_CASE_CONTENTS)
+        set(TEST_ASSETS_DIR "/data/lvgl_assets/")
         string(REPLACE "setUp" "${TEST_APP_NAME}_setUp" TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
         string(REPLACE "tearDown" "${TEST_APP_NAME}_tearDown" TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
+        string(REPLACE "A:" ${TEST_ASSETS_DIR} TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
+        string(REPLACE "B:" ${TEST_ASSETS_DIR} TEST_CASE_CONTENTS "${TEST_CASE_CONTENTS}")
         file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/../build_test_nuttx/${TEST_CASE_NAME} "${TEST_CASE_CONTENTS}")
 
         execute_process(
