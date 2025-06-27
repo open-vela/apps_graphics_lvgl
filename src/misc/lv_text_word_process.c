@@ -100,7 +100,7 @@ lv_iter_t * lv_text_word_process_iter_create(const char * txt, const uint32_t te
 
     ctx->font = font;
     ctx->letter_space = letter_space;
-    ctx->remaining_width = remaining_width;
+    ctx->remaining_width = remaining_width + letter_space;
     ctx->flag = flag;
 
     lv_iter_make_peekable(ctx->char_iter, 2);
