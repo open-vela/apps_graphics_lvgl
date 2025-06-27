@@ -36,13 +36,16 @@
  **********************/
 
 typedef enum {
-    GRAD_TYPE_UNKNOWN,
+    GRAD_TYPE_FREE,
     GRAD_TYPE_LINEAR,
     GRAD_TYPE_LINEAR_EXT,
     GRAD_TYPE_RADIAL,
+    GRAD_TYPE_UNKNOWN,
 } grad_type_t;
 
+struct _lv_vg_lite_grad_ctx_t;
 typedef struct {
+    struct _lv_vg_lite_grad_ctx_t * ctx;
     grad_type_t type;
     lv_vector_gradient_t lv;
     union {
@@ -52,15 +55,31 @@ typedef struct {
     } vg;
 } grad_item_t;
 
+typedef grad_item_t * grad_item_ref_t;
+
+typedef struct _lv_vg_lite_grad_ctx_t {
+    struct _lv_draw_vg_lite_unit_t * unit;
+    lv_cache_t * cache;
+    struct _lv_vg_lite_pending_t * pending;
+    lv_ll_t item_pool;
+
+    /**
+     * Temporary reuse of data to reduce the use of
+     * large memory allocations on the heap and stack during runtime
+     */
+    grad_item_t local_grad_item;
+    vg_lite_color_ramp_t local_color_ramp[VLC_MAX_COLOR_RAMP_STOPS];
+} lv_vg_lite_grad_ctx_t;
+
 /**********************
  *  STATIC PROTOTYPES
  **********************/
 
-static grad_item_t * grad_get(struct _lv_draw_vg_lite_unit_t * u, const lv_vector_gradient_t * grad);
+static grad_item_t * grad_get(lv_vg_lite_grad_ctx_t * ctx, const lv_vector_gradient_t * grad);
 static void grad_cache_release_cb(void * entry, void * user_data);
-static bool grad_create_cb(grad_item_t * item, void * user_data);
-static void grad_free_cb(grad_item_t * item, void * user_data);
-static lv_cache_compare_res_t grad_compare_cb(const grad_item_t * lhs, const grad_item_t * rhs);
+static bool grad_create_cb(grad_item_ref_t * item_ref, void * user_data);
+static void grad_free_cb(grad_item_ref_t * item_ref, void * user_data);
+static lv_cache_compare_res_t grad_compare_cb(const grad_item_ref_t * lhs_ref, const grad_item_ref_t * rhs_ref);
 
 static grad_type_t lv_grad_style_to_type(lv_vector_gradient_style_t style);
 static void grad_point_to_matrix(vg_lite_matrix_t * grad_matrix, float x1, float y1, float x2, float y2);
@@ -82,9 +101,9 @@ static void lv_vg_lite_radial_gradient_dump_info(const vg_lite_radial_gradient_t
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_vg_lite_grad_init(struct _lv_draw_vg_lite_unit_t * u, uint32_t cache_cnt)
+struct _lv_vg_lite_grad_ctx_t * lv_vg_lite_grad_ctx_create(uint32_t cache_cnt, struct _lv_draw_vg_lite_unit_t * unit)
 {
-    LV_ASSERT_NULL(u);
+    LV_ASSERT_MSG(cache_cnt > 0, "cache_cnt should be greater than 0");
 
     lv_cache_ops_t ops = {
         .compare_cb = (lv_cache_compare_cb_t)grad_compare_cb,
@@ -92,24 +111,39 @@ void lv_vg_lite_grad_init(struct _lv_draw_vg_lite_unit_t * u, uint32_t cache_cnt
         .free_cb = (lv_cache_free_cb_t)grad_free_cb,
     };
 
-    u->grad_cache = lv_cache_create(&lv_cache_class_lru_rb_count, sizeof(grad_item_t), cache_cnt, ops);
-    lv_cache_set_name(u->grad_cache, "VG_GRAD");
-    u->grad_pending = lv_vg_lite_pending_create(sizeof(lv_cache_entry_t *), 4);
-    lv_vg_lite_pending_set_free_cb(u->grad_pending, grad_cache_release_cb, u->grad_cache);
+    lv_vg_lite_grad_ctx_t * ctx = lv_malloc_zeroed(sizeof(lv_vg_lite_grad_ctx_t));
+    LV_ASSERT_MALLOC(ctx);
+    ctx->unit = unit;
+
+    _lv_ll_init(&ctx->item_pool, sizeof(grad_item_t));
+
+    ctx->cache = lv_cache_create(&lv_cache_class_lru_rb_count, sizeof(grad_item_ref_t), cache_cnt, ops);
+    lv_cache_set_name(ctx->cache, "VG_GRAD");
+    ctx->pending = lv_vg_lite_pending_create(sizeof(lv_cache_entry_t *), 4);
+    lv_vg_lite_pending_set_free_cb(ctx->pending, grad_cache_release_cb, ctx->cache);
+
+    return ctx;
 }
 
-void lv_vg_lite_grad_deinit(struct _lv_draw_vg_lite_unit_t * u)
+void lv_vg_lite_grad_ctx_delete(struct _lv_vg_lite_grad_ctx_t * ctx)
 {
-    LV_ASSERT_NULL(u);
-    LV_ASSERT_NULL(u->grad_pending)
-    lv_vg_lite_pending_destroy(u->grad_pending);
-    u->grad_pending = NULL;
-    lv_cache_destroy(u->grad_cache, NULL);
-    u->grad_cache = NULL;
+    LV_ASSERT_NULL(ctx);
+    lv_vg_lite_pending_destroy(ctx->pending);
+    lv_cache_destroy(ctx->cache, NULL);
+    _lv_ll_clear(&ctx->item_pool);
+
+    lv_memzero(ctx, sizeof(lv_vg_lite_grad_ctx_t));
+    lv_free(ctx);
+}
+
+struct _lv_vg_lite_pending_t * lv_vg_lite_grad_ctx_get_pending(struct _lv_vg_lite_grad_ctx_t * ctx)
+{
+    LV_ASSERT_NULL(ctx);
+    return ctx->pending;
 }
 
 bool lv_vg_lite_draw_grad(
-    struct _lv_draw_vg_lite_unit_t * u,
+    struct _lv_vg_lite_grad_ctx_t * ctx,
     vg_lite_buffer_t * buffer,
     vg_lite_path_t * path,
     const lv_vector_gradient_t * grad,
@@ -118,7 +152,7 @@ bool lv_vg_lite_draw_grad(
     vg_lite_fill_t fill,
     vg_lite_blend_t blend)
 {
-    LV_ASSERT_NULL(u);
+    LV_ASSERT_NULL(ctx);
     LV_VG_LITE_ASSERT_DEST_BUFFER(buffer);
     LV_VG_LITE_ASSERT_PATH(path);
     LV_ASSERT_NULL(grad);
@@ -147,9 +181,7 @@ bool lv_vg_lite_draw_grad(
         }
     }
 
-    LV_PROFILER_DRAW_BEGIN_TAG("grad_get");
-    grad_item_t * grad_item = grad_get(u, grad);
-    LV_PROFILER_DRAW_END_TAG("grad_get");
+    grad_item_t * grad_item = grad_get(ctx, grad);
     if(!grad_item) {
         LV_LOG_WARN("Failed to get gradient, style: %d", grad->style);
         return false;
@@ -253,7 +285,7 @@ bool lv_vg_lite_draw_grad(
 }
 
 bool lv_vg_lite_draw_grad_helper(
-    struct _lv_draw_vg_lite_unit_t * u,
+    struct _lv_vg_lite_grad_ctx_t * ctx,
     vg_lite_buffer_t * buffer,
     vg_lite_path_t * path,
     const lv_area_t * area,
@@ -262,7 +294,7 @@ bool lv_vg_lite_draw_grad_helper(
     vg_lite_fill_t fill,
     vg_lite_blend_t blend)
 {
-    LV_ASSERT_NULL(u);
+    LV_ASSERT_NULL(ctx);
     LV_VG_LITE_ASSERT_DEST_BUFFER(buffer);
     LV_VG_LITE_ASSERT_PATH(path);
     LV_ASSERT_NULL(area);
@@ -346,43 +378,84 @@ bool lv_vg_lite_draw_grad_helper(
     vg_lite_matrix_t grad_matrix;
     vg_lite_identity(&grad_matrix);
 
-    return lv_vg_lite_draw_grad(u, buffer, path, &grad, &grad_matrix, matrix, fill, blend);
+    return lv_vg_lite_draw_grad(ctx, buffer, path, &grad, matrix, matrix, fill, blend);
 }
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
 
-static grad_item_t * grad_get(struct _lv_draw_vg_lite_unit_t * u, const lv_vector_gradient_t * grad)
+static grad_item_t * grad_get(lv_vg_lite_grad_ctx_t * ctx, const lv_vector_gradient_t * grad)
 {
-    LV_ASSERT_NULL(u);
+    LV_PROFILER_DRAW_BEGIN;
+    LV_ASSERT_NULL(ctx);
     LV_ASSERT_NULL(grad);
 
-    grad_item_t search_key;
-    lv_memzero(&search_key, sizeof(search_key));
-    search_key.type = lv_grad_style_to_type(grad->style);
-    search_key.lv = *grad;
+    grad_item_ref_t search_key = &ctx->local_grad_item;
+    lv_memzero(search_key, sizeof(ctx->local_grad_item));
+    search_key->type = lv_grad_style_to_type(grad->style);
+    search_key->lv = *grad;
 
-    lv_cache_entry_t * cache_node_entry = lv_cache_acquire(u->grad_cache, &search_key, NULL);
+    lv_cache_entry_t * cache_node_entry = lv_cache_acquire(ctx->cache, &search_key, ctx);
     if(cache_node_entry == NULL) {
         /* check if the cache is full */
-        size_t free_size = lv_cache_get_free_size(u->grad_cache, NULL);
+        size_t free_size = lv_cache_get_free_size(ctx->cache, NULL);
         if(free_size == 0) {
             LV_LOG_INFO("grad cache is full, release all pending cache entries");
-            lv_vg_lite_finish(u);
+            lv_vg_lite_finish(ctx->unit);
         }
 
-        cache_node_entry = lv_cache_acquire_or_create(u->grad_cache, &search_key, NULL);
+        cache_node_entry = lv_cache_acquire_or_create(ctx->cache, &search_key, ctx);
         if(cache_node_entry == NULL) {
             LV_LOG_ERROR("grad cache creating failed");
+            LV_PROFILER_DRAW_END;
             return NULL;
         }
     }
 
     /* Add the new entry to the pending list */
-    lv_vg_lite_pending_add(u->grad_pending, &cache_node_entry);
+    lv_vg_lite_pending_add(ctx->pending, &cache_node_entry);
 
-    return lv_cache_entry_get_data(cache_node_entry);
+    grad_item_ref_t * grad_item_ref = lv_cache_entry_get_data(cache_node_entry);
+
+    LV_PROFILER_DRAW_END;
+    return *grad_item_ref;
+}
+
+static grad_item_t * grad_item_pool_alloc(lv_vg_lite_grad_ctx_t * ctx, grad_type_t type)
+{
+    LV_ASSERT_NULL(ctx);
+    grad_item_t * item = _lv_ll_get_head(&ctx->item_pool);
+    /* Try to obtain a free node from the head */
+    if(item && item->type == GRAD_TYPE_FREE) {
+        _lv_ll_move_before(&ctx->item_pool, item, NULL);
+        LV_LOG_TRACE("reuse item: %p, type: %d", (void *)item, type);
+    }
+    else {
+        /* Allocate a new node if the pool is empty or all nodes are in use */
+        item = _lv_ll_ins_tail(&ctx->item_pool);
+        LV_ASSERT_MALLOC(item);
+        if(!item) {
+            LV_LOG_ERROR("alloc grad item failed");
+            return NULL;
+        }
+        LV_LOG_TRACE("alloc new item: %p, type: %d, pool size: %" LV_PRIu32,
+                     (void *)item, type, _lv_ll_get_len(&ctx->item_pool));
+    }
+    lv_memzero(item, sizeof(grad_item_t));
+    item->ctx = ctx;
+    item->type = type;
+    return item;
+}
+
+static void grad_item_pool_free(grad_item_t * item)
+{
+    LV_ASSERT_NULL(item);
+    LV_ASSERT_NULL(item->ctx);
+    /* Move the free nodes to the head to ensure quick allocation */
+    item->type = GRAD_TYPE_FREE;
+    grad_item_t * head = _lv_ll_get_head(&item->ctx->item_pool);
+    _lv_ll_move_before(&item->ctx->item_pool, item, head);
 }
 
 static void grad_cache_release_cb(void * entry, void * user_data)
@@ -392,16 +465,10 @@ static void grad_cache_release_cb(void * entry, void * user_data)
     lv_cache_release(cache, * entry_p, NULL);
 }
 
-static vg_lite_color_ramp_t * grad_create_color_ramp(const lv_vector_gradient_t * grad)
+static void convert_color_ramp(vg_lite_color_ramp_t * color_ramp, const lv_vector_gradient_t * grad)
 {
+    LV_ASSERT_NULL(color_ramp);
     LV_ASSERT_NULL(grad);
-
-    vg_lite_color_ramp_t * color_ramp = lv_malloc(sizeof(vg_lite_color_ramp_t) * grad->stops_count);
-    LV_ASSERT_MALLOC(color_ramp);
-    if(!color_ramp) {
-        LV_LOG_ERROR("malloc failed for color_ramp");
-        return NULL;
-    }
 
     for(uint16_t i = 0; i < grad->stops_count; i++) {
         color_ramp[i].stop = grad->stops[i].frac / 255.0f;
@@ -412,8 +479,6 @@ static vg_lite_color_ramp_t * grad_create_color_ramp(const lv_vector_gradient_t 
         color_ramp[i].blue = c.blue / 255.0f;
         color_ramp[i].alpha = grad->stops[i].opa / 255.0f;
     }
-
-    return color_ramp;
 }
 
 static bool linear_grad_create(grad_item_t * item)
@@ -468,19 +533,13 @@ static bool linear_grad_create(grad_item_t * item)
     return true;
 }
 
-static bool linear_ext_grad_create(grad_item_t * item)
+static bool linear_ext_grad_create(grad_item_t * item, vg_lite_color_ramp_t * color_ramp)
 {
     LV_PROFILER_DRAW_BEGIN;
 
     if(item->lv.stops_count > VLC_MAX_COLOR_RAMP_STOPS) {
         LV_LOG_WARN("Gradient stops limited: %d, max: %d", item->lv.stops_count, VLC_MAX_GRADIENT_STOPS);
         item->lv.stops_count = VLC_MAX_COLOR_RAMP_STOPS;
-    }
-
-    vg_lite_color_ramp_t * color_ramp = grad_create_color_ramp(&item->lv);
-    if(!color_ramp) {
-        LV_PROFILER_DRAW_END;
-        return false;
     }
 
     const vg_lite_linear_gradient_parameter_t grad_param = {
@@ -490,13 +549,12 @@ static bool linear_ext_grad_create(grad_item_t * item)
         .Y1 = item->lv.y2,
     };
 
-    vg_lite_ext_linear_gradient_t linear_grad;
-    lv_memzero(&linear_grad, sizeof(linear_grad));
+    convert_color_ramp(color_ramp, &item->lv);
 
     LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_set_linear_grad");
     LV_VG_LITE_CHECK_ERROR(
         vg_lite_set_linear_grad(
-            &linear_grad,
+            &item->vg.linear_ext,
             item->lv.stops_count,
             color_ramp,
             grad_param,
@@ -504,29 +562,24 @@ static bool linear_ext_grad_create(grad_item_t * item)
             1),
         /* Error handler */
     {
-        lv_vg_lite_ext_linear_gradient_dump_info(&linear_grad);
+        lv_vg_lite_ext_linear_gradient_dump_info(&item->vg.linear_ext);
     });
     LV_PROFILER_DRAW_END_TAG("vg_lite_set_linear_grad");
 
     LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_update_linear_grad");
-    vg_lite_error_t err = vg_lite_update_linear_grad(&linear_grad);
+    vg_lite_error_t err = vg_lite_update_linear_grad(&item->vg.linear_ext);
     LV_PROFILER_DRAW_END_TAG("vg_lite_update_linear_grad");
-    if(err == VG_LITE_SUCCESS) {
-        item->vg.linear_ext = linear_grad;
-    }
-    else {
+    if(err != VG_LITE_SUCCESS)  {
         LV_LOG_ERROR("vg_lite_update_linear_grad error: %d", (int)err);
         lv_vg_lite_error_dump_info(err);
-        lv_vg_lite_ext_linear_gradient_dump_info(&linear_grad);
+        lv_vg_lite_ext_linear_gradient_dump_info(&item->vg.linear_ext);
     }
-
-    lv_free(color_ramp);
 
     LV_PROFILER_DRAW_END;
     return err == VG_LITE_SUCCESS;
 }
 
-static bool radial_grad_create(grad_item_t * item)
+static bool radial_grad_create(grad_item_t * item, vg_lite_color_ramp_t * color_ramp)
 {
     LV_PROFILER_DRAW_BEGIN;
 
@@ -535,11 +588,7 @@ static bool radial_grad_create(grad_item_t * item)
         item->lv.stops_count = VLC_MAX_COLOR_RAMP_STOPS;
     }
 
-    vg_lite_color_ramp_t * color_ramp = grad_create_color_ramp(&item->lv);
-    if(!color_ramp) {
-        LV_PROFILER_DRAW_END;
-        return false;
-    }
+    convert_color_ramp(color_ramp, &item->lv);
 
     const vg_lite_radial_gradient_parameter_t grad_param = {
         .cx = item->lv.cx,
@@ -549,13 +598,10 @@ static bool radial_grad_create(grad_item_t * item)
         .fy = item->lv.cy,
     };
 
-    vg_lite_radial_gradient_t radial_grad;
-    lv_memzero(&radial_grad, sizeof(radial_grad));
-
     LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_set_radial_grad");
     LV_VG_LITE_CHECK_ERROR(
         vg_lite_set_radial_grad(
-            &radial_grad,
+            &item->vg.radial,
             item->lv.stops_count,
             color_ramp,
             grad_param,
@@ -563,23 +609,18 @@ static bool radial_grad_create(grad_item_t * item)
             1),
         /* Error handler */
     {
-        lv_vg_lite_radial_gradient_dump_info(&radial_grad);
+        lv_vg_lite_radial_gradient_dump_info(&item->vg.radial);
     });
     LV_PROFILER_DRAW_END_TAG("vg_lite_set_radial_grad");
 
     LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_update_radial_grad");
-    vg_lite_error_t err = vg_lite_update_radial_grad(&radial_grad);
+    vg_lite_error_t err = vg_lite_update_radial_grad(&item->vg.radial);
     LV_PROFILER_DRAW_END_TAG("vg_lite_update_radial_grad");
-    if(err == VG_LITE_SUCCESS) {
-        item->vg.radial = radial_grad;
-    }
-    else {
+    if(err != VG_LITE_SUCCESS) {
         LV_LOG_ERROR("vg_lite_update_radial_grad error: %d", (int)err);
         lv_vg_lite_error_dump_info(err);
-        lv_vg_lite_radial_gradient_dump_info(&radial_grad);
+        lv_vg_lite_radial_gradient_dump_info(&item->vg.radial);
     }
-
-    lv_free(color_ramp);
 
     LV_PROFILER_DRAW_END;
     return err == VG_LITE_SUCCESS;
@@ -627,52 +668,98 @@ static vg_lite_gradient_spreadmode_t lv_spread_to_vg(lv_vector_gradient_spread_t
     return VG_LITE_GRADIENT_SPREAD_FILL;
 }
 
-static bool grad_create_cb(grad_item_t * item, void * user_data)
+
+static bool grad_create_cb(grad_item_ref_t * item_ref, void * user_data)
 {
-    LV_UNUSED(user_data);
-    item->type = lv_grad_style_to_type(item->lv.style);
-    switch(item->type) {
+    LV_PROFILER_DRAW_BEGIN;
+    const grad_type_t type = lv_grad_style_to_type((*item_ref)->lv.style);
+    if(type == GRAD_TYPE_UNKNOWN) {
+        LV_PROFILER_DRAW_END;
+        return false;
+    }
+
+    grad_item_t * item = grad_item_pool_alloc(user_data, type);
+    if(item == NULL) {
+        /* Should not happen */
+        LV_PROFILER_DRAW_END;
+        return false;
+    }
+
+    /* Copy key information */
+    item->lv = (*item_ref)->lv;
+
+    bool is_success = false;
+
+    lv_vg_lite_grad_ctx_t * ctx = user_data;
+    LV_ASSERT_NULL(ctx);
+
+    switch(type) {
         case GRAD_TYPE_LINEAR:
-            return linear_grad_create(item);
+            is_success = linear_grad_create(item);
+            break;
 
         case GRAD_TYPE_LINEAR_EXT:
-            return linear_ext_grad_create(item);
+            is_success = linear_ext_grad_create(item, ctx->local_color_ramp);
+            break;
 
         case GRAD_TYPE_RADIAL:
-            return radial_grad_create(item);
+            is_success = radial_grad_create(item, ctx->local_color_ramp);
+            break;
 
         default:
-            LV_LOG_ERROR("unknown gradient type: %d", item->type);
+            LV_LOG_ERROR("unknown gradient type: %d", type);
             break;
     }
 
-    return false;
+    if(is_success) {
+        *item_ref = item;
+    }
+    else {
+        grad_item_pool_free(item);
+    }
+
+    LV_PROFILER_DRAW_END;
+    return is_success;
 }
 
-static void grad_free_cb(grad_item_t * item, void * user_data)
+static void grad_free_cb(grad_item_ref_t * item_ref, void * user_data)
 {
     LV_UNUSED(user_data);
+    LV_PROFILER_DRAW_BEGIN;
+    grad_item_t * item = *item_ref;
     switch(item->type) {
         case GRAD_TYPE_LINEAR:
+            LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_clear_grad");
             LV_VG_LITE_CHECK_ERROR(vg_lite_clear_grad(&item->vg.linear), {});
+            LV_PROFILER_DRAW_END_TAG("vg_lite_clear_grad");
             break;
 
         case GRAD_TYPE_LINEAR_EXT:
+            LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_clear_linear_grad");
             LV_VG_LITE_CHECK_ERROR(vg_lite_clear_linear_grad(&item->vg.linear_ext), {});
+            LV_PROFILER_DRAW_END_TAG("vg_lite_clear_linear_grad");
             break;
 
         case GRAD_TYPE_RADIAL:
+            LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_clear_radial_grad");
             LV_VG_LITE_CHECK_ERROR(vg_lite_clear_radial_grad(&item->vg.radial), {});
+            LV_PROFILER_DRAW_END_TAG("vg_lite_clear_radial_grad");
             break;
 
         default:
             LV_LOG_ERROR("unknown gradient type: %d", item->type);
             break;
     }
+
+    grad_item_pool_free(item);
+    LV_PROFILER_DRAW_END;
 }
 
-static lv_cache_compare_res_t grad_compare_cb(const grad_item_t * lhs, const grad_item_t * rhs)
+static lv_cache_compare_res_t grad_compare_cb(const grad_item_ref_t * lhs_ref, const grad_item_ref_t * rhs_ref)
 {
+    const grad_item_t * lhs = *lhs_ref;
+    const grad_item_t * rhs = *rhs_ref;
+
     /* compare type first */
     if(lhs->type != rhs->type) {
         return lhs->type > rhs->type ? 1 : -1;
