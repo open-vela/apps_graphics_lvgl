@@ -1676,7 +1676,6 @@ static void _render_text(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * dsc,
     lv_matrix_t mtx;
     lv_matrix_identity(&mtx);
     lv_matrix_translate(&mtx, text->x, text->y);
-
     for(uint32_t i = 0; i < lv_array_size(&text->contents); i++) {
         lv_svg_render_obj_t * ptext = *((lv_svg_render_obj_t **)lv_array_at(&text->contents, i));
         lv_svg_render_content_t * content = (lv_svg_render_content_t *)ptext;
@@ -1763,7 +1762,7 @@ static void _render_span(const lv_svg_render_content_t * content, lv_vector_dsc_
             if(_is_control_character(letter)) {
                 continue;
             }
-            lv_font_glyph_dsc_t g = {0};
+            lv_font_glyph_dsc_t g;
             lv_font_get_glyph_dsc(span->font, &g, letter, '\0');
             lv_vector_path_t * p = (lv_vector_path_t *)lv_font_get_glyph_bitmap(&g, NULL);
             lv_vector_path_clear(glyph_path);

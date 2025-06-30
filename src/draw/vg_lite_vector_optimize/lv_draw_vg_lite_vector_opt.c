@@ -27,6 +27,8 @@
  *      DEFINES
  *********************/
 
+#define OPA_MIX(opa1, opa2) LV_UDIV255((opa1) * (opa2))
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -128,11 +130,13 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
                       lv_vg_lite_path_t * lv_vg_path,
                       const lv_vector_draw_dsc_t * dsc,
                       vg_lite_matrix_t * matrix,
-                      const lv_fpoint_t * offset)
+                      const lv_fpoint_t * offset,
+                      const lv_opa_t opa)
 {
     LV_PROFILER_DRAW_BEGIN;
 
-    const vg_lite_color_t vg_color = lv_color32_to_vg(dsc->fill_dsc->draw_attrs.color, dsc->fill_dsc->opa);
+    const vg_lite_color_t vg_color = lv_color32_to_vg(dsc->fill_dsc->draw_attrs.color, OPA_MIX(dsc->fill_dsc->opa, opa));
+
     const vg_lite_blend_t blend = lv_blend_to_vg(dsc->blend_mode);
     const vg_lite_fill_t fill = lv_fill_to_vg(dsc->fill_dsc->fill_rule);
 
@@ -160,19 +164,26 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
                 lv_image_decoder_dsc_t decoder_dsc;
                 if(lv_vg_lite_buffer_open_image(&image_buffer, &decoder_dsc, dsc->fill_dsc->draw_attrs.img_dsc.src, false, true)) {
                     /* Calculate pattern matrix. Should start from path bond box, and also apply fill matrix. */
-                    lv_matrix_t m = dsc->matrix;
+                    vg_lite_matrix_t pattern_matrix = *matrix;
 
                     if(dsc->fill_dsc->fill_units == LV_VECTOR_FILL_UNITS_OBJECT_BOUNDING_BOX) {
                         /* Convert to object bounding box coordinates */
-                        lv_matrix_translate(&m, offset->x, offset->y);
+                        vg_lite_translate(offset->x, offset->y, &pattern_matrix);
                     }
 
-                    lv_matrix_multiply(&m, &dsc->fill_dsc->matrix);
+                    vg_lite_matrix_t fill_matrix;
+                    lv_vg_lite_matrix(&fill_matrix, &dsc->fill_dsc->matrix);
+                    lv_vg_lite_matrix_multiply(&pattern_matrix, &fill_matrix);
 
-                    vg_lite_matrix_t pattern_matrix;
-                    lv_vg_lite_matrix(&pattern_matrix, &m);
+                    const lv_draw_image_dsc_t * img_dsc = &dsc->fill_dsc->draw_attrs.img_dsc;
+                    lv_draw_image_dsc_t tmp_dsc;
+                    if(opa < LV_OPA_COVER) {
+                        tmp_dsc = dsc->fill_dsc->draw_attrs.img_dsc;
+                        tmp_dsc.opa = OPA_MIX(tmp_dsc.opa, opa);
+                        img_dsc = &tmp_dsc;
+                    }
 
-                    vg_lite_color_t recolor = lv_vg_lite_image_recolor(&image_buffer, &dsc->fill_dsc->draw_attrs.img_dsc);
+                    vg_lite_color_t recolor = lv_vg_lite_image_recolor(&image_buffer, img_dsc);
 
                     if(dsc->fill_dsc->draw_attrs.img_dsc.colorkey) {
                         lv_vg_lite_set_color_key(dsc->fill_dsc->draw_attrs.img_dsc.colorkey);
@@ -205,11 +216,22 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
                 lv_vg_lite_matrix(&fill_matrix, &dsc->fill_dsc->matrix);
                 lv_vg_lite_matrix_multiply(&grad_matrix, &fill_matrix);
 
+                const lv_vector_gradient_t * gradient = &dsc->fill_dsc->draw_attrs.gradient;
+                lv_vector_gradient_t tmp_gradient;
+                if(opa < LV_OPA_COVER) {
+                    tmp_gradient = dsc->fill_dsc->draw_attrs.gradient;
+                    for(uint16_t i = 0; i < tmp_gradient.stops_count; i++) {
+                        tmp_gradient.stops[i].opa = OPA_MIX(tmp_gradient.stops[i].opa, opa);
+                    }
+
+                    gradient = &tmp_gradient;
+                }
+
                 lv_vg_lite_draw_grad(
                     u->grad_ctx,
                     &u->target_buffer,
                     vg_path,
-                    &dsc->fill_dsc->draw_attrs.gradient,
+                    gradient,
                     &grad_matrix,
                     matrix,
                     fill,
@@ -228,7 +250,8 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
                         const lv_platform_path_base_t * impl,
                         lv_vg_lite_path_t * lv_vg_path,
                         const lv_vector_draw_dsc_t * dsc,
-                        vg_lite_matrix_t * matrix)
+                        vg_lite_matrix_t * matrix,
+                        const lv_opa_t opa)
 {
     LV_PROFILER_DRAW_BEGIN;
 
@@ -245,7 +268,8 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
 
     lv_vg_lite_path_set_quality(lv_vg_stroke_path, vg_path->quality);
     vg_lite_path_t * vg_stroke_path = lv_vg_lite_path_get_path(lv_vg_stroke_path);
-    const vg_lite_color_t vg_color = lv_color32_to_vg(stroke_dsc->draw_attrs.color, stroke_dsc->opa);
+    const vg_lite_color_t vg_color = lv_color32_to_vg(dsc->stroke_dsc->draw_attrs.color, OPA_MIX(dsc->stroke_dsc->opa,
+                                                                                                 opa));
 
 #define STROKE_DROP() lv_vg_lite_stroke_path_drop(u, lv_vg_stroke_path)
 
@@ -265,7 +289,7 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
 
     /* set stroke params */
     vg_stroke_path->quality = vg_path->quality;
-    vg_stroke_path->stroke_color = lv_color32_to_vg(stroke_dsc->draw_attrs.color, stroke_dsc->opa);
+    vg_stroke_path->stroke_color = lv_color32_to_vg(dsc->stroke_dsc->draw_attrs.color, OPA_MIX(dsc->stroke_dsc->opa, opa));
     const vg_lite_color_t vg_color = 0;
 
     /* set stroke path bounding box */
@@ -334,12 +358,17 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
     lv_vector_fill_dsc_t * fill_dsc = dsc->fill_dsc;
     lv_vector_stroke_dsc_t * stroke_dsc = dsc->stroke_dsc;
 
+    vg_lite_matrix_t matrix = u->global_matrix;
+
+    const lv_area_t scissor_area = lv_matrix_is_identity((lv_matrix_t *)&matrix)
+                                   ? dsc->scissor_area
+                                   : lv_matrix_transform_area((lv_matrix_t *)&matrix, &dsc->scissor_area);
+
     /* clear area */
     if(!path_impl) {
-        /* clear color needs to ignore fill_dsc.opa */
-        vg_lite_color_t c = lv_color32_to_vg(fill_dsc->draw_attrs.color, fill_dsc->opa);
+        vg_lite_color_t c = lv_color32_to_vg(dsc->fill_dsc->draw_attrs.color, OPA_MIX(dsc->fill_dsc->opa, u->task_act->opa));
         vg_lite_rectangle_t rect;
-        lv_vg_lite_rect(&rect, &dsc->scissor_area);
+        lv_vg_lite_rect(&rect, &scissor_area);
         LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_clear");
         LV_VG_LITE_CHECK_ERROR(vg_lite_clear(&u->target_buffer, &rect, c), {
             lv_vg_lite_buffer_dump_info(&u->target_buffer);
@@ -358,8 +387,9 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
     }
 
     /* transform matrix */
-    vg_lite_matrix_t matrix;
-    lv_vg_lite_matrix(&matrix, &dsc->matrix);
+    vg_lite_matrix_t dsc_matrix;
+    lv_vg_lite_matrix(&dsc_matrix, &dsc->matrix);
+    lv_vg_lite_matrix_multiply(&matrix, &dsc_matrix);
     LV_VG_LITE_ASSERT_MATRIX(&matrix);
 
     /* convert path */
@@ -373,9 +403,9 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
 
     if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
         /* set scissor area */
-        lv_vg_lite_set_scissor_area(&dsc->scissor_area);
+        lv_vg_lite_set_scissor_area(&scissor_area);
         LV_LOG_TRACE("Set scissor area: X1:%" LV_PRId32 ", Y1:%" LV_PRId32 ", X2:%" LV_PRId32 ", Y2:%" LV_PRId32,
-                     dsc->scissor_area.x1, dsc->scissor_area.y1, dsc->scissor_area.x2, dsc->scissor_area.y2);
+                     scissor_area.x1, scissor_area.y1, scissor_area.x2, scissor_area.y2);
     }
     else {
         /* calc inverse matrix */
@@ -389,22 +419,24 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
         }
 
         /* Reverse the clip area on the source */
-        lv_point_precise_t p1 = { dsc->scissor_area.x1, dsc->scissor_area.y1 };
+        lv_point_precise_t p1 = { scissor_area.x1, scissor_area.y1 };
         lv_point_precise_t p1_res = lv_vg_lite_matrix_transform_point(&result, &p1);
 
         /* vg-lite bounding_box will crop the pixels on the edge, so +1px is needed here */
-        lv_point_precise_t p2 = { dsc->scissor_area.x2 + 1, dsc->scissor_area.y2 + 1 };
+        lv_point_precise_t p2 = { scissor_area.x2 + 1, scissor_area.y2 + 1 };
         lv_point_precise_t p2_res = lv_vg_lite_matrix_transform_point(&result, &p2);
 
         lv_vg_lite_path_set_bounding_box(lv_vg_path, p1_res.x, p1_res.y, p2_res.x, p2_res.y);
     }
 
+    const lv_opa_t layer_opa = u->task_act->opa;
+
     if(fill_dsc->opa) {
-        draw_fill(u, lv_vg_path, dsc, &matrix, &offset);
+        draw_fill(u, lv_vg_path, dsc, &matrix, &offset, layer_opa);
     }
 
     if(stroke_dsc->opa) {
-        draw_stroke(u, path_impl, lv_vg_path, dsc, &matrix);
+        draw_stroke(u, path_impl, lv_vg_path, dsc, &matrix, layer_opa);
     }
 
     /* drop path */
