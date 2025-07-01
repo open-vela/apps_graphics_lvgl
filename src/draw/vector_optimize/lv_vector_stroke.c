@@ -768,6 +768,20 @@ static bool dash_line_generated(struct _base_generator * gen, lv_fpoint_t * poin
 static void path_to_stroke_cb(lv_vector_path_op_t op, const lv_fpoint_t * pt, void * data)
 {
     lv_base_generator * gen = (lv_base_generator *)data;
+    if(!gen) {
+        LV_LOG_WARN("Null generator in path_to_stroke_cb");
+        return;
+    }
+
+    if(!pt && op < LV_VECTOR_PATH_OP_CLOSE) {
+        LV_LOG_WARN("Null point in path_to_stroke_cb");
+        return;
+    }
+
+    if(op == LV_VECTOR_PATH_OP_CLOSE && gen->state == LV_BASE_GEN_INITIAL) {
+        return;
+    }
+
     lv_base_gen_state_t state;
 start:
     state = gen->state;

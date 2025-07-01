@@ -774,12 +774,12 @@ void test_draw_transforms(void)
     lv_vector_path_append_rect(path, &rect1, 0, 0);
 
     // Original shape
+    lv_matrix_t matrix;
+    lv_matrix_identity(&matrix);
     lv_vector_dsc_set_fill_color(ctx, lv_color_make(0xff, 0x00, 0x00));
     lv_vector_dsc_set_fill_opa(ctx, LV_OPA_COVER);
     lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_TRANSP);
-    lv_vector_dsc_set_transform(ctx, &(lv_matrix_t) {
-        .m = {{1, 0}, {0, 1}, {0, 0}}
-    });
+    lv_vector_dsc_set_transform(ctx, &matrix);
     lv_vector_dsc_add_path(ctx, path);
 
     // Translated
