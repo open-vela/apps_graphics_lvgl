@@ -75,6 +75,25 @@ static void lv_vg_lite_path_update_bounding_box_by_point(lv_vg_lite_path_t * pat
     lv_vg_lite_path_set_bounding_box(path, min_x, min_y, max_x, max_y);
 }
 
+static void lv_vg_lite_path_update_bounding_box_after_append(lv_vg_lite_path_t * dst, lv_vg_lite_path_t * src)
+{
+    LV_ASSERT_NULL(dst);
+    LV_ASSERT_NULL(src);
+
+    float dst_min_x, dst_min_y, dst_max_x, dst_max_y;
+    float src_min_x, src_min_y, src_max_x, src_max_y;
+
+    lv_vg_lite_path_get_bounding_box(dst, &dst_min_x, &dst_min_y, &dst_max_x, &dst_max_y);
+    lv_vg_lite_path_get_bounding_box(src, &src_min_x, &src_min_y, &src_max_x, &src_max_y);
+
+    float min_x = (dst_min_x < src_min_x) ? dst_min_x : src_min_x;
+    float min_y = (dst_min_y < src_min_y) ? dst_min_y : src_min_y;
+    float max_x = (dst_max_x > src_max_x) ? dst_max_x : src_max_x;
+    float max_y = (dst_max_y > src_max_y) ? dst_max_y : src_max_y;
+
+    lv_vg_lite_path_set_bounding_box(dst, min_x, min_y, max_x, max_y);
+}
+
 static struct lv_platform_path_base_t * lv_vg_lite_path_create_cb(lv_vector_path_quality_t quality)
 {
     lv_platform_vg_lite_path_t * path = lv_malloc_zeroed(sizeof(lv_platform_vg_lite_path_t));
@@ -114,6 +133,7 @@ static struct lv_platform_path_base_t * lv_vg_lite_path_clone_cb(struct lv_platf
     lv_platform_vg_lite_path_t * dst = lv_malloc_zeroed(sizeof(lv_platform_vg_lite_path_t));
     dst->vg_path = lv_vg_lite_path_create(src->vg_path->base.format);
     lv_vg_lite_path_append_path(dst->vg_path, src->vg_path);
+    lv_vg_lite_path_update_bounding_box_after_append(dst->vg_path, src->vg_path);
     return (lv_platform_path_base_t *)dst;
 }
 
@@ -121,7 +141,9 @@ static void lv_vg_lite_path_concat_cb(struct lv_platform_path_base_t * self, str
 {
     lv_platform_vg_lite_path_t * dst = LV_VG_LITE_PATH_CAST(self);
     lv_platform_vg_lite_path_t * src = LV_VG_LITE_PATH_CAST(other);
+
     lv_vg_lite_path_append_path(dst->vg_path, src->vg_path);
+    lv_vg_lite_path_update_bounding_box_after_append(dst->vg_path, src->vg_path);
 }
 
 static void lv_vg_lite_path_move_to_cb(struct lv_platform_path_base_t * self, const lv_fpoint_t * p)
@@ -202,6 +224,83 @@ static lv_vector_path_quality_t lv_vg_lite_path_get_quality_cb(struct lv_platfor
     }
     return lv_quality;
 }
+typedef struct {
+    const vg_lite_matrix_t * matrix;
+    lv_vg_lite_path_t * new_path;
+} lv_vg_lite_path_transform_ctx_t;
+
+static void lv_vg_lite_path_transform_and_build_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
+{
+    LV_ASSERT_NULL(user_data);
+    LV_ASSERT_NULL(data);
+
+    lv_vg_lite_path_transform_ctx_t * ctx = (lv_vg_lite_path_transform_ctx_t *)user_data;
+    const vg_lite_matrix_t * matrix = ctx->matrix;
+    lv_vg_lite_path_t * new_path = ctx->new_path;
+
+    uint32_t point_count = 0;
+
+    /* Determine number of points based on op_code */
+    switch(op_code) {
+        case VLC_OP_MOVE:
+        case VLC_OP_LINE:
+            point_count = 1;
+            break;
+        case VLC_OP_QUAD:
+            point_count = 2;
+            break;
+        case VLC_OP_CUBIC:
+            point_count = 3;
+            break;
+        case VLC_OP_CLOSE:
+            lv_vg_lite_path_close(new_path);
+            return;
+        default:
+            return; /* Skip unsupported op codes */
+    }
+
+    /* Ensure we have enough data */
+    if(len < point_count * 2) {
+        return;
+    }
+
+    /* Transform points and build new path */
+    lv_point_precise_t points[3];
+    for(uint32_t i = 0; i < point_count; i++) {
+        const float * point_data = &data[i * 2];
+        lv_point_precise_t point = {
+            .x = point_data[0],
+            .y = point_data[1]
+        };
+        points[i] = lv_vg_lite_matrix_transform_point(matrix, &point);
+    }
+
+    /* Build new path */
+    switch(op_code) {
+        case VLC_OP_MOVE:
+            lv_vg_lite_path_move_to(new_path, points[0].x, points[0].y);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[0]);
+            break;
+        case VLC_OP_LINE:
+            lv_vg_lite_path_line_to(new_path, points[0].x, points[0].y);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[0]);
+            break;
+        case VLC_OP_QUAD:
+            lv_vg_lite_path_quad_to(new_path, points[0].x, points[0].y, points[1].x, points[1].y);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[0]);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[1]);
+            break;
+        case VLC_OP_CUBIC:
+            lv_vg_lite_path_cubic_to(new_path,
+                                     points[0].x, points[0].y,
+                                     points[1].x, points[1].y,
+                                     points[2].x, points[2].y);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[0]);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[1]);
+            lv_vg_lite_path_update_bounding_box_by_point(new_path, (lv_fpoint_t *)&points[2]);
+            break;
+    }
+}
 
 static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, const lv_matrix_t * matrix)
 {
@@ -209,6 +308,28 @@ static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, 
     vg_lite_matrix_t vg_matrix = {0};
     lv_vg_lite_matrix(&vg_matrix, matrix);
     lv_vg_lite_path_set_transform(path->vg_path, &vg_matrix);
+
+    vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(path->vg_path);
+    if(vg_path) {
+        /* Create a temporary path for transformed data */
+        lv_vg_lite_path_t * temp_path = lv_vg_lite_path_create(vg_path->format);
+        lv_vg_lite_path_set_bounding_box(temp_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+
+        lv_vg_lite_path_transform_ctx_t ctx = {
+            .matrix = &vg_matrix,
+            .new_path = temp_path
+        };
+
+        /* Single pass: transform points and build new path */
+        lv_vg_lite_path_for_each_data(vg_path, lv_vg_lite_path_transform_and_build_cb, &ctx);
+
+        /* Replace original path with transformed one */
+        lv_vg_lite_path_reset(path->vg_path, path->vg_path->base.format);
+        lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+        lv_vg_lite_path_append_path(path->vg_path, temp_path);
+        lv_vg_lite_path_update_bounding_box_after_append(path->vg_path, temp_path);
+        lv_vg_lite_path_destroy(temp_path);
+    }
 }
 
 static void get_path_data_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
@@ -321,7 +442,6 @@ static size_t lv_vg_lite_path_get_mem_size(struct lv_platform_path_base_t * self
     lv_platform_vg_lite_path_t * path = LV_VG_LITE_PATH_CAST(self);
     return path->vg_path->mem_size;
 }
-
 
 static const lv_platform_path_handlers vg_lite_path_handlers = {
     .create         = lv_vg_lite_path_create_cb,
