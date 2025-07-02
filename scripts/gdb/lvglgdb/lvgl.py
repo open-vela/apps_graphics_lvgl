@@ -97,7 +97,7 @@ class LVObject(Value):
         return self.spec_attr.child_cnt if self.spec_attr else 0
 
     @property
-    def childs(self):
+    def children(self):
         if not self.spec_attr:
             return
 
@@ -440,7 +440,7 @@ class DumpObj(gdb.Command):
             return
 
         # dump children
-        for child in obj.childs:
+        for child in obj.children:
             self.dump_obj(child, depth + 1, limit=limit)
 
     def invoke(self, args, from_tty):
