@@ -191,7 +191,9 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_CO
 void lv_style_set_color_filter_opa(lv_style_t * style, lv_opa_t value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_COLOR_FILTER_OPA;
 void lv_style_set_recolor(lv_style_t * style, lv_color_t value);
+LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_RECOLOR;
 void lv_style_set_recolor_opa(lv_style_t * style, lv_opa_t value);
+LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_RECOLOR_OPA;
 void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value);
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_ANIM;
 void lv_style_set_anim_duration(lv_style_t * style, uint32_t value);
@@ -687,12 +689,12 @@ LV_ATTRIBUTE_EXTERN_DATA extern const lv_style_prop_t _lv_style_const_prop_id_GR
 
 #define LV_STYLE_CONST_RECOLOR(val) \
     { \
-        .prop = LV_STYLE_RECOLOR, .value = { .color = val } \
+        .prop_ptr = &_lv_style_const_prop_id_RECOLOR, .value = { .color = val } \
     }
 
 #define LV_STYLE_CONST_RECOLOR_OPA(val) \
     { \
-        .prop = LV_STYLE_RECOLOR_OPA, .value = { .num = (int32_t)val } \
+        .prop_ptr = &_lv_style_const_prop_id_RECOLOR_OPA, .value = { .num = (int32_t)val } \
     }
 
 #define LV_STYLE_CONST_ANIM(val) \

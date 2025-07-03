@@ -898,6 +898,8 @@ void lv_style_set_recolor(lv_style_t * style, lv_color_t value)
     lv_style_set_prop(style, LV_STYLE_RECOLOR, v);
 }
 
+const lv_style_prop_t _lv_style_const_prop_id_RECOLOR = LV_STYLE_RECOLOR;
+
 void lv_style_set_recolor_opa(lv_style_t * style, lv_opa_t value)
 {
     lv_style_value_t v = {
@@ -905,6 +907,8 @@ void lv_style_set_recolor_opa(lv_style_t * style, lv_opa_t value)
     };
     lv_style_set_prop(style, LV_STYLE_RECOLOR_OPA, v);
 }
+
+const lv_style_prop_t _lv_style_const_prop_id_RECOLOR_OPA = LV_STYLE_RECOLOR_OPA;
 
 void lv_style_set_anim(lv_style_t * style, const lv_anim_t * value)
 {

@@ -606,19 +606,19 @@ static inline lv_opa_t lv_obj_get_style_color_filter_opa(const lv_obj_t * obj, u
     return (lv_opa_t)v.num;
 }
 
-static inline lv_color_t lv_obj_get_style_recolor(const lv_obj_t * obj, lv_part_t part)
+static inline lv_color_t lv_obj_get_style_recolor(const lv_obj_t * obj, uint32_t part)
 {
     lv_style_value_t v = lv_obj_get_style_prop(obj, part, LV_STYLE_RECOLOR);
     return v.color;
 }
 
-static inline lv_opa_t lv_obj_get_style_recolor_opa(const lv_obj_t * obj, lv_part_t part)
+static inline lv_opa_t lv_obj_get_style_recolor_opa(const lv_obj_t * obj, uint32_t part)
 {
     lv_style_value_t v = lv_obj_get_style_prop(obj, part, LV_STYLE_RECOLOR_OPA);
     return (lv_opa_t)v.num;
 }
 
-static inline const lv_anim_t * lv_obj_get_style_anim(const lv_obj_t * obj, lv_part_t part)
+static inline const lv_anim_t * lv_obj_get_style_anim(const lv_obj_t * obj, uint32_t part)
 {
     lv_style_value_t v = lv_obj_get_style_prop(obj, part, LV_STYLE_ANIM);
     return (const lv_anim_t *)v.ptr;
