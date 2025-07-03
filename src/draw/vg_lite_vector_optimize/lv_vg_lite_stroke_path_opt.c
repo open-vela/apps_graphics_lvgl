@@ -71,7 +71,6 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_u
         LV_PROFILER_DRAW_END;
         return NULL;
     }
-    lv_vg_lite_path_end(unit->stroke_path);
     unit->stroke_path_in_use = true;
 
     LV_PROFILER_DRAW_END;

@@ -141,7 +141,7 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
     const vg_lite_fill_t fill = lv_fill_to_vg(dsc->fill_dsc->fill_rule);
 
     /* If it is fill mode, the end op code should be added */
-    lv_vg_lite_path_try_end(lv_vg_path);
+    lv_vg_lite_path_add_end(lv_vg_path);
 
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
     LV_VG_LITE_ASSERT_PATH(vg_path);
@@ -252,6 +252,7 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
             break;
     }
 
+    lv_vg_lite_path_clear_end(lv_vg_path);
     LV_PROFILER_DRAW_END;
 }
 
@@ -274,6 +275,7 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
         LV_PROFILER_DRAW_END;
         return;
     }
+    lv_vg_lite_path_add_end(lv_vg_stroke_path);
 
     lv_vg_lite_path_set_quality(lv_vg_stroke_path, vg_path->quality);
     vg_lite_path_t * vg_stroke_path = lv_vg_lite_path_get_path(lv_vg_stroke_path);
@@ -353,6 +355,10 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
             LV_LOG_WARN("unsupported style: %d", stroke_dsc->style);
             break;
     }
+
+#if LV_VG_LITE_USE_STROKE_TO_PATH
+    lv_vg_lite_path_clear_end(lv_vg_stroke_path);
+#endif
 
     STROKE_DROP();
     LV_PROFILER_DRAW_END;

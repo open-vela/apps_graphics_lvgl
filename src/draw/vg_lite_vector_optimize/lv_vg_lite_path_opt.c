@@ -38,18 +38,16 @@
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_vg_lite_path_try_end(lv_vg_lite_path_t * path)
+void lv_vg_lite_path_add_end(lv_vg_lite_path_t * vg_path)
 {
-    LV_ASSERT_NULL(path);
+    lv_vg_lite_path_end(vg_path);
+}
 
-    vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(path);
-    const uint8_t * cur = vg_path->path;
-    const uint8_t * end = cur + vg_path->path_length;
-    uint8_t fmt_len = lv_vg_lite_path_format_len(vg_path->format);
-
-    uint8_t end_op_code = LV_VG_LITE_PATH_GET_OP_CODE(end - fmt_len);
-    if(end_op_code != VLC_OP_END) {
-        lv_vg_lite_path_end(path);
+void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * vg_path)
+{
+    if(vg_path->base.add_end) {
+        vg_path->base.path_length -= vg_path->format_len;
+        vg_path->base.add_end = 0;
     }
 }
 
