@@ -32,12 +32,14 @@
 typedef struct {
     int fd;
     lv_indev_state_t last_state;
-    lv_indev_t * indev_drv;
+    struct mouse_report_s last_sample;
+    bool has_last_sample;
 } lv_nuttx_mouse_t;
 
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static void mouse_set_cursor(lv_indev_t * indev, int32_t size);
 static void mouse_read(lv_indev_t * drv, lv_indev_data_t * data);
 static void mouse_delete_cb(lv_event_t * e);
 static lv_indev_t * mouse_init(int fd);
@@ -82,40 +84,92 @@ lv_indev_t * lv_nuttx_mouse_create(const char * dev_path)
  *   STATIC FUNCTIONS
  **********************/
 
+static bool mouse_read_sample(int fd, struct mouse_report_s * sample)
+{
+    int nbytes = read(fd, sample, sizeof(struct mouse_report_s));
+    return nbytes == sizeof(struct mouse_report_s);
+    if(nbytes == sizeof(struct mouse_report_s)) {
+        return true;
+    }
+    else {
+        if(nbytes == -1) {
+            if(errno != EAGAIN) {
+                LV_LOG_WARN("Read error: %s", strerror(errno));
+            }
+        }
+        else if(nbytes != 0) {
+            LV_LOG_WARN("Unexpected read size: %d", nbytes);
+        }
+        return false;
+    }
+}
+
+static void conv_mouse_sample(lv_indev_t * drv,
+                              lv_indev_data_t * data,
+                              struct mouse_report_s * sample)
+{
+    lv_nuttx_mouse_t * mouse = drv->driver_data;
+    uint8_t mouse_buttons = sample->buttons;
+
+    lv_display_t * disp = lv_indev_get_display(drv);
+    int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
+    int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
+
+    data->point.x =
+        LV_CLAMP(0,
+                 data->point.x + (sample->x * CONFIG_LV_MOUSE_RATE),
+                 hor_max);
+    data->point.y =
+        LV_CLAMP(0,
+                 data->point.y + (sample->y * CONFIG_LV_MOUSE_RATE),
+                 ver_max);
+
+    if(mouse_buttons & MOUSE_BUTTON_1 || mouse_buttons & MOUSE_BUTTON_2 ||
+       mouse_buttons & MOUSE_BUTTON_3) {
+        mouse->last_state = LV_INDEV_STATE_PRESSED;
+    }
+    else {
+        mouse->last_state = LV_INDEV_STATE_RELEASED;
+    }
+}
+
 static void mouse_read(lv_indev_t * drv, lv_indev_data_t * data)
 {
-    FAR lv_nuttx_mouse_t * mouse = drv->driver_data;
+    lv_nuttx_mouse_t * mouse = drv->driver_data;
     struct mouse_report_s sample;
 
-    /* Read one sample */
+    /*
+     * Note: Since it is necessary to avoid multi-processing click events
+     * caused by redundant continue_reading, a two-unit sample sliding window
+     * algorithm is used here. continue_reading is only activated when there
+     * are two points in the window.
+     */
 
-    int nbytes = read(mouse->fd, &sample, sizeof(struct mouse_report_s));
-
-    /* Handle unexpected return values */
-
-    if(nbytes == sizeof(struct mouse_report_s)) {
-        lv_display_t * disp = lv_indev_get_display(drv);
-        int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
-        int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
-
-        data->point.x =
-            LV_CLAMP(0,
-                     data->point.x + (sample.x * CONFIG_LV_MOUSE_RATE),
-                     hor_max);
-        data->point.y =
-            LV_CLAMP(0,
-                     data->point.y + (sample.y * CONFIG_LV_MOUSE_RATE),
-                     ver_max);
-
-        uint8_t mouse_buttons = sample.buttons;
-
-        if(mouse_buttons & MOUSE_BUTTON_1 || mouse_buttons & MOUSE_BUTTON_2 ||
-           mouse_buttons & MOUSE_BUTTON_3) {
-            mouse->last_state = LV_INDEV_STATE_PRESSED;
+    /* If has last sample, use it first */
+    if(mouse->has_last_sample) {
+        conv_mouse_sample(drv, data, &mouse->last_sample);
+    }
+    else {
+        /* Read first sample */
+        if(!mouse_read_sample(mouse->fd, &sample)) {
+            /* No sample available, return last state */
+            data->state = mouse->last_state;
+            return;
         }
-        else {
-            mouse->last_state = LV_INDEV_STATE_RELEASED;
-        }
+
+        conv_mouse_sample(drv, data, &sample);
+    }
+
+    /* Try to read next sample */
+    if(mouse_read_sample(mouse->fd, &sample)) {
+        /* Save last sample and let lvgl continue reading */
+        mouse->last_sample = sample;
+        mouse->has_last_sample = true;
+        data->continue_reading = true;
+    }
+    else {
+        /* No more sample available, clear last sample flag */
+        mouse->has_last_sample = false;
     }
 
     data->state = mouse->last_state;
@@ -128,6 +182,7 @@ static void mouse_delete_cb(lv_event_t * e)
     if(mouse) {
         lv_indev_set_driver_data(indev, NULL);
         lv_indev_set_read_cb(indev, NULL);
+        mouse_set_cursor(indev, -1);
 
         if(mouse->fd >= 0) {
             close(mouse->fd);
@@ -138,22 +193,30 @@ static void mouse_delete_cb(lv_event_t * e)
     }
 }
 
-static void mouse_set_cursor(FAR lv_indev_t * indev)
+static void mouse_set_cursor(lv_indev_t * indev, int32_t size)
 {
-    FAR lv_obj_t * cursor_obj = lv_obj_create(lv_layer_sys());
-    lv_obj_remove_style_all(cursor_obj);
-
-    int32_t size = 20;
-    lv_obj_set_size(cursor_obj, size, size);
-    lv_obj_set_style_translate_x(cursor_obj, -size / 2, 0);
-    lv_obj_set_style_translate_y(cursor_obj, -size / 2, 0);
-    lv_obj_set_style_radius(cursor_obj, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_opa(cursor_obj, LV_OPA_50, 0);
-    lv_obj_set_style_bg_color(cursor_obj, lv_color_black(), 0);
-    lv_obj_set_style_border_width(cursor_obj, 2, 0);
-    lv_obj_set_style_border_color(cursor_obj,
-                                  lv_palette_main(LV_PALETTE_GREY), 0);
-    lv_indev_set_cursor(indev, cursor_obj);
+    lv_obj_t * cursor_obj = lv_indev_get_cursor(indev);
+    if(size <= 0) {
+        if(cursor_obj) {
+            lv_obj_delete(cursor_obj);
+            lv_indev_set_cursor(indev, NULL);
+        }
+    }
+    else {
+        if(cursor_obj == NULL) {
+            cursor_obj = lv_obj_create(lv_layer_sys());
+            lv_obj_remove_style_all(cursor_obj);
+            lv_obj_set_style_radius(cursor_obj, LV_RADIUS_CIRCLE, 0);
+            lv_obj_set_style_bg_opa(cursor_obj, LV_OPA_50, 0);
+            lv_obj_set_style_bg_color(cursor_obj, lv_color_black(), 0);
+            lv_obj_set_style_border_width(cursor_obj, 2, 0);
+            lv_obj_set_style_border_color(cursor_obj, lv_palette_main(LV_PALETTE_GREY), 0);
+        }
+        lv_obj_set_size(cursor_obj, size, size);
+        lv_obj_set_style_translate_x(cursor_obj, -size / 2, 0);
+        lv_obj_set_style_translate_y(cursor_obj, -size / 2, 0);
+        lv_indev_set_cursor(indev, cursor_obj);
+    }
 }
 
 static lv_indev_t * mouse_init(int fd)
@@ -169,7 +232,13 @@ static lv_indev_t * mouse_init(int fd)
 
     mouse->fd = fd;
     mouse->last_state = LV_INDEV_STATE_RELEASED;
-    mouse->indev_drv = indev = lv_indev_create();
+    indev = lv_indev_create();
+
+    if(indev == NULL) {
+        LV_LOG_ERROR("indev create failed");
+        lv_free(mouse);
+        return NULL;
+    }
 
     lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev, mouse_read);
@@ -177,7 +246,7 @@ static lv_indev_t * mouse_init(int fd)
     lv_indev_add_event_cb(indev, mouse_delete_cb, LV_EVENT_DELETE, indev);
 
     /* Set cursor icon */
-    mouse_set_cursor(indev);
+    mouse_set_cursor(indev, 20);
     return indev;
 }
 
