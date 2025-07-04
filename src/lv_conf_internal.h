@@ -2597,6 +2597,15 @@
     #endif
 #endif
 
+/*Enable Vector Graphic dump info */
+#ifndef LV_USE_VECTOR_DUMP_INFO
+    #ifdef CONFIG_LV_USE_VECTOR_DUMP_INFO
+        #define LV_USE_VECTOR_DUMP_INFO CONFIG_LV_USE_VECTOR_DUMP_INFO
+    #else
+        #define LV_USE_VECTOR_DUMP_INFO 0
+    #endif
+#endif
+
 /*Enable the image decoder size expand feature*/
 #ifndef LV_DECODER_IMG_SIZE_EXPAND
     #ifdef CONFIG_LV_DECODER_IMG_SIZE_EXPAND

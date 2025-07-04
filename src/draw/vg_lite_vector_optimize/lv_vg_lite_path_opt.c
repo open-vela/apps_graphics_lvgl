@@ -441,6 +441,15 @@ static size_t lv_vg_lite_path_get_mem_size(struct lv_platform_path_base_t * self
     return path->vg_path->mem_size;
 }
 
+#if LV_USE_VECTOR_DUMP_INFO
+static void lv_vg_lite_path_dump_info_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_vg_lite_path_t * path = LV_VG_LITE_PATH_CAST(self);
+    vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(path->vg_path);
+    lv_vg_lite_path_dump_info(vg_path);
+}
+#endif
+
 static const lv_platform_path_handlers vg_lite_path_handlers = {
     .create         = lv_vg_lite_path_create_cb,
     .destroy        = lv_vg_lite_path_destroy_cb,
@@ -459,6 +468,9 @@ static const lv_platform_path_handlers vg_lite_path_handlers = {
     .is_empty       = lv_vg_lite_path_is_empty_cb,
     .transform_path = lv_vg_lite_path_transform_path_cb,
     .get_mem_size   = lv_vg_lite_path_get_mem_size,
+#if LV_USE_VECTOR_DUMP_INFO
+    .dump_path_info = lv_vg_lite_path_dump_info_cb,
+#endif
 };
 
 const lv_platform_path_handlers * lv_vector_get_platform_handlers(void)

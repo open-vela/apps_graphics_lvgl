@@ -825,6 +825,13 @@ void lv_vector_dsc_set_current_dsc(const lv_vector_dsc_t * dsc, lv_vector_draw_d
     dsc->current_dsc->stroke_dsc->use_count = 0;
 }
 
+#if LV_USE_VECTOR_DUMP_INFO
+void lv_vector_dump_info(const lv_vector_dsc_t * dsc)
+{
+    lv_vector_for_each_task_dump_info(&dsc->tasks.draw_task_list);
+}
+#endif
+
 /* draw functions */
 void lv_vector_dsc_add_path(lv_vector_dsc_t * dsc, const lv_vector_path_t * path)
 {
