@@ -417,6 +417,13 @@ menu "LVGL configuration"
 			help
 				Enable drawing support vector graphic optimizated APIs.
 
+		config LV_USE_VECTOR_DUMP_INFO
+			bool "Dump vector graphic information"
+			default n
+			depends on LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+			help
+				Dump vector graphic information to console.
+
 		config LV_DECODER_IMG_SIZE_EXPAND
 			int "Default image expend size."
 			default 0

@@ -320,6 +320,15 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
  */
 bool lv_vector_path_is_empty(const lv_vector_path_t * path);
 
+#if LV_USE_VECTOR_DUMP_INFO
+/**
+ * Dump information about a vector path object
+ * @param dsc              pointer to a vector graphic descriptor
+ * @param path             pointer to a path
+ */
+void lv_vector_dump_info(const lv_vector_dsc_t * dsc);
+#endif
+
 /**
  * Get the memory size of a vector path object
  * @param path              pointer to a path

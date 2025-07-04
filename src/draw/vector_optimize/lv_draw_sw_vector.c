@@ -696,6 +696,71 @@ size_t lv_sw_path_get_mem_size_cb(struct lv_platform_path_base_t * self)
     return size;
 }
 
+#if LV_USE_VECTOR_DUMP_INFO
+void lv_sw_path_dump_info_cb(struct lv_platform_path_base_t * self)
+{
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+
+    uint32_t ops_size = lv_array_size(&path->ops);
+    uint32_t points_size = lv_array_size(&path->points);
+    size_t buf_size = (ops_size * 20) + (points_size * 20) + 1024; // Conservative estimate
+    char * logInfo = lv_malloc(buf_size);
+    if(!logInfo) {
+        LV_LOG_ERROR("Failed to allocate memory for path dump info");
+        return;
+    }
+
+    lv_snprintf(logInfo, buf_size, "ops|pts: %d|%d|{", (int)ops_size, (int)points_size);
+
+    uint32_t pidx = 0;
+    lv_vector_path_op_t * op = lv_array_front(&path->ops);
+    for(uint32_t i = 0; i < ops_size; i++) {
+        switch(op[i]) {
+            case LV_VECTOR_PATH_OP_MOVE_TO: {
+                    lv_fpoint_t * pt = lv_array_at(&path->points, pidx);
+                    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo),
+                                "M%f,%f ", pt->x, pt->y);
+                    pidx += 1;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_LINE_TO: {
+                    lv_fpoint_t * pt = lv_array_at(&path->points, pidx);
+                    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo),
+                                "L%f,%f ", pt->x, pt->y);
+                    pidx += 1;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_QUAD_TO: {
+                    lv_fpoint_t * pt1 = lv_array_at(&path->points, pidx);
+                    lv_fpoint_t * pt2 = lv_array_at(&path->points, pidx + 1);
+                    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo),
+                                "Q%f,%f %f,%f ", pt1->x, pt1->y, pt2->x, pt2->y);
+                    pidx += 2;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_CUBIC_TO: {
+                    lv_fpoint_t * pt1 = lv_array_at(&path->points, pidx);
+                    lv_fpoint_t * pt2 = lv_array_at(&path->points, pidx + 1);
+                    lv_fpoint_t * pt3 = lv_array_at(&path->points, pidx + 2);
+                    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo),
+                                "C%f,%f %f,%f %f,%f ", pt1->x, pt1->y, pt2->x, pt2->y, pt3->x, pt3->y);
+                    pidx += 3;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_CLOSE: {
+                    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo), "Z ");
+                }
+                break;
+        }
+        lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo), "|");
+    }
+
+    lv_snprintf(logInfo + lv_strlen(logInfo), buf_size - lv_strlen(logInfo), "}");
+    LV_LOG_USER("Path dump: %s", logInfo);
+    lv_free(logInfo);
+}
+#endif
+
 static const lv_platform_path_handlers sw_path_handlers = {
     .create         = lv_sw_path_create_cb,
     .destroy        = lv_sw_path_destroy_cb,
@@ -714,6 +779,9 @@ static const lv_platform_path_handlers sw_path_handlers = {
     .is_empty       = lv_sw_path_is_empty_cb,
     .transform_path = lv_sw_path_transform_path_cb,
     .get_mem_size   = lv_sw_path_get_mem_size_cb,
+#if LV_USE_VECTOR_DUMP_INFO
+    .dump_path_info = lv_sw_path_dump_info_cb,
+#endif
 };
 
 const lv_platform_path_handlers * lv_vector_get_platform_handlers(void)

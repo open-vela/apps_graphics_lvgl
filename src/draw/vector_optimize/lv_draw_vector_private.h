@@ -65,6 +65,9 @@ struct _lv_platform_path_handlers {
     void (*transform_path)(struct lv_platform_path_base_t * self, lv_vector_path_transform_data_t * transform_data);
     bool (*is_empty)(struct lv_platform_path_base_t * self);
     size_t (*get_mem_size)(struct lv_platform_path_base_t * self);
+#if LV_USE_VECTOR_DUMP_INFO
+    void (*dump_path_info)(struct lv_platform_path_base_t * self);
+#endif
 };
 
 struct lv_platform_path_base_t {
@@ -119,6 +122,12 @@ void lv_vector_path_transform_path(const lv_platform_path_base_t * impl, lv_vect
  * @return true if path contains no points or commands, false otherwise
  */
 bool lv_vector_path_impl_is_empty(const lv_platform_path_base_t * impl);
+
+#if LV_USE_VECTOR_DUMP_INFO
+void lv_vector_dump_path_info(const lv_platform_path_base_t * impl);
+void lv_vector_dump_dsc_info(const lv_vector_draw_dsc_t * dsc);
+void lv_vector_for_each_task_dump_info(const lv_vector_draw_task_list_t * draw_task_list);
+#endif
 
 /* Traverser for task list */
 typedef void (*vector_draw_task_cb)(void * ctx, const lv_platform_path_base_t * path, const lv_vector_draw_dsc_t * dsc);

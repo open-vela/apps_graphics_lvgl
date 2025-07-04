@@ -792,6 +792,9 @@
  *Requires `LV_USE_MATRIX = 1`*/
 #define LV_USE_VECTOR_GRAPHIC_OPTIMIZE  0
 
+/*Enable Vector Graphic dump info */
+#define LV_USE_VECTOR_DUMP_INFO 0
+
 /*Enable the image decoder size expand feature*/
 #define LV_DECODER_IMG_SIZE_EXPAND 0
 
