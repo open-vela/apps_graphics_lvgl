@@ -81,16 +81,16 @@ void lv_draw_vg_lite_label_init(struct _lv_draw_vg_lite_unit_t * u)
     lv_freetype_outline_add_event(freetype_outline_event_cb, LV_EVENT_ALL, u);
 #endif /* LV_USE_FREETYPE */
 
-    u->bitmap_font_pending = lv_vg_lite_pending_create(sizeof(lv_font_glyph_dsc_t), 8);
-    lv_vg_lite_pending_set_free_cb(u->bitmap_font_pending, bitmap_cache_release_cb, NULL);
+    u->letter_pending = lv_vg_lite_pending_create(sizeof(lv_font_glyph_dsc_t), 8);
+    lv_vg_lite_pending_set_free_cb(u->letter_pending, bitmap_cache_release_cb, NULL);
 }
 
 void lv_draw_vg_lite_label_deinit(struct _lv_draw_vg_lite_unit_t * u)
 {
     LV_ASSERT_NULL(u);
-    LV_ASSERT_NULL(u->bitmap_font_pending)
-    lv_vg_lite_pending_destroy(u->bitmap_font_pending);
-    u->bitmap_font_pending = NULL;
+    LV_ASSERT_NULL(u->letter_pending)
+    lv_vg_lite_pending_destroy(u->letter_pending);
+    u->letter_pending = NULL;
 }
 
 void lv_draw_vg_lite_letter(lv_draw_unit_t * draw_unit, const lv_draw_letter_dsc_t * dsc, const lv_area_t * coords)
@@ -277,7 +277,7 @@ static void draw_letter_bitmap(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_d
     if(dsc->g->entry) {
         /* Increment the cache reference count */
         lv_cache_entry_acquire_data(dsc->g->entry);
-        lv_vg_lite_pending_add(u->bitmap_font_pending, (void *)dsc->g);
+        lv_vg_lite_pending_add(u->letter_pending, (void *)dsc->g);
     }
     else {
         /* No caching, wait for GPU finish before releasing the data */
@@ -380,6 +380,14 @@ static void draw_letter_outline(lv_draw_vg_lite_unit_t * u, const lv_draw_glyph_
         VG_LITE_BLEND_SRC_OVER,
         lv_vg_lite_color(dsc->color, dsc->opa, true));
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    if(dsc->g->entry) {
+        /* Increment the cache reference count */
+        lv_cache_entry_acquire_data(dsc->g->entry);
+        lv_vg_lite_pending_add(u->letter_pending, (void *)dsc->g);
+    }
+#endif
+
     LV_PROFILER_DRAW_END;
 }
 
@@ -398,6 +406,9 @@ static void vg_lite_outline_push(const lv_freetype_outline_event_param_t * param
          */
         case LV_FREETYPE_OUTLINE_END:
             lv_vg_lite_path_end(outline);
+#if LV_VG_LITE_USE_PATH_UPLOAD
+            lv_vg_lite_path_finish_upload(outline);
+#endif
             break;
         case LV_FREETYPE_OUTLINE_MOVE_TO:
             lv_vg_lite_path_move_to(outline, param->to.x, -param->to.y);
@@ -428,8 +439,11 @@ static void freetype_outline_event_cb(lv_event_t * e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_freetype_outline_event_param_t * param = lv_event_get_param(e);
     switch(code) {
-        case LV_EVENT_CREATE:
-            param->outline = lv_vg_lite_path_create(PATH_DATA_COORD_FORMAT);
+        case LV_EVENT_CREATE: {
+                param->outline = lv_vg_lite_path_create(PATH_DATA_COORD_FORMAT);
+                size_t len = (param->sizes.data_size + param->sizes.segments_size) * lv_vg_lite_path_format_len(PATH_DATA_COORD_FORMAT);
+                lv_vg_lite_path_reserve_space(param->outline, len);
+            }
             break;
         case LV_EVENT_DELETE:
             lv_vg_lite_path_destroy(param->outline);

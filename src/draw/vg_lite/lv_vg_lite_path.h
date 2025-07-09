@@ -39,6 +39,24 @@ extern "C" {
 #define LV_VG_LITE_PATH_SET_OP_CODE(PTR, TYPE, OP_CODE) (*((TYPE*)PTR) = (OP_CODE))
 #define LV_VG_LITE_PATH_GET_OP_CODE(PTR) (*((uint8_t*)PTR))
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
+#define LV_VG_LITE_PATH_MEM_PERFIX 8
+#define LV_VG_LITE_PATH_MEM_POSTFIX 8
+#define LV_VG_LITE_PATH_MEM_ALIGN 64
+#define LV_VG_LITE_PATH_MEM_ALIGN_LENGTH 8
+#else
+#define LV_VG_LITE_PATH_MEM_PERFIX 0
+#define LV_VG_LITE_PATH_MEM_POSTFIX 0
+#define LV_VG_LITE_PATH_MEM_ALIGN 0
+#define LV_VG_LITE_PATH_MEM_ALIGN_LENGTH 0
+#endif
+
+#define LV_VG_LITE_PATH_MEM_EXTRA LV_VG_LITE_PATH_MEM_PERFIX + LV_VG_LITE_PATH_MEM_POSTFIX + LV_VG_LITE_PATH_MEM_ALIGN + LV_VG_LITE_PATH_MEM_ALIGN_LENGTH
+
+#define LV_VG_LITE_DATA(count)         (0x40000000 | count)
+
+#define LV_VG_LITE_RETURN()            (0x70000000)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -49,6 +67,7 @@ typedef struct _lv_draw_vg_lite_unit_t lv_draw_vg_lite_unit_t;
 struct _lv_vg_lite_path_t {
     vg_lite_path_t base;
     vg_lite_matrix_t matrix;
+    void * unaligned_mem;
     size_t mem_size;
     uint8_t format_len;
     bool has_transform;
@@ -93,6 +112,8 @@ void lv_vg_lite_path_set_quality(lv_vg_lite_path_t * path, vg_lite_quality_t qua
 vg_lite_path_t * lv_vg_lite_path_get_path(lv_vg_lite_path_t * path);
 
 void lv_vg_lite_path_reserve_space(lv_vg_lite_path_t * path, size_t len);
+
+void lv_vg_lite_path_finish_upload(lv_vg_lite_path_t * path);
 
 void lv_vg_lite_path_move_to(lv_vg_lite_path_t * path,
                              float x, float y);
