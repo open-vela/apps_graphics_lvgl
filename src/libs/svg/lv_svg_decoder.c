@@ -302,7 +302,7 @@ static uint8_t * alloc_file(const char * filename, uint32_t * size)
     /*Read file to buffer*/
     data = lv_malloc(data_size);
     if(data == NULL) {
-        LV_LOG_WARN("malloc failed for data size %u", data_size);
+        LV_LOG_WARN("malloc failed for data size %" LV_PRIu32, data_size);
         goto failed;
     }
 
