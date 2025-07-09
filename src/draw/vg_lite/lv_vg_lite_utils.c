@@ -1134,6 +1134,47 @@ bool lv_vg_lite_path_check(const vg_lite_path_t * path)
             return false;
     }
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    if(!VLM_PATH_GET_UPLOAD_BIT(*path)) {
+        return true;
+    }
+
+    uint32_t bytes = LV_VG_LITE_ALIGN(path->path_length + LV_VG_LITE_PATH_MEM_PERFIX + LV_VG_LITE_PATH_MEM_POSTFIX,
+                                      LV_VG_LITE_PATH_MEM_ALIGN_LENGTH);
+
+    if(path->path_changed != 0) {
+        LV_LOG_ERROR("path->path_changed not 0");
+        return false;
+    }
+
+    if(path->uploaded.bytes != bytes) {
+        LV_LOG_ERROR("path uploaded bytes(%d) != %d", (int)path->uploaded.bytes, (int)bytes);
+        return false;
+    }
+
+    if((lv_uintptr_t)path->uploaded.memory != (lv_uintptr_t)path->uploaded.address) {
+        LV_LOG_ERROR("path uploaded memory(%d) != %d", (lv_uintptr_t)path->uploaded.memory, path->uploaded.address);
+        return false;
+    }
+
+    if(((uint32_t *)path->uploaded.memory)[0] != LV_VG_LITE_DATA((path->path_length + 7) / 8)) {
+        LV_LOG_ERROR("perfix [0] is not VG_LITE_DATA((path->path_length + 7) / 8)");
+        return false;
+    }
+    if(((uint32_t *)path->uploaded.memory)[1] != 0) {
+        LV_LOG_ERROR("perfix [1] is not 0");
+        return false;
+    }
+    if(((uint32_t *)path->uploaded.memory)[bytes / 4 - 2] != LV_VG_LITE_RETURN()) {
+        LV_LOG_ERROR("postfix [bytes/4-2] is not VG_LITE_RETURN()");
+        return false;
+    }
+    if(((uint32_t *)path->uploaded.memory)[bytes / 4 - 1] != 0) {
+        LV_LOG_ERROR("postfix [bytes/4-1] is not 0");
+        return false;
+    }
+#endif
+
     return true;
 }
 
@@ -1356,7 +1397,7 @@ void lv_vg_lite_flush(struct _lv_draw_vg_lite_unit_t * u)
 
     lv_vg_lite_pending_swap(u->image_dsc_pending);
 
-    lv_vg_lite_pending_swap(u->bitmap_font_pending);
+    lv_vg_lite_pending_swap(u->letter_pending);
 
     u->flush_count = 0;
     LV_PROFILER_DRAW_END;
@@ -1378,7 +1419,7 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
     lv_vg_lite_pending_remove_all(u->image_dsc_pending);
 
     /* Clear bitmap font dsc reference */
-    lv_vg_lite_pending_remove_all(u->bitmap_font_pending);
+    lv_vg_lite_pending_remove_all(u->letter_pending);
 
     u->flush_count = 0;
     u->letter_count = 0;

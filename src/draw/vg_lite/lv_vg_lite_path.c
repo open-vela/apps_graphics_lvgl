@@ -100,7 +100,13 @@ void lv_vg_lite_path_destroy(lv_vg_lite_path_t * path)
     LV_PROFILER_DRAW_BEGIN;
     LV_ASSERT_NULL(path);
     if(path->base.path != NULL) {
-        lv_free(path->base.path);
+        if(path->unaligned_mem) {
+            lv_free(path->unaligned_mem);
+            path->unaligned_mem = NULL;
+        }
+        else {
+            lv_free(path->base.path);
+        }
         path->base.path = NULL;
 
         /* clear remaining path data */
@@ -256,7 +262,7 @@ void lv_vg_lite_path_reserve_space(lv_vg_lite_path_t * path, size_t len)
     bool need_reallocated = false;
 
     /*Calculate new mem size until match the contidion*/
-    while(path->base.path_length + len > path->mem_size) {
+    while(path->base.path_length + len + LV_VG_LITE_PATH_MEM_EXTRA > path->mem_size) {
         if(path->mem_size == 0) {
             path->mem_size = LV_MAX(len, PATH_MEM_SIZE_MIN);
         }
@@ -271,8 +277,57 @@ void lv_vg_lite_path_reserve_space(lv_vg_lite_path_t * path, size_t len)
         return;
     }
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    uint8_t * new_path = lv_malloc(path->mem_size);
+    LV_ASSERT_MALLOC(new_path);
+    uint8_t * new_path_aligned = (uint8_t *)LV_VG_LITE_ALIGN((lv_uintptr_t)new_path,
+                                                             LV_VG_LITE_PATH_MEM_ALIGN) + LV_VG_LITE_PATH_MEM_PERFIX;
+    lv_memcpy(new_path_aligned, path->base.path, path->base.path_length);
+    if(path->unaligned_mem) {
+        lv_free(path->unaligned_mem);
+    }
+    path->base.path = new_path_aligned;
+    path->unaligned_mem = new_path;
+#else
     path->base.path = lv_realloc(path->base.path, path->mem_size);
     LV_ASSERT_MALLOC(path->base.path);
+#endif
+}
+
+void lv_vg_lite_path_finish_upload(lv_vg_lite_path_t * path)
+{
+    LV_ASSERT_NULL(path);
+
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    LV_ASSERT(!VLM_PATH_GET_UPLOAD_BIT(path->base));
+    LV_ASSERT(path->base.path_length > 0);
+    LV_ASSERT_NULL(path->unaligned_mem);
+    VLM_PATH_ENABLE_UPLOAD(path->base);
+
+    path->base.path_changed = 0;
+
+    path->base.uploaded.memory = (void *)LV_VG_LITE_ALIGN((lv_uintptr_t)path->unaligned_mem,
+                                                          LV_VG_LITE_PATH_MEM_ALIGN);
+    path->base.uploaded.address = (uint32_t)path->base.uploaded.memory;
+    uint32_t bytes = LV_VG_LITE_ALIGN(path->base.path_length + LV_VG_LITE_PATH_MEM_PERFIX + LV_VG_LITE_PATH_MEM_POSTFIX,
+                                      LV_VG_LITE_PATH_MEM_ALIGN_LENGTH);
+
+    /* Initialize command buffer prefix. */
+    ((uint32_t *) path->base.uploaded.memory)[0] = LV_VG_LITE_DATA((path->base.path_length + 7) / 8);
+    ((uint32_t *) path->base.uploaded.memory)[1] = 0;
+
+    /* Initialize command buffer postfix. */
+    ((uint32_t *) path->base.uploaded.memory)[bytes / 4 - 2] = LV_VG_LITE_RETURN();
+    ((uint32_t *) path->base.uploaded.memory)[bytes / 4 - 1] = 0;
+    path->base.uploaded.bytes = bytes;
+
+    lv_draw_buf_t path_buf;
+    lv_draw_buf_init(&path_buf, bytes, 1, LV_COLOR_FORMAT_RAW, bytes, path->base.uploaded.memory, bytes);
+    lv_draw_buf_flush_cache(&path_buf, NULL);
+#else
+    LV_UNUSED(path);
+    LV_ASSERT_MSG(false, "LV_VG_LITE_USE_PATH_UPLOAD not enabled");
+#endif
 }
 
 static inline void lv_vg_lite_path_append_data(lv_vg_lite_path_t * path, const void * data, size_t len)

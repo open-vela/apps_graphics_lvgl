@@ -602,6 +602,19 @@
     #endif
 #endif
 
+/* Enable path upload mode. */
+#ifndef LV_VG_LITE_USE_PATH_UPLOAD
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_VG_LITE_USE_PATH_UPLOAD
+            #define LV_VG_LITE_USE_PATH_UPLOAD CONFIG_LV_VG_LITE_USE_PATH_UPLOAD
+        #else
+            #define LV_VG_LITE_USE_PATH_UPLOAD 0
+        #endif
+    #else
+        #define LV_VG_LITE_USE_PATH_UPLOAD 1
+    #endif
+#endif
+
 #endif
 
 /* Use G2D GPU. */
