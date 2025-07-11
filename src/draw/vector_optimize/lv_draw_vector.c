@@ -637,23 +637,29 @@ void lv_vector_dsc_set_fill_linear_gradient(lv_vector_dsc_t * dsc, float x1, flo
 {
     lv_vector_dsc_fill_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->fill_dsc);
 
+    lv_vector_gradient_t * gradient = &dsc->current_dsc->fill_dsc->draw_attrs.gradient;
     dsc->current_dsc->fill_dsc->style = LV_VECTOR_DRAW_STYLE_GRADIENT;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.x1 = x1;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.y1 = y1;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.x2 = x2;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.y2 = y2;
+    gradient.style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
+    gradient.x1 = x1;
+    gradient.y1 = y1;
+    gradient.x2 = x2;
+    gradient.y2 = y2;
+    gradient->stops_count = 0;
+    gradient->spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 }
 
 void lv_vector_dsc_set_fill_radial_gradient(lv_vector_dsc_t * dsc, float cx, float cy, float radius)
 {
     lv_vector_dsc_fill_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->fill_dsc);
 
+    lv_vector_gradient_t * gradient = &dsc->current_dsc->fill_dsc->draw_attrs.gradient;
     dsc->current_dsc->fill_dsc->style = LV_VECTOR_DRAW_STYLE_GRADIENT;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.cx = cx;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.cy = cy;
-    dsc->current_dsc->fill_dsc->draw_attrs.gradient.cr = radius;
+    gradient.style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
+    gradient.cx = cx;
+    gradient.cy = cy;
+    gradient.cr = radius;
+    gradient->stops_count = 0;
+    gradient->spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 }
 
 void lv_vector_dsc_set_fill_gradient_spread(lv_vector_dsc_t * dsc, lv_vector_gradient_spread_t spread)
@@ -770,6 +776,8 @@ void lv_vector_dsc_set_stroke_linear_gradient(lv_vector_dsc_t * dsc, float x1, f
     gradient->y1 = y1;
     gradient->x2 = x2;
     gradient->y2 = y2;
+    gradient->stops_count = 0;
+    gradient->spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 }
 
 void lv_vector_dsc_set_stroke_radial_gradient(lv_vector_dsc_t * dsc, float cx, float cy, float radius)
@@ -783,6 +791,8 @@ void lv_vector_dsc_set_stroke_radial_gradient(lv_vector_dsc_t * dsc, float cx, f
     gradient->cx = cx;
     gradient->cy = cy;
     gradient->cr = radius;
+    gradient->stops_count = 0;
+    gradient->spread = LV_VECTOR_GRADIENT_SPREAD_PAD;
 }
 
 void lv_vector_dsc_set_stroke_gradient_spread(lv_vector_dsc_t * dsc, lv_vector_gradient_spread_t spread)
