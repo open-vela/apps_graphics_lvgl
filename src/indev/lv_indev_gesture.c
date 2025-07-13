@@ -87,19 +87,6 @@ void lv_indev_set_pinch_down_threshold(lv_indev_gesture_recognizer_t * recognize
     recognizer->config->pinch_down_threshold = threshold;
 }
 
-void lv_indev_get_gesture_primary_point(lv_indev_gesture_recognizer_t * recognizer, lv_point_t * point)
-{
-    if(recognizer->info->motions[0].finger != -1) {
-        point->x = recognizer->info->motions[0].point.x;
-        point->y = recognizer->info->motions[0].point.y;
-        return;
-    }
-
-    /* There are currently no active contact points */
-    point->x = 0;
-    point->y = 0;
-}
-
 bool lv_indev_recognizer_is_active(lv_indev_gesture_recognizer_t * recognizer)
 {
     if(recognizer->state == LV_INDEV_GESTURE_STATE_ENDED ||
@@ -145,9 +132,6 @@ lv_indev_gesture_state_t lv_event_get_gesture_state(lv_event_t * gesture_event)
 
 void lv_indev_set_gesture_data(lv_indev_data_t * data, lv_indev_gesture_recognizer_t * recognizer)
 {
-    bool is_active;
-    lv_point_t cur_pnt;
-
     if(recognizer == NULL) return;
 
     /* If there is a single contact point use its coords,
@@ -156,29 +140,11 @@ void lv_indev_set_gesture_data(lv_indev_data_t * data, lv_indev_gesture_recogniz
      * Note: If a gesture was detected, the primary point is overwritten below
      */
 
-    lv_indev_get_gesture_primary_point(recognizer, &cur_pnt);
-    data->point.x = cur_pnt.x;
-    data->point.y = cur_pnt.y;
-
     data->gesture_type = LV_INDEV_GESTURE_NONE;
     data->gesture_data = NULL;
 
-    /* The call below returns false if there are no active contact points */
-    /* - OR when the gesture has ended, false is considered as a RELEASED state */
-    is_active = lv_indev_recognizer_is_active(recognizer);
-
-    if(is_active == false) {
-        data->state = LV_INDEV_STATE_RELEASED;
-    }
-    else {
-        data->state = LV_INDEV_STATE_PRESSED;
-    }
-
     switch(recognizer->state) {
         case LV_INDEV_GESTURE_STATE_RECOGNIZED:
-            lv_indev_get_gesture_center_point(recognizer, &cur_pnt);
-            data->point.x = cur_pnt.x;
-            data->point.y = cur_pnt.y;
             data->gesture_type = LV_INDEV_GESTURE_PINCH;
             data->gesture_data = (void *) recognizer;
             break;

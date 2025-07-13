@@ -113,6 +113,8 @@ struct _lv_indev_t {
 
     lv_indev_gesture_type_t gesture_type;
     void * gesture_data;
+
+    bool update_primary_point;
 };
 
 /**********************

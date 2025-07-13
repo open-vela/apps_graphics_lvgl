@@ -41,10 +41,11 @@ typedef struct {
     bool has_last_sample;
     lv_indev_state_t last_state;
     lv_indev_t * indev_drv;
+    struct touch_point_s primary_point; /* Track current active contact point (primary touch in multi-touch scenarios) */
 #if LV_USE_GESTURE_RECOGNITION
     lv_indev_gesture_recognizer_t recognizer;
     lv_indev_touch_data_t * touch_data;
-    uint8_t active_points;
+    uint8_t active_points; /* Number of currently active touch points */
 #endif
 } lv_nuttx_touchscreen_t;
 
@@ -153,27 +154,70 @@ static void process_single_touch(lv_indev_t * drv,
         data->point.x = LV_CLAMP(0, sample->point[0].x, hor_max);
         data->point.y = LV_CLAMP(0, sample->point[0].y, ver_max);
         touchscreen->last_state = LV_INDEV_STATE_PRESSED;
+
+        if(touch_flags & TOUCH_DOWN) {
+            touchscreen->primary_point.id = sample->point[0].id;
+            touchscreen->primary_point.x = data->point.x;
+            touchscreen->primary_point.y = data->point.y;
+        }
     }
     else if(touch_flags & TOUCH_UP) {
+        touchscreen->primary_point.id = UINT8_MAX;
         touchscreen->last_state = LV_INDEV_STATE_RELEASED;
     }
 }
 
 #if LV_USE_GESTURE_RECOGNITION
+static void touchscreen_update_primary_point(struct touch_sample_s * sample,
+                                             lv_nuttx_touchscreen_t * touchscreen,
+                                             int32_t hor_max, int32_t ver_max)
+{
+    int primary_index = -1;
+
+    for(int i = 0; i < sample->npoints; i++) {
+        uint8_t touch_flags = sample->point[i].flags;
+
+        if(touchscreen->primary_point.id == sample->point[i].id) {
+            if(touch_flags & (TOUCH_DOWN | TOUCH_MOVE)) {
+                primary_index = i;
+                break;
+            }
+            else if((touch_flags & TOUCH_UP) && primary_index >= 0) {
+                break;
+            }
+        }
+        else if((touch_flags & (TOUCH_DOWN | TOUCH_MOVE)) && primary_index < 0) {
+            primary_index = i;
+        }
+    }
+
+    if(primary_index != -1) {
+        touchscreen->primary_point.id = sample->point[primary_index].id;
+        touchscreen->primary_point.x =
+            LV_CLAMP(0, sample->point[primary_index].x, hor_max);
+        touchscreen->primary_point.y =
+            LV_CLAMP(0, sample->point[primary_index].y, ver_max);
+    }
+    else {
+        touchscreen->primary_point.id = UINT8_MAX;
+    }
+}
+
 static void process_multi_touch(lv_indev_t * indev,
                                 lv_indev_data_t * data,
                                 struct touch_sample_s * sample)
 {
     lv_nuttx_touchscreen_t * touchscreen = lv_indev_get_driver_data(indev);
     lv_indev_touch_data_t * touch_data_tmp = touchscreen->touch_data;
+    lv_display_t * disp = lv_indev_get_display(indev);
+    int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
+    int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
+    uint16_t finger_release_cnt = 0;
 
     for(int i = 0; i < sample->npoints; i++) {
         touch_data_tmp->id = sample->point[i].id;
         uint8_t touch_flags = sample->point[i].flags;
         if(touch_flags & (TOUCH_DOWN | TOUCH_MOVE)) {
-            lv_display_t * disp = lv_indev_get_display(indev);
-            int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
-            int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
             touch_data_tmp->point.x = LV_CLAMP(0, sample->point[i].x, hor_max);
             touch_data_tmp->point.y = LV_CLAMP(0, sample->point[i].y, ver_max);
             touch_data_tmp->state = LV_INDEV_STATE_PRESSED;
@@ -181,6 +225,7 @@ static void process_multi_touch(lv_indev_t * indev,
         }
         else if(touch_flags & TOUCH_UP) {
             touch_data_tmp->state = LV_INDEV_STATE_RELEASED;
+            finger_release_cnt++;
             touch_data_tmp++;
         }
     }
@@ -189,6 +234,22 @@ static void process_multi_touch(lv_indev_t * indev,
                                   touchscreen->touch_data,
                                   touchscreen->active_points);
     lv_indev_set_gesture_data(data, &touchscreen->recognizer);
+
+    data->update_primary_point = false;
+    if(finger_release_cnt == touchscreen->active_points) {
+        data->state = LV_INDEV_STATE_RELEASED;
+        touchscreen->primary_point.id = UINT8_MAX;
+    }
+    else {
+        data->state = LV_INDEV_STATE_PRESSED;
+        if(finger_release_cnt > 0) {
+            data->update_primary_point = true;
+        }
+
+        touchscreen_update_primary_point(sample, touchscreen, hor_max, ver_max);
+        data->point.x = touchscreen->primary_point.x;
+        data->point.y = touchscreen->primary_point.y;
+    }
 }
 #endif
 

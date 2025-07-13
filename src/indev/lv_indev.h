@@ -71,6 +71,7 @@ typedef struct {
     lv_indev_gesture_type_t gesture_type;
     void * gesture_data;
 
+    bool update_primary_point;
 } lv_indev_data_t;
 
 typedef void (*lv_indev_read_cb_t)(lv_indev_t * indev, lv_indev_data_t * data);

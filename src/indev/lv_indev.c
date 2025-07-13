@@ -735,6 +735,7 @@ static void indev_pointer_proc(lv_indev_t * i, lv_indev_data_t * data)
 
     i->gesture_type = data->gesture_type;
     i->gesture_data = data->gesture_data;
+    i->update_primary_point  = data->update_primary_point;
 
     /*Process the diff first as scrolling will be processed in indev_proc_release*/
     indev_proc_pointer_diff(i);
@@ -1229,6 +1230,11 @@ static void indev_proc_press(lv_indev_t * indev)
 
     lv_display_t * disp = indev_act->disp;
     bool new_obj_searched = false;
+
+    if(indev->update_primary_point) {
+        indev->pointer.last_point.x = indev->pointer.act_point.x;
+        indev->pointer.last_point.y = indev->pointer.act_point.y;
+    }
 
     /*If there is no last object then search*/
     if(indev_obj_act == NULL) {
