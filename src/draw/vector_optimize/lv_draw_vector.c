@@ -180,6 +180,11 @@ void lv_vector_path_line_to(lv_vector_path_t * path, const lv_fpoint_t * p)
     LV_ASSERT_NULL(path);
     LV_ASSERT_NULL(p);
 
+    if(lv_vector_path_is_empty(path)) {
+        /*first op must be move_to*/
+        return;
+    }
+
     lv_vector_ensure_write_access(path);
     path->impl->handlers->line_to(path->impl, p);
 }
@@ -189,6 +194,11 @@ void lv_vector_path_quad_to(lv_vector_path_t * path, const lv_fpoint_t * ctrl, c
     LV_ASSERT_NULL(path);
     LV_ASSERT_NULL(ctrl);
     LV_ASSERT_NULL(end);
+
+    if(lv_vector_path_is_empty(path)) {
+        /*first op must be move_to*/
+        return;
+    }
 
     lv_vector_ensure_write_access(path);
     path->impl->handlers->quad_to(path->impl, ctrl, end);
@@ -202,6 +212,11 @@ void lv_vector_path_cubic_to(lv_vector_path_t * path, const lv_fpoint_t * ctrl1,
     LV_ASSERT_NULL(ctrl2);
     LV_ASSERT_NULL(end);
 
+    if(lv_vector_path_is_empty(path)) {
+        /*first op must be move_to*/
+        return;
+    }
+
     lv_vector_ensure_write_access(path);
     path->impl->handlers->cubic_to(path->impl, ctrl1, ctrl2, end);
 }
@@ -209,6 +224,11 @@ void lv_vector_path_cubic_to(lv_vector_path_t * path, const lv_fpoint_t * ctrl1,
 void lv_vector_path_close(lv_vector_path_t * path)
 {
     LV_ASSERT_NULL(path);
+
+    if(lv_vector_path_is_empty(path)) {
+        /*first op must be move_to*/
+        return;
+    }
 
     lv_vector_ensure_write_access(path);
     path->impl->handlers->close_path(path->impl);
