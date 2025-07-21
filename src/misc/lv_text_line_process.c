@@ -141,7 +141,7 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
             res = lv_iter_peek(word_iter, &word_next);
             if(res == LV_RESULT_INVALID) {
                 end = word.pos.end;
-                brk = word.pos.end;
+                brk = word.pos.brk != UINT32_MAX ? word.pos.brk : word.pos.end;
                 break;
             }
 
