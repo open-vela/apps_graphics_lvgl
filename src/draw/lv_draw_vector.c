@@ -666,22 +666,36 @@ void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
 
 void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, uint16_t dash_count)
 {
+    if(!dash_pattern || dash_count == 0) {
+        lv_array_clear(&(dsc->current_dsc.stroke_dsc.dash_pattern));
+        return;
+    }
+
     lv_array_t * dash_array = &(dsc->current_dsc.stroke_dsc.dash_pattern);
-    if(dash_pattern) {
-        dash_count = MIN(dash_count, DASH_MAX);
-        lv_array_clear(dash_array);
-        if(lv_array_capacity(dash_array) == 0) {
-            lv_array_init(dash_array, dash_count, sizeof(float));
-        }
-        else {
-            lv_array_resize(dash_array, dash_count);
-        }
-        for(uint16_t i = 0; i < dash_count; i++) {
+
+    dash_count = MIN(dash_count, DASH_MAX);
+    uint16_t final_count = dash_count;
+    if(dash_count % 2 != 0) {
+        final_count = MIN(dash_count * 2, DASH_MAX);
+    }
+
+    lv_array_clear(dash_array);
+    if(lv_array_capacity(dash_array) == 0) {
+        lv_array_init(dash_array, final_count, sizeof(float));
+    }
+    else {
+        lv_array_resize(dash_array, final_count);
+    }
+
+    if(final_count == dash_count) {
+        for(uint16_t i = 0; i < final_count; i++) {
             lv_array_push_back(dash_array, &dash_pattern[i]);
         }
     }
-    else {   /*clear dash*/
-        lv_array_clear(dash_array);
+    else {
+        for(uint16_t i = 0; i < final_count; i++) {
+            lv_array_push_back(dash_array, &dash_pattern[i % dash_count]);
+        }
     }
 }
 
