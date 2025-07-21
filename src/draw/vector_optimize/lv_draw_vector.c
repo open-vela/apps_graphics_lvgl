@@ -730,21 +730,39 @@ void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
 
 void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, uint16_t dash_count)
 {
-    lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
+    if(!dsc || !dsc->current_dsc || !dsc->tasks.draw_task_list.allocator) {
+        return;
+    }
 
-    if(dash_pattern && dash_count > 0) {
-        dash_count = MIN(dash_count, DASH_MAX);
-        if(dash_count > dsc->current_dsc->stroke_dsc->dash_count) {
-            dsc->current_dsc->stroke_dsc->dash_pattern = dsc->tasks.draw_task_list.allocator->alloc(
-                                                             dsc->tasks.draw_task_list.allocator, dash_count * sizeof(float));
-            LV_ASSERT_MALLOC(dsc->current_dsc->stroke_dsc->dash_pattern);
+    lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator,
+                                             &dsc->current_dsc->stroke_dsc);
+
+    if(!dash_pattern || dash_count == 0) {
+        dsc->current_dsc->stroke_dsc->dash_count = 0;
+        return;
+    }
+
+    dash_count = MIN(dash_count, DASH_MAX);
+    uint16_t final_count = (dash_count % 2 != 0) ? MIN(dash_count * 2, DASH_MAX) : dash_count;
+
+    float * new_pattern = dsc->tasks.draw_task_list.allocator->alloc(
+                              dsc->tasks.draw_task_list.allocator, final_count * sizeof(float));
+    if(!new_pattern) {
+        LV_LOG_ERROR("Failed to allocate memory for dash pattern");
+        return;
+    }
+
+    if(dash_count % 2 != 0) {
+        for(uint16_t i = 0; i < final_count; i++) {
+            new_pattern[i] = dash_pattern[i % dash_count];
         }
-        lv_memcpy(dsc->current_dsc->stroke_dsc->dash_pattern, dash_pattern, dash_count * sizeof(float));
-        dsc->current_dsc->stroke_dsc->dash_count = dash_count;
     }
     else {
-        dsc->current_dsc->stroke_dsc->dash_count = 0;
+        lv_memcpy(new_pattern, dash_pattern, final_count * sizeof(float));
     }
+
+    dsc->current_dsc->stroke_dsc->dash_pattern = new_pattern;
+    dsc->current_dsc->stroke_dsc->dash_count = final_count;
 }
 
 void lv_vector_dsc_set_stroke_cap(lv_vector_dsc_t * dsc, lv_vector_stroke_cap_t cap)
