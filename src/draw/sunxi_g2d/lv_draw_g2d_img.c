@@ -169,6 +169,7 @@ static void _g2d_blit_no_alpha(lv_draw_buf_t * dest_buf, const lv_area_t * dest_
     uint32_t src_stride = src_buf->header.stride;
     uint32_t dest_stride = dest_buf->header.stride;
     uint8_t dest_px_size = lv_color_format_get_size(dest_cf);
+    uint8_t src_px_size = lv_color_format_get_size(src_cf);
 
     lv_area_t src_area_clip, dest_area_clip;
     lv_area_copy(&src_area_clip, src_area);
@@ -198,7 +199,8 @@ static void _g2d_blit_no_alpha(lv_draw_buf_t * dest_buf, const lv_area_t * dest_
     info.src_image_h.clip_rect.y = src_area_clip.y1;
     info.src_image_h.clip_rect.w = src_clip_w;
     info.src_image_h.clip_rect.h = src_clip_h;
-    info.src_image_h.width = (yuv_buf && yuv_buf->semi_planar.y.stride != 0) ? yuv_buf->semi_planar.y.stride : src_buf->header.w;
+    info.src_image_h.width = (yuv_buf &&
+                              yuv_buf->semi_planar.y.stride != 0) ? yuv_buf->semi_planar.y.stride : src_buf->header.w;
     info.src_image_h.height = src_buf->header.h;
     info.src_image_h.mode = G2D_PIXEL_ALPHA;
     info.src_image_h.alpha = 255;
@@ -240,7 +242,8 @@ static void _g2d_blit_no_alpha(lv_draw_buf_t * dest_buf, const lv_area_t * dest_
         hal_dcache_clean_invalidate(src_uv_vaddr_start, yuv_buf->semi_planar.uv.stride * src_h);
     }
     else {
-        unsigned long src_vaddr_start = (unsigned long)src_buf->data;
+        unsigned long src_vaddr_start = (unsigned long)src_buf->data + src_stride * src_area_clip.y1 + src_px_size *
+                                        src_area_clip.x1;
         hal_dcache_clean_invalidate(src_vaddr_start, src_stride * src_h);
     }
 
