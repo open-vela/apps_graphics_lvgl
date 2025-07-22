@@ -353,7 +353,13 @@ static inline void lv_draw_buf_clear_flag(lv_draw_buf_t * draw_buf, lv_image_fla
 
 static inline lv_result_t lv_draw_buf_from_image(lv_draw_buf_t * buf, const lv_image_dsc_t * img)
 {
-    const lv_result_t res = lv_draw_buf_init(buf, img->header.w, img->header.h, img->header.cf, img->header.stride,
+    uint32_t stride = img->header.stride;
+    if(stride == 0) {
+        /*If image doesn't have stride, treat it as lvgl v8 legacy image format*/
+        stride = (img->header.w * lv_color_format_get_bpp(img->header.cf) + 7) >> 3;
+    }
+
+    const lv_result_t res = lv_draw_buf_init(buf, img->header.w, img->header.h, img->header.cf, stride,
                                              (void *)img->data, img->data_size);
     if(res != LV_RESULT_OK) {
         return res;

@@ -298,14 +298,7 @@ lv_result_t lv_bin_decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
             }
             else {
                 decoded = &decoder_data->c_array;
-                if(image->header.stride == 0) {
-                    /*If image doesn't have stride, treat it as lvgl v8 legacy image format*/
-                    lv_image_dsc_t tmp = *image;
-                    tmp.header.stride = (tmp.header.w * lv_color_format_get_bpp(cf) + 7) >> 3;
-                    res = lv_draw_buf_from_image(decoded, &tmp);
-                }
-                else
-                    res = lv_draw_buf_from_image(decoded, image);
+                res = lv_draw_buf_from_image(decoded, image);
             }
 
             if(res == LV_RESULT_OK) {
