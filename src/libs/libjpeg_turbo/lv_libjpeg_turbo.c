@@ -372,6 +372,10 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
                                     LV_STRIDE_AUTO);
     if(decoded != NULL) {
         uint32_t line_index = 0;
+
+        /*Clean up garbage values ​​that appear in alignment*/
+        lv_draw_buf_clear(decoded, NULL);
+
         /* while (scan lines remain to be read) */
         /* jpeg_read_scanlines(...); */
 

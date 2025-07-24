@@ -323,6 +323,9 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         return NULL;
     }
 
+    /*Clean up garbage values ​​that appear in alignment*/
+    lv_draw_buf_clear(decoded, NULL);
+
     void * palette = decoded->data;
     void * map = decoded->data + LV_COLOR_INDEXED_PALETTE_SIZE(cf) * sizeof(lv_color32_t);
 
