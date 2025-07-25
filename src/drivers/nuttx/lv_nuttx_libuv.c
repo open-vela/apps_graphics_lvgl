@@ -82,8 +82,8 @@ static int lv_nuttx_uv_uinput_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * 
 static void lv_nuttx_uv_uinput_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 
 #ifdef CONFIG_LV_USE_NUTTX_MOUSE
-static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
-static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
+    static int lv_nuttx_uv_mouse_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
+    static void lv_nuttx_uv_mouse_deinit(lv_nuttx_uv_ctx_t * uv_ctx);
 #endif
 
 static int lv_nuttx_uv_control_init(lv_nuttx_uv_t * uv_info, lv_nuttx_uv_ctx_t * uv_ctx);
