@@ -160,6 +160,7 @@ typedef struct {
     lv_vector_draw_style_t style;
     lv_vector_draw_style_attrs_t draw_attrs;
     lv_matrix_t matrix;
+    bool stroke_dsc_changed;
 } lv_vector_stroke_dsc_t;
 
 typedef struct {

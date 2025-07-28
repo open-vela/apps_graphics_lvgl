@@ -56,25 +56,24 @@ void lv_vg_lite_stroke_path_deinit(struct _lv_draw_vg_lite_unit_t * unit)
     unit->stroke_path = NULL;
 }
 
-struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_unit_t * unit,
-                                                       const lv_platform_path_base_t * impl,
+struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(lv_platform_vg_lite_path_t * impl,
                                                        const lv_vector_stroke_dsc_t * dsc)
 {
     LV_PROFILER_DRAW_BEGIN;
-    LV_ASSERT_NULL(unit);
-    LV_ASSERT_NULL(unit->stroke_path);
-    LV_ASSERT(!unit->stroke_path_in_use);
-    lv_vg_lite_path_reset(unit->stroke_path, VG_LITE_FP32);
-    lv_vg_lite_path_set_bounding_box(unit->stroke_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+    LV_ASSERT_NULL(impl->stroke_path_cache);
+    lv_vg_lite_path_reset(impl->stroke_path_cache, VG_LITE_FP32);
+    lv_vg_lite_path_set_bounding_box(impl->stroke_path_cache, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
 
-    if(!lv_vector_stroke_generate(impl, dsc, vg_path_generate_cb, unit->stroke_path)) {
+    if(!lv_vector_stroke_generate((lv_platform_path_base_t *)impl, dsc, vg_path_generate_cb, impl->stroke_path_cache)) {
+        lv_vg_lite_path_destroy(impl->stroke_path_cache);
+        impl->stroke_path_cache = NULL;
         LV_PROFILER_DRAW_END;
         return NULL;
     }
-    unit->stroke_path_in_use = true;
 
     LV_PROFILER_DRAW_END;
-    return unit->stroke_path;
+    return impl->stroke_path_cache;
+
 }
 
 
@@ -82,8 +81,6 @@ void lv_vg_lite_stroke_path_drop(struct _lv_draw_vg_lite_unit_t * unit, struct _
 {
     LV_ASSERT_NULL(unit);
     LV_ASSERT_NULL(path);
-    LV_ASSERT(unit->stroke_path == path);
-    unit->stroke_path_in_use = false;
 }
 
 /**********************

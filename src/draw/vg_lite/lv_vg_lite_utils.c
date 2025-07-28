@@ -14,7 +14,11 @@
 #include "lv_vg_lite_decoder.h"
 #include "lv_vg_lite_path.h"
 #include "lv_vg_lite_pending.h"
-#include "lv_vg_lite_grad.h"
+#if LV_USE_VECTOR_GRAPHIC
+    #include "lv_vg_lite_grad.h"
+#elif LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    #include "../vg_lite_vector_optimize/lv_vg_lite_grad_opt.h"
+#endif
 #include "lv_draw_vg_lite_type.h"
 #include <string.h>
 
@@ -1391,13 +1395,17 @@ void lv_vg_lite_flush(struct _lv_draw_vg_lite_unit_t * u)
     LV_VG_LITE_CHECK_ERROR(vg_lite_flush(), {});
 
     /* Remove all old caches reference and swap new caches reference */
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
     lv_vg_lite_pending_swap(lv_vg_lite_grad_ctx_get_pending(u->grad_ctx));
 #endif
 
     lv_vg_lite_pending_swap(u->image_dsc_pending);
 
     lv_vg_lite_pending_swap(u->letter_pending);
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    lv_vg_lite_pending_swap(u->vector_pending);
+#endif
 
     u->flush_count = 0;
     LV_PROFILER_DRAW_END;
@@ -1410,7 +1418,7 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
 
     LV_VG_LITE_CHECK_ERROR(vg_lite_finish(), {});
 
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
     /* Clear all gradient caches reference */
     lv_vg_lite_pending_remove_all(lv_vg_lite_grad_ctx_get_pending(u->grad_ctx));
 #endif
@@ -1420,6 +1428,11 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
 
     /* Clear bitmap font dsc reference */
     lv_vg_lite_pending_remove_all(u->letter_pending);
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    /* Clear vector reference */
+    lv_vg_lite_pending_remove_all(u->vector_pending);
+#endif
 
     u->flush_count = 0;
     u->letter_count = 0;

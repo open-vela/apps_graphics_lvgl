@@ -34,12 +34,16 @@ typedef struct _lv_draw_vg_lite_unit_t lv_draw_vg_lite_unit_t;
 typedef struct _lv_platform_vg_lite_path_t {
     lv_platform_path_base_t base;
     lv_vg_lite_path_t * vg_path;
+    lv_vg_lite_path_t * stroke_path_cache;
 } lv_platform_vg_lite_path_t;
 
 /**********************
  * GLOBAL PROTOTYPES
  **********************/
 void lv_vg_lite_path_add_end(lv_vg_lite_path_t * path);
+#if LV_VG_LITE_USE_PATH_UPLOAD
+void lv_vg_lite_path_upload(lv_draw_vg_lite_unit_t * u, void * impl, lv_vg_lite_path_t * vg_path);
+#endif
 void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * path);
 
 /**********************

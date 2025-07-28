@@ -20,6 +20,8 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
+#define PATH_FLAG_POLYGON  0x1
+#define PATH_FLAG_CHANGED  0x2
 
 /**********************
  *      TYPEDEFS

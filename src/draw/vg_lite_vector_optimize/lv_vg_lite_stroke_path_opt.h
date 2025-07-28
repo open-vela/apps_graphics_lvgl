@@ -17,6 +17,7 @@ extern "C" {
 #include "../vg_lite/lv_vg_lite_utils.h"
 
 #if LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#include "lv_vg_lite_path_opt.h"
 
 /*********************
  *      DEFINES
@@ -47,13 +48,11 @@ void lv_vg_lite_stroke_path_deinit(struct _lv_draw_vg_lite_unit_t * unit);
 
 /**
  * @brief Get the stroke path
- * @param unit pointer to the unit
- * @param path pointer to the vector path
+ * @param impl pointer to the vector path
  * @param dsc pointer to the vector stroke descriptor
  * @return pointer to the path of the stroke
  */
-struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_unit_t * unit,
-                                                       const lv_platform_path_base_t * impl,
+struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(lv_platform_vg_lite_path_t * impl,
                                                        const lv_vector_stroke_dsc_t * dsc);
 
 /**

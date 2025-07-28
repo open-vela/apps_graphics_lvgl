@@ -49,7 +49,9 @@ struct _lv_draw_vg_lite_unit_t {
     lv_cache_t * stroke_cache;
 
     struct _lv_vg_lite_pending_t * letter_pending;
-
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    struct _lv_vg_lite_pending_t * vector_pending;
+#endif
     uint16_t flush_count;
     uint16_t letter_count;
     vg_lite_buffer_t target_buffer;

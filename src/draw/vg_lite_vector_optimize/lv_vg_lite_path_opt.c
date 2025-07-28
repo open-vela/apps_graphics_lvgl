@@ -12,6 +12,7 @@
 #if LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 #include "../vg_lite/lv_draw_vg_lite_type.h"
 #include "../vg_lite/lv_vg_lite_math.h"
+#include "../vg_lite/lv_vg_lite_pending.h"
 #include <float.h>
 
 /*********************
@@ -40,8 +41,23 @@
 
 void lv_vg_lite_path_add_end(lv_vg_lite_path_t * vg_path)
 {
-    lv_vg_lite_path_end(vg_path);
+    if(vg_path->base.add_end == 0) {
+        lv_vg_lite_path_end(vg_path);
+    }
 }
+
+#if LV_VG_LITE_USE_PATH_UPLOAD
+void lv_vg_lite_path_upload(lv_draw_vg_lite_unit_t * u, void * impl, lv_vg_lite_path_t * vg_path)
+{
+    if(!VLM_PATH_GET_UPLOAD_BIT(vg_path->base)) {
+        /* Increase ref count before adding to pending queue */
+        lv_platform_path_base_t * impl_path = *((lv_platform_path_base_t **)impl);
+        lv_vector_path_ref(impl_path);
+        lv_vg_lite_pending_add(u->vector_pending, impl);
+        lv_vg_lite_path_finish_upload(vg_path);
+    }
+}
+#endif
 
 void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * vg_path)
 {
@@ -112,6 +128,10 @@ static struct lv_platform_path_base_t * lv_vg_lite_path_create_cb(lv_vector_path
     path->vg_path = lv_vg_lite_path_create(VG_LITE_FP32);
     lv_vg_lite_path_set_quality(path->vg_path, vg_quality);
     lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+
+    path->stroke_path_cache = lv_vg_lite_path_create(VG_LITE_FP32);
+    lv_vg_lite_path_set_quality(path->stroke_path_cache, vg_quality);
+    lv_vg_lite_path_set_bounding_box(path->stroke_path_cache, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
     return (lv_platform_path_base_t *)path;
 }
 
@@ -122,6 +142,11 @@ static void lv_vg_lite_path_destroy_cb(struct lv_platform_path_base_t * self)
     if(path->vg_path) {
         lv_vg_lite_path_destroy(path->vg_path);
     }
+
+    if(path->stroke_path_cache) {
+        lv_vg_lite_path_destroy(path->stroke_path_cache);
+    }
+
     lv_free(path);
 }
 
@@ -131,6 +156,10 @@ static struct lv_platform_path_base_t * lv_vg_lite_path_clone_cb(struct lv_platf
     lv_platform_vg_lite_path_t * dst = lv_malloc_zeroed(sizeof(lv_platform_vg_lite_path_t));
     dst->vg_path = lv_vg_lite_path_create(src->vg_path->base.format);
     lv_vg_lite_path_append_path(dst->vg_path, src->vg_path);
+    lv_vg_lite_path_clear_end(dst->vg_path);
+
+    dst->stroke_path_cache = lv_vg_lite_path_create(src->stroke_path_cache->base.format);
+
     lv_vg_lite_path_update_bounding_box_after_append(dst->vg_path, src->vg_path);
     return (lv_platform_path_base_t *)dst;
 }

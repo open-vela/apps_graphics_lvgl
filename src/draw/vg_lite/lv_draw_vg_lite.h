@@ -83,6 +83,11 @@ void lv_draw_vg_lite_mask_rect(lv_draw_unit_t * draw_unit, const lv_draw_mask_re
 void lv_draw_vg_lite_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc_t * dsc);
 #endif
 
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+void lv_draw_vg_lite_vector_init(struct _lv_draw_vg_lite_unit_t * u);
+
+void lv_draw_vg_lite_vector_deinit(struct _lv_draw_vg_lite_unit_t * u);
+#endif
 /**********************
  *      MACROS
  **********************/

@@ -23,6 +23,30 @@
 #include <float.h>
 #include <math.h>
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
+static void vector_path_release_cb(void * entry, void * user_data)
+{
+    LV_UNUSED(user_data);
+    lv_platform_path_base_t * impl = *((lv_platform_path_base_t **)entry);
+    lv_vector_path_unref(impl);
+}
+
+void lv_draw_vg_lite_vector_init(struct _lv_draw_vg_lite_unit_t * u)
+{
+    LV_ASSERT_NULL(u);
+    u->vector_pending = lv_vg_lite_pending_create(sizeof(lv_platform_path_base_t *), 8);
+    lv_vg_lite_pending_set_free_cb(u->vector_pending, vector_path_release_cb, NULL);
+}
+
+void lv_draw_vg_lite_vector_deinit(struct _lv_draw_vg_lite_unit_t * u)
+{
+    LV_ASSERT_NULL(u);
+    LV_ASSERT_NULL(u->vector_pending);
+    lv_vg_lite_pending_destroy(u->vector_pending);
+    u->vector_pending = NULL;
+}
+#endif
+
 /*********************
  *      DEFINES
  *********************/
@@ -127,6 +151,7 @@ static vg_lite_fill_t lv_fill_to_vg(lv_vector_fill_t fill_rule)
 }
 
 static void draw_fill(lv_draw_vg_lite_unit_t * u,
+                      const lv_platform_path_base_t * impl,
                       lv_vg_lite_path_t * lv_vg_path,
                       const lv_vector_draw_dsc_t * dsc,
                       vg_lite_matrix_t * matrix,
@@ -142,6 +167,9 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
 
     /* If it is fill mode, the end op code should be added */
     lv_vg_lite_path_add_end(lv_vg_path);
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    lv_vg_lite_path_upload(u, (void *)(&impl), lv_vg_path);
+#endif
 
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
     LV_VG_LITE_ASSERT_PATH(vg_path);
@@ -252,7 +280,6 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
             break;
     }
 
-    lv_vg_lite_path_clear_end(lv_vg_path);
     LV_PROFILER_DRAW_END;
 }
 
@@ -269,15 +296,34 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
     lv_vector_stroke_dsc_t * stroke_dsc = dsc->stroke_dsc;
 
 #if LV_VG_LITE_USE_STROKE_TO_PATH
-    lv_vg_lite_path_t * lv_vg_stroke_path = lv_vg_lite_stroke_path_get(u, impl, stroke_dsc);
-    if(!lv_vg_stroke_path) {
-        LV_LOG_ERROR("convert stroke to path failed");
-        LV_PROFILER_DRAW_END;
-        return;
-    }
-    lv_vg_lite_path_add_end(lv_vg_stroke_path);
+    lv_platform_vg_lite_path_t * impl_path = (lv_platform_vg_lite_path_t *)impl;
 
-    lv_vg_lite_path_set_quality(lv_vg_stroke_path, vg_path->quality);
+    lv_vg_lite_path_t * lv_vg_stroke_path;
+    if((impl_path->stroke_path_cache->base.path_length != 0)
+       && (!(impl_path->base.flags & PATH_FLAG_CHANGED))
+       && (!(stroke_dsc->stroke_dsc_changed))) {
+        lv_vg_stroke_path = impl_path->stroke_path_cache;
+    }
+    else {
+        lv_vg_stroke_path = lv_vg_lite_stroke_path_get(impl_path, stroke_dsc);
+        if(!lv_vg_stroke_path) {
+            LV_LOG_ERROR("convert stroke to path failed");
+            LV_PROFILER_DRAW_END;
+            return;
+        }
+#if LV_VG_LITE_USE_STROKE_PATH_CACHE
+        impl_path->stroke_path_cache = lv_vg_stroke_path;
+#endif
+        impl_path->base.flags &= ~PATH_FLAG_CHANGED;
+        stroke_dsc->stroke_dsc_changed = false;
+
+        lv_vg_lite_path_add_end(lv_vg_stroke_path);
+#if LV_VG_LITE_USE_PATH_UPLOAD
+        lv_vg_lite_path_upload(u, (void *)(&impl), lv_vg_stroke_path);
+#endif
+        lv_vg_lite_path_set_quality(lv_vg_stroke_path, vg_path->quality);
+    }
+
     vg_lite_path_t * vg_stroke_path = lv_vg_lite_path_get_path(lv_vg_stroke_path);
     const vg_lite_color_t vg_color = lv_color32_to_vg(dsc->stroke_dsc->draw_attrs.color, OPA_MIX(dsc->stroke_dsc->opa,
                                                                                                  opa));
@@ -356,10 +402,6 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
             break;
     }
 
-#if LV_VG_LITE_USE_STROKE_TO_PATH
-    lv_vg_lite_path_clear_end(lv_vg_stroke_path);
-#endif
-
     STROKE_DROP();
     LV_PROFILER_DRAW_END;
 }
@@ -428,7 +470,6 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
         if(!lv_vg_lite_matrix_inverse(&result, &matrix)) {
             LV_LOG_ERROR("no inverse matrix");
             lv_vg_lite_matrix_dump_info(&matrix);
-            // lv_vg_lite_path_drop(u, lv_vg_path);
             LV_PROFILER_DRAW_END;
             return;
         }
@@ -447,15 +488,12 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
     const lv_opa_t layer_opa = u->task_act->opa;
 
     if(fill_dsc->opa) {
-        draw_fill(u, lv_vg_path, dsc, &matrix, &offset, layer_opa);
+        draw_fill(u, path_impl, lv_vg_path, dsc, &matrix, &offset, layer_opa);
     }
 
     if(stroke_dsc->opa) {
         draw_stroke(u, path_impl, lv_vg_path, dsc, &matrix, layer_opa);
     }
-
-    /* drop path */
-    // lv_vg_lite_path_drop(u, lv_vg_path);
 
     /* Flush in time to avoid accumulation of drawing commands */
     lv_vg_lite_flush(u);

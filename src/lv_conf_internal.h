@@ -602,6 +602,19 @@
     #endif
 #endif
 
+/* Enable stroke path cache. */
+#ifndef LV_VG_LITE_USE_STROKE_PATH_CACHE
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_VG_LITE_USE_STROKE_PATH_CACHE
+            #define LV_VG_LITE_USE_STROKE_PATH_CACHE CONFIG_LV_VG_LITE_USE_STROKE_PATH_CACHE
+        #else
+            #define LV_VG_LITE_USE_STROKE_PATH_CACHE 0
+        #endif
+    #else
+        #define LV_VG_LITE_USE_STROKE_PATH_CACHE 1
+    #endif
+#endif
+
 /* Enable path upload mode. */
 #ifndef LV_VG_LITE_USE_PATH_UPLOAD
     #ifdef _LV_KCONFIG_PRESENT

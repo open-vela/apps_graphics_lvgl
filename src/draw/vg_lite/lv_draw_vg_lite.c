@@ -88,6 +88,10 @@ void lv_draw_vg_lite_init(void)
     lv_vg_lite_path_init(unit);
     lv_vg_lite_decoder_init();
     lv_draw_vg_lite_label_init(unit);
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    lv_draw_vg_lite_vector_init(unit);
+#endif
 }
 
 void lv_draw_vg_lite_deinit(void)
@@ -323,6 +327,10 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
     lv_vg_lite_path_deinit(unit);
     lv_vg_lite_decoder_deinit();
     lv_draw_vg_lite_label_deinit(unit);
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    lv_draw_vg_lite_vector_deinit(unit);
+#endif
     return 1;
 }
 
