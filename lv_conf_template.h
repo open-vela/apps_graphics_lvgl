@@ -219,6 +219,9 @@
 /* Enable stroke to path optimization. */
 #define LV_VG_LITE_USE_STROKE_TO_PATH 1
 
+/* Enable stroke path cache. */
+#define LV_VG_LITE_USE_STROKE_PATH_CACHE 1
+
 /* Enable path upload mode. */
 #define LV_VG_LITE_USE_PATH_UPLOAD 1
 

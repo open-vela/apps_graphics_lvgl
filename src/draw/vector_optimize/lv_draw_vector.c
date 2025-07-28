@@ -94,6 +94,7 @@ static void _copy_stroke_dsc(lv_vector_stroke_dsc_t * stroke_dsc, const lv_vecto
 
 static inline void lv_vector_ensure_write_access(lv_vector_path_t * path)
 {
+    path->impl->flags |= PATH_FLAG_CHANGED;
     if(path->impl->ref_count > 1) {
         lv_platform_path_base_t * new_impl = path->impl->handlers->clone(path->impl);
         LV_ASSERT_MALLOC(new_impl);
@@ -515,6 +516,7 @@ static inline void lv_vector_dsc_stroke_ensure_write_access(lv_linear_allocator 
 
         _copy_stroke_dsc(new_dsc, *stroke_dsc);
         new_dsc->use_count = 0;
+        new_dsc->stroke_dsc_changed = false;
 
         *stroke_dsc = new_dsc;
     }
@@ -567,6 +569,7 @@ lv_vector_dsc_t * lv_vector_dsc_create(lv_layer_t * layer)
     stroke_dsc->miter_limit = 4.0f;
     stroke_dsc->dash_count = 0;
     lv_matrix_identity(&(stroke_dsc->matrix)); /*identity matrix*/
+    stroke_dsc->stroke_dsc_changed = false;
 
     dsc->current_dsc->blend_mode = LV_VECTOR_BLEND_SRC_OVER;
     dsc->current_dsc->scissor_area = layer->_clip_area;
@@ -746,6 +749,7 @@ void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
 
     dsc->current_dsc->stroke_dsc->width = width;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
 }
 
 void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, uint16_t dash_count)
@@ -783,24 +787,28 @@ void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, 
 
     dsc->current_dsc->stroke_dsc->dash_pattern = new_pattern;
     dsc->current_dsc->stroke_dsc->dash_count = final_count;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
 }
 
 void lv_vector_dsc_set_stroke_cap(lv_vector_dsc_t * dsc, lv_vector_stroke_cap_t cap)
 {
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->cap = cap;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
 }
 
 void lv_vector_dsc_set_stroke_join(lv_vector_dsc_t * dsc, lv_vector_stroke_join_t join)
 {
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->join = join;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
 }
 
 void lv_vector_dsc_set_stroke_miter_limit(lv_vector_dsc_t * dsc, uint16_t miter_limit)
 {
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->miter_limit = miter_limit;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
 }
 
 void lv_vector_dsc_set_stroke_linear_gradient(lv_vector_dsc_t * dsc, float x1, float y1, float x2, float y2)
@@ -871,6 +879,7 @@ void lv_vector_dsc_set_current_dsc(const lv_vector_dsc_t * dsc, lv_vector_draw_d
     _copy_stroke_dsc(dsc->current_dsc->stroke_dsc, draw_dsc->stroke_dsc);
     dsc->current_dsc->fill_dsc->use_count = 0;
     dsc->current_dsc->stroke_dsc->use_count = 0;
+    dsc->current_dsc->stroke_dsc->stroke_dsc_changed = false;
 }
 
 #if LV_USE_VECTOR_DUMP_INFO
@@ -971,6 +980,7 @@ void lv_draw_vector(lv_vector_dsc_t * dsc)
     _copy_stroke_dsc(stroke_dsc, dsc->current_dsc->stroke_dsc);
     fill_dsc->use_count = 0;
     stroke_dsc->use_count = 0;
+    stroke_dsc->stroke_dsc_changed = false;
 
     dsc->current_dsc->fill_dsc = fill_dsc;
     dsc->current_dsc->stroke_dsc = stroke_dsc;

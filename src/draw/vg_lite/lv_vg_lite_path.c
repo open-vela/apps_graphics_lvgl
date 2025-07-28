@@ -142,6 +142,10 @@ void lv_vg_lite_path_reset(lv_vg_lite_path_t * path, vg_lite_format_t data_forma
     path->base.format = data_format;
     path->base.quality = VG_LITE_HIGH;
     path->base.path_type = VG_LITE_DRAW_ZERO;
+    path->base.add_end = 0;
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    VLM_PATH_DISABLE_UPLOAD(path->base);
+#endif
     path->format_len = lv_vg_lite_path_format_len(data_format);
     path->has_transform = false;
 }
@@ -282,7 +286,9 @@ void lv_vg_lite_path_reserve_space(lv_vg_lite_path_t * path, size_t len)
     LV_ASSERT_MALLOC(new_path);
     uint8_t * new_path_aligned = (uint8_t *)LV_VG_LITE_ALIGN((lv_uintptr_t)new_path,
                                                              LV_VG_LITE_PATH_MEM_ALIGN) + LV_VG_LITE_PATH_MEM_PERFIX;
-    lv_memcpy(new_path_aligned, path->base.path, path->base.path_length);
+    if(path->base.path) {
+        lv_memcpy(new_path_aligned, path->base.path, path->base.path_length);
+    }
     if(path->unaligned_mem) {
         lv_free(path->unaligned_mem);
     }
@@ -297,6 +303,7 @@ void lv_vg_lite_path_reserve_space(lv_vg_lite_path_t * path, size_t len)
 void lv_vg_lite_path_finish_upload(lv_vg_lite_path_t * path)
 {
     LV_ASSERT_NULL(path);
+    if(path->base.path_length == 0) return;
 
 #if LV_VG_LITE_USE_PATH_UPLOAD
     LV_ASSERT(!VLM_PATH_GET_UPLOAD_BIT(path->base));

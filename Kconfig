@@ -382,6 +382,11 @@ menu "LVGL configuration"
 			default y
 			depends on LV_USE_DRAW_VG_LITE
 
+		config LV_VG_LITE_USE_STROKE_PATH_CACHE
+			bool "Enable stroke path cache"
+			default y
+			depends on LV_VG_LITE_USE_STROKE_TO_PATH && LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+
 		config LV_VG_LITE_USE_PATH_UPLOAD
 			bool "Enable path upload mode"
 			default y
