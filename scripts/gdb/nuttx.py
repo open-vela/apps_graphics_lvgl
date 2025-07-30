@@ -5,7 +5,7 @@ import sys
 from os import path
 
 import gdb
-from nuttxgdb import utils
+from nxgdb import utils
 
 # Add current script folder so we can import module lvgl
 
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     if here not in sys.path:
         sys.path.insert(0, here)
 
-from lvgl import set_lvgl_instance
+from lvglgdb import set_lvgl_instance
 
 
 class Lvglobal(gdb.Command):
