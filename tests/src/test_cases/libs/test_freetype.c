@@ -13,6 +13,10 @@
 
 #define OPTION_GENERATE_OUTLINE_DATA 0
 
+#ifndef TEST_CUSTOM_FONT_PATH
+    #define TEST_CUSTOM_FONT_PATH ""
+#endif
+
 /*
  * Generated vector ops string can use https://w-mai.github.io/vegravis/
  * to visualize the outline data.
@@ -404,7 +408,8 @@ void test_freetype_bitmap_rendering_test(void)
 {
     /*Create a font*/
     char file_path[256] = {0};
-    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH "%s", "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
+    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH TEST_CUSTOM_FONT_PATH "%s",
+                "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
     lv_font_t * font_italic = lv_freetype_font_create(file_path,
                                                       LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
                                                       24,
@@ -464,7 +469,8 @@ void test_freetype_outline_rendering_test(void)
 {
     /*Create a font*/
     char file_path[256] = {0};
-    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH "%s", "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
+    lv_snprintf(file_path, sizeof(file_path), LV_FS_POSIX_PATH TEST_CUSTOM_FONT_PATH "%s",
+                "src/test_files/fonts/noto/NotoSansSC-Regular.ttf");
     lv_font_t * font_italic = lv_freetype_font_create(file_path,
                                                       LV_FREETYPE_FONT_RENDER_MODE_OUTLINE,
                                                       24,
