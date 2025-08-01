@@ -99,6 +99,11 @@ lv_result_t lv_draw_buf_blur(lv_draw_buf_t * dst_buf, const lv_draw_buf_t * src_
     }
 
     if(args->radius < 1) {
+        /* When the user does not set the blur radius, the image needs to be copied. */
+        if(dst_buf != src_buf) {
+            lv_draw_buf_copy(dst_buf, NULL, src_buf, NULL);
+        }
+
         return LV_RESULT_OK;
     }
 
