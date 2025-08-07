@@ -650,8 +650,8 @@ void lv_sw_matrix_transform_point(const lv_matrix_t * matrix, lv_fpoint_t * poin
     float x = point->x;
     float y = point->y;
 
-    point->x = x * matrix->m[0][0] + y * matrix->m[1][0] + matrix->m[0][2];
-    point->y = x * matrix->m[0][1] + y * matrix->m[1][1] + matrix->m[1][2];
+    point->x = x * matrix->m[0][0] + y * matrix->m[0][1] + matrix->m[0][2];
+    point->y = x * matrix->m[1][0] + y * matrix->m[1][1] + matrix->m[1][2];
 }
 
 static void lv_sw_path_transform_cb(struct lv_platform_path_base_t * self, const lv_matrix_t * matrix)
