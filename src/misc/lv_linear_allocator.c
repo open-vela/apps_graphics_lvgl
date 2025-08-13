@@ -8,8 +8,6 @@
  *********************/
 #include "lv_linear_allocator.h"
 
-#if LV_USE_LINEAR_ALLOCATOR
-
 #include "../stdlib/lv_mem.h"
 #include "../stdlib/lv_string.h"
 
@@ -207,5 +205,3 @@ void lv_linear_allocator_delete(lv_linear_allocator * mem)
     }
     lv_free(mem);
 }
-
-#endif

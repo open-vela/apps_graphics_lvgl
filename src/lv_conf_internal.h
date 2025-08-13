@@ -1094,15 +1094,6 @@
     #endif
 #endif
 
-/* Enable the linear allocator */
-#ifndef LV_USE_LINEAR_ALLOCATOR
-    #ifdef CONFIG_LV_USE_LINEAR_ALLOCATOR
-        #define LV_USE_LINEAR_ALLOCATOR CONFIG_LV_USE_LINEAR_ALLOCATOR
-    #else
-        #define LV_USE_LINEAR_ALLOCATOR 0
-    #endif
-#endif
-
 /* Enable the allocator for the draw task */
 #ifndef LV_DRAW_TASK_USE_ALLOCATOR
     #ifdef CONFIG_LV_DRAW_TASK_USE_ALLOCATOR
@@ -2679,17 +2670,25 @@
 
 /*SVG library*/
 #ifndef LV_USE_SVG
-    #ifdef CONFIG_LV_USE_SVG
-        #define LV_USE_SVG CONFIG_LV_USE_SVG
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_USE_SVG
+            #define LV_USE_SVG CONFIG_LV_USE_SVG
+        #else
+            #define LV_USE_SVG 0
+        #endif
     #else
-        #define LV_USE_SVG 0
+        #define LV_USE_SVG 1
     #endif
 #endif
 #ifndef LV_USE_SVG_ANIMATION
-    #ifdef CONFIG_LV_USE_SVG_ANIMATION
-        #define LV_USE_SVG_ANIMATION CONFIG_LV_USE_SVG_ANIMATION
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_USE_SVG_ANIMATION
+            #define LV_USE_SVG_ANIMATION CONFIG_LV_USE_SVG_ANIMATION
+        #else
+            #define LV_USE_SVG_ANIMATION 0
+        #endif
     #else
-        #define LV_USE_SVG_ANIMATION 0
+        #define LV_USE_SVG_ANIMATION 1
     #endif
 #endif
 #ifndef LV_USE_SVG_DEBUG

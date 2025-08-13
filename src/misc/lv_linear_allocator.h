@@ -15,8 +15,6 @@ extern "C" {
  *********************/
 #include "../lv_conf_internal.h"
 
-#if LV_USE_LINEAR_ALLOCATOR
-
 #include "lv_types.h"
 
 /*********************
@@ -72,8 +70,6 @@ void lv_linear_allocator_delete(lv_linear_allocator * mem);
 /**********************
  *      MACROS
  **********************/
-
-#endif
 
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -102,4 +102,4 @@ void test_linear_allocator_performance_various_sizes(void)
     lv_linear_allocator_delete(allocator);
 }
 
-#endif /* LV_BUILD_TEST && LV_USE_LINEAR_ALLOCATOR */
+#endif /* LV_BUILD_TEST */
