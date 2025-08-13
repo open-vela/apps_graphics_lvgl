@@ -423,7 +423,7 @@ menu "LVGL configuration"
 			bool "Use Vector Graphic APIs optimizated"
 			default n
 			select LV_USE_MATRIX
-			depends on !LV_USE_VECTOR_GRAPHIC && LV_USE_LINEAR_ALLOCATOR
+			depends on !LV_USE_VECTOR_GRAPHIC
 			help
 				Enable drawing support vector graphic optimizated APIs.
 
@@ -692,10 +692,6 @@ menu "LVGL configuration"
 			config LV_USE_GESTURE_RECOGNITION
 				bool "Enable the multi-touch gesture recognition feature"
 				depends on LV_USE_FLOAT
-				default n
-
-			config LV_USE_LINEAR_ALLOCATOR
-				bool "Enable the linear allocator"
 				default n
 
 			choice LV_DRAW_TASK_USE_ALLOCATOR
@@ -1304,10 +1300,12 @@ menu "LVGL configuration"
 
 		config LV_USE_SVG
 			bool "SVG library"
+			default y
 			depends on LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
 		config LV_USE_SVG_ANIMATION
 			bool "SVG animation"
+			default y
 			depends on LV_USE_SVG
 
 		config LV_USE_RLE

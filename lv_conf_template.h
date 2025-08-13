@@ -377,9 +377,6 @@
 /* Gesture recognition requires the use of floats */
 #define LV_USE_GESTURE_RECOGNITION 0
 
-/* Enable the linear allocator */
-#define LV_USE_LINEAR_ALLOCATOR 0
-
 /* Enable the allocator for the draw task */
 #define LV_DRAW_TASK_USE_ALLOCATOR 0
 #if LV_DRAW_TASK_USE_ALLOCATOR
@@ -817,8 +814,8 @@
 #define LV_USE_LZ4_EXTERNAL  0
 
 /*SVG library*/
-#define LV_USE_SVG 0
-#define LV_USE_SVG_ANIMATION 0
+#define LV_USE_SVG 1
+#define LV_USE_SVG_ANIMATION 1
 #define LV_USE_SVG_DEBUG 0
 
 /*FFmpeg library for image decoding and playing videos

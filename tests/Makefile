@@ -99,16 +99,12 @@ TEST_CASE_FILES := \
     ${LVGL_PATH}/tests/src/test_cases/test_group.c \
     ${LVGL_PATH}/tests/src/test_cases/test_demo_widgets.c \
     ${LVGL_PATH}/tests/src/test_cases/test_txt.c \
-    ${LVGL_PATH}/tests/src/test_cases/test_array.c
+    ${LVGL_PATH}/tests/src/test_cases/test_array.c \
+    ${LVGL_PATH}/tests/src/test_cases/test_linear_allocator.c
 
 ifeq ($(CONFIG_LV_USE_FS_MEMFS), y)
 TEST_CASE_FILES += \
     ${LVGL_PATH}/tests/src/test_cases/test_font_loader.c
-endif
-
-ifeq ($(CONFIG_LV_USE_LINEAR_ALLOCATOR), y)
-TEST_CASE_FILES += \
-    ${LVGL_PATH}/tests/src/test_cases/test_linear_allocator.c
 endif
 
 ifeq ($(CONFIG_LV_BUILD_EXAMPLES), y)
