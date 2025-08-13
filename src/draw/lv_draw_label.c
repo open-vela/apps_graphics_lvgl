@@ -284,6 +284,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
     while(pos.y + line_height_font < draw_unit->clip_area->y1) {
 #if LV_USE_TEXTFLOW == 0
         /*Go to next line*/
+        remaining_len -= line_end - line_start;
         line_start = line_end;
         real_line_start = line_start;
         line_end += lv_text_get_next_line(&dsc->text[real_line_start], remaining_len, font, dsc->letter_space, w, NULL,
@@ -310,8 +311,8 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
         if(dsc->text[real_line_start] == '\0') return;
 #else
         pos.y += line_height;
-#endif
         remaining_len -= line_end - line_start;
+#endif
     }
 
     /*Align to middle*/
