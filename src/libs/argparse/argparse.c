@@ -118,6 +118,24 @@ static int argparse_getvalue(struct argparse * self, const struct argparse_optio
             if(!s || s[0] != '\0')  // no digits or contains invalid characters
                 argparse_error(self, opt, "expects an integer value", flags);
             break;
+        case ARGPARSE_OPT_HEX:
+            errno = 0;
+            if(self->optvalue) {
+                *(unsigned long *)opt->value = strtoul(self->optvalue, (char **)&s, 16);
+                self->optvalue     = NULL;
+            }
+            else if(self->argc > 1) {
+                self->argc--;
+                *(unsigned long *)opt->value = strtoul(*++self->argv, (char **)&s, 16);
+            }
+            else {
+                argparse_error(self, opt, "requires a value", flags);
+            }
+            if(errno == ERANGE)
+                argparse_error(self, opt, "numerical result out of range", flags);
+            if(!s || s[0] != '\0')  // no digits or contains invalid characters
+                argparse_error(self, opt, "expects an hexadecimal value", flags);
+            break;
         case ARGPARSE_OPT_FLOAT:
             errno = 0;
             if(self->optvalue) {
@@ -155,6 +173,7 @@ static void argparse_options_check(const struct argparse_option * options)
             case ARGPARSE_OPT_BOOLEAN:
             case ARGPARSE_OPT_BIT:
             case ARGPARSE_OPT_INTEGER:
+            case ARGPARSE_OPT_HEX:
             case ARGPARSE_OPT_FLOAT:
             case ARGPARSE_OPT_STRING:
             case ARGPARSE_OPT_GROUP:
@@ -351,6 +370,9 @@ void argparse_usage(struct argparse * self)
         if(options->type == ARGPARSE_OPT_INTEGER) {
             len += lv_strlen("=<int>");
         }
+        if(options->type == ARGPARSE_OPT_HEX) {
+            len += lv_strlen("=<hex>");
+        }
         if(options->type == ARGPARSE_OPT_FLOAT) {
             len += lv_strlen("=<flt>");
         }
@@ -387,6 +409,9 @@ void argparse_usage(struct argparse * self)
         }
         if(options->type == ARGPARSE_OPT_INTEGER) {
             pos += argparse_printf("=<int>");
+        }
+        if(options->type == ARGPARSE_OPT_HEX) {
+            pos += argparse_printf("=<hex>");
         }
         else if(options->type == ARGPARSE_OPT_FLOAT) {
             pos += argparse_printf("=<flt>");
