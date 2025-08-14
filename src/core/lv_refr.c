@@ -26,6 +26,7 @@
 
 /*Display being refreshed*/
 #define disp_refr LV_GLOBAL_DEFAULT()->disp_refresh
+#define refr_debug_enable LV_GLOBAL_DEFAULT()->refr_debug_enable
 
 /**********************
  *      TYPEDEFS
@@ -74,6 +75,7 @@ static bool alpha_test_area_on_obj(lv_obj_t * obj, const lv_area_t * area);
  */
 void _lv_refr_init(void)
 {
+    lv_refr_enable_debug_mode(LV_USE_REFR_DEBUG);
 }
 
 void _lv_refr_deinit(void)
@@ -120,17 +122,18 @@ void lv_obj_redraw(lv_layer_t * layer, lv_obj_t * obj)
     lv_obj_send_event(obj, LV_EVENT_DRAW_MAIN_BEGIN, layer);
     lv_obj_send_event(obj, LV_EVENT_DRAW_MAIN, layer);
     lv_obj_send_event(obj, LV_EVENT_DRAW_MAIN_END, layer);
-#if LV_USE_REFR_DEBUG
-    lv_color_t debug_color = lv_color_make(lv_rand(0, 0xFF), lv_rand(0, 0xFF), lv_rand(0, 0xFF));
-    lv_draw_rect_dsc_t draw_dsc;
-    lv_draw_rect_dsc_init(&draw_dsc);
-    draw_dsc.bg_color = debug_color;
-    draw_dsc.bg_opa = LV_OPA_20;
-    draw_dsc.border_width = 1;
-    draw_dsc.border_opa = LV_OPA_30;
-    draw_dsc.border_color = debug_color;
-    lv_draw_rect(layer, &draw_dsc, &obj_coords_ext);
-#endif
+
+    if(refr_debug_enable) {
+        lv_color_t debug_color = lv_color_make(lv_rand(0, 0xFF), lv_rand(0, 0xFF), lv_rand(0, 0xFF));
+        lv_draw_rect_dsc_t draw_dsc;
+        lv_draw_rect_dsc_init(&draw_dsc);
+        draw_dsc.bg_color = debug_color;
+        draw_dsc.bg_opa = LV_OPA_20;
+        draw_dsc.border_width = 1;
+        draw_dsc.border_opa = LV_OPA_30;
+        draw_dsc.border_color = debug_color;
+        lv_draw_rect(layer, &draw_dsc, &obj_coords_ext);
+    }
 
     const lv_area_t * obj_coords;
     if(lv_obj_has_flag(obj, LV_OBJ_FLAG_OVERFLOW_VISIBLE)) {
@@ -590,6 +593,11 @@ void lv_obj_refr(lv_layer_t * layer, lv_obj_t * obj)
     /* Restore the original layer opa and recolor */
     layer->opa = layer_opa_ori;
     layer->recolor = layer_recolor;
+}
+
+void lv_refr_enable_debug_mode(bool enable)
+{
+    refr_debug_enable = enable;
 }
 
 /**********************

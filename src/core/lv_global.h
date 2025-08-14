@@ -77,6 +77,8 @@ typedef struct _lv_global_t {
     lv_display_t * disp_refresh;
     lv_display_t * disp_default;
 
+    bool refr_debug_enable;
+
     lv_ll_t style_trans_ll;
     bool style_refresh;
     uint32_t style_custom_table_size;
