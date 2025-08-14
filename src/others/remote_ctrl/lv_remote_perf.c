@@ -42,14 +42,14 @@ typedef struct {
             size_t max_events;
             size_t max_scrolls;
             const char * tag;
-        } sysmon_perf_create;
+        } perf_create;
         struct {
             bool immediate;
-        } sysmon_perf_start;
+        } perf_start;
         struct {
             const char * file_name;
-        } sysmon_perf_csv;
-    };
+        } perf_csv;
+    } sysmon;
 } perf_cfg_t;
 
 typedef struct {
@@ -149,9 +149,9 @@ static bool arg_parse(perf_cfg_t * cfg, int argc, const char * argv[])
         }
 
         cfg->cmd = PERF_CMD_CREATE;
-        cfg->sysmon_perf_create.tag = info[1];
-        cfg->sysmon_perf_create.max_events = atoi(info[2]);
-        cfg->sysmon_perf_create.max_scrolls = atoi(info[3]);
+        cfg->sysmon.perf_create.tag = info[1];
+        cfg->sysmon.perf_create.max_events = atoi(info[2]);
+        cfg->sysmon.perf_create.max_scrolls = atoi(info[3]);
         return true;
     }
 
@@ -163,10 +163,10 @@ static bool arg_parse(perf_cfg_t * cfg, int argc, const char * argv[])
     if(lv_strcmp(subcommand, "start") == 0) {
         cfg->cmd = PERF_CMD_START;
         if(size > 1) {
-            cfg->sysmon_perf_start.immediate = atoi(info[1]) != 0;
+            cfg->sysmon.perf_start.immediate = atoi(info[1]) != 0;
         }
         else {
-            cfg->sysmon_perf_start.immediate = false;
+            cfg->sysmon.perf_start.immediate = false;
         }
 
         return true;
@@ -199,7 +199,7 @@ static bool arg_parse(perf_cfg_t * cfg, int argc, const char * argv[])
         }
 
         cfg->cmd = PERF_CMD_CSV;
-        cfg->sysmon_perf_csv.file_name = info[1];
+        cfg->sysmon.perf_csv.file_name = info[1];
         return true;
     }
 
@@ -240,9 +240,9 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
                 lv_sysmon_perf_destroy(perf_ctx->instance);
             }
             lv_memzero(perf_ctx->tag, sizeof(perf_ctx->tag));
-            lv_strncpy(perf_ctx->tag, cfg.sysmon_perf_create.tag, sizeof(perf_ctx->tag) - 1);
-            perf_ctx->instance = lv_sysmon_perf_create(perf_ctx->tag, cfg.sysmon_perf_create.max_events,
-                                                       cfg.sysmon_perf_create.max_scrolls);
+            lv_strncpy(perf_ctx->tag, cfg.sysmon.perf_create.tag, sizeof(perf_ctx->tag) - 1);
+            perf_ctx->instance = lv_sysmon_perf_create(perf_ctx->tag, cfg.sysmon.perf_create.max_events,
+                                                       cfg.sysmon.perf_create.max_scrolls);
             break;
         case PERF_CMD_DESTROY:
             if(perf_ctx->instance) {
@@ -251,7 +251,7 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
             }
             break;
         case PERF_CMD_START:
-            if(lv_sysmon_perf_start(perf_ctx->instance, cfg.sysmon_perf_start.immediate) == LV_RESULT_INVALID) {
+            if(lv_sysmon_perf_start(perf_ctx->instance, cfg.sysmon.perf_start.immediate) == LV_RESULT_INVALID) {
                 LV_LOG_WARN("Sysmon perf is not created or already started");
             }
             break;
@@ -269,12 +269,12 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
             break;
         case PERF_CMD_CSV:
             data = lv_sysmon_perf_get_data(perf_ctx->instance);
-            if(lv_fs_open(&csv, cfg.sysmon_perf_csv.file_name, LV_FS_MODE_WR | LV_FS_MODE_RD) != LV_FS_RES_OK) {
-                LV_LOG_ERROR("Failed to open file %s", cfg.sysmon_perf_csv.file_name);
+            if(lv_fs_open(&csv, cfg.sysmon.perf_csv.file_name, LV_FS_MODE_WR | LV_FS_MODE_RD) != LV_FS_RES_OK) {
+                LV_LOG_ERROR("Failed to open file %s", cfg.sysmon.perf_csv.file_name);
                 return LV_RESULT_INVALID;
             }
             if(lv_fs_seek(&csv, 0, LV_FS_SEEK_END) != LV_FS_RES_OK) {
-                LV_LOG_ERROR("Failed to seek to end of file %s", cfg.sysmon_perf_csv.file_name);
+                LV_LOG_ERROR("Failed to seek to end of file %s", cfg.sysmon.perf_csv.file_name);
                 lv_fs_close(&csv);
                 return LV_RESULT_INVALID;
             }

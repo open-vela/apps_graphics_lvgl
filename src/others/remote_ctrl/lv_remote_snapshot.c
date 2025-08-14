@@ -222,7 +222,7 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
     switch(snapshot_ctx->cfg.cmd) {
         case SNAPSHOT_CMD_TAKE: {
                 if(snapshot_ctx->buf) {
-                    LV_LOG_WARN("Snapshot buf: %p is already in progress, please save to file", snapshot_ctx->buf);
+                    LV_LOG_WARN("Snapshot buf: %p is already in progress, please save to file", (void *)snapshot_ctx->buf);
                     return LV_RESULT_OK;
                 }
 

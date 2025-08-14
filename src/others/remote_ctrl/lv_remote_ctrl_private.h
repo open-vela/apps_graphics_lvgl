@@ -19,6 +19,7 @@ extern "C" {
 #if LV_USE_REMOTE_CTRL
 
 #include "../../misc/lv_log.h"
+#include "../../stdlib/lv_sprintf.h"
 
 /*********************
  *      DEFINES
