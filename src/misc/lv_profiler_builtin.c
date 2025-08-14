@@ -168,10 +168,23 @@ void lv_profiler_builtin_set_enable(bool enable)
 
 void lv_profiler_builtin_flush(void)
 {
-    LV_ASSERT_NULL(profiler_ctx);
+    if(!profiler_ctx) {
+        return;
+    }
 
     LV_PROFILER_MULTEX_LOCK;
     flush_no_lock();
+    LV_PROFILER_MULTEX_UNLOCK;
+}
+
+void lv_profiler_builtin_reset(void)
+{
+    if(!profiler_ctx) {
+        return;
+    }
+
+    LV_PROFILER_MULTEX_LOCK;
+    profiler_ctx->cur_index = 0;
     LV_PROFILER_MULTEX_UNLOCK;
 }
 

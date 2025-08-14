@@ -68,6 +68,7 @@ void lv_nuttx_profiler_init(void)
     config.tick_get_cb = tick_get_cb;
     config.flush_cb = flush_cb;
     lv_profiler_builtin_init(&config);
+    lv_profiler_builtin_set_enable(false);
 }
 
 void lv_nuttx_profiler_set_file(const char * file)

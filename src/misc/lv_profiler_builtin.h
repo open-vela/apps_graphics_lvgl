@@ -78,6 +78,11 @@ void lv_profiler_builtin_set_enable(bool enable);
 void lv_profiler_builtin_flush(void);
 
 /**
+ * @brief Reset the profiling data
+ */
+void lv_profiler_builtin_reset(void);
+
+/**
  * @brief Write the profiling data for a function with the given tag
  * @param func Name of the function being profiled
  * @param tag Tag to associate with the profiling data for the function
