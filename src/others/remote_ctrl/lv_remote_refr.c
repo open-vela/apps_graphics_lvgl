@@ -1,5 +1,5 @@
 /**
- * @file lv_remote_templ.c
+ * @file lv_remote_refr.c
  *
  */
 
@@ -12,6 +12,7 @@
 #if LV_USE_REMOTE_CTRL
 
 #include "../../libs/argparse/argparse.h"
+#include "../../core/lv_refr.h"
 
 /*********************
  *      DEFINES
@@ -20,10 +21,6 @@
 /**********************
  *      TYPEDEFS
  **********************/
-
-typedef struct {
-    int value;
-} templ_ctx_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -47,7 +44,7 @@ typedef struct {
 
 static void show_help_cb(lv_remote_ctrl_print_func_t print_func)
 {
-    print_func("This is a template remote control application.\n");
+    print_func("refr - display refresh control\n");
 }
 
 static void constructor_cb(void * ctx)
@@ -60,15 +57,35 @@ static void destructor_cb(void * ctx)
     LV_UNUSED(ctx);
 }
 
+static int refr_debug_cmd_cb(struct argparse * self,
+                             const struct argparse_option * option)
+{
+    LV_UNUSED(self);
+    int debug_en = *(int *)option->value;
+    lv_refr_enable_debug_mode(debug_en ? true : false);
+    LV_LOG_USER("debug enable: %d", debug_en);
+    return 0;
+}
+
+static int refr_now_cmd_cb(struct argparse * self,
+                           const struct argparse_option * option)
+{
+    LV_UNUSED(self);
+    LV_UNUSED(option);
+    lv_refr_now(NULL);
+    LV_LOG_USER("refresh now");
+    return 0;
+}
+
 static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
 {
-    templ_ctx_t * templ_ctx = ctx;
-
-    int value = -1;
+    LV_UNUSED(ctx);
+    int debug_en = 0;
 
     struct argparse_option options[] = {
         OPT_HELP(),
-        OPT_INTEGER('v', "value", &value, "set the value", NULL, 0, 0),
+        OPT_INTEGER('d', "debug", &debug_en, "enable debug", refr_debug_cmd_cb, 0, 0),
+        OPT_BOOLEAN(0, "now", NULL, "refresh now", refr_now_cmd_cb, 0, 0),
         OPT_END(),
     };
 
@@ -79,14 +96,9 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
         return LV_RESULT_INVALID;
     }
 
-    if(value >= 0) {
-        templ_ctx->value = value;
-        LV_LOG_USER("value set to %d", value);
-    }
-
     return LV_RESULT_OK;
 }
 
-LV_REMOTE_CTRL_CLASS_EXPORT(templ, sizeof(templ_ctx_t))
+LV_REMOTE_CTRL_CLASS_EXPORT(refr, 0)
 
 #endif /*LV_USE_REMOTE_CTRL*/
