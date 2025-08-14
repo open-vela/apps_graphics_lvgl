@@ -2719,6 +2719,15 @@
     #endif
 #endif
 
+/*Use argparser library for command line argument parsing*/
+#ifndef LV_USE_ARGPARSE
+    #ifdef CONFIG_LV_USE_ARGPARSE
+        #define LV_USE_ARGPARSE CONFIG_LV_USE_ARGPARSE
+    #else
+        #define LV_USE_ARGPARSE 0
+    #endif
+#endif
+
 /*==================
  * OTHERS
  *==================*/
@@ -3165,6 +3174,7 @@
 #endif
 
 /*1: Enable remote control*/
+/*Requires: LV_USE_ARGPARSE*/
 #ifndef LV_USE_REMOTE_CTRL
     #ifdef CONFIG_LV_USE_REMOTE_CTRL
         #define LV_USE_REMOTE_CTRL CONFIG_LV_USE_REMOTE_CTRL

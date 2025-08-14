@@ -1372,6 +1372,10 @@ menu "LVGL configuration"
 			bool "Dump format"
 			depends on LV_USE_FFMPEG
 			default n
+
+		config LV_USE_ARGPARSE
+			bool "Enable argparse library"
+			default n
 	endmenu
 
 	menu "Others"
@@ -1580,6 +1584,7 @@ menu "LVGL configuration"
 
 		config LV_USE_REMOTE_CTRL
 			bool "Enable remote control"
+			depends on LV_USE_ARGPARSE
 			default n
 	endmenu
 
