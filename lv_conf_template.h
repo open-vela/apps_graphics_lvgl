@@ -826,6 +826,9 @@
     #define LV_FFMPEG_DUMP_FORMAT 0
 #endif
 
+/*Use argparser library for command line argument parsing*/
+#define LV_USE_ARGPARSE 0
+
 /*==================
  * OTHERS
  *==================*/
@@ -966,6 +969,7 @@
 #endif
 
 /*1: Enable remote control*/
+/*Requires: LV_USE_ARGPARSE*/
 #define LV_USE_REMOTE_CTRL 0
 
 /*1: Enable color filter style*/
