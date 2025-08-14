@@ -8,7 +8,7 @@
  *********************/
 #include "../sw/lv_draw_sw.h"
 
-#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_USE_THORVG
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_USE_THORVG && !LV_USE_VG_LITE_THORVG
 #if LV_USE_THORVG_EXTERNAL
     #include <thorvg_capi.h>
 #else
