@@ -526,11 +526,14 @@ static void lv_path_to_vg(lv_vg_lite_path_t * dest, const lv_vector_path_t * src
 
     LV_ASSERT_MSG((lv_uintptr_t)path_data - (lv_uintptr_t)vg_path->path == path_length, "path length overflow");
 
+    const float offset_x = (max_x - min_x) / 4.0f;
+    const float offset_y = (max_y - min_y) / 4.0f;
+
     lv_vg_lite_path_set_bounding_box(dest,
-                                     min_x - expand_bound,
-                                     min_y - expand_bound,
-                                     max_x + expand_bound + 1,
-                                     max_y + expand_bound + 1);
+                                     min_x - expand_bound - offset_x,
+                                     min_y - expand_bound - offset_y,
+                                     max_x + expand_bound + offset_x,
+                                     max_y + expand_bound + offset_y);
 
     offset->x = lroundf(min_x);
     offset->y = lroundf(min_y);
