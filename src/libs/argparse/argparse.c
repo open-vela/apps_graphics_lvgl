@@ -234,19 +234,6 @@ static int argparse_long_opt(struct argparse * self, const struct argparse_optio
     return -2;
 }
 
-static int argparse_printf(const char * fmt, ...)
-{
-    char buf[64];
-
-    va_list ap;
-    va_start(ap, fmt);
-    int len = lv_vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-
-    LV_LOG("%s", buf);
-    return len;
-}
-
 int argparse_init(struct argparse * self, struct argparse_option * options, const char * const * usages, int flags)
 {
     lv_memzero(self, sizeof(*self));
@@ -370,10 +357,10 @@ void argparse_usage(struct argparse * self)
         if(options->type == ARGPARSE_OPT_INTEGER) {
             len += lv_strlen("=<int>");
         }
-        if(options->type == ARGPARSE_OPT_HEX) {
+        else if(options->type == ARGPARSE_OPT_HEX) {
             len += lv_strlen("=<hex>");
         }
-        if(options->type == ARGPARSE_OPT_FLOAT) {
+        else if(options->type == ARGPARSE_OPT_FLOAT) {
             len += lv_strlen("=<flt>");
         }
         else if(options->type == ARGPARSE_OPT_STRING) {
@@ -397,27 +384,40 @@ void argparse_usage(struct argparse * self)
             continue;
         }
 
-        pos = argparse_printf("    ");
+        char log_buf[64];
+        ssize_t remain = sizeof(log_buf);
+
+#define APPEND_LOG_FMT(...) \
+    do { \
+        pos += lv_snprintf(log_buf + pos, remain, __VA_ARGS__); \
+        remain -= pos; \
+        if(remain <= 0) { \
+            LV_LOG_ERROR("log_buf not enough, string may be truncated"); \
+            continue; \
+        } \
+    } while(0)
+
+        APPEND_LOG_FMT("    ");
         if(options->short_name) {
-            pos += argparse_printf("-%c", options->short_name);
+            APPEND_LOG_FMT("-%c", options->short_name);
         }
         if(options->long_name && options->short_name) {
-            pos += argparse_printf(", ");
+            APPEND_LOG_FMT(", ");
         }
         if(options->long_name) {
-            pos += argparse_printf("--%s", options->long_name);
+            APPEND_LOG_FMT("--%s", options->long_name);
         }
         if(options->type == ARGPARSE_OPT_INTEGER) {
-            pos += argparse_printf("=<int>");
+            APPEND_LOG_FMT("=<int>");
         }
-        if(options->type == ARGPARSE_OPT_HEX) {
-            pos += argparse_printf("=<hex>");
+        else if(options->type == ARGPARSE_OPT_HEX) {
+            APPEND_LOG_FMT("=<hex>");
         }
         else if(options->type == ARGPARSE_OPT_FLOAT) {
-            pos += argparse_printf("=<flt>");
+            APPEND_LOG_FMT("=<flt>");
         }
         else if(options->type == ARGPARSE_OPT_STRING) {
-            pos += argparse_printf("=<str>");
+            APPEND_LOG_FMT("=<str>");
         }
         if(pos <= usage_opts_width) {
             pad = usage_opts_width - pos;
@@ -426,7 +426,7 @@ void argparse_usage(struct argparse * self)
             LV_LOG("\n");
             pad = usage_opts_width;
         }
-        LV_LOG("%*s%s\n", (int)pad + 2, "", options->help);
+        LV_LOG("%s%*s%s\n", log_buf, (int)pad + 2, "", options->help);
     }
 
     // print epilog
