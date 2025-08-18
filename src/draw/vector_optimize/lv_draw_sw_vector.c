@@ -29,16 +29,6 @@
 
 #define LV_SW_PATH_ARRAY_DEFAULT_SIZE 8
 
-#define CHECK_AND_RESIZE_PATH_CONTAINER(P, N) \
-    do { \
-        if ((lv_array_size(&(P)->ops) + (N)) > lv_array_capacity(&(P)->ops)) { \
-            lv_array_resize(&(P)->ops, ((P)->ops.capacity << 1)); \
-        } \
-        if ((lv_array_size(&(P)->points) + (N)) > lv_array_capacity(&(P)->points)) { \
-            lv_array_resize(&(P)->points, ((P)->points.capacity << 1)); \
-        } \
-    } while(0)
-
 /**********************
  *      TYPEDEFS
  **********************/
