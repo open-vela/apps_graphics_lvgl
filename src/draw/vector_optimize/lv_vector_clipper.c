@@ -31,7 +31,7 @@
  *   STATIC FUNCTIONS
  **********************/
 
-static void _make_polygon(gpc_polygon * polygon, const lv_vector_path_t * polygon_path)
+static lv_vector_path_data_t * _make_polygon(gpc_polygon * polygon, const lv_vector_path_t * polygon_path)
 {
     size_t init_caps = 4;
     polygon->contour = (gpc_vertex_list *)lv_malloc(init_caps * sizeof(gpc_vertex_list));
@@ -79,9 +79,7 @@ static void _make_polygon(gpc_polygon * polygon, const lv_vector_path_t * polygo
         }
     }
 
-    lv_array_deinit(&path_data->ops);
-    lv_array_deinit(&path_data->points);
-    lv_free(path_data);
+    return path_data;
 }
 
 static void _clip_polygon(lv_vector_clipper_t type, lv_vector_path_t * result_path, const lv_vector_path_t * path1,
@@ -93,8 +91,8 @@ static void _clip_polygon(lv_vector_clipper_t type, lv_vector_path_t * result_pa
     gpc_polygon poly_b = {.num_contours = 0, .hole = NULL, .contour = NULL};
     gpc_polygon result = {.num_contours = 0, .hole = NULL, .contour = NULL};
 
-    _make_polygon(&poly_a, path1);
-    _make_polygon(&poly_b, path2);
+    lv_vector_path_data_t * path_data_a = _make_polygon(&poly_a, path1);
+    lv_vector_path_data_t * path_data_b = _make_polygon(&poly_b, path2);
 
     switch(type) {
         case LV_VECTOR_CLIPPER_INTERSECT:
@@ -132,6 +130,14 @@ static void _clip_polygon(lv_vector_clipper_t type, lv_vector_path_t * result_pa
     lv_free(poly_a.contour);
     lv_free(poly_b.contour);
     gpc_free_polygon(&result);
+
+    lv_array_deinit(&path_data_a->ops);
+    lv_array_deinit(&path_data_a->points);
+    lv_free(path_data_a);
+
+    lv_array_deinit(&path_data_b->ops);
+    lv_array_deinit(&path_data_b->points);
+    lv_free(path_data_b);
 }
 
 /**********************

@@ -308,9 +308,9 @@ static void _update_scene_2(lv_vector_clipper_obj_t * clipper)
 {
     lv_matrix_t matrix;
     lv_matrix_identity(&matrix);
-    lv_matrix_translate(&matrix, -200, -160);
-    lv_matrix_rotate(&matrix, 5);
     lv_matrix_translate(&matrix, 200, 160);
+    lv_matrix_rotate(&matrix, 5);
+    lv_matrix_translate(&matrix, -200, -160);
 
     lv_matrix_transform_path(&matrix, clipper->path1);
 }

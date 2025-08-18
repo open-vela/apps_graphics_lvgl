@@ -22,6 +22,16 @@ extern "C" {
  *********************/
 #define LV_VECTOR_POLYGON_STOP 0xF
 
+#define CHECK_AND_RESIZE_PATH_CONTAINER(P, N) \
+    do { \
+        if ((lv_array_size(&(P)->ops) + (N)) > lv_array_capacity(&(P)->ops)) { \
+            lv_array_resize(&(P)->ops, ((P)->ops.capacity << 1)); \
+        } \
+        if ((lv_array_size(&(P)->points) + (N)) > lv_array_capacity(&(P)->points)) { \
+            lv_array_resize(&(P)->points, ((P)->points.capacity << 1)); \
+        } \
+    } while(0)
+
 #define OP_PUSH_BACK(arr, op) \
     do { \
         uint8_t * co = ((uint8_t *)(arr)->data) + (arr)->size; \

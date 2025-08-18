@@ -367,25 +367,30 @@ static void get_path_data_cb(void * user_data, uint8_t op_code, const float * da
     switch(op_code) {
         case VLC_OP_CLOSE:
             lv_op = LV_VECTOR_PATH_OP_CLOSE;
+            CHECK_AND_RESIZE_PATH_CONTAINER(parser, 1);
             OP_PUSH_BACK(&parser->ops, &lv_op);
             break;
         case VLC_OP_MOVE:
             lv_op = LV_VECTOR_PATH_OP_MOVE_TO;
+            CHECK_AND_RESIZE_PATH_CONTAINER(parser, 1);
             OP_PUSH_BACK(&parser->ops, &lv_op);
             POINT_PUSH_BACK(&parser->points, (lv_fpoint_t *)data);
             break;
         case VLC_OP_LINE:
             lv_op = LV_VECTOR_PATH_OP_LINE_TO;
+            CHECK_AND_RESIZE_PATH_CONTAINER(parser, 1);
             OP_PUSH_BACK(&parser->ops, &lv_op);
             POINT_PUSH_BACK(&parser->points, (lv_fpoint_t *)data);
             break;
         case VLC_OP_QUAD:
             lv_op = LV_VECTOR_PATH_OP_QUAD_TO;
+            CHECK_AND_RESIZE_PATH_CONTAINER(parser, 2);
             OP_PUSH_BACK(&parser->ops, &lv_op);
             POINT2_PUSH_BACK(&parser->points, (lv_fpoint_t *)data, (lv_fpoint_t *)(data + 2));
             break;
         case VLC_OP_CUBIC:
             lv_op = LV_VECTOR_PATH_OP_CUBIC_TO;
+            CHECK_AND_RESIZE_PATH_CONTAINER(parser, 3);
             OP_PUSH_BACK(&parser->ops, &lv_op);
             POINT3_PUSH_BACK(&parser->points, (lv_fpoint_t *)data, (lv_fpoint_t *)(data + 2), (lv_fpoint_t *)(data + 4));
             break;
