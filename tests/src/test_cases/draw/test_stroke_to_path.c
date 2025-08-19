@@ -58,7 +58,8 @@ static void draw_lines(lv_layer_t * layer)
 
     lv_vector_path_t * path2 = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
 
-    lv_vector_stroke_dsc_t * td = lv_vector_dsc_get_current_dsc(dsc)->stroke_dsc;
+    lv_vector_draw_dsc_t * current_dsc = lv_vector_dsc_get_current_dsc(dsc);
+    lv_vector_stroke_dsc_t * td = &current_dsc->stroke_dsc;
 
     lv_vector_dsc_set_stroke_width(dsc, 5.0f);
     lv_vector_stroke_to_path(path2, path, td);

@@ -45,7 +45,7 @@ void test_mem_performance_throughput(void)
         TEST_ASSERT_NOT_NULL(ptr);
         lv_free(ptr);
     }
-    double duration = (double)(clock() - start) / CLOCKS_PER_SEC;
+    float duration = (float)(clock() - start) / CLOCKS_PER_SEC;
     float throughput = (float)ITERATIONS / duration;
     LV_LOG_USER("Throughput: %.2f allocations/s", throughput);
 }
