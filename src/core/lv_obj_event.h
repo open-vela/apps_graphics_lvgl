@@ -59,6 +59,7 @@ typedef enum {
     LV_INDEV_CROWN_SCROLL_NONE  = 0,  /**< Not responding to check events. */
     LV_INDEV_CROWN_SCROLL_INV   = 1,  /**< Object cannot be scrolled */
     LV_INDEV_CROWN_SCROLL_OK    = 2,  /**< Object can be scrolled */
+    LV_INDEV_CROWN_SCROLL_HOLD  = 3,  /**< Object as a candidate in this direction */
 } lv_crown_scroll_t;
 
 /**< Crown scroll param, Check if the object can be scrolled*/
