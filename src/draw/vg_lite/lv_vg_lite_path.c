@@ -315,7 +315,7 @@ void lv_vg_lite_path_finish_upload(lv_vg_lite_path_t * path)
 
     path->base.uploaded.memory = (void *)LV_VG_LITE_ALIGN((lv_uintptr_t)path->unaligned_mem,
                                                           LV_VG_LITE_PATH_MEM_ALIGN);
-    path->base.uploaded.address = (uint32_t)path->base.uploaded.memory;
+    path->base.uploaded.address = (vg_lite_uint32_t)(lv_uintptr_t)path->base.uploaded.memory;
     uint32_t bytes = LV_VG_LITE_ALIGN(path->base.path_length + LV_VG_LITE_PATH_MEM_PERFIX + LV_VG_LITE_PATH_MEM_POSTFIX,
                                       LV_VG_LITE_PATH_MEM_ALIGN_LENGTH);
 

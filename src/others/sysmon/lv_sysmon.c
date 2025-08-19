@@ -122,6 +122,7 @@ lv_obj_t * lv_sysmon_create(lv_obj_t * parent)
 
 static void perf_update_timer_cb(lv_timer_t * t)
 {
+    LV_UNUSED(t);
     /*Wait for a display*/
     if(!sysmon_perf.common.inited && lv_display_get_default()) {
         lv_obj_t * obj1 = lv_sysmon_create(lv_layer_sys());
