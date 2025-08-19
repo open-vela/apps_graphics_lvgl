@@ -1,5 +1,8 @@
 #if LV_BUILD_TEST
 #include "../lvgl.h"
+
+#if LV_USE_PERF_MONITOR
+
 #include "unity/unity.h"
 
 #define MOCK_REFRESH_TIME 10
@@ -258,5 +261,49 @@ void test_perf_monitor_scroll(void)
 
     lv_sysmon_perf_destroy(scroll);
 }
+
+#else /*LV_USE_PERF_MONITOR*/
+
+void setUp(void)
+{
+}
+
+void tearDown(void)
+{
+}
+
+void test_perf_monitor_start_stop(void)
+{
+}
+
+void test_perf_monitor_refresh(void)
+{
+}
+
+void test_perf_monitor_render(void)
+{
+}
+
+void test_perf_monitor_real_refresh(void)
+{
+}
+
+void test_perf_monitor_fps(void)
+{
+}
+
+void test_perf_monitor_reset_data(void)
+{
+}
+
+void test_perf_monitor_start_stop_on_render(void)
+{
+}
+
+void test_perf_monitor_scroll(void)
+{
+}
+
+#endif
 
 #endif /* LV_BUILD_TEST */
