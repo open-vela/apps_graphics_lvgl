@@ -1157,7 +1157,7 @@ bool lv_vg_lite_path_check(const vg_lite_path_t * path)
     }
 
     if((lv_uintptr_t)path->uploaded.memory != (lv_uintptr_t)path->uploaded.address) {
-        LV_LOG_ERROR("path uploaded memory(%d) != %d", (lv_uintptr_t)path->uploaded.memory, path->uploaded.address);
+        LV_LOG_ERROR("path uploaded memory(%p) != %" LV_PRIu32, path->uploaded.memory, (uint32_t)path->uploaded.address);
         return false;
     }
 

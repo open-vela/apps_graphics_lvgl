@@ -187,13 +187,14 @@ static inline void exp_blur_row(
     uint8_t * dst,
     const uint8_t * src,
     int32_t width,
-    int32_t /* height */, /* TODO: This seems very strange. Why is height not used as it is in _blurcol() ? */
+    int32_t height,
     int32_t stride,
     int32_t line,
     int32_t alpha,
     int32_t aprec,
     int32_t zprec)
 {
+    LV_UNUSED(height);
     const uint8_t * input = &(src[line * stride]);
     uint8_t * output = &(dst[line * stride]);
     int32_t zB = *input << zprec;
@@ -220,7 +221,7 @@ static inline void exp_blur_row(
 
 static inline void exp_blur_col(
     uint8_t * dst,
-    int32_t /*width*/,
+    int32_t width,
     int32_t height,
     int32_t stride,
     int32_t x,
@@ -228,6 +229,7 @@ static inline void exp_blur_col(
     int32_t aprec,
     int32_t zprec)
 {
+    LV_UNUSED(width);
     uint8_t * ptr = dst + x * sizeof(uint32_t);
     int32_t zB = *((uint8_t *)ptr) << zprec;
     int32_t zG = *((uint8_t *)ptr + 1) << zprec;

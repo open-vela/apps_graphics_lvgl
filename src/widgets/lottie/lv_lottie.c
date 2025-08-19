@@ -81,7 +81,7 @@ void lv_lottie_set_buffer(lv_obj_t * obj, int32_t w, int32_t h, void * buf)
     tvg_picture_set_size(lottie->tvg_paint, w, h);
 
     /*Force updating when the buffer changes*/
-    float f_current;
+    uint32_t f_current;
     tvg_animation_get_frame(lottie->tvg_anim, &f_current);
     anim_exec_cb(obj, (int32_t) f_current);
 }
@@ -101,7 +101,7 @@ void lv_lottie_set_draw_buf(lv_obj_t * obj, lv_draw_buf_t * draw_buf)
     tvg_picture_set_size(lottie->tvg_paint, draw_buf->header.w, draw_buf->header.h);
 
     /*Force updating when the buffer changes*/
-    float f_current;
+    uint32_t f_current;
     tvg_animation_get_frame(lottie->tvg_anim, &f_current);
     anim_exec_cb(obj, (int32_t) f_current);
 }
@@ -115,7 +115,7 @@ void lv_lottie_set_src_data(lv_obj_t * obj, const void * src, size_t src_size)
         tvg_picture_set_size(lottie->tvg_paint, canvas_draw_buf->header.w, canvas_draw_buf->header.h);
     }
 
-    float f_total;
+    uint32_t f_total;
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
     lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;
@@ -133,7 +133,7 @@ void lv_lottie_set_src_file(lv_obj_t * obj, const char * src)
         tvg_picture_set_size(lottie->tvg_paint, canvas_draw_buf->header.w, canvas_draw_buf->header.h);
     }
 
-    float f_total;
+    uint32_t f_total;
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
     lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;

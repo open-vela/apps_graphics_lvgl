@@ -274,6 +274,7 @@ static void img_fs_gif_cb(benchmark_context_t * context)
 
 static void empty_screen_cb(benchmark_context_t * context)
 {
+    LV_UNUSED(context);
     color_anim(lv_screen_active());
 }
 
@@ -835,9 +836,9 @@ static void sysmon_perf_observer_cb(lv_observer_t * observer, lv_subject_t * sub
     /*Ignore the first call as it contains data from the previous scene*/
     if(scenes[context->scene_act].measurement_cnt != 0) {
         scenes[context->scene_act].cpu_avg_usage += info->calculated.cpu;
-        scenes[context->scene_act].fps_avg += info->calculated.fps;
-        scenes[context->scene_act].render_avg_time += info->calculated.render_avg_time;
-        scenes[context->scene_act].flush_avg_time += info->calculated.flush_avg_time;
+        scenes[context->scene_act].fps_avg += (uint32_t)info->calculated.fps;
+        scenes[context->scene_act].render_avg_time += (uint32_t)info->calculated.render_avg_time;
+        scenes[context->scene_act].flush_avg_time += (uint32_t)info->calculated.flush_avg_time;
     }
     scenes[context->scene_act].measurement_cnt++;
 }
