@@ -375,4 +375,31 @@ void test_image_clip_radius(void)
     TEST_ASSERT_EQUAL_SCREENSHOT("widgets/image_clip_radius_circle.png");
 }
 
+void test_image_set_src_null(void)
+{
+    lv_obj_t * img;
+
+    img = img_create();
+    lv_image_set_src(img, LV_SYMBOL_IMAGE);
+    lv_obj_update_layout(img);
+    lv_image_set_src(img, NULL);
+    lv_obj_update_layout(img);
+    TEST_ASSERT_EQUAL(lv_obj_get_width(img), 0);
+    TEST_ASSERT_EQUAL(lv_obj_get_height(img), 0);
+
+    lv_image_set_src(img, "A:src/test_assets/test_img_lvgl_logo.png");
+    lv_obj_update_layout(img);
+    lv_image_set_src(img, NULL);
+    lv_obj_update_layout(img);
+    TEST_ASSERT_EQUAL(lv_obj_get_width(img), 0);
+    TEST_ASSERT_EQUAL(lv_obj_get_height(img), 0);
+
+    lv_image_set_src(img, &test_img_lvgl_logo_png);
+    lv_obj_update_layout(img);
+    lv_image_set_src(img, NULL);
+    lv_obj_update_layout(img);
+    TEST_ASSERT_EQUAL(lv_obj_get_width(img), 0);
+    TEST_ASSERT_EQUAL(lv_obj_get_height(img), 0);
+}
+
 #endif
