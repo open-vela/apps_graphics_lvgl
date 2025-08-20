@@ -657,7 +657,11 @@ static void lv_sw_path_transform_cb(struct lv_platform_path_base_t * self, const
 
 static void lv_sw_path_get_data_cb(struct lv_platform_path_base_t * self, lv_vector_path_data_t * data)
 {
-    LV_LOG_WARN("not implemented");
+    lv_platform_sw_path_t * src = LV_SW_PATH_CAST(self);
+
+    lv_array_copy(&data->ops, &src->ops);
+    lv_array_copy(&data->points, &src->points);
+
 }
 
 static void lv_sw_path_transform_path_cb(struct lv_platform_path_base_t * self,
