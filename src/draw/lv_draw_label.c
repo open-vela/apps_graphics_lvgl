@@ -361,7 +361,7 @@ void lv_draw_label_iterate_characters(lv_draw_unit_t * draw_unit, const lv_draw_
 
     /*Write out all lines*/
 #if LV_USE_TEXTFLOW == 0
-    while(dsc->text[real_line_start] != '\0') {
+    while(remaining_len && dsc->text[real_line_start] != '\0') {
 #else
     while(remaining_len && lv_iter_next(line_iter, &line_info) == LV_RESULT_OK) {
         line_start = line_info.pos.start;
