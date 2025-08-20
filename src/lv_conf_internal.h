@@ -2670,25 +2670,17 @@
 
 /*SVG library*/
 #ifndef LV_USE_SVG
-    #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_SVG
-            #define LV_USE_SVG CONFIG_LV_USE_SVG
-        #else
-            #define LV_USE_SVG 0
-        #endif
+    #ifdef CONFIG_LV_USE_SVG
+        #define LV_USE_SVG CONFIG_LV_USE_SVG
     #else
-        #define LV_USE_SVG 1
+        #define LV_USE_SVG 0
     #endif
 #endif
 #ifndef LV_USE_SVG_ANIMATION
-    #ifdef _LV_KCONFIG_PRESENT
-        #ifdef CONFIG_LV_USE_SVG_ANIMATION
-            #define LV_USE_SVG_ANIMATION CONFIG_LV_USE_SVG_ANIMATION
-        #else
-            #define LV_USE_SVG_ANIMATION 0
-        #endif
+    #ifdef CONFIG_LV_USE_SVG_ANIMATION
+        #define LV_USE_SVG_ANIMATION CONFIG_LV_USE_SVG_ANIMATION
     #else
-        #define LV_USE_SVG_ANIMATION 1
+        #define LV_USE_SVG_ANIMATION 0
     #endif
 #endif
 #ifndef LV_USE_SVG_DEBUG

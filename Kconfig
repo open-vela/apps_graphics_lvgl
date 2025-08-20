@@ -1300,12 +1300,12 @@ menu "LVGL configuration"
 
 		config LV_USE_SVG
 			bool "SVG library"
-			default y
+			default n
 			depends on LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
 		config LV_USE_SVG_ANIMATION
 			bool "SVG animation"
-			default y
+			default n
 			depends on LV_USE_SVG
 
 		config LV_USE_RLE
