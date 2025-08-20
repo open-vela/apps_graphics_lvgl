@@ -576,7 +576,6 @@ static void lv_sw_path_cubic_to_cb(struct lv_platform_path_base_t * self,
     POINT3_PUSH_BACK(&path->points, p1, p2, p3);
 }
 
-
 static void lv_sw_path_close_cb(struct lv_platform_path_base_t * self)
 {
     lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
@@ -661,13 +660,60 @@ static void lv_sw_path_get_data_cb(struct lv_platform_path_base_t * self, lv_vec
 
     lv_array_copy(&data->ops, &src->ops);
     lv_array_copy(&data->points, &src->points);
-
 }
 
 static void lv_sw_path_transform_path_cb(struct lv_platform_path_base_t * self,
                                          lv_vector_path_transform_data_t * transform_data)
 {
-    LV_LOG_WARN("not implemented");
+    lv_platform_sw_path_t * path = LV_SW_PATH_CAST(self);
+
+    uint32_t pidx = 0;
+    uint32_t len = lv_array_size(&path->ops);
+    lv_vector_path_op_t * op = lv_array_front(&path->ops);
+    void * user_data = transform_data->user_data;
+    for(uint32_t i = 0; i < len; i++) {
+        switch(op[i]) {
+            case LV_VECTOR_PATH_OP_MOVE_TO: {
+                    lv_fpoint_t * pt = lv_array_at(&path->points, pidx);
+                    transform_data->cb(LV_VECTOR_PATH_OP_MOVE_TO, pt, user_data);
+                    pidx += 1;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_LINE_TO: {
+                    lv_fpoint_t * pt = lv_array_at(&path->points, pidx);
+                    transform_data->cb(LV_VECTOR_PATH_OP_LINE_TO, pt, user_data);
+                    pidx += 1;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_QUAD_TO: {
+                    LV_ASSERT(pidx > 0);
+                    lv_fpoint_t * pt1 = lv_array_at(&path->points, pidx);
+                    lv_fpoint_t * pt2 = lv_array_at(&path->points, pidx + 1);
+                    lv_fpoint_t * last_pt = lv_array_at(&path->points, pidx - 1);
+
+                    lv_flatten_quadratic_curve(last_pt, pt1, pt2, transform_data->cb, user_data);
+                    pidx += 2;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_CUBIC_TO: {
+                    LV_ASSERT(pidx > 0);
+                    lv_fpoint_t * pt1 = lv_array_at(&path->points, pidx);
+                    lv_fpoint_t * pt2 = lv_array_at(&path->points, pidx + 1);
+                    lv_fpoint_t * pt3 = lv_array_at(&path->points, pidx + 2);
+                    lv_fpoint_t * last_pt = lv_array_at(&path->points, pidx - 1);
+
+                    lv_flatten_cubic_curve(last_pt, pt1, pt2, pt3, transform_data->cb, user_data);
+                    pidx += 3;
+                }
+                break;
+            case LV_VECTOR_PATH_OP_CLOSE: {
+                    transform_data->cb(LV_VECTOR_PATH_OP_CLOSE, NULL, user_data);
+                }
+                break;
+        }
+    }
+
+    transform_data->cb(LV_VECTOR_POLYGON_STOP, NULL, user_data); // for polygon stop flag
 }
 
 static bool lv_sw_path_is_empty_cb(struct lv_platform_path_base_t * self)
