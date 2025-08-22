@@ -262,7 +262,11 @@ if(CONFIG_LVGL_UNITTESTS)
   # Copy reference images to resource directory
   set(RESOURCE_DIR
       ${CMAKE_SOURCE_DIR}/${CONFIG_ARCH_BOARD_CUSTOM_DIR}../common/resource/)
-  file(COPY ${RESOURCE_DIR} DESTINATION ${LVGL_PATH}/tests/ref_imgs)
+  file(COPY ${LVGL_PATH}/tests/ref_imgs DESTINATION ${RESOURCE_DIR}/)
+  file(MAKE_DIRECTORY ${RESOURCE_DIR}/lvgl_assets ${RESOURCE_DIR}/lvgl_assets/src)
+  file(COPY ${LVGL_PATH}/tests/test_images DESTINATION ${RESOURCE_DIR}/lvgl_assets/)
+  file(COPY ${LVGL_PATH}/tests/src/test_assets DESTINATION ${RESOURCE_DIR}/lvgl_assets/src/)
+  file(COPY ${LVGL_PATH}/tests/src/test_files DESTINATION ${RESOURCE_DIR}/lvgl_assets/src/)
 
   # Create lock file
   file(TOUCH ${CMAKE_CURRENT_BINARY_DIR}/../build_test_nuttx/test_entries.lock)
