@@ -28,7 +28,7 @@ CFLAGS += -DLV_TEST_OPTION=7 ${INCDIR_PREFIX}${LVGL_PATH}/tests/unity \
           ${INCDIR_PREFIX}${LVGL_PATH}/tests/src \
           -DLV_CONF_PATH=${LVGL_PATH}/tests/src/lv_test_conf.h \
           -DLV_BUILD_TEST=1 -DTEST_FONT_PATH='"/data/font/MiSans-Regular.ttf"' \
-          -DREF_IMGS_PATH='"/data/ref_imgs/" -DTEST_CUSTOM_FONT_PATH="data/lvgl_assets/"'
+          -DREF_IMGS_PATH='"/data/ref_imgs/"' -DTEST_CUSTOM_FONT_PATH='"data/lvgl_assets/"'
 
 ifeq ($(CONFIG_LV_TEST_COVERAGE), y)
 CFLAGS += --coverage
@@ -200,7 +200,11 @@ STACKSIZE = $(CONFIG_LVGL_UNITTESTS_STACKSIZE)
 MODULE = ${CONFIG_LVGL_UNITTESTS}
 
 postinstall::
+    $(shell mkdir -p $(RESOURCE_DIR)/lvgl_assets/src)
     $(shell cp -r ${LVGL_PATH}/tests/ref_imgs ${RESOURCE_DIR})
+    $(shell cp -r $(LVGL_PATH)/tests/src/test_assets $(RESOURCE_DIR)/lvgl_assets/src)
+    $(shell cp -r $(LVGL_PATH)/tests/src/test_files $(RESOURCE_DIR)/lvgl_assets/src)
+    $(shell cp -r $(LVGL_PATH)/tests/test_images $(RESOURCE_DIR)/lvgl_assets/)
 
 distclean::
 	$(call DELFILE, ${LVGL_PATH}/tests/build_test_nuttx/*.lock)
