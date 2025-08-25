@@ -778,6 +778,11 @@ static void blend_mode_cb(lv_obj_t * parent)
     LV_DRAW_BUF_DEFINE_STATIC(buf_xrgb8888, 36, 30, LV_COLOR_FORMAT_XRGB8888);
     LV_DRAW_BUF_DEFINE_STATIC(buf_argb8888, 36, 30, LV_COLOR_FORMAT_ARGB8888);
 
+    LV_DRAW_BUF_INIT_STATIC(buf_rgb565);
+    LV_DRAW_BUF_INIT_STATIC(buf_rgb888);
+    LV_DRAW_BUF_INIT_STATIC(buf_xrgb8888);
+    LV_DRAW_BUF_INIT_STATIC(buf_argb8888);
+
     /*The canvas will stay in the top left corner to show the original image*/
     lv_obj_t * canvas = lv_canvas_create(lv_screen_active());
 
