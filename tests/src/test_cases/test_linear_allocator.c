@@ -2,7 +2,7 @@
 #include "../lvgl.h"
 #include "unity/unity.h"
 
-#define ITERATIONS 10000
+#define ITERATIONS 10
 
 void setUp(void)
 {

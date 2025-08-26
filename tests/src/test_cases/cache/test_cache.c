@@ -49,6 +49,7 @@ void setUp(void)
         .free_cb = (lv_cache_free_cb_t)free_cb,
     };
     cache = lv_cache_create(&lv_cache_class_lru_rb_size, sizeof(test_data), CACHE_SIZE_BYTES, ops);
+    lv_cache_set_name(cache, "test_cache");
 }
 
 void tearDown(void)
