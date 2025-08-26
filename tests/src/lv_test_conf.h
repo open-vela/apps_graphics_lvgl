@@ -24,6 +24,7 @@ extern "C" {
 #define LV_USE_STDLIB_STRING        LV_STDLIB_CLIB
 #define LV_USE_STDLIB_SPRINTF       LV_STDLIB_CLIB
 #define LV_USE_OS                   LV_OS_PTHREAD
+#define LV_DRAW_THREAD_STACKSIZE    65535 /* More stack space is required after turning on ASAN */
 #define LV_OBJ_STYLE_CACHE          0
 #define LV_BIN_DECODER_RAM_LOAD     1   /* Run test with bin image loaded to RAM */
 #endif
@@ -119,10 +120,6 @@ typedef void * lv_user_data_t;
 #undef LV_USE_MEM_MONITOR
 #undef LV_DPI_DEF
 #define  LV_DPI_DEF         130
-#endif
-
-#if defined(LVGL_CI_USING_SYS_HEAP)
-#undef LV_USE_FLOAT
 #endif
 
 #ifdef __cplusplus

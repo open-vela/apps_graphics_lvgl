@@ -463,6 +463,14 @@ void test_freetype_bitmap_rendering_test(void)
     lv_obj_align_to(label2, label1, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
 
     TEST_FREETYPE_ASSERT_EQUAL_SCREENSHOT("1");
+
+    lv_obj_clean(lv_screen_active());
+    lv_style_reset(&style_italic);
+    lv_style_reset(&style_normal);
+    lv_style_reset(&style_normal_small);
+    lv_freetype_font_delete(font_italic);
+    lv_freetype_font_delete(font_normal);
+    lv_freetype_font_delete(font_normal_small);
 }
 
 void test_freetype_outline_rendering_test(void)

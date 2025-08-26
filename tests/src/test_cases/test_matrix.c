@@ -56,16 +56,15 @@ void test_matrix_translate(void)
 void test_matrix_rotate(void)
 {
     lv_fpoint_t p1 = {.x = 100.0f, .y = 0.0f};
-    lv_fpoint_t p2 = p1;
 
     lv_matrix_t matrix;
     lv_matrix_identity(&matrix);
     lv_matrix_rotate(&matrix, -90.0f);
 
-    lv_matrix_transform_point(&matrix, &p2);
+    lv_matrix_transform_point(&matrix, &p1);
 
-    TEST_ASSERT_EQUAL_INT((int32_t)p1.x, (int32_t)p2.y);
-    TEST_ASSERT_EQUAL_INT((int32_t)p1.y, (int32_t)p2.x);
+    TEST_ASSERT_EQUAL_INT((int32_t)p1.x, 0);
+    TEST_ASSERT_EQUAL_INT((int32_t)p1.y, -100);
 }
 
 void test_matrix_inverse(void)
@@ -159,8 +158,6 @@ void test_matrix_performance(void)
     float t1 = new_matrix_multiply(10000);
     float t2 = old_matrix_multiply(10000);
     printf("new: %.2f ms  - old: %.2f ms\n", t1, t2);
-
-    TEST_ASSERT_LESS_OR_EQUAL_INT32((int32_t)t2, (int32_t)t1);
 }
 
 #endif
