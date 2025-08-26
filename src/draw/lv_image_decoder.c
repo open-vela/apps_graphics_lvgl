@@ -312,15 +312,11 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
 
     const void * src = dsc->src;
     lv_image_src_t src_type = dsc->src_type;
-    /* miwear could set NULL data variable type of image */
-#if 0
+
     if(src_type == LV_IMAGE_SRC_VARIABLE) {
         const lv_image_dsc_t * img_dsc = src;
         if(img_dsc->data == NULL) return NULL;
     }
-#else
-    LV_UNUSED(src_type);
-#endif
 
     if(src_type == LV_IMAGE_SRC_FILE) LV_LOG_INFO("Try to find decoder for %s", (const char *)src);
     else LV_LOG_INFO("Try to find decoder for %p", src);
