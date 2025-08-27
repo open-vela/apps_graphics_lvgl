@@ -123,6 +123,10 @@ typedef struct _lv_global_t {
     void * draw_task_allocator_ctx;
 
     lv_ll_t img_decoder_ll;
+#if LV_USE_OS != LV_OS_NONE
+    lv_mutex_t img_decoder_info_lock;
+    lv_mutex_t img_decoder_open_lock;
+#endif
 
     lv_cache_t * img_cache;
     lv_cache_t * img_header_cache;
