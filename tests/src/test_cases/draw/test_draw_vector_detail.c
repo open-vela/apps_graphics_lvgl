@@ -36,10 +36,16 @@ void tearDown(void)
 
 #define SNAPSHOT_NAME(n) (#n)
 
+#ifndef NON_AMD64_BUILD
+    #define EXT_NAME ".lp64.png"
+#else
+    #define EXT_NAME ".lp32.png"
+#endif
+
 static void draw_snapshot(const char * name)
 {
     char fn_buf[64];
-    lv_snprintf(fn_buf, sizeof(fn_buf), "draw/vector_draw_%s.png", name);
+    lv_snprintf(fn_buf, sizeof(fn_buf), "draw/vector_draw_%s" EXT_NAME, name);
     TEST_ASSERT_EQUAL_SCREENSHOT(fn_buf);
 }
 
