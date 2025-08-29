@@ -148,7 +148,13 @@ static lv_result_t line_iter_next_cb(void * instance, void * context, void * ele
             if(word_next.pos.brk != UINT32_MAX) {
                 end = word_next.pos.end;
                 brk = word_next.pos.brk;
-                real_width += word_next.real_width;
+                if(word_next.pos.start == word_next.pos.brk) {
+                    brk = word.pos.end;
+                }
+                else {
+                    real_width += word_next.real_width;
+                }
+
                 ideal_width += word_next.ideal_width;
                 break;
             }
