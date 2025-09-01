@@ -204,9 +204,11 @@ if(CONFIG_LVGL_UNITTESTS)
     ${CMAKE_C_FLAGS}
     -DLV_TEST_OPTION=7
     -DLV_BUILD_TEST=1
-    -DTEST_FONT_PATH="/data/font/MiSans-Regular.ttf"
+    -DTEST_FONT_PATH="/data/lvgl_assets/src/test_files/fonts/noto/NotoSansSC-Regular.ttf"
     -DREF_IMGS_PATH="/data/ref_imgs/"
     -DTEST_CUSTOM_FONT_PATH="data/lvgl_assets/"
+    -DREF_IMG_TOLERANCE=2   # Tolerance for different freetype version
+    -DNON_AMD64_BUILD=1     # Use *.lp32.png references images
     # Remap Unity test framework symbols to avoid conflicts
     # between lvgl's bundled Unity and app-level Unity usage.
     -DUnity=lv_Unity
