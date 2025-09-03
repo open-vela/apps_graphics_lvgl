@@ -23,9 +23,7 @@
  *      DEFINES
  *********************/
 
-#define LV_SW_PATH_CAST(ptr) \
-    (assert(ptr != NULL), \
-     (lv_platform_sw_path_t *)(ptr))
+#define LV_SW_PATH_CAST(ptr)  (lv_platform_sw_path_t *)(ptr)
 
 #define LV_SW_PATH_ARRAY_DEFAULT_SIZE 8
 
@@ -45,6 +43,14 @@ typedef struct {
     uint8_t b;
     uint8_t a;
 } _tvg_color;
+
+typedef struct {
+    Tvg_Canvas * canvas;
+    int32_t partial_y_offset;
+    int32_t translate_x;
+    int32_t translate_y;
+    lv_opa_t opa;
+} _tvg_draw_state;
 
 typedef struct _lv_platform_sw_path_t {
     lv_platform_path_base_t base;
@@ -284,7 +290,7 @@ static void _set_paint_fill_gradient(Tvg_Paint * obj, const lv_vector_gradient_t
 }
 
 static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const lv_draw_image_dsc_t * p,
-                                    const lv_matrix_t * m)
+                                    const lv_matrix_t * m, const lv_opa_t opa)
 {
     lv_image_decoder_dsc_t decoder_dsc;
     lv_image_decoder_args_t args = { 0 };
@@ -314,7 +320,7 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
     tvg_picture_load_raw(img, (uint32_t *)src_buf, header->w, header->h, true);
     Tvg_Paint * clip_path = tvg_paint_duplicate(obj);
     tvg_paint_set_composite_method(img, clip_path, TVG_COMPOSITE_METHOD_CLIP_PATH);
-    tvg_paint_set_opacity(img, p->opa);
+    tvg_paint_set_opacity(img, LV_UDIV255(p->opa * opa));
 
     Tvg_Matrix mtx;
     _lv_matrix_to_tvg(&mtx, m);
@@ -324,7 +330,7 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
 }
 
 static void _set_paint_fill(Tvg_Paint * obj, Tvg_Canvas * canvas, const lv_vector_fill_dsc_t * dsc,
-                            const lv_matrix_t * matrix)
+                            const lv_matrix_t * matrix, const lv_opa_t opa)
 {
     tvg_shape_set_fill_rule(obj, _lv_fill_rule_to_tvg(dsc->fill_rule));
 
@@ -334,22 +340,17 @@ static void _set_paint_fill(Tvg_Paint * obj, Tvg_Canvas * canvas, const lv_vecto
         tvg_shape_set_fill_color(obj, c.r, c.g, c.b, c.a);
     }
     else if(dsc->style == LV_VECTOR_DRAW_STYLE_PATTERN) {
-        lv_matrix_t imx;
+        lv_matrix_t imx = *matrix;
 
         if(dsc->fill_units == LV_VECTOR_FILL_UNITS_OBJECT_BOUNDING_BOX) {
             /* Convert to object bounding box coordinates */
-            imx = *matrix;
-
             float x, y, w, h;
             tvg_paint_get_bounds(obj, &x, &y, &w, &h, false);
             lv_matrix_translate(&imx, x, y);
-            lv_matrix_multiply(&imx, &dsc->matrix);
         }
-        else {
-            /* Copy fill matrix directly, no need to convert */
-            imx = dsc->matrix;
-        }
-        _set_paint_fill_pattern(obj, canvas, &dsc->draw_attrs.img_dsc, &imx);
+
+        lv_matrix_multiply(&imx, &dsc->matrix);
+        _set_paint_fill_pattern(obj, canvas, &dsc->draw_attrs.img_dsc, &imx, opa);
     }
     else if(dsc->style == LV_VECTOR_DRAW_STYLE_GRADIENT) {
         _set_paint_fill_gradient(obj, &dsc->draw_attrs.gradient, &dsc->matrix);
@@ -405,7 +406,8 @@ static void _set_paint_blend_mode(Tvg_Paint * obj, lv_vector_blend_t blend)
 static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, const lv_vector_draw_dsc_t * dsc)
 {
     lv_platform_sw_path_t * path = (lv_platform_sw_path_t *)path_impl;
-    Tvg_Canvas * canvas = (Tvg_Canvas *)ctx;
+    _tvg_draw_state * state = (_tvg_draw_state *)ctx;
+    Tvg_Canvas * canvas = (Tvg_Canvas *)state->canvas;
 
     Tvg_Paint * obj = tvg_shape_new();
 
@@ -433,7 +435,7 @@ static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl,
         _set_paint_shape(obj, path);
 
         if(dsc->fill_dsc->opa > 0) {
-            _set_paint_fill(obj, canvas, dsc->fill_dsc, &dsc->matrix);
+            _set_paint_fill(obj, canvas, dsc->fill_dsc, &dsc->matrix, state->opa);
         }
 
         if(dsc->stroke_dsc->opa > 0) {
@@ -451,7 +453,7 @@ static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl,
 
 void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc_t * dsc)
 {
-    LV_UNUSED(draw_unit);
+    lv_draw_task_t * t = ((lv_draw_sw_unit_t *)draw_unit)->task_act;
 
     if(dsc->draw_task_list.task_list == NULL)
         return;
@@ -476,7 +478,8 @@ void lv_draw_sw_vector(lv_draw_unit_t * draw_unit, const lv_draw_vector_task_dsc
     Tvg_Canvas * canvas = tvg_swcanvas_create();
     tvg_swcanvas_set_target(canvas, buf, stride / 4, width, height, TVG_COLORSPACE_ARGB8888);
 
-    _lv_vector_for_each_destroy_tasks((lv_vector_draw_task_list_t *)&dsc->draw_task_list, _task_draw_cb, canvas);
+    _tvg_draw_state state = {canvas, 0, -layer->buf_area.x1, -layer->buf_area.y1, t->opa};
+    _lv_vector_for_each_destroy_tasks((lv_vector_draw_task_list_t *)&dsc->draw_task_list, _task_draw_cb, &state);
 
     if(tvg_canvas_draw(canvas) == TVG_RESULT_SUCCESS) {
         tvg_canvas_sync(canvas);
@@ -630,6 +633,7 @@ static void lv_sw_path_get_bounds_cb(struct lv_platform_path_base_t * self, lv_a
 
 static lv_vector_path_quality_t lv_sw_path_get_quality_cb(struct lv_platform_path_base_t * self)
 {
+    LV_UNUSED(self);
     LV_LOG_WARN("not implemented");
     return LV_VECTOR_PATH_QUALITY_MEDIUM;
 }
