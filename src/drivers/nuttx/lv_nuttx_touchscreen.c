@@ -144,14 +144,14 @@ static void process_single_touch(lv_indev_t * drv,
 {
     lv_nuttx_touchscreen_t * touchscreen = drv->driver_data;
     uint8_t touch_flags = sample->point[0].flags;
+    lv_display_t * disp = lv_indev_get_display(drv);
+    int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
+    int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
+
+    data->point.x = LV_CLAMP(0, sample->point[0].x, hor_max);
+    data->point.y = LV_CLAMP(0, sample->point[0].y, ver_max);
 
     if(touch_flags & (TOUCH_DOWN | TOUCH_MOVE)) {
-        lv_display_t * disp = lv_indev_get_display(drv);
-        int32_t hor_max = lv_display_get_horizontal_resolution(disp) - 1;
-        int32_t ver_max = lv_display_get_vertical_resolution(disp) - 1;
-
-        data->point.x = LV_CLAMP(0, sample->point[0].x, hor_max);
-        data->point.y = LV_CLAMP(0, sample->point[0].y, ver_max);
         touchscreen->last_state = LV_INDEV_STATE_PRESSED;
     }
     else if(touch_flags & TOUCH_UP) {
