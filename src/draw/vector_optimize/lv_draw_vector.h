@@ -601,6 +601,16 @@ lv_vector_draw_dsc_t * lv_vector_dsc_get_current_dsc(const lv_vector_dsc_t * dsc
 void lv_vector_dsc_set_current_dsc(const lv_vector_dsc_t * dsc, lv_vector_draw_dsc_t * draw_dsc);
 
 /**
+ * Get the stroke drawing descriptor from the vector draw descriptor
+ * @param dsc       pointer to a vector draw descriptor
+ * @return          pointer to the stroke drawing descriptor (contains style properties like stroke color)
+ */
+static inline lv_vector_stroke_dsc_t * lv_vector_draw_dsc_get_stroke_dsc(lv_vector_draw_dsc_t * dsc)
+{
+    return dsc->stroke_dsc;
+}
+
+/**
  * Add a graphic path to the draw list
  * @param dsc           pointer to a vector graphic descriptor
  * @param path          pointer to a path

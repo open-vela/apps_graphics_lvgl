@@ -115,6 +115,15 @@ static inline void lv_vector_init_platform_path(lv_platform_path_base_t * impl, 
     impl->handlers = lv_vector_get_platform_handlers();
 }
 
+void lv_matrix_transform_point(const lv_matrix_t * matrix, lv_fpoint_t * point)
+{
+    float x = point->x;
+    float y = point->y;
+
+    point->x = x * matrix->m[0][0] + y * matrix->m[0][1] + matrix->m[0][2];
+    point->y = x * matrix->m[1][0] + y * matrix->m[1][1] + matrix->m[1][2];
+}
+
 void lv_matrix_transform_path(const lv_matrix_t * matrix, lv_vector_path_t * path)
 {
     LV_ASSERT_NULL(matrix);
@@ -935,6 +944,11 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
         return;
     }
 
+    lv_area_t final_rect;
+    if(!_lv_area_intersect(&final_rect, &r, rect)) {
+        return;
+    }
+
     if(!dsc->tasks.draw_task_list.task_list) {
         dsc->tasks.draw_task_list.task_list = lv_malloc(sizeof(lv_ll_t));
         LV_ASSERT_MALLOC(dsc->tasks.draw_task_list.task_list);
@@ -953,7 +967,7 @@ void lv_vector_clear_area(lv_vector_dsc_t * dsc, const lv_area_t * rect)
 
     new_task->dsc->fill_dsc->draw_attrs.color = dsc->current_dsc->fill_dsc->draw_attrs.color;
     new_task->dsc->fill_dsc->opa = dsc->current_dsc->fill_dsc->opa;
-    lv_area_copy(&(new_task->dsc->scissor_area), rect);
+    lv_area_copy(&(new_task->dsc->scissor_area), &final_rect);
 }
 
 void lv_draw_vector(lv_vector_dsc_t * dsc)

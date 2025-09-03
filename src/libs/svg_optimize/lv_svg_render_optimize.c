@@ -239,11 +239,17 @@ static void _lv_svg_draw_dsc_delete(struct _lv_svg_draw_dsc * dsc)
 
 static void _alloc_draw_dsc(lv_vector_draw_dsc_t * dsc)
 {
-    dsc->fill_dsc = lv_zalloc(sizeof(lv_vector_fill_dsc_t));
-    LV_ASSERT_MALLOC(dsc->fill_dsc);
-    dsc->stroke_dsc = lv_zalloc(sizeof(lv_vector_stroke_dsc_t));
-    LV_ASSERT_MALLOC(dsc->stroke_dsc);
-    if(dsc->stroke_dsc->dash_count > 0) {
+    if(!dsc->fill_dsc) {
+        dsc->fill_dsc = lv_zalloc(sizeof(lv_vector_fill_dsc_t));
+        LV_ASSERT_MALLOC(dsc->fill_dsc);
+    }
+
+    if(!dsc->stroke_dsc) {
+        dsc->stroke_dsc = lv_zalloc(sizeof(lv_vector_stroke_dsc_t));
+        LV_ASSERT_MALLOC(dsc->stroke_dsc);
+    }
+
+    if(dsc->stroke_dsc->dash_count > 0 && !dsc->stroke_dsc->dash_pattern) {
         dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * dsc->stroke_dsc->dash_count);
         LV_ASSERT_MALLOC(dsc->stroke_dsc->dash_pattern);
     }
@@ -1846,10 +1852,10 @@ static void _get_group_bounds(const lv_svg_render_obj_t * obj, lv_area_t * area)
 {
     lv_svg_render_group_t * group = (lv_svg_render_group_t *)obj;
 
-    float x1 = 0;
-    float y1 = 0;
-    float x2 = 0;
-    float y2 = 0;
+    int32_t x1 = 0;
+    int32_t y1 = 0;
+    int32_t x2 = 0;
+    int32_t y2 = 0;
 
     for(uint32_t i = 0; i < group->items.size; i++) {
         lv_svg_render_obj_t * list = *((lv_svg_render_obj_t **)lv_array_at(&group->items, i));

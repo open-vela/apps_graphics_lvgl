@@ -325,6 +325,7 @@ void test_draw_stroke_gradients(void)
     lv_area_t linear_rect2 = {160, 50, 210, 150};
     lv_vector_path_append_rect(path, &linear_rect2, 10, 10);
     lv_vector_dsc_set_stroke_linear_gradient(ctx, 160, 50, 210, 100);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
     lv_vector_dsc_set_stroke_gradient_spread(ctx, LV_VECTOR_GRADIENT_SPREAD_REPEAT);
     lv_vector_dsc_add_path(ctx, path);
 
@@ -333,6 +334,7 @@ void test_draw_stroke_gradients(void)
     lv_area_t linear_rect3 = {270, 50, 320, 150};
     lv_vector_path_append_rect(path, &linear_rect3, 10, 10);
     lv_vector_dsc_set_stroke_linear_gradient(ctx, 270, 50, 320, 100);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
     lv_vector_dsc_set_stroke_gradient_spread(ctx, LV_VECTOR_GRADIENT_SPREAD_REFLECT);
     lv_vector_dsc_add_path(ctx, path);
 
@@ -347,6 +349,7 @@ void test_draw_stroke_gradients(void)
     lv_area_t radial_rect1 = {50, 200, 100, 250};
     lv_vector_path_append_rect(path, &radial_rect1, 10, 10);
     lv_vector_dsc_set_stroke_radial_gradient(ctx, 100, 250, 40);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
     lv_vector_dsc_set_stroke_gradient_spread(ctx, LV_VECTOR_GRADIENT_SPREAD_PAD);
     lv_vector_dsc_set_stroke_width(ctx, 30.0f);
     lv_vector_dsc_add_path(ctx, path);
@@ -356,6 +359,7 @@ void test_draw_stroke_gradients(void)
     lv_area_t radial_rect2 = {160, 200, 210, 250};
     lv_vector_path_append_rect(path, &radial_rect2, 10, 10);
     lv_vector_dsc_set_stroke_radial_gradient(ctx, 210, 250, 40);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
     lv_vector_dsc_set_stroke_gradient_spread(ctx, LV_VECTOR_GRADIENT_SPREAD_REPEAT);
     lv_vector_dsc_add_path(ctx, path);
 
@@ -364,6 +368,7 @@ void test_draw_stroke_gradients(void)
     lv_area_t radial_rect3 = {270, 200, 320, 250};
     lv_vector_path_append_rect(path, &radial_rect3, 10, 10);
     lv_vector_dsc_set_stroke_radial_gradient(ctx, 320, 250, 40);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
     lv_vector_dsc_set_stroke_gradient_spread(ctx, LV_VECTOR_GRADIENT_SPREAD_REFLECT);
     lv_vector_dsc_add_path(ctx, path);
 

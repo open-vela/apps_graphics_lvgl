@@ -59,22 +59,21 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_path_t * path2 = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
 
     lv_vector_draw_dsc_t * current_dsc = lv_vector_dsc_get_current_dsc(dsc);
-    lv_vector_stroke_dsc_t * td = &current_dsc->stroke_dsc;
 
     lv_vector_dsc_set_stroke_width(dsc, 5.0f);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
     lv_vector_dsc_set_stroke_width(dsc, 8.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_SQUARE);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
     lv_vector_dsc_set_stroke_width(dsc, 10.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_ROUND);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
@@ -82,7 +81,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash, 2);
     lv_vector_dsc_set_stroke_width(dsc, 5.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_BUTT);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 
@@ -91,7 +90,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash1, 4);
     lv_vector_dsc_set_stroke_width(dsc, 8.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_SQUARE);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 
@@ -100,7 +99,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash2, 4);
     lv_vector_dsc_set_stroke_width(dsc, 10.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_ROUND);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 
@@ -119,21 +118,21 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_width(dsc, 10.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_BUTT);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_BEVEL);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
     lv_vector_dsc_set_stroke_width(dsc, 8.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_SQUARE);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_MITER);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
     lv_vector_dsc_set_stroke_width(dsc, 10.0f);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_ROUND);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_ROUND);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
 
     lv_vector_dsc_translate(dsc, 40, 0);
@@ -141,7 +140,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash, 2);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_BUTT);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_BEVEL);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 
@@ -150,7 +149,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash1, 4);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_SQUARE);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_MITER);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 
@@ -159,7 +158,7 @@ static void draw_lines(lv_layer_t * layer)
     lv_vector_dsc_set_stroke_dash(dsc, dash2, 4);
     lv_vector_dsc_set_stroke_cap(dsc, LV_VECTOR_STROKE_CAP_ROUND);
     lv_vector_dsc_set_stroke_join(dsc, LV_VECTOR_STROKE_JOIN_ROUND);
-    lv_vector_stroke_to_path(path2, path, td);
+    lv_vector_stroke_to_path(path2, path, lv_vector_draw_dsc_get_stroke_dsc(current_dsc));
     lv_vector_dsc_add_path(dsc, path2);
     lv_vector_dsc_set_stroke_dash(dsc, NULL, 0);
 

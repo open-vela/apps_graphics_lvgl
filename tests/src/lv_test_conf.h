@@ -27,6 +27,7 @@ extern "C" {
 #define LV_DRAW_THREAD_STACKSIZE    65535 /* More stack space is required after turning on ASAN */
 #define LV_OBJ_STYLE_CACHE          0
 #define LV_BIN_DECODER_RAM_LOAD     1   /* Run test with bin image loaded to RAM */
+#define LV_USE_VECTOR_GRAPHIC_OPTIMIZE 1
 #endif
 
 #ifdef LVGL_CI_USING_DEF_HEAP
@@ -73,6 +74,11 @@ typedef void * lv_user_data_t;
 #define  LV_COLOR_DEPTH     32
 #define  LV_DPI_DEF         160
 #include "lv_test_conf_full.h"
+
+#ifdef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#undef LV_USE_VECTOR_GRAPHIC
+#endif
+
 #elif LV_TEST_OPTION == 6
 #define  LV_COLOR_DEPTH     32
 #define  LV_DPI_DEF         160
@@ -82,6 +88,11 @@ typedef void * lv_user_data_t;
 #define  LV_ATTRIBUTE_MEM_ALIGN __declspec(align(LV_DRAW_BUF_ALIGN))
 #else
 #define  LV_ATTRIBUTE_MEM_ALIGN __attribute__((aligned(LV_DRAW_BUF_ALIGN)))
+#endif
+
+/* Not tested yet */
+#ifdef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#undef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 #endif
 
 #include "lv_test_conf_vg_lite.h"
