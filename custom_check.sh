@@ -25,4 +25,13 @@ if ! (git diff --exit-code --color=always | tee /tmp/lvgl_diff.patch); then
 fi
 
 echo "LVGL code format check passed"
+
+${CUR_DIR}/scripts/run_tests.sh
+if [ $? -eq 0 ]; then
+    echo "Run tests successfully."
+else
+    echo "Run tests failed with exit code: $?"
+    exit 1
+fi
+
 exit 0
