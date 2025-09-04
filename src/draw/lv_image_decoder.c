@@ -245,7 +245,7 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
 {
     if(decoded == NULL) return NULL; /*No need to adjust*/
 
-    if(!LV_COLOR_FORMAT_IS_REGULAR(decoded->header.cf)) return decoded; /*No need to adjust for regular color format*/
+    if(!LV_COLOR_FORMAT_IS_REGULAR(decoded->header.cf)) return decoded; /*Only need to adjust for regular color format*/
 
     lv_image_decoder_args_t * args = &dsc->args;
     if(args->stride_align && decoded->header.cf != LV_COLOR_FORMAT_RGB565A8) {
