@@ -128,6 +128,7 @@ void lv_matrix_transform_path(const lv_matrix_t * matrix, lv_vector_path_t * pat
 {
     LV_ASSERT_NULL(matrix);
     LV_ASSERT_NULL(path);
+    if(lv_vector_path_is_empty(path)) return;
 
     lv_vector_ensure_write_access(path);
     path->impl->handlers->transform(path->impl, matrix);
@@ -154,7 +155,7 @@ void lv_vector_path_copy(lv_vector_path_t * target_path, const lv_vector_path_t 
 {
     LV_ASSERT_NULL(target_path);
     LV_ASSERT_NULL(path);
-    if(target_path == path) return;
+    if((target_path == path) || (lv_vector_path_is_empty(path))) return;
 
     lv_vector_ensure_write_access(target_path);
     target_path->impl->handlers->clear(target_path->impl);
@@ -490,6 +491,8 @@ void lv_vector_path_append_arc(lv_vector_path_t * path, const lv_fpoint_t * c, f
 
 void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t * subpath)
 {
+    if(lv_vector_path_is_empty(subpath)) return;
+
     lv_vector_ensure_write_access(path);
     path->impl->handlers->concat(path->impl, subpath->impl);
 }
