@@ -220,15 +220,16 @@ void test_remote_ctrl_disp(void)
     execute_args(ARRAY_SIZE(argv_dump_disp), argv_dump_disp, LV_RESULT_OK);
 
     /* Test set display rotation */
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < 5; i++) {
         static const lv_display_rotation_t rotations[] = {
             LV_DISPLAY_ROTATION_0,
             LV_DISPLAY_ROTATION_90,
             LV_DISPLAY_ROTATION_180,
             LV_DISPLAY_ROTATION_270,
+            LV_DISPLAY_ROTATION_0, /* restore rotation */
         };
 
-        static const char * rotation_str[] = { "0", "90", "180", "270" };
+        static const char * rotation_str[] = { "0", "90", "180", "270", "0" };
 
         const char * argv_rotation[] = {
             "disp",
