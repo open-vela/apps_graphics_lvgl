@@ -273,12 +273,9 @@ size_t lv_vector_path_get_mem_size(const lv_vector_path_t * path)
     return path->impl->handlers->get_mem_size(path->impl);
 }
 
-void lv_vector_path_append_rect(lv_vector_path_t * path, const lv_area_t * rect, float rx, float ry)
+void lv_vector_path_append_rectangle(lv_vector_path_t * path, float x, float y, float w, float h, float rx, float ry)
 {
-    float x = rect->x1;
-    float y = rect->y1;
-    float w = rect->x2 - x;
-    float h = rect->y2 - y;
+    if(w <= 0.0f || h <= 0.0f) return;
 
     float hw = w * 0.5f;
     float hh = h * 0.5f;
@@ -286,7 +283,7 @@ void lv_vector_path_append_rect(lv_vector_path_t * path, const lv_area_t * rect,
     if(rx > hw) rx = hw;
     if(ry > hh) ry = hh;
 
-    if(rx == 0 && ry == 0) {
+    if(rx <= 0.0f && ry <= 0.0f) {
         lv_fpoint_t pt = {x, y};
         lv_vector_path_move_to(path, &pt);
         pt.x += w;
@@ -296,71 +293,73 @@ void lv_vector_path_append_rect(lv_vector_path_t * path, const lv_area_t * rect,
         pt.x -= w;
         lv_vector_path_line_to(path, &pt);
         lv_vector_path_close(path);
+        return;
     }
-    else if(rx == hw && ry == hh) {
-        lv_fpoint_t pt = {x + w * 0.5f, y + h * 0.5f};
+
+    if(rx == hw && ry == hh) {
+        lv_fpoint_t pt = {x + hw, y + hh};
         lv_vector_path_append_circle(path, &pt, rx, ry);
+        return;
     }
-    else {
-        float hrx = rx * 0.5f;
-        float hry = ry * 0.5f;
-        lv_fpoint_t pt, pt2, pt3;
 
-        pt.x = x + rx;
-        pt.y = y;
-        lv_vector_path_move_to(path, &pt);
+    float hrx = rx * 0.5f;
+    float hry = ry * 0.5f;
+    lv_fpoint_t pt, pt2, pt3;
 
-        pt.x = x + w - rx;
-        pt.y = y;
-        lv_vector_path_line_to(path, &pt);
+    pt.x = x + rx;
+    pt.y = y;
+    lv_vector_path_move_to(path, &pt);
 
-        pt.x = x + w - rx + hrx;
-        pt.y = y;
-        pt2.x = x + w;
-        pt2.y = y + ry - hry;
-        pt3.x = x + w;
-        pt3.y = y + ry;
-        lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
+    pt.x = x + w - rx;
+    pt.y = y;
+    lv_vector_path_line_to(path, &pt);
 
-        pt.x = x + w;
-        pt.y = y + h - ry;
-        lv_vector_path_line_to(path, &pt);
+    pt.x = x + w - rx + hrx;
+    pt.y = y;
+    pt2.x = x + w;
+    pt2.y = y + ry - hry;
+    pt3.x = x + w;
+    pt3.y = y + ry;
+    lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
 
-        pt.x = x + w;
-        pt.y = y + h - ry + hry;
-        pt2.x = x + w - rx + hrx;
-        pt2.y = y + h;
-        pt3.x = x + w - rx;
-        pt3.y = y + h;
-        lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
+    pt.x = x + w;
+    pt.y = y + h - ry;
+    lv_vector_path_line_to(path, &pt);
 
-        pt.x = x + rx;
-        pt.y = y + h;
-        lv_vector_path_line_to(path, &pt);
+    pt.x = x + w;
+    pt.y = y + h - ry + hry;
+    pt2.x = x + w - rx + hrx;
+    pt2.y = y + h;
+    pt3.x = x + w - rx;
+    pt3.y = y + h;
+    lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
 
-        pt.x = x + rx - hrx;
-        pt.y = y + h;
-        pt2.x = x;
-        pt2.y = y + h - ry + hry;
-        pt3.x = x;
-        pt3.y = y + h - ry;
-        lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
+    pt.x = x + rx;
+    pt.y = y + h;
+    lv_vector_path_line_to(path, &pt);
 
-        pt.x = x;
-        pt.y = y + ry;
-        lv_vector_path_line_to(path, &pt);
+    pt.x = x + rx - hrx;
+    pt.y = y + h;
+    pt2.x = x;
+    pt2.y = y + h - ry + hry;
+    pt3.x = x;
+    pt3.y = y + h - ry;
+    lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
 
-        pt.x = x;
-        pt.y = y + ry - hry;
-        pt2.x = x + rx - hrx;
-        pt2.y = y;
-        pt3.x = x + rx;
-        pt3.y = y;
-        lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
-        lv_vector_path_close(path);
-    }
+    pt.x = x;
+    pt.y = y + ry;
+    lv_vector_path_line_to(path, &pt);
+
+    pt.x = x;
+    pt.y = y + ry - hry;
+    pt2.x = x + rx - hrx;
+    pt2.y = y;
+    pt3.x = x + rx;
+    pt3.y = y;
+    lv_vector_path_cubic_to(path, &pt, &pt2, &pt3);
+
+    lv_vector_path_close(path);
 }
-
 void lv_vector_path_append_circle(lv_vector_path_t * path, const lv_fpoint_t * c, float rx, float ry)
 {
     float krx = rx * 0.552284f;
