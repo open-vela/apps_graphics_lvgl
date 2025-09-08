@@ -432,8 +432,15 @@ static void _task_draw_cb(void * ctx, const lv_vector_path_t * path, const lv_ve
         _set_paint_matrix(obj, &mtx);
 
         _set_paint_shape(obj, path);
-        _set_paint_fill(obj, canvas, &dsc->fill_dsc, &dsc->matrix, state->opa);
-        _set_paint_stroke(obj, &dsc->stroke_dsc);
+
+        if(dsc->fill_dsc.opa > 0) {
+            _set_paint_fill(obj, canvas, &dsc->fill_dsc, &dsc->matrix, state->opa);
+        }
+
+        if(dsc->stroke_dsc.opa > 0) {
+            _set_paint_stroke(obj, &dsc->stroke_dsc);
+        }
+
         _set_paint_blend_mode(obj, dsc->blend_mode);
     }
     tvg_paint_set_opacity(obj, state->opa);
