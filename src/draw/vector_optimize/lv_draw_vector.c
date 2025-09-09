@@ -893,7 +893,14 @@ void lv_vector_dsc_set_current_dsc(const lv_vector_dsc_t * dsc, lv_vector_draw_d
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
 
     _copy_fill_dsc(dsc->current_dsc->fill_dsc, draw_dsc->fill_dsc);
+
+    if(draw_dsc->stroke_dsc->dash_count > 0) {
+        dsc->current_dsc->stroke_dsc->dash_pattern =
+            dsc->tasks.draw_task_list.allocator->alloc(dsc->tasks.draw_task_list.allocator,
+                                                       sizeof(float) * draw_dsc->stroke_dsc->dash_count);
+    }
     _copy_stroke_dsc(dsc->current_dsc->stroke_dsc, draw_dsc->stroke_dsc);
+
     dsc->current_dsc->fill_dsc->use_count = 0;
     dsc->current_dsc->stroke_dsc->use_count = 0;
     dsc->current_dsc->stroke_dsc->stroke_dsc_changed = false;
