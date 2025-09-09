@@ -101,7 +101,6 @@ void lv_vector_path_ref(lv_platform_path_base_t * impl);
  */
 void lv_vector_path_unref(lv_platform_path_base_t * impl);
 
-
 const lv_platform_path_handlers * lv_vector_get_platform_handlers(void);
 
 /**

@@ -22,6 +22,9 @@
     #define M_PI 3.1415926f
 #endif
 
+#define DASH_ARRAY_MAX 16
+#define DASH_COUNT(n) ((n) <= DASH_ARRAY_MAX ? (n) : DASH_ARRAY_MAX)
+
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define ABS(a) fabsf(a)
@@ -250,7 +253,7 @@ static void _alloc_draw_dsc(lv_vector_draw_dsc_t * dsc)
     }
 
     if(dsc->stroke_dsc->dash_count > 0 && !dsc->stroke_dsc->dash_pattern) {
-        dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * dsc->stroke_dsc->dash_count);
+        dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * DASH_COUNT(dsc->stroke_dsc->dash_count));
         LV_ASSERT_MALLOC(dsc->stroke_dsc->dash_pattern);
     }
 }
@@ -861,38 +864,17 @@ static void _set_attr(lv_svg_render_obj_t * obj, lv_vector_draw_dsc_t * dsc, con
                     return;
                 }
                 else {
-                    lv_array_t * dash_array  = (lv_array_t *)lv_malloc(sizeof(lv_array_t));
-                    if(dash_array == NULL) {
-                        LV_LOG_ERROR("Memory allocation failed for dash_arr");
-                        return;
-                    }
-                    if(dsc->stroke_dsc->dash_pattern && dsc->stroke_dsc->dash_count > 0) {
-                        lv_array_init(dash_array, dsc->stroke_dsc->dash_count, sizeof(float));
-
-                        for(uint16_t i = 0; i < dsc->stroke_dsc->dash_count; i++) {
-                            lv_array_push_back(dash_array, &dsc->stroke_dsc->dash_pattern[i]);
-                        }
-                    }
-                    else {
-                        lv_array_clear(dash_array);
-                    }
-
                     lv_svg_attr_values_list_t * vals = (lv_svg_attr_values_list_t *)(attr->value.val);
                     uint32_t len = vals->length;
                     float * dashs = (float *)(&vals->data);
-                    lv_array_clear(dash_array);
 
                     obj->flags |= _RENDER_ATTR_STROKE_DASH_ARRAY;
+                    dsc->stroke_dsc->dash_count = len;
                     if(len) {
-                        if(lv_array_capacity(dash_array) == 0) {
-                            lv_array_init(dash_array, len, sizeof(float));
+                        if(!dsc->stroke_dsc->dash_pattern) {
+                            dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * DASH_ARRAY_MAX);
                         }
-                        else {
-                            lv_array_resize(dash_array, len);
-                        }
-                        for(uint32_t i = 0; i < len; i++) {
-                            lv_array_push_back(dash_array, (uint8_t *)(&dashs[i]));
-                        }
+                        lv_memcpy(dsc->stroke_dsc->dash_pattern, dashs, sizeof(float) * DASH_COUNT(len));
                     }
                 }
             }
@@ -990,7 +972,8 @@ static void _init_draw_dsc(lv_vector_draw_dsc_t * dsc)
 {
     dsc->fill_dsc = lv_zalloc(sizeof(lv_vector_fill_dsc_t));
     dsc->stroke_dsc = lv_zalloc(sizeof(lv_vector_stroke_dsc_t));
-    dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * 32);
+    dsc->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * DASH_ARRAY_MAX);
+    dsc->stroke_dsc->dash_count = 0;
 
     lv_vector_fill_dsc_t * fill_dsc = dsc->fill_dsc;
     fill_dsc->style = LV_VECTOR_DRAW_STYLE_SOLID;
@@ -1009,7 +992,6 @@ static void _init_draw_dsc(lv_vector_draw_dsc_t * dsc)
     stroke_dsc->cap = LV_VECTOR_STROKE_CAP_BUTT;
     stroke_dsc->join = LV_VECTOR_STROKE_JOIN_MITER;
     stroke_dsc->miter_limit = 4.0f;
-    stroke_dsc->dash_count = 0;
     stroke_dsc->use_count = 0;
     lv_matrix_identity(&(stroke_dsc->matrix)); // identity matrix
 
@@ -1060,7 +1042,10 @@ static void _copy_stroke_dsc(lv_vector_stroke_dsc_t * stroke_dsc, const lv_vecto
     stroke_dsc->miter_limit = stroke_src->miter_limit;
     stroke_dsc->dash_count = stroke_src->dash_count;
     if(stroke_src->dash_count > 0) {
-        lv_memcpy(stroke_dsc->dash_pattern, stroke_src->dash_pattern, sizeof(float) * stroke_src->dash_count);
+        if(!stroke_dsc->dash_pattern) {
+            stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * DASH_ARRAY_MAX);
+        }
+        lv_memcpy(stroke_dsc->dash_pattern, stroke_src->dash_pattern, sizeof(float) * DASH_COUNT(stroke_src->dash_count));
     }
     lv_memcpy(&(stroke_dsc->matrix), &(stroke_src->matrix), sizeof(lv_matrix_t));
     _copy_draw_attrs(stroke_dsc->style, &stroke_dsc->draw_attrs, &stroke_src->draw_attrs);
@@ -1348,8 +1333,11 @@ static void _special_render(const lv_svg_render_obj_t * obj, lv_vector_dsc_t * d
     if(obj->flags & _RENDER_ATTR_STROKE_DASH_ARRAY) {
         dst->stroke_dsc->dash_count = src->stroke_dsc->dash_count;
         if(src->stroke_dsc->dash_count > 0) {
+            if(!dst->stroke_dsc->dash_pattern) {
+                dst->stroke_dsc->dash_pattern = lv_zalloc(sizeof(float) * DASH_ARRAY_MAX);
+            }
             lv_memcpy(&(dst->stroke_dsc->dash_pattern), &(src->stroke_dsc->dash_pattern),
-                      sizeof(float) * src->stroke_dsc->dash_count);
+                      sizeof(float) * DASH_COUNT(src->stroke_dsc->dash_count));
         }
     }
 }
