@@ -70,7 +70,7 @@ void lv_draw_vg_lite_triangle(lv_draw_unit_t * draw_unit, const lv_draw_triangle
     vg_lite_matrix_t matrix = u->global_matrix;
 
     if(dsc->bg_grad.dir != LV_GRAD_DIR_NONE) {
-#if LV_USE_VECTOR_GRAPHIC
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
         lv_vg_lite_draw_grad_helper(
             u->grad_ctx,
             &u->target_buffer,
