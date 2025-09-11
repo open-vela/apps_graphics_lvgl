@@ -106,8 +106,10 @@ lv_result_t lv_snapshot_take_to_draw_buf(lv_obj_t * obj, lv_color_format_t cf, l
     if(top_obj == NULL) {
         /* Clear draw buffer when no top object*/
         lv_draw_buf_clear(draw_buf, NULL);
-        lv_draw_buf_flush_cache(draw_buf, NULL);
         top_obj = obj;
+    }
+    else {
+        lv_draw_buf_flush_cache(draw_buf, NULL);
     }
 
     lv_layer_t layer;
