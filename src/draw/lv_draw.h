@@ -20,6 +20,7 @@ extern "C" {
 #include "../misc/lv_text.h"
 #include "../misc/lv_profiler.h"
 #include "../misc/lv_matrix.h"
+#include "../misc/lv_event.h"
 #include "lv_image_decoder.h"
 #include "../osal/lv_os.h"
 #include "lv_draw_buf.h"
@@ -165,6 +166,12 @@ struct _lv_draw_unit_t {
      * @return
      */
     int32_t (*delete_cb)(lv_draw_unit_t * draw_unit);
+
+    /**
+     * Called when an event is sent to the draw unit.
+     * @param event pointer to the event descriptor
+     */
+    void (*event_cb)(lv_event_t * event);
 };
 
 struct _lv_layer_t  {
@@ -315,6 +322,15 @@ lv_draw_task_t * lv_draw_get_next_available_task(lv_layer_t * layer, lv_draw_tas
  * @return          number of tasks depending on `t_check`
  */
 uint32_t lv_draw_get_dependent_count(lv_draw_task_t * t_check);
+
+
+/**
+ * Send an event to the draw units
+ * @param name              the name of the draw unit to send the event to
+ * @param code              the event code
+ * @param param             the event parameter
+ */
+void lv_draw_unit_send_event(const char * name, lv_event_code_t code, void * param);
 
 /**
  * Initialize a layer
