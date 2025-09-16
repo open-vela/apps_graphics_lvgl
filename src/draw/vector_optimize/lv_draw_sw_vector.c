@@ -456,6 +456,7 @@ static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl,
         _set_paint_blend_mode(obj, dsc->blend_mode);
     }
 
+    tvg_paint_set_opacity(obj, state->opa);
     tvg_canvas_push(canvas, obj);
 }
 
