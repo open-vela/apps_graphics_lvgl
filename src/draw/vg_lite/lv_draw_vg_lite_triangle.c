@@ -14,7 +14,11 @@
 #include "lv_vg_lite_utils.h"
 #include "lv_vg_lite_path.h"
 #include "lv_draw_vg_lite_type.h"
-#include "lv_vg_lite_grad.h"
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    #include "../vg_lite_vector_optimize/lv_vg_lite_grad_opt.h"
+#else
+    #include "lv_vg_lite_grad.h"
+#endif
 
 /*********************
  *      DEFINES

@@ -17,15 +17,15 @@ extern "C" {
 
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 
-/*********************
- *      DEFINES
- *********************/
-#define PATH_FLAG_POLYGON  0x1
-#define PATH_FLAG_CHANGED  0x2
-
 /**********************
  *      TYPEDEFS
  **********************/
+enum {
+    PATH_FLAG_POLYGON = 0x1,
+    PATH_FLAG_CHANGED = 0x2
+};
+typedef uint8_t lv_vector_path_flags_t;
+
 struct lv_platform_path_base_t;
 
 typedef struct _lv_platform_path_handlers lv_platform_path_handlers;
@@ -74,7 +74,7 @@ struct _lv_platform_path_handlers {
 
 struct lv_platform_path_base_t {
     int16_t ref_count;
-    uint16_t flags;
+    lv_vector_path_flags_t flags;
     const lv_platform_path_handlers * handlers;
 };
 
