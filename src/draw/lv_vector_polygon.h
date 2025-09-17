@@ -20,8 +20,6 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define PATH_FLAG_POLYGON  0x1
-
 #define LV_VECTOR_POLYGON_STOP 0xF
 
 /**********************

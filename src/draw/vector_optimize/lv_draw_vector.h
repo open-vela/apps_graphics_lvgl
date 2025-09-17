@@ -321,6 +321,13 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
  */
 bool lv_vector_path_is_empty(const lv_vector_path_t * path);
 
+/**
+ * check if vector path is a polygon
+ * @param path Pointer to the vector path object to check
+ * @return true if path is a polygon, false otherwise
+ */
+bool lv_vector_path_is_polygon(const lv_vector_path_t * path);
+
 #if LV_USE_VECTOR_DUMP_INFO
 /**
  * Dump information about a vector path object

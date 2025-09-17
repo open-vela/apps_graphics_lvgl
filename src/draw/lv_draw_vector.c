@@ -508,6 +508,11 @@ bool lv_vector_path_is_empty(const lv_vector_path_t * path)
     return false;
 }
 
+bool lv_vector_path_is_polygon(const lv_vector_path_t * path)
+{
+    return path->flags & PATH_FLAG_POLYGON;
+}
+
 /* draw dsc functions */
 
 lv_vector_dsc_t * lv_vector_dsc_create(lv_layer_t * layer)

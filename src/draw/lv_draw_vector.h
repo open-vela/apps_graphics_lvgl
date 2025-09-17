@@ -27,6 +27,11 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 enum {
+    PATH_FLAG_POLYGON = 0x1
+};
+typedef uint8_t lv_vector_path_flags_t;
+
+enum {
     LV_VECTOR_FILL_NONZERO = 0,
     LV_VECTOR_FILL_EVENODD,
 };
@@ -311,6 +316,13 @@ void lv_vector_path_append_path(lv_vector_path_t * path, const lv_vector_path_t 
  * @return true if path contains no points or commands, false otherwise
  */
 bool lv_vector_path_is_empty(const lv_vector_path_t * path);
+
+/**
+ * check if vector path is a polygon
+ * @param path Pointer to the vector path object to check
+ * @return true if path is a polygon, false otherwise
+ */
+bool lv_vector_path_is_polygon(const lv_vector_path_t * path);
 
 /**
  * Create a vector graphic descriptor

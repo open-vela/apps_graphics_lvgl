@@ -263,6 +263,11 @@ bool lv_vector_path_is_empty(const lv_vector_path_t * path)
     return lv_vector_path_impl_is_empty(path->impl);
 }
 
+bool lv_vector_path_is_polygon(const lv_vector_path_t * path)
+{
+    return path->impl->flags & PATH_FLAG_POLYGON;
+}
+
 size_t lv_vector_path_get_mem_size(const lv_vector_path_t * path)
 {
     return path->impl->handlers->get_mem_size(path->impl);
