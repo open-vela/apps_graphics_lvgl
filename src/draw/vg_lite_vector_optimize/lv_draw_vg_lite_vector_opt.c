@@ -16,8 +16,7 @@
 #include "../vg_lite/lv_vg_lite_path.h"
 #include "../vg_lite/lv_vg_lite_pending.h"
 #include "../vg_lite/lv_vg_lite_utils.h"
-
-#include "lv_vg_lite_grad_opt.h"
+#include "../vg_lite/lv_vg_lite_grad.h"
 #include "lv_vg_lite_stroke_opt.h"
 #include "lv_vg_lite_stroke_path_opt.h"
 #include <float.h>

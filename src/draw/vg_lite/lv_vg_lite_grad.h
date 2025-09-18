@@ -16,7 +16,7 @@ extern "C" {
 
 #include "../../lvgl.h"
 
-#if LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC
+#if LV_USE_DRAW_VG_LITE && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)
 
 #include "lv_vg_lite_utils.h"
 
@@ -99,7 +99,7 @@ bool lv_vg_lite_draw_grad_helper(
  *      MACROS
  **********************/
 
-#endif /*LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC*/
+#endif /*LV_USE_DRAW_VG_LITE && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)*/
 
 #ifdef __cplusplus
 } /*extern "C"*/
