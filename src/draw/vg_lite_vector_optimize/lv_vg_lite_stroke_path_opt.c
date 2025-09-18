@@ -71,6 +71,13 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(lv_platform_vg_lite_path_
         return NULL;
     }
 
+    vg_lite_path_t * vg_stroke_path = lv_vg_lite_path_get_path(impl->stroke_path_cache);
+    float expand_bound = dsc->width;
+    vg_stroke_path->bounding_box[0] -= expand_bound;
+    vg_stroke_path->bounding_box[1] -= expand_bound;
+    vg_stroke_path->bounding_box[2] += expand_bound;
+    vg_stroke_path->bounding_box[3] += expand_bound;
+
     LV_PROFILER_DRAW_END;
     return impl->stroke_path_cache;
 
