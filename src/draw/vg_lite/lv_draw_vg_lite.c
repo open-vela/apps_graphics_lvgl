@@ -326,6 +326,7 @@ static void draw_event_cb(lv_event_t * e)
 
     switch(code) {
         case LV_EVENT_CANCEL: {
+#if LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE
                 /**
                  * Because VG-Lite will deinitialize the context (including the GPU independent heap)
                  * before the GPU goes to sleep, it is necessary to first discard and dereference
@@ -335,6 +336,7 @@ static void draw_event_cb(lv_event_t * e)
                 lv_cache_drop_all(lv_vg_lite_grad_ctx_get_cache(unit->grad_ctx), NULL);
                 lv_cache_drop_all(unit->stroke_cache, NULL);
                 LV_LOG_INFO("dropt all cache");
+#endif
             }
             break;
         default:
