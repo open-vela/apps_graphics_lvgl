@@ -14,11 +14,7 @@
 #include "lv_vg_lite_decoder.h"
 #include "lv_vg_lite_path.h"
 #include "lv_vg_lite_pending.h"
-#if LV_USE_VECTOR_GRAPHIC
-    #include "lv_vg_lite_grad.h"
-#elif LV_USE_VECTOR_GRAPHIC_OPTIMIZE
-    #include "../vg_lite_vector_optimize/lv_vg_lite_grad_opt.h"
-#endif
+#include "lv_vg_lite_grad.h"
 #include "lv_draw_vg_lite_type.h"
 #include <string.h>
 

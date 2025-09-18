@@ -22,7 +22,6 @@
 #include "lv_vg_lite_stroke_path.h"
 
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
-    #include "../vg_lite_vector_optimize/lv_vg_lite_grad_opt.h"
     #include "../vg_lite_vector_optimize/lv_vg_lite_stroke_opt.h"
     #include "../vg_lite_vector_optimize/lv_vg_lite_stroke_path_opt.h"
 #endif

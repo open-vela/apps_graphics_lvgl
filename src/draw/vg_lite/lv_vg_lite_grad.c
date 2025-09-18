@@ -9,7 +9,7 @@
 
 #include "lv_vg_lite_grad.h"
 
-#if LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC
+#if LV_USE_DRAW_VG_LITE && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)
 
 #include "lv_draw_vg_lite_type.h"
 #include "lv_vg_lite_pending.h"
@@ -884,4 +884,4 @@ static void lv_vg_lite_radial_gradient_dump_info(const vg_lite_radial_gradient_t
     LV_LOG_USER("spread_mode: %d", (int)grad->spread_mode);
 }
 
-#endif /*LV_USE_DRAW_VG_LITE && LV_USE_VECTOR_GRAPHIC*/
+#endif /*LV_USE_DRAW_VG_LITE && (LV_USE_VECTOR_GRAPHIC || LV_USE_VECTOR_GRAPHIC_OPTIMIZE)*/
