@@ -457,6 +457,10 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
     offset.x = lroundf(min_x);
     offset.y = lroundf(min_y);
 
+    /* Save original bounding box and expand it */
+    float orig_min_x = min_x, orig_min_y = min_y, orig_max_x = max_x, orig_max_y = max_y;
+    lv_vg_lite_path_expand_bounding_box(lv_vg_path);
+
     if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
         /* set scissor area */
         lv_vg_lite_set_scissor_area(&scissor_area);
@@ -496,6 +500,9 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
 
     /* Flush in time to avoid accumulation of drawing commands */
     lv_vg_lite_flush(u);
+
+    /* Restore original bounding box */
+    lv_vg_lite_path_set_bounding_box(lv_vg_path, orig_min_x, orig_min_y, orig_max_x, orig_max_y);
 
     LV_PROFILER_DRAW_END;
 }
