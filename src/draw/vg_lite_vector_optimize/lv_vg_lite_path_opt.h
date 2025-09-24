@@ -45,6 +45,7 @@ void lv_vg_lite_path_add_end(lv_vg_lite_path_t * path);
 void lv_vg_lite_path_upload(lv_draw_vg_lite_unit_t * u, void * impl, lv_vg_lite_path_t * vg_path);
 #endif
 void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * path);
+void lv_vg_lite_path_expand_bounding_box(lv_vg_lite_path_t * path);
 
 /**********************
  *      MACROS

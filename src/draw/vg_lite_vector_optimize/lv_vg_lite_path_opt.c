@@ -67,6 +67,23 @@ void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * vg_path)
     }
 }
 
+void lv_vg_lite_path_expand_bounding_box(lv_vg_lite_path_t * path)
+{
+    float min_x, min_y, max_x, max_y;
+    lv_vg_lite_path_get_bounding_box(path, &min_x, &min_y, &max_x, &max_y);
+
+    float width = max_x - min_x;
+    float height = max_y - min_y;
+
+    /* Expand bounding box by 1/4 of its size in each direction */
+    float new_min_x = min_x - width / 4;
+    float new_min_y = min_y - height / 4;
+    float new_max_x = max_x + width / 4;
+    float new_max_y = max_y + height / 4;
+
+    lv_vg_lite_path_set_bounding_box(path, new_min_x, new_min_y, new_max_x, new_max_y);
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
