@@ -127,11 +127,11 @@ static struct lv_platform_path_base_t * lv_vg_lite_path_create_cb(lv_vector_path
     }
     path->vg_path = lv_vg_lite_path_create(VG_LITE_FP32);
     lv_vg_lite_path_set_quality(path->vg_path, vg_quality);
-    lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+    lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 
     path->stroke_path_cache = lv_vg_lite_path_create(VG_LITE_FP32);
     lv_vg_lite_path_set_quality(path->stroke_path_cache, vg_quality);
-    lv_vg_lite_path_set_bounding_box(path->stroke_path_cache, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+    lv_vg_lite_path_set_bounding_box(path->stroke_path_cache, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
     return (lv_platform_path_base_t *)path;
 }
 
@@ -217,7 +217,7 @@ static void lv_vg_lite_path_clear_cb(struct lv_platform_path_base_t * self)
 {
     lv_platform_vg_lite_path_t * path = LV_VG_LITE_PATH_CAST(self);
     lv_vg_lite_path_reset(path->vg_path, path->vg_path->base.format);
-    lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+    lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 }
 
 static void lv_vg_lite_path_get_bounds_cb(struct lv_platform_path_base_t * self, lv_area_t * area)
@@ -340,7 +340,7 @@ static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, 
     if(vg_path) {
         /* Create a temporary path for transformed data */
         lv_vg_lite_path_t * temp_path = lv_vg_lite_path_create(vg_path->format);
-        lv_vg_lite_path_set_bounding_box(temp_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+        lv_vg_lite_path_set_bounding_box(temp_path, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 
         lv_vg_lite_path_transform_ctx_t ctx = {
             .matrix = &vg_matrix,
@@ -352,7 +352,7 @@ static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, 
 
         /* Replace original path with transformed one */
         lv_vg_lite_path_reset(path->vg_path, path->vg_path->base.format);
-        lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+        lv_vg_lite_path_set_bounding_box(path->vg_path, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
         lv_vg_lite_path_append_path(path->vg_path, temp_path);
         lv_vg_lite_path_update_bounding_box_after_append(path->vg_path, temp_path);
         lv_vg_lite_path_destroy(temp_path);
