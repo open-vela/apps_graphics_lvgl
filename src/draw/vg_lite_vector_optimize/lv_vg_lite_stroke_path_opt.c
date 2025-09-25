@@ -62,7 +62,7 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(lv_platform_vg_lite_path_
     LV_PROFILER_DRAW_BEGIN;
     LV_ASSERT_NULL(impl->stroke_path_cache);
     lv_vg_lite_path_reset(impl->stroke_path_cache, VG_LITE_FP32);
-    lv_vg_lite_path_set_bounding_box(impl->stroke_path_cache, FLT_MAX, FLT_MAX, FLT_MIN, FLT_MIN);
+    lv_vg_lite_path_set_bounding_box(impl->stroke_path_cache, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX);
 
     if(!lv_vector_stroke_generate((lv_platform_path_base_t *)impl, dsc, vg_path_generate_cb, impl->stroke_path_cache)) {
         lv_vg_lite_path_destroy(impl->stroke_path_cache);
