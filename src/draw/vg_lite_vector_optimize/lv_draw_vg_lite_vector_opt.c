@@ -459,13 +459,13 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
 
     /* Save original bounding box and expand it */
     float orig_min_x = min_x, orig_min_y = min_y, orig_max_x = max_x, orig_max_y = max_y;
-    lv_vg_lite_path_expand_bounding_box(lv_vg_path);
-
     if(vg_lite_query_feature(gcFEATURE_BIT_VG_SCISSOR)) {
         /* set scissor area */
         lv_vg_lite_set_scissor_area(&scissor_area);
         LV_LOG_TRACE("Set scissor area: X1:%" LV_PRId32 ", Y1:%" LV_PRId32 ", X2:%" LV_PRId32 ", Y2:%" LV_PRId32,
                      scissor_area.x1, scissor_area.y1, scissor_area.x2, scissor_area.y2);
+
+        lv_vg_lite_path_expand_bounding_box(lv_vg_path);
     }
     else {
         /* calc inverse matrix */
