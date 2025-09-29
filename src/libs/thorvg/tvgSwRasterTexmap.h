@@ -1042,8 +1042,10 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             if (line->x[0] > 1) pixel = *(dst - 1);
             else pixel = *dst;
 
+            int len = line->length[0];
+            if (len > width) len = width;
             pos = 1;
-            while (pos <= line->length[0]) {
+            while (pos <= len) {
                 *dst = INTERPOLATE(*dst, pixel, line->coverage[0] * pos);
                 ++dst;
                 ++pos;
@@ -1054,9 +1056,12 @@ static bool _apply(SwSurface* surface, AASpans* aaSpans)
             if (line->x[1] < (int32_t)(surface->w - 1)) pixel = *(dst + 1);
             else pixel = *dst;
 
+
+            len = line->length[1];
+            if (len > width) len = width;
             pos = width;
-            while ((int32_t)(width - line->length[1]) < pos) {
-                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * (line->length[1] - (width - pos))));
+            while (width - len < pos) {
+                *dst = INTERPOLATE(*dst, pixel, 255 - (line->coverage[1] * (len - (width - pos))));
                 --dst;
                 --pos;
             }
