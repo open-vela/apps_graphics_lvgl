@@ -171,6 +171,7 @@ void test_arc_click_sustained_from_start_to_end_does_not_set_value_to_max(void)
 
     lv_obj_set_size(_test_arc, 100, 100);
     lv_obj_center(_test_arc);
+    lv_obj_update_layout(_test_arc);
     lv_obj_add_event_cb(_test_arc, dummy_event_cb, LV_EVENT_PRESSED, NULL);
     test_arc_event_cnt = 0;
 

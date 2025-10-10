@@ -43,6 +43,7 @@
 #define LV_USE_BIDI 1
 #define LV_USE_ARABIC_PERSIAN_CHARS 1
 #define LV_USE_PERF_MONITOR         1
+#define LV_USE_PERF_MONITOR_LOG_MODE 1
 #define LV_USE_MEM_MONITOR          1
 #define LV_LABEL_TEXT_SELECTION     1
 

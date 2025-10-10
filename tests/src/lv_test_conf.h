@@ -126,7 +126,6 @@ typedef void * lv_user_data_t;
 #endif
 
 /*For screenshots*/
-#undef LV_USE_PERF_MONITOR
 #undef LV_USE_MEM_MONITOR
 #undef LV_DPI_DEF
 #define  LV_DPI_DEF         130

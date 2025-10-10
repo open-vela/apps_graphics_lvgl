@@ -29,9 +29,6 @@
 /* Simulate VG-Lite hardware using ThorVG */
 #define LV_USE_VG_LITE_THORVG       1
 
-/* Enable performance monitor log mode for build test */
-#define LV_USE_PERF_MONITOR_LOG_MODE 1
-
 /*Using matrix for transformations.
  *Requirements:
     `LV_USE_MATRIX = 1`.
