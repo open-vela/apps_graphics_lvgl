@@ -289,6 +289,7 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
 
     switch(code) {
         case LV_EVENT_REFR_START:
+            lv_draw_unit_send_event(NULL, LV_EVENT_REFR_START, NULL);
             info->measured.refr_interval_sum += lv_tick_elaps(info->measured.prev_refr_start);
             info->measured.prev_refr_start = perf_global.refr_start;
             break;
@@ -304,8 +305,11 @@ static void lv_sysmon_perf_update_info(lv_sysmon_perf_info_t * info, lv_event_co
                 }
                 info->calculated.duration = lv_tick_elaps(info->measured.perf_start);
             }
+            lv_value_precise_t gpu_run_time = 0;
+            lv_draw_unit_send_event(NULL, LV_EVENT_RENDER_READY, &gpu_run_time);
             info->measured.render_elaps_sum += lv_tick_elaps(perf_global.render_start);
             info->measured.render_cnt++;
+            info->measured.gpu_run_time_sum += gpu_run_time;
             break;
         case LV_EVENT_FLUSH_START:
         case LV_EVENT_FLUSH_WAIT_START:
@@ -370,6 +374,8 @@ static void lv_sysmon_perf_calculate_info(lv_sysmon_perf_info_t * info, bool sta
     info->calculated.render_avg_time = info->measured.render_cnt ? ((lv_value_precise_t)(info->measured.render_elaps_sum -
                                                                                          info->measured.flush_in_render_elaps_sum) /
                                                                     info->measured.render_cnt) : 0;
+    info->calculated.gpu_run_avg_time = info->measured.render_cnt ? ((lv_value_precise_t)info->measured.gpu_run_time_sum /
+                                                                     info->measured.render_cnt) : 0;
 }
 
 static void lv_sysmon_perf_update_scrolls(lv_sysmon_perf_t * perf, lv_event_code_t code)

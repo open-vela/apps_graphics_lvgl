@@ -73,6 +73,7 @@ typedef struct {
         uint32_t refr_cnt;
         uint32_t render_elaps_sum; /*Contains the flush time too*/
         uint32_t render_cnt;
+        lv_value_precise_t gpu_run_time_sum;
         uint32_t flush_in_render_start;
         uint32_t flush_in_render_elaps_sum;
         uint32_t flush_not_in_render_start;
@@ -88,6 +89,7 @@ typedef struct {
         lv_value_precise_t refr_avg_time;
         lv_value_precise_t render_avg_time;       /**< Pure rendering time without flush time*/
         lv_value_precise_t flush_avg_time;        /**< Pure flushing time without rendering time*/
+        lv_value_precise_t gpu_run_avg_time;
     } calculated;
 
 } lv_sysmon_perf_info_t;

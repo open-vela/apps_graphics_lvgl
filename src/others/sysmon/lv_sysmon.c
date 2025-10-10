@@ -158,19 +158,26 @@ static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
     LV_UNUSED(label);
     LV_LOG("sysmon: "
            "%" LV_PRFv32(".2f") " FPS (refr_cnt: %" LV_PRIu32 " | redraw_cnt: %" LV_PRIu32" | refr_rate: %" LV_PRFv32(".2f") "), "
-           "refr %" LV_PRFv32(".2f") "ms (render %" LV_PRFv32(".2f") "ms | flush %" LV_PRFv32(".2f") "ms), "
-           "CPU %" LV_PRIu32 "%%\n",
+           "refr %" LV_PRFv32(".2f") "ms (render %" LV_PRFv32(".2f") "ms | flush %" LV_PRFv32(".2f") "ms), GPU time %"
+           LV_PRFv32(".2f") "ms, "
+           "CPU %" LV_PRIu32 "%%, GPU %" LV_PRFv32(".2f") "%%\n",
            perf->calculated.fps, perf->measured.refr_cnt, perf->measured.render_cnt, perf->calculated.fps_refr,
            perf->calculated.refr_avg_time, perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
-           perf->calculated.cpu);
+           perf->calculated.gpu_run_avg_time, perf->calculated.cpu,
+           perf->calculated.render_avg_time > 0 ? perf->calculated.gpu_run_avg_time /
+           perf->calculated.render_avg_time * 100 : 0);
 #else
     lv_label_set_text_fmt(
         label,
         "%" LV_PRFv32(".2f") "/" "%" LV_PRFv32(".2f") " FPS, %" LV_PRIu32 "%% CPU\n"
-        "%" LV_PRFv32(".2f")" ms (%" LV_PRFv32(".2f")" | %" LV_PRFv32(".2f")")",
+        "%" LV_PRFv32(".2f")" ms (%" LV_PRFv32(".2f")" | %" LV_PRFv32(".2f")")"
+        "%" LV_PRFv32(".2f")" ms (%" LV_PRFv32(".2f"),
         perf->calculated.fps, perf->calculated.fps_refr, perf->calculated.cpu,
         perf->calculated.render_avg_time + perf->calculated.flush_avg_time,
-        perf->calculated.render_avg_time, perf->calculated.flush_avg_time
+        perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
+        perf->calculated.gpu_run_avg_time,
+        perf->calculated.render_avg_time > 0 ? perf->calculated.gpu_run_avg_time /
+        perf->calculated.render_avg_time * 100 : 0
     );
 #endif /*LV_USE_PERF_MONITOR_LOG_MODE*/
 }

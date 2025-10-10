@@ -154,12 +154,14 @@ class vg_lite_ctx
         void * target_buffer;
         vg_lite_uint32_t target_px_size;
         vg_lite_buffer_format_t target_format;
+        vg_lite_uint32_t run_time;
 
     public:
         vg_lite_ctx()
             : target_buffer { nullptr }
             , target_px_size { 0 }
             , target_format { VG_LITE_BGRA8888 }
+            , run_time { 0 }
             , clut_2colors { 0 }
             , clut_4colors { 0 }
             , clut_16colors { 0 }
@@ -787,6 +789,8 @@ extern "C" {
             return VG_LITE_SUCCESS;
         }
 
+        uint32_t start_time = lv_tick_get();
+
         TVG_CHECK_RETURN_VG_ERROR(ctx->canvas->sync());
         TVG_CHECK_RETURN_VG_ERROR(ctx->canvas->clear(true));
 
@@ -853,6 +857,8 @@ extern "C" {
         /* finish convert, clean target buffer info */
         ctx->target_buffer = nullptr;
         ctx->target_px_size = 0;
+
+        ctx->run_time += lv_tick_elaps(start_time);
 
         return VG_LITE_SUCCESS;
     }
@@ -2102,7 +2108,7 @@ Empty_sequence_handler:
 
     vg_lite_error_t vg_lite_get_parameter(vg_lite_param_type_t type,
                                           vg_lite_int32_t count,
-                                          vg_lite_float_t * params)
+                                          vg_lite_pointer params)
     {
         switch(type) {
             case VG_LITE_GPU_IDLE_STATE:
@@ -2113,6 +2119,9 @@ Empty_sequence_handler:
                 *(vg_lite_uint32_t *)params = 1;
                 return VG_LITE_SUCCESS;
 
+            case VG_LITE_HARDWARE_RUNNING_TIME:
+                *(float *)params = vg_lite_ctx::get_instance()->run_time / 1000.0f;
+                return VG_LITE_SUCCESS;
             default:
                 break;
         }

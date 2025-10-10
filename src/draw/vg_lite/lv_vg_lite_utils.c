@@ -1476,6 +1476,14 @@ void lv_vg_lite_set_color_key(const lv_image_colorkey_t * colorkey)
     LV_VG_LITE_CHECK_ERROR(vg_lite_set_color_key(vg_colorkey), {});
 }
 
+float lv_vg_lite_get_running_time(void)
+{
+    float time = 0;
+    LV_VG_LITE_CHECK_ERROR(vg_lite_get_parameter(VG_LITE_HARDWARE_RUNNING_TIME, 1, &time), {});
+    /* Convert to millisecond */
+    return time * 1000;
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/

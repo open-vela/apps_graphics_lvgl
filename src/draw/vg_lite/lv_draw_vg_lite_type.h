@@ -60,6 +60,9 @@ struct _lv_draw_vg_lite_unit_t {
     struct _lv_vg_lite_path_t * stroke_path;
     bool path_in_use;
     bool stroke_path_in_use;
+
+    float run_time_start;
+    float run_time_last;
 };
 
 /**********************

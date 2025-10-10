@@ -323,6 +323,7 @@ static int32_t draw_delete(lv_draw_unit_t * draw_unit)
 static void draw_event_cb(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+    lv_draw_vg_lite_unit_t * unit = lv_event_get_current_target(e);
 
     switch(code) {
         case LV_EVENT_CANCEL: {
@@ -332,11 +333,21 @@ static void draw_event_cb(lv_event_t * e)
                  * before the GPU goes to sleep, it is necessary to first discard and dereference
                  * all caches that depend on the independent heap.
                  */
-                lv_draw_vg_lite_unit_t * unit = lv_event_get_current_target(e);
                 lv_cache_drop_all(lv_vg_lite_grad_ctx_get_cache(unit->grad_ctx), NULL);
                 lv_cache_drop_all(unit->stroke_cache, NULL);
                 LV_LOG_INFO("dropt all cache");
 #endif
+            }
+            break;
+        case LV_EVENT_REFR_START: {
+                unit->run_time_start = lv_vg_lite_get_running_time();
+            }
+            break;
+        case LV_EVENT_RENDER_READY: {
+                unit->run_time_last = lv_vg_lite_get_running_time() - unit->run_time_start;
+                if(e->param) {
+                    *(lv_value_precise_t *)(e->param) += (lv_value_precise_t)unit->run_time_last;
+                }
             }
             break;
         default:

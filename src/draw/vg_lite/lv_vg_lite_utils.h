@@ -179,6 +179,8 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u);
 
 void lv_vg_lite_set_color_key(const lv_image_colorkey_t * colorkey);
 
+float lv_vg_lite_get_running_time(void);
+
 static inline void lv_vg_lite_draw(vg_lite_buffer_t * target,
                                    vg_lite_path_t * path,
                                    vg_lite_fill_t fill_rule,
