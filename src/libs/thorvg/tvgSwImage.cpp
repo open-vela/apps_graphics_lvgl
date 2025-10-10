@@ -130,7 +130,40 @@ bool imagePrepare(SwImage* image, const RenderMesh* mesh, const Matrix* transfor
     }
 
     if (!_genOutline(image, mesh, transform, mpool, tid)) return false;
-    return mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, image->direct);
+    if(!mathUpdateOutlineBBox(image->outline, clipRegion, renderRegion, image->direct)) return false ;
+
+    if (image->direct) {
+        // Check and adjust top margin (to prevent negative coordinates)
+        auto minY = renderRegion.min.y + image->oy;
+        if (minY < 0) {
+            renderRegion.min.y -= minY;// Move min.y down so that the source coordinate is >= 0
+        }
+
+        // Check and adjust the left margin (to prevent negative coordinates)
+        auto minX = renderRegion.min.x + image->ox;
+        if (minX < 0) {
+            renderRegion.min.x -= minX;// Move min.x to the right so that the source coordinate is >= 0
+        }
+
+        // Check and adjust the bottom border (to prevent it from exceeding the image height)
+        auto maxY = renderRegion.max.y + image->oy;
+        if (maxY > (int32_t)image->h) {
+            renderRegion.max.y -= (maxY - image->h);
+        }
+
+        // Check and adjust the right margin (to prevent it from exceeding the image width)
+        auto maxX = renderRegion.max.x + image->ox;
+        if (maxX > (int32_t)image->w) {
+            renderRegion.max.x -= (maxX - image->w);
+        }
+
+        // Verify that the adjusted region is still valid
+        if (renderRegion.min.x >= renderRegion.max.x ||
+            renderRegion.min.y >= renderRegion.max.y) {
+            return false;
+        }
+    }
+    return true ;
 }
 
 
