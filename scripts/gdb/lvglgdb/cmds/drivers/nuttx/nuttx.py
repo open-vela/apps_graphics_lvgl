@@ -41,7 +41,9 @@ class Lvglobal(gdb.Command):
         if not args.pid:
             print("LVGL is in multi-process mode; please provide --pid.")
             return
-        lv_key = utils.gdb_eval_or_none("lv_nuttx_tlskey")
+        lv_key = utils.gdb_eval_or_none("lv_nuttx_tlskey") or utils.gdb_eval_or_none(
+            "lv_global_default::index"
+        )
         if lv_key is None:
             lv_key = utils.gdb_eval_or_none("lv_global_default::index")
         if lv_key is None:
