@@ -23,6 +23,7 @@
  **********************/
 
 typedef struct {
+    lv_timer_t * ori_timer;
     lv_timer_cb_t ori_timer_cb;
     void * ori_user_data;
 } timer_ctx_t;
@@ -113,7 +114,7 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
         OPT_BOOLEAN(0, "resume", &resume, "resume timer", NULL, 0, 0),
         OPT_BOOLEAN(0, "ready", &ready, "ready timer", NULL, 0, 0),
         OPT_BOOLEAN(0, "reset", &reset, "reset timer", NULL, 0, 0),
-        OPT_BOOLEAN(0, "enable", &enable, "enable or disable all timer", NULL, 0, 0),
+        OPT_INTEGER(0, "enable", &enable, "enable or disable all timer. -1: disable all, 1: enable all", NULL, 0, 0),
         OPT_INTEGER(0, "hook", &hook, "hool timer callback", NULL, 0, 0),
         OPT_BOOLEAN(0, "del", &delete_timer, "delete timer", NULL, 0, 0),
         OPT_END(),
@@ -137,20 +138,24 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
                 t = lv_timer_get_next(t);
             }
         }
+
+        return LV_RESULT_OK;
     }
 
     if(enable) {
         lv_timer_enable(enable > 0 ? true : false);
+        return LV_RESULT_OK;
     }
 
     if(hook == 0) {
-        if(!timer_ctx->ori_timer_cb) {
-            LV_LOG_WARN("timer hook: %p not set", (void *)(lv_uintptr_t)timer_ctx->ori_timer_cb);
+        if(!timer_ctx->ori_timer) {
+            LV_LOG_WARN("timer hook not set");
             return LV_RESULT_INVALID;
         }
 
-        lv_timer_set_cb(timer, timer_ctx->ori_timer_cb);
-        lv_timer_set_user_data(timer, timer_ctx->ori_user_data);
+        lv_timer_set_cb(timer_ctx->ori_timer, timer_ctx->ori_timer_cb);
+        lv_timer_set_user_data(timer_ctx->ori_timer, timer_ctx->ori_user_data);
+        timer_ctx->ori_timer = NULL;
         timer_ctx->ori_timer_cb = NULL;
         timer_ctx->ori_user_data = NULL;
         LV_LOG_USER("timer unhooked");
@@ -193,6 +198,7 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
             return LV_RESULT_INVALID;
         }
 
+        timer_ctx->ori_timer = timer;
         timer_ctx->ori_timer_cb = timer->timer_cb;
         timer_ctx->ori_user_data = timer->user_data;
 
@@ -203,6 +209,14 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
     }
 
     if(delete_timer) {
+        if(timer == timer_ctx->ori_timer) {
+            LV_LOG_USER("clearing timer hooked: %p, user_data: %p", (void *)(lv_uintptr_t)timer_ctx->ori_timer_cb,
+                        timer_ctx->ori_user_data);
+            timer_ctx->ori_timer = NULL;
+            timer_ctx->ori_timer_cb = NULL;
+            timer_ctx->ori_user_data = NULL;
+        }
+
         lv_timer_delete(timer);
         LV_LOG_USER("timer deleted");
     }
