@@ -511,9 +511,36 @@ void test_remote_ctrl_timer(void)
     /* Test invalid args */
     test_invalid_arg("timer");
 
+    /* Test enable or disable timer */
+    const char * argv_zero_disable[] = {
+        "timer",
+        "--enable", "0",
+    };
+
+    /* 0 was not a valid value for enable/disable */
+    execute_args(ARRAY_SIZE(argv_zero_disable), argv_zero_disable, LV_RESULT_INVALID);
+
+    const char * argv_disable[] = {
+        "timer",
+        "--enable", "-1",
+    };
+    execute_args(ARRAY_SIZE(argv_disable), argv_disable, LV_RESULT_OK);
+
+    const char * argv_enable[] = {
+        "timer",
+        "--enable", "1",
+    };
+    execute_args(ARRAY_SIZE(argv_enable), argv_enable, LV_RESULT_OK);
+
     /* Create a test timer */
     lv_timer_t * timer = lv_timer_create(dummy_timer_cb, 100, NULL);
     TEST_ASSERT_NOT_NULL(timer);
+
+    const char * argv_dump_all[] = {
+        "timer",
+        "--dump",
+    };
+    execute_args(ARRAY_SIZE(argv_dump_all), argv_dump_all, LV_RESULT_OK);
 
     /* Test dump timer info */
     char timer_buf[32];
@@ -532,6 +559,16 @@ void test_remote_ctrl_timer(void)
         "--period", "200",
     };
     execute_args(ARRAY_SIZE(argv_period), argv_period, LV_RESULT_OK);
+    TEST_ASSERT_EQUAL(200, timer->period);
+
+    /* Test set null timer period */
+    const char * argv_null_timer_period[] = {
+        "timer",
+        "--period", "400",
+    };
+    execute_args(ARRAY_SIZE(argv_null_timer_period), argv_null_timer_period, LV_RESULT_INVALID);
+
+    /* Should not change period */
     TEST_ASSERT_EQUAL(200, timer->period);
 
     /* Test pause timer */
@@ -575,7 +612,6 @@ void test_remote_ctrl_timer(void)
     /* Test disable hook */
     const char * argv_hook_disable[] = {
         "timer",
-        "--timer", timer_buf,
         "--hook", "0",
     };
     execute_args(ARRAY_SIZE(argv_hook_disable), argv_hook_disable, LV_RESULT_OK);
@@ -588,6 +624,9 @@ void test_remote_ctrl_timer(void)
         "--reset",
     };
     execute_args(ARRAY_SIZE(argv_reset), argv_reset, LV_RESULT_OK);
+
+    /* Test hook timer before delete */
+    execute_args(ARRAY_SIZE(argv_hook_enable), argv_hook_enable, LV_RESULT_OK);
 
     /* Test delete timer */
     const char * argv_del[] = {
