@@ -76,6 +76,7 @@ void lv_draw_g2d_init(void)
     draw_g2d_unit->base_unit.dispatch_cb = _g2d_dispatch;
     draw_g2d_unit->base_unit.evaluate_cb = _g2d_evaluate;
     draw_g2d_unit->base_unit.delete_cb = LV_USE_OS ? lv_draw_g2d_delete : NULL;
+    draw_g2d_unit->base_unit.name = "G2D";
 
     lv_g2d_init();
 
