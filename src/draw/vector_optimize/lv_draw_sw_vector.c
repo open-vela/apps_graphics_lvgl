@@ -436,18 +436,23 @@ static void _task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl,
             0.0f, 0.0f, 1.0f,
         };
         _set_paint_matrix(obj, &mtx);
-        tvg_shape_append_rect(obj, rc.x, rc.y, rc.w, rc.h, 0, 0);
+        tvg_shape_append_rect(obj, rc.x + state->translate_x, rc.y + state->translate_y, rc.w, rc.h, 0, 0);
         tvg_shape_set_fill_color(obj, c.r, c.g, c.b, c.a);
     }
     else {
+        lv_matrix_t matrix;
+        lv_matrix_identity(&matrix);
+        lv_matrix_translate(&matrix, state->translate_x, state->translate_y);
+        lv_matrix_multiply(&matrix, &dsc->matrix);
+
         Tvg_Matrix mtx;
-        _lv_matrix_to_tvg(&mtx, &dsc->matrix);
+        _lv_matrix_to_tvg(&mtx, &matrix);
         _set_paint_matrix(obj, &mtx);
 
         _set_paint_shape(obj, path);
 
         if(dsc->fill_dsc->opa > 0) {
-            _set_paint_fill(obj, canvas, dsc->fill_dsc, &dsc->matrix, state->opa);
+            _set_paint_fill(obj, canvas, dsc->fill_dsc, &matrix, state->opa);
         }
 
         if(dsc->stroke_dsc->opa > 0) {
