@@ -388,14 +388,14 @@ void argparse_usage(struct argparse * self)
         ssize_t remain = sizeof(log_buf);
 
 #define APPEND_LOG_FMT(...) \
-    do { \
+    { \
         pos += lv_snprintf(log_buf + pos, remain, __VA_ARGS__); \
         remain -= pos; \
         if(remain <= 0) { \
             LV_LOG_ERROR("log_buf not enough, string may be truncated"); \
             continue; \
         } \
-    } while(0)
+    }
 
         APPEND_LOG_FMT("    ");
         if(options->short_name) {
