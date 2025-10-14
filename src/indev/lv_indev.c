@@ -447,6 +447,8 @@ void lv_indev_set_cursor(lv_indev_t * indev, lv_obj_t * cur_obj)
     if(indev->type != LV_INDEV_TYPE_POINTER) return;
 
     indev->cursor = cur_obj;
+    if(!indev->cursor) return;
+
     lv_obj_set_parent(indev->cursor, lv_display_get_layer_sys(indev->disp));
     lv_obj_set_pos(indev->cursor, indev->pointer.act_point.x, indev->pointer.act_point.y);
     lv_obj_remove_flag(indev->cursor, LV_OBJ_FLAG_CLICKABLE);
