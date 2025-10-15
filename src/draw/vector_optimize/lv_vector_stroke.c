@@ -769,12 +769,13 @@ static void path_to_stroke_cb(lv_vector_path_op_t op, const lv_fpoint_t * pt, vo
 {
     lv_base_generator * gen = (lv_base_generator *)data;
     if(!gen) {
-        LV_LOG_WARN("Null generator in path_to_stroke_cb");
+        LV_LOG_WARN("Null generator");
         return;
     }
 
+    /* LV_VECTOR_POLYGON_STOP=0xF > LV_VECTOR_PATH_OP_CLOSE */
     if(!pt && op < LV_VECTOR_PATH_OP_CLOSE) {
-        LV_LOG_WARN("Null point in path_to_stroke_cb");
+        LV_LOG_WARN("Null point, op = %d", op);
         return;
     }
 
@@ -788,6 +789,10 @@ start:
 
     switch(state) {
         case LV_BASE_GEN_INITIAL: {
+                if(!pt) {
+                    LV_LOG_WARN("Null point, op = %d", op);
+                    return;
+                }
                 gen->last_op = op;
                 gen->start_point = *pt;
                 gen->state = LV_BASE_GEN_START_ACCUMULATE;
@@ -807,6 +812,10 @@ start:
         case LV_BASE_GEN_ACCUMULATE: {
                 gen->last_op = op;
                 if(op < LV_VECTOR_PATH_OP_CLOSE) {
+                    if(!pt) {
+                        LV_LOG_WARN("Null point, op = %d", op);
+                        return;
+                    }
                     if(op == LV_VECTOR_PATH_OP_MOVE_TO) {
                         gen->start_point = *pt;
                         gen->state = LV_BASE_GEN_GENERATE;
