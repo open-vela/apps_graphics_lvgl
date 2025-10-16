@@ -1167,6 +1167,8 @@ static void indev_button_proc(lv_indev_t * i, lv_indev_data_t * data)
 
 static void indev_proc_long_press(lv_indev_t * indev)
 {
+    if(indev_obj_act == NULL) return;
+
     const bool is_disabled = lv_obj_has_state(indev_obj_act, LV_STATE_DISABLED);
 
     /*If there is no scrolling then check for long press time*/
