@@ -230,6 +230,8 @@ void lv_span_set_text(lv_span_t * span, const char * text)
 #else
     lv_memcpy(span->txt, text, text_alloc_len);
 #endif
+
+    refresh_self_size(span->spangroup);
 }
 
 void lv_span_set_text_static(lv_span_t * span, const char * text)
@@ -253,6 +255,8 @@ void lv_span_set_text_static(lv_span_t * span, const char * text)
 #else
     span->txt = (char *)text;
 #endif
+
+    refresh_self_size(span->spangroup);
 }
 
 void lv_spangroup_set_align(lv_obj_t * obj, lv_text_align_t align)
