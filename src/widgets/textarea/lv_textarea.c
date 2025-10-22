@@ -60,6 +60,7 @@ static void draw_placeholder(lv_event_t * e);
 static void draw_cursor(lv_event_t * e);
 static void auto_hide_characters(lv_obj_t * obj);
 static inline bool is_valid_but_non_printable_char(const uint32_t letter);
+static void calc_placeholder_text_size(lv_obj_t * obj);
 
 /**********************
  *  STATIC VARIABLES
@@ -348,6 +349,8 @@ void lv_textarea_set_placeholder_text(lv_obj_t * obj, const char * txt)
 
         lv_strcpy(ta->placeholder_txt, txt);
         ta->placeholder_txt[txt_len] = '\0';
+
+        calc_placeholder_text_size(obj);
     }
 
     lv_obj_invalidate(obj);
@@ -450,7 +453,6 @@ void lv_textarea_set_password_mode(lv_obj_t * obj, bool en)
 void lv_textarea_set_password_bullet(lv_obj_t * obj, const char * bullet)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
-    LV_ASSERT_NULL(bullet);
 
     lv_textarea_t * ta = (lv_textarea_t *)obj;
 
@@ -499,6 +501,9 @@ void lv_textarea_set_one_line(lv_obj_t * obj, bool en)
     }
 
     lv_obj_scroll_to(obj, 0, 0, LV_ANIM_OFF);
+
+    /* update placeholder text size */
+    calc_placeholder_text_size(obj);
 }
 
 void lv_textarea_set_accepted_chars(lv_obj_t * obj, const char * list)
@@ -1316,6 +1321,7 @@ static void draw_placeholder(lv_event_t * e)
         lv_area_copy(&ph_coords, &obj->coords);
         lv_area_move(&ph_coords, left + border_width, top + border_width);
         ph_dsc.text = ta->placeholder_txt;
+        ph_dsc.text_size = ta->placeholder_txt_size;
         lv_draw_label(layer, &ph_dsc, &ph_coords);
     }
 }
@@ -1396,6 +1402,21 @@ static inline bool is_valid_but_non_printable_char(const uint32_t letter)
     }
 
     return false;
+}
+
+static void calc_placeholder_text_size(lv_obj_t * obj)
+{
+    lv_textarea_t * ta = (lv_textarea_t *)obj;
+
+    lv_draw_label_dsc_t ph_dsc;
+    lv_draw_label_dsc_init(&ph_dsc);
+    lv_obj_init_draw_label_dsc(obj, LV_PART_TEXTAREA_PLACEHOLDER, &ph_dsc);
+    ph_dsc.text = ta->placeholder_txt;
+    if(ta->one_line) ph_dsc.flag |= LV_TEXT_FLAG_EXPAND;
+
+    lv_text_get_size(&ta->placeholder_txt_size, ph_dsc.text, ph_dsc.font, ph_dsc.letter_space, ph_dsc.line_space,
+                     LV_COORD_MAX,
+                     ph_dsc.flag);
 }
 
 #endif

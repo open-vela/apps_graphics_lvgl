@@ -28,6 +28,7 @@ extern "C" {
 #define LV_OBJ_STYLE_CACHE          0
 #define LV_BIN_DECODER_RAM_LOAD     1   /* Run test with bin image loaded to RAM */
 #define LV_USE_VECTOR_GRAPHIC_OPTIMIZE 1
+#define LV_USE_TEXTFLOW             1
 #endif
 
 #ifdef LVGL_CI_USING_DEF_HEAP
