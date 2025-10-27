@@ -113,6 +113,11 @@ elseif (OPTIONS_TEST_SYSHEAP)
     filter_compiler_options (C TEST_LIBS ${SANITIZE_AND_COVERAGE_OPTIONS})
     set (LV_CONF_BUILD_DISABLE_EXAMPLES ON)
     set (ENABLE_TESTS ON)
+
+    if ($ENV{NON_AMD64_BUILD})
+        add_definitions(-DLV_USE_ARM_MVE_SW=1)
+    endif()
+
 elseif (OPTIONS_TEST_DEFHEAP)
     set (BUILD_OPTIONS ${LVGL_TEST_OPTIONS_TEST_DEFHEAP})
     filter_compiler_options (C TEST_LIBS ${SANITIZE_AND_COVERAGE_OPTIONS})
@@ -134,7 +139,7 @@ elseif (OPTIONS_TEST_VG_LITE)
     # In 32-bit systems, the output of ThorVG's anti-aliasing algorithm has a slight deviation.
     if ($ENV{NON_AMD64_BUILD})
         # Set a tolerance value for the VG-Lite tests.
-        add_definitions(-DREF_IMG_TOLERANCE=9)
+        add_definitions(-DREF_IMG_TOLERANCE=9 -DLV_USE_ARM_MVE_SW=1)
     endif()
 else()
     message(FATAL_ERROR "Must provide a known options value (check main.py?).")

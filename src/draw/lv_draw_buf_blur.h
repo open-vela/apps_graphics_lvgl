@@ -26,6 +26,7 @@ extern "C" {
 
 typedef enum {
     LV_DRAW_BUF_BLUR_TYPE_EXP,
+    _LV_DRAW_BUF_BLUR_TYPE_LAST,
 } lv_draw_buf_blur_type_t;
 
 typedef struct {

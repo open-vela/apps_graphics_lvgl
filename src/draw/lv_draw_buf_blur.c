@@ -11,14 +11,20 @@
 #include "lv_draw_buf_blur.h"
 #include <math.h>
 
-#ifdef CONFIG_ARM_HAVE_MVE
+/* LV_USE_ARM_MVE_SW is only used for code testing */
+
+#if defined(CONFIG_ARM_HAVE_MVE) || defined(LV_USE_ARM_MVE_SW)
     #define LV_DRAW_BUF_BLUR_MVE_OPT 1
 #else
     #define LV_DRAW_BUF_BLUR_MVE_OPT 0
 #endif
 
 #if LV_DRAW_BUF_BLUR_MVE_OPT
-    #include <arm_mve.h>
+    #ifdef LV_USE_ARM_MVE_SW
+        #include "../libs/arm_mve_sw/arm_mve_sw.h"
+    #else
+        #include <arm_mve.h>
+    #endif
 #endif
 
 /*********************
@@ -262,9 +268,6 @@ static void exp_blur(uint8_t * dst,
                      int32_t aprec,
                      int32_t zprec)
 {
-    if(radius < 1)
-        return;
-
     /**
      * calculate the alpha such that 90% of
      * the kernel is within the radius.
@@ -286,7 +289,7 @@ static void exp_blur(uint8_t * dst,
 static inline void exp_blur_row_q8_mve(uint8_t * dst,
                                        const uint8_t * src,
                                        int32_t width,
-                                       int32_t /* height */,
+                                       int32_t height,
                                        int32_t stride,
                                        int32_t line,
                                        int32_t alpha,
@@ -296,6 +299,7 @@ static inline void exp_blur_row_q8_mve(uint8_t * dst,
     const uint8_t * input1 = &(src[(line + 1) * stride]);
     uint8_t * output0 = &(dst[line * stride]);
     uint8_t * output1 = &(dst[(line + 1) * stride]);
+    LV_UNUSED(height);
 
     uint32x4_t sum0 = vldrbq_u32(input0);
     uint32x4_t sum1 = vldrbq_u32(input1);
@@ -342,8 +346,9 @@ static inline void exp_blur_col_q8_mve(uint8_t * dst,
     uint8_t * scancol = dst + x * 4;
     uint16x8_t sum = vldrbq_u16(scancol);
     uint16x8_t zRGBA;
+    LV_UNUSED(width);
 
-    for(int32_t index = stride; index < (height - 1) * stride; index += stride) {
+    for(int32_t index = stride; index < height * stride; index += stride) {
         zRGBA = vldrbq_u16(&scancol[index]);
         sum = vmulq_n_u16(sum, inv_alpha);
         sum = vmlaq_n_u16(sum, zRGBA, alpha);
@@ -374,8 +379,9 @@ static inline void exp_blur_8col_q8_mve(uint8_t * dst,
     uint16x8_t sum2 = vldrbq_u16(scancol + 16); /* load 2 pixels of rgba8888*/
     uint16x8_t sum3 = vldrbq_u16(scancol + 24); /* load 2 pixels of rgba8888*/
     uint16x8_t zRGBA;
+    LV_UNUSED(width);
 
-    for(int32_t index = stride; index < (height - 1) * stride; index += stride) {
+    for(int32_t index = stride; index < height * stride; index += stride) {
         __builtin_prefetch(&scancol[index]);
 
         zRGBA = vldrbq_u16(&scancol[index]);
@@ -435,7 +441,7 @@ static inline void exp_blur_8col_q8_mve(uint8_t * dst,
 static inline void _blurrow_mve(uint8_t * dst,
                                 const uint8_t * src,
                                 int32_t width,
-                                int32_t /* height */, // TODO: This seems very strange. Why is height not used as it is in _blurcol() ?
+                                int32_t height, // TODO: This seems very strange. Why is height not used as it is in _blurcol() ?
                                 int32_t stride,
                                 int32_t line,
                                 int32_t alpha,
@@ -444,6 +450,7 @@ static inline void _blurrow_mve(uint8_t * dst,
                                 int32_t zprec)
 {
     int32_t index;
+    LV_UNUSED(height);
 
     const uint8_t * input = &(src[line * stride]);
     uint8_t * output = &(dst[line * stride]);
@@ -505,6 +512,7 @@ static inline void _blurcol_mve(uint8_t * dst,
 {
     int32_t index;
     uint8_t * ptr, * ptr1, * ptr2, * ptr3;
+    LV_UNUSED(width);
 
     ptr  = dst + x * 4;
     ptr1 = ptr + 1 * 4;
@@ -517,7 +525,7 @@ static inline void _blurcol_mve(uint8_t * dst,
     uint32x4_t sum3 = vshlq_n_u32(vldrbq_u32(ptr3), zprec);
     uint32x4_t zRGBA, zRGBA1;
 
-    for(index = stride; index < (height - 1) * stride; index += stride) {
+    for(index = stride; index < height * stride; index += stride) {
 
         zRGBA = vshlq_n_u32(vldrbq_u32(&ptr[index]), zprec);
         sum = vmulq_n_u32(sum, inv_alpha);
