@@ -76,6 +76,13 @@ void lv_qrcode_set_size(lv_obj_t * obj, int32_t size)
     if(old_buf != NULL) lv_draw_buf_destroy(old_buf);
 }
 
+void lv_qrcode_set_type(lv_obj_t * obj, lv_qrcode_type_t type)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    lv_qrcode_t * qrcode = (lv_qrcode_t *)obj;
+    qrcode->style_type = type;
+}
+
 void lv_qrcode_set_dark_color(lv_obj_t * obj, lv_color_t color)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);
@@ -88,6 +95,120 @@ void lv_qrcode_set_light_color(lv_obj_t * obj, lv_color_t color)
     LV_ASSERT_OBJ(obj, MY_CLASS);
     lv_qrcode_t * qrcode = (lv_qrcode_t *)obj;
     qrcode->light_color = color;
+}
+
+/* Helper: set a pixel in the 1-bit canvas buffer to dark (1).
+ * buf_u8 points to image data (skip palette).
+ * row_byte_cnt is draw_buf->header.stride.
+ * Assumes buffer was cleared (0 = light) before drawing. */
+static inline void set_canvas_px(uint8_t * buf_u8, uint32_t stride, int32_t x, int32_t y)
+{
+    uint32_t byte_index = stride * (uint32_t)y + (uint32_t)(x >> 3);
+    uint8_t mask = (uint8_t)(1 << (7 - (x & 7)));
+    buf_u8[byte_index] |= mask; /* set pixel to dark */
+}
+
+void lv_circle_qrcode_update(int32_t qr_size, int32_t scale, uint8_t * qr0, int margin, lv_draw_buf_t * draw_buf,
+                             uint8_t * buf_u8)
+{
+    uint32_t row_byte_cnt = draw_buf->header.stride;
+    /* Determine finder (eye) areas in module coordinates (7x7 blocks at three corners) */
+    const int modules = qr_size;
+    const int fp_size = 7; /* finder pattern is 7x7 modules */
+    const int fp_coords[3][2] = {
+        {0, 0},                       /* top-left */
+        {modules - fp_size, 0},       /* top-right */
+        {0, modules - fp_size}        /* bottom-left */
+    };
+
+    /* 1) Draw ordinary modules as circular modules, except modules that are inside finder areas.
+    * Each module is drawn as a filled circle centered in its cell (radius ~= scale/2).
+    */
+    const float module_radius = scale / 2.0f;
+    const float module_r2 = module_radius * module_radius;
+    for(int module_y = 0; module_y < modules; module_y++) {
+        for(int module_x = 0; module_x < modules; module_x++) {
+            /* Skip modules that belong to finder patterns; they'll be drawn as circular rings below */
+            bool in_finder = false;
+            for(int i = 0; i < 3; i++) {
+                int fx = fp_coords[i][0], fy = fp_coords[i][1];
+                if(module_x >= fx && module_x < fx + fp_size && module_y >= fy && module_y < fy + fp_size) {
+                    in_finder = true;
+                    break;
+                }
+            }
+            if(in_finder || !qrcodegen_getModule(qr0, module_x, module_y)) continue;
+
+            /* pixel region for this module */
+            int start_x = margin + module_x * scale;
+            int start_y = margin + module_y * scale;
+            /* center of the module cell */
+            float cx = start_x + (scale - 1) / 2.0f;
+            float cy = start_y + (scale - 1) / 2.0f;
+
+            for(int py = 0; py < scale; py++) {
+                int yPixel = start_y + py;
+                if(yPixel < 0 || yPixel >= draw_buf->header.h) continue;
+                for(int px = 0; px < scale; px++) {
+                    int xPixel = start_x + px;
+                    if(xPixel < 0 || xPixel >= draw_buf->header.w) continue;
+
+                    float dx = (float)xPixel - cx;
+                    float dy = (float)yPixel - cy;
+                    if(dx * dx + dy * dy <= module_r2) {
+                        set_canvas_px(buf_u8, row_byte_cnt, xPixel, yPixel);
+                    }
+                }
+            }
+        }
+    }
+
+    /* 2) Draw finder patterns as circular ring style:
+    *    - Outer ring: corresponds to the outer 7x7 dark border (dark modules except the 5x5 inner area).
+    *    - Inner dot: corresponds to the central 3x3 dark area (drawn as a filled circle).
+    *
+    * emulate the original 7/5/3 nested squares with concentric circles:
+    *   r_outer = half of (7*scale)
+    *   r_mid   = half of (5*scale)
+    *   r_inner = half of (3*scale)
+    */
+    for(int f = 0; f < 3; f++) {
+        int fx = fp_coords[f][0], fy = fp_coords[f][1];
+
+        /* pixel region covering the 7x7 finder block */
+        int start_x = margin + fx * scale;
+        int start_y = margin + fy * scale;
+        int fp_pix_size = fp_size * scale;
+
+        float cx = start_x + (fp_pix_size - 1) / 2.0f;
+        float cy = start_y + (fp_pix_size - 1) / 2.0f;
+
+        float r_outer = fp_pix_size / 2.0f;
+        float r_mid = (fp_size - 2) * scale / 2.0f;   /* 5x5 => gap between outer and inner */
+        float r_inner = (fp_size - 4) * scale / 2.0f; /* 3x3 => central filled circle */
+
+        float r_outer2 = r_outer * r_outer;
+        float r_mid2 = r_mid * r_mid;
+        float r_inner2 = r_inner * r_inner;
+
+        for(int py = 0; py < fp_pix_size; py++) {
+            int yPixel = start_y + py;
+            if(yPixel < 0 || yPixel >= draw_buf->header.h) continue;
+            for(int px = 0; px < fp_pix_size; px++) {
+                int xPixel = start_x + px;
+                if(xPixel < 0 || xPixel >= draw_buf->header.w) continue;
+
+                float dx = (float)xPixel - cx;
+                float dy = (float)yPixel - cy;
+                float d2 = dx * dx + dy * dy;
+
+                /* Outer ring or inner filled dot */
+                if((d2 <= r_outer2 && d2 > r_mid2) || d2 <= r_inner2) {
+                    set_canvas_px(buf_u8, row_byte_cnt, xPixel, yPixel);
+                }
+            }
+        }
+    }
 }
 
 lv_result_t lv_qrcode_update(lv_obj_t * obj, const void * data, uint32_t data_len)
@@ -149,6 +270,20 @@ lv_result_t lv_qrcode_update(lv_obj_t * obj, const void * data, uint32_t data_le
      * A simple `lv_canvas_set_px` would work but it's slow for so many pixels.
      * So buffer 1 byte (8 px) from the qr code and set it in the canvas image */
     uint32_t row_byte_cnt = draw_buf->header.stride;
+
+    // Draw circle type
+    if(qrcode->style_type == LV_QRCODE_TYPE_CIRCLE) {
+        lv_circle_qrcode_update(qr_size,  scale, qr0, margin, draw_buf, buf_u8);
+
+        /* invalidate the canvas to refresh it */
+        lv_display_enable_invalidation(lv_obj_get_display(obj), true);
+
+        lv_free(qr0);
+        lv_free(data_tmp);
+        return LV_RESULT_OK;
+    }
+
+    // Draw rect type
     int y;
     for(y = margin; y < scaled + margin; y += scale) {
         uint8_t b = 0;
@@ -218,6 +353,9 @@ static void lv_qrcode_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj
 
     /*Set default size*/
     lv_qrcode_set_size(obj, LV_DPI_DEF);
+
+    /*Set default type*/
+    lv_qrcode_set_type(obj, LV_QRCODE_TYPE_RECT);
 
     /*Set default color*/
     lv_qrcode_set_dark_color(obj, lv_color_black());

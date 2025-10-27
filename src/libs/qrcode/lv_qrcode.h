@@ -24,12 +24,18 @@ extern "C" {
  *      TYPEDEFS
  **********************/
 
+typedef enum {
+    LV_QRCODE_TYPE_RECT = 1,
+    LV_QRCODE_TYPE_CIRCLE = 2,
+} lv_qrcode_type_t;
+
 /*Data of qrcode*/
 typedef struct {
     lv_canvas_t canvas;
     lv_color_t dark_color;
     lv_color_t light_color;
     int32_t quiet_zone;
+    lv_qrcode_type_t style_type;
 } lv_qrcode_t;
 
 LV_ATTRIBUTE_EXTERN_DATA extern const lv_obj_class_t lv_qrcode_class;
@@ -51,6 +57,13 @@ lv_obj_t * lv_qrcode_create(lv_obj_t * parent);
  * @param size width and height of the QR code
  */
 void lv_qrcode_set_size(lv_obj_t * obj, int32_t size);
+
+/**
+ * Set QR code type.
+ * @param obj pointer to a QR code object
+ * @param type style type of the QR code
+ */
+void lv_qrcode_set_type(lv_obj_t * obj, lv_qrcode_type_t type);
 
 /**
  * Set QR code dark color.
