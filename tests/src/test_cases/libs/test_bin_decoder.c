@@ -120,6 +120,186 @@ void test_bin_decoder_bin_file(void)
 {
     bin_decoder("A:src/test_files/binimages/cogwheel.ARGB8888.bin", "libs/cogwheel.ARGB8888.png");
 }
+void test_bin_decoder_bin_rle_file(void)
+{
+#if LV_BIN_DECODER_RAM_LOAD == 1
+    bin_decoder("A:src/test_files/binimages/test_rle.rle", "libs/test_rle.png");
+#endif
+}
+void test_bin_decoder_get_area_unsupported_format(void)
+{
+    lv_image_decoder_dsc_t dsc;
+    lv_area_t full_area = {0, 0, 100, 100};
+    lv_area_t decoded_area = {LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN};
+
+    /* Setup with unsupported format */
+    dsc.header.cf = LV_COLOR_FORMAT_UNKNOWN;
+    lv_area_t decoder_data = {0};
+    dsc.user_data = &decoder_data;
+
+    lv_result_t res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+    TEST_ASSERT_EQUAL(LV_RESULT_INVALID, res);
+}
+void test_bin_decoder_get_area_null_decoder_data(void)
+{
+    lv_image_decoder_dsc_t dsc;
+    lv_area_t full_area = {0, 0, 100, 100};
+    lv_area_t decoded_area = {LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN};
+
+    dsc.header.cf = LV_COLOR_FORMAT_ARGB8888;
+    dsc.user_data = NULL;
+
+    lv_result_t res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+    TEST_ASSERT_EQUAL(LV_RESULT_INVALID, res);
+}
+
+void test_bin_decoder_get_area_indexed_file(void)
+{
+    lv_image_decoder_dsc_t dsc;
+    lv_image_decoder_args_t args = {0};
+
+    lv_result_t res = lv_image_decoder_open(&dsc, "A:test_images/stride_align64/UNCOMPRESSED/test_I8.bin", &args);
+    TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+
+    lv_area_t full_area = {0, 0, dsc.header.w - 1, dsc.header.h - 1};
+    lv_area_t decoded_area = {LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN};
+
+    /* Decode line by line */
+    for(int y = 0; y < dsc.header.h; y++) {
+        res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+        TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+        TEST_ASSERT_EQUAL(y, decoded_area.y1);
+    }
+
+    /* Should return INVALID when past end */
+    res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+    TEST_ASSERT_EQUAL(LV_RESULT_INVALID, res);
+
+    lv_image_decoder_close(&dsc);
+}
+void test_bin_decoder_get_area_indexed_variable(void)
+{
+    LV_IMAGE_DECLARE(test_I8_NONE_align64);
+
+    lv_image_decoder_dsc_t dsc;
+    lv_image_decoder_args_t args = {0};
+
+    lv_result_t res = lv_image_decoder_open(&dsc, &test_I8_NONE_align64, &args);
+    TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+
+    lv_area_t full_area = {0, 0, dsc.header.w - 1, dsc.header.h - 1};
+    lv_area_t decoded_area = {LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN};
+
+    /* Decode first line */
+    res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+    TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+    TEST_ASSERT_NOT_NULL(dsc.decoded);
+
+    lv_image_decoder_close(&dsc);
+}
+void test_bin_decoder_get_area_rgb_formats(void)
+{
+#if LV_BIN_DECODER_RAM_LOAD == 1
+    const char * images[] = {
+        "A:test_images/stride_align64/LZ4/test_ARGB8888.bin",
+        "A:test_images/stride_align64/LZ4/test_XRGB8888.bin",
+        "A:test_images/stride_align64/LZ4/test_RGB888.bin",
+        "A:test_images/stride_align64/LZ4/test_RGB565.bin",
+        "A:test_images/stride_align64/LZ4/test_ARGB8565.bin",
+#if LV_USE_VG_LITE_THORVG == 0
+        "A:test_images/stride_align64/LZ4/test_RGB565A8.bin",
+#endif
+        "A:test_images/stride_align64/UNCOMPRESSED/test_ARGB8888.bin",
+        "A:test_images/stride_align64/UNCOMPRESSED/test_XRGB8888.bin",
+        "A:test_images/stride_align64/UNCOMPRESSED/test_RGB888.bin",
+        "A:test_images/stride_align64/UNCOMPRESSED/test_RGB565.bin",
+        "A:test_images/stride_align64/UNCOMPRESSED/test_ARGB8565.bin",
+#if LV_USE_VG_LITE_THORVG == 0
+        "A:test_images/stride_align64/UNCOMPRESSED/test_RGB565A8.bin",
+#endif
+    };
+
+    for(size_t i = 0; i < sizeof(images) / sizeof(images[0]); i++) {
+        lv_image_decoder_dsc_t dsc;
+        lv_image_decoder_args_t args = {0};
+
+        lv_result_t res = lv_image_decoder_open(&dsc, images[i], &args);
+        TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+
+        lv_area_t full_area = {0, 0, dsc.header.w - 1, dsc.header.h - 1};
+        lv_area_t decoded_area = {LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN, LV_COORD_MIN};
+
+        /* Decode multiple lines */
+        for(int y = 0; y < 5 && y < dsc.header.h; y++) {
+            res = lv_bin_decoder_get_area(NULL, &dsc, &full_area, &decoded_area);
+            TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+        }
+
+        lv_image_decoder_close(&dsc);
+    }
+#endif
+}
+void test_bin_decoder_compressed_indexed_use_indexed(void)
+{
+#if LV_BIN_DECODER_RAM_LOAD == 1 && LV_USE_VG_LITE_THORVG == 0
+    LV_IMAGE_DECLARE(test_I1_LZ4_align64);
+    LV_IMAGE_DECLARE(test_I2_LZ4_align64);
+    LV_IMAGE_DECLARE(test_I4_LZ4_align64);
+    LV_IMAGE_DECLARE(test_I8_LZ4_align64);
+
+    const lv_image_dsc_t * images[] = {
+        &test_I1_LZ4_align64,
+        &test_I2_LZ4_align64,
+        &test_I4_LZ4_align64,
+        &test_I8_LZ4_align64
+    };
+
+    for(size_t i = 0; i < sizeof(images) / sizeof(images[0]); i++) {
+        lv_image_decoder_dsc_t dsc;
+        lv_image_decoder_args_t args = {0};
+
+        args.use_indexed = true;
+
+        lv_result_t res = lv_image_decoder_open(&dsc, images[i], &args);
+        TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+
+        TEST_ASSERT_NOT_NULL(dsc.decoded);
+        TEST_ASSERT_TRUE(dsc.header.flags & LV_IMAGE_FLAGS_COMPRESSED);
+
+        lv_image_decoder_close(&dsc);
+    }
+#endif
+}
+void test_bin_decoder_compressed_indexed_file_use_indexed(void)
+{
+#if LV_BIN_DECODER_RAM_LOAD == 1
+    lv_image_decoder_dsc_t dsc;
+    lv_image_decoder_args_t args = {0};
+
+    args.use_indexed = true;
+
+    lv_result_t res = lv_image_decoder_open(&dsc, "A:test_images/stride_align64/LZ4/test_I8.bin", &args);
+    TEST_ASSERT_EQUAL(LV_RESULT_OK, res);
+
+    TEST_ASSERT_NOT_NULL(dsc.decoded);
+
+    lv_image_decoder_close(&dsc);
+#endif
+}
+void test_bin_decoder_image_flags_with_premultiplied(void)
+{
+#if LV_BIN_DECODER_RAM_LOAD == 1
+    lv_image_decoder_dsc_t dsc;
+    lv_image_decoder_args_t args = {0};
+
+    args.use_indexed = true;
+
+    lv_result_t res = lv_image_decoder_open(&dsc, "A:src/test_files/binimages/test_i8_premultiplied.bin", &args);
+    TEST_ASSERT_EQUAL(LV_RESULT_INVALID, res);
+
+    lv_image_decoder_close(&dsc);
+#endif
+}
 void test_bin_decoder_image_dsc_error_handling(void)
 {
     lv_image_dsc_t * image_dsc = get_image_dsc();
