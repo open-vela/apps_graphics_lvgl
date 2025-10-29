@@ -645,10 +645,8 @@ static void lv_nuttx_uv_control_client_read_cb(uv_stream_t * client, ssize_t nre
         lv_nuttx_uv_ctx_t * uv_ctx = uv_handle_get_data((uv_handle_t *)client);
         const lv_remote_ctrl_args_t * args = (const lv_remote_ctrl_args_t *)buf->base;
         lv_remote_ctrl_execute(uv_ctx->control_ctx.remote_ctrl_ctx, args);
-        return;
     }
-
-    if(nread < 0) {
+    else if(nread < 0) {
         if(nread != UV_EOF) {
             LV_LOG_ERROR("uv_read failed: %s", uv_strerror(nread));
         }
