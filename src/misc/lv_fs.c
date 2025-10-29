@@ -418,6 +418,114 @@ lv_fs_res_t lv_fs_tell(lv_fs_file_t * file_p, uint32_t * pos)
     return res;
 }
 
+lv_fs_res_t lv_fs_get_size(lv_fs_file_t * file_p, uint32_t * size_res)
+{
+    uint32_t original_pos;
+    lv_fs_res_t ret = lv_fs_tell(file_p, &original_pos);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_seek(file_p, 0, LV_FS_SEEK_END);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_tell(file_p, size_res);
+
+    if(ret != LV_FS_RES_OK || *size_res != original_pos) {
+        lv_fs_res_t seek_res = lv_fs_seek(file_p, original_pos, LV_FS_SEEK_SET);
+        if(ret == LV_FS_RES_OK) {
+            ret = seek_res;
+        }
+    }
+
+    return ret;
+}
+
+lv_fs_res_t lv_fs_path_get_size(const char * path, uint32_t * size_res)
+{
+    lv_fs_file_t file;
+    lv_fs_res_t ret = lv_fs_open(&file, path, LV_FS_MODE_RD);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    ret = lv_fs_seek(&file, 0, LV_FS_SEEK_END);
+
+    if(ret == LV_FS_RES_OK) {
+        ret = lv_fs_tell(&file, size_res);
+    }
+
+    lv_fs_res_t close_res = lv_fs_close(&file);
+    if(ret == LV_FS_RES_OK) {
+        ret = close_res;
+    }
+
+    return ret;
+}
+
+lv_fs_res_t lv_fs_load_to_buf(void * buf, uint32_t buf_size, const char * path)
+{
+    lv_fs_file_t file;
+    lv_fs_res_t ret = lv_fs_open(&file, path, LV_FS_MODE_RD);
+    if(ret != LV_FS_RES_OK) {
+        return ret;
+    }
+
+    uint32_t bytes_read;
+    ret = lv_fs_read(&file, buf, buf_size, &bytes_read);
+
+    if(ret == LV_FS_RES_OK && bytes_read != buf_size) {
+        LV_LOG_WARN("Only %"LV_PRIu32" bytes out of %"LV_PRIu32" were read from the file to the buffer",
+                    bytes_read, buf_size);
+        ret = LV_FS_RES_UNKNOWN;
+    }
+
+    lv_fs_res_t close_res = lv_fs_close(&file);
+    if(ret == LV_FS_RES_OK) {
+        ret = close_res;
+    }
+
+    return ret;
+}
+
+void * lv_fs_load_with_alloc(const char * path, uint32_t * size)
+{
+    lv_fs_file_t file;
+    uint8_t * data = NULL;
+
+    lv_fs_res_t ret = lv_fs_open(&file, path, LV_FS_MODE_RD);
+    if(ret != LV_FS_RES_OK) {
+        LV_LOG_WARN("can't open file %s, res %d", path, ret);
+        return NULL;
+    }
+
+    ret = lv_fs_get_size(&file, size);
+    if(ret != LV_FS_RES_OK) {
+        LV_LOG_WARN("can't get file size %s, res %d", path, ret);
+        goto fail;
+    }
+
+    data = lv_malloc(*size);
+    if(data == NULL) {
+        LV_LOG_WARN("malloc failed for data with size %" LV_PRIu32, *size);
+        goto fail;
+    }
+
+    uint32_t bytes_read;
+    ret = lv_fs_read(&file, data, *size, &bytes_read);
+    if(ret != LV_FS_RES_OK || bytes_read != *size) {
+        LV_LOG_WARN("read %s failed, rn %" LV_PRIu32 ", res %d", path, bytes_read, ret);
+        lv_free(data);
+        data = NULL;
+    }
+
+fail:
+    lv_fs_close(&file);
+    return data;
+}
+
 lv_fs_res_t lv_fs_dir_open(lv_fs_dir_t * rddir_p, const char * path)
 {
     if(path == NULL) return LV_FS_RES_INV_PARAM;
