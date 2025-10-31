@@ -502,7 +502,7 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
         return LV_RESULT_INVALID;
     }
     LV_PROFILER_DRAW_BEGIN;
-
+    lv_area_t area = {0, 0, draw_buf->header.w - 1, draw_buf->header.h - 1};
     /*Premultiply color with alpha, do case by case by judging color format*/
     lv_color_format_t cf = draw_buf->header.cf;
     if(LV_COLOR_FORMAT_IS_INDEXED(cf)) {
@@ -511,6 +511,11 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
         for(int i = 0; i < size; i++) {
             lv_color_premultiply(&palette[i]);
         }
+        /**
+         * We only need to flush the palette table, so we set y2 equal to y1 to improve performance
+         * and reduce cache flush overhead.
+         */
+        area.y2 = 0;
     }
     else if(cf == LV_COLOR_FORMAT_ARGB8888) {
         uint32_t h = draw_buf->header.h;
@@ -566,7 +571,7 @@ lv_result_t lv_draw_buf_premultiply(lv_draw_buf_t * draw_buf)
     }
 
     draw_buf->header.flags |= LV_IMAGE_FLAGS_PREMULTIPLIED;
-    lv_draw_buf_flush_cache(draw_buf, NULL);
+    lv_draw_buf_flush_cache(draw_buf, &area);
 
     LV_PROFILER_DRAW_END;
     return LV_RESULT_OK;
