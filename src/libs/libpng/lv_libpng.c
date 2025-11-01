@@ -138,13 +138,11 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc)
 {
     LV_UNUSED(decoder); /*Unused*/
-    LV_PROFILER_DECODER_BEGIN_TAG("lv_libpng_decoder_open");
 
     lv_draw_buf_t * decoded;
     decoded = decode_png(dsc);
 
     if(decoded == NULL) {
-        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
@@ -153,7 +151,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
-        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
 
@@ -166,13 +163,11 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     dsc->decoded = decoded;
 
     if(dsc->args.no_cache) {
-        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_OK;
     }
 
     /*If the image cache is disabled, just return the decoded image*/
     if(!lv_image_cache_is_enabled()) {
-        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_OK;
     }
 
@@ -186,11 +181,9 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
 
     if(entry == NULL) {
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
-        LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
         return LV_RESULT_INVALID;
     }
     dsc->cache_entry = entry;
-    LV_PROFILER_DECODER_END_TAG("lv_libpng_decoder_open");
 
     return LV_RESULT_OK;     /*The image is fully decoded. Return with its pointer*/
 }
@@ -263,6 +256,7 @@ failed:
 
 static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
 {
+    LV_PROFILER_DECODER_BEGIN;
     int ret;
     uint8_t * png_data;
     uint32_t png_data_size;
@@ -275,6 +269,7 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         png_data = alloc_file(dsc->src, &png_data_size);
         if(png_data == NULL) {
             LV_LOG_WARN("can't load file: %s", (const char *)dsc->src);
+            LV_PROFILER_DECODER_END;
             return NULL;
         }
     }
@@ -287,11 +282,14 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         return NULL;
 
     /*Ready to read file*/
+    LV_PROFILER_DECODER_BEGIN_TAG("png_image_begin_read_from_memory");
     ret = png_image_begin_read_from_memory(&image, png_data, png_data_size);
+    LV_PROFILER_DECODER_END_TAG("png_image_begin_read_from_memory");
     if(!ret) {
         LV_LOG_ERROR("png read failed: %d", ret);
         if(dsc->src_type == LV_IMAGE_SRC_FILE)
             lv_free(png_data);
+        LV_PROFILER_DECODER_END;
         return NULL;
     }
 
@@ -318,8 +316,10 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         else if(dsc->src_type == LV_IMAGE_SRC_VARIABLE)
             LV_LOG_ERROR("alloc PNG_IMAGE_SIZE(%" LV_PRIu32 ")", (uint32_t)PNG_IMAGE_SIZE(image));
 
+        LV_PROFILER_DECODER_BEGIN_TAG("png_image_free");
         png_image_free(&image);
-
+        LV_PROFILER_DECODER_END_TAG("png_image_free");
+        LV_PROFILER_DECODER_END;
         return NULL;
     }
 
@@ -330,16 +330,22 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
     void * map = decoded->data + LV_COLOR_INDEXED_PALETTE_SIZE(cf) * sizeof(lv_color32_t);
 
     /*Start decoding*/
+    LV_PROFILER_DECODER_BEGIN_TAG("png_image_finish_read");
     ret = png_image_finish_read(&image, NULL, map, decoded->header.stride, palette);
+    LV_PROFILER_DECODER_END_TAG("png_image_finish_read");
+    LV_PROFILER_DECODER_BEGIN_TAG("png_image_free");
     png_image_free(&image);
+    LV_PROFILER_DECODER_END_TAG("png_image_free");
     if(dsc->src_type == LV_IMAGE_SRC_FILE)
         lv_free(png_data);
     if(!ret) {
         LV_LOG_ERROR("png decode failed: %s", image.message);
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
+        LV_PROFILER_DECODER_END;
         return NULL;
     }
 
+    LV_PROFILER_DECODER_END;
     return decoded;
 }
 
