@@ -54,6 +54,8 @@ static void image_dsc_free_cb(void * dsc, void * user_data);
  *  STATIC VARIABLES
  **********************/
 
+static bool g_is_dump_param_enabled = false;
+
 /**********************
  *      MACROS
  **********************/
@@ -880,7 +882,13 @@ bool lv_vg_lite_buffer_open_image(vg_lite_buffer_t * buffer, lv_image_decoder_ds
     if(LV_COLOR_FORMAT_IS_INDEXED(decoded->header.cf)) {
         uint32_t palette_size = LV_COLOR_INDEXED_PALETTE_SIZE(decoded->header.cf);
         LV_PROFILER_DRAW_BEGIN_TAG("vg_lite_set_CLUT");
-        LV_VG_LITE_CHECK_ERROR(vg_lite_set_CLUT(palette_size, (vg_lite_uint32_t *)decoded->data), {});
+        LV_VG_LITE_CHECK_ERROR(
+        vg_lite_set_CLUT(palette_size, (vg_lite_uint32_t *)decoded->data), {
+            for(uint32_t i = 0; i < palette_size; i++)
+            {
+                LV_LOG_USER("CLUT[%" LV_PRIu32 "] = 0x%08X", i, ((vg_lite_uint32_t *)decoded->data)[i]);
+            }
+        });
         LV_PROFILER_DRAW_END_TAG("vg_lite_set_CLUT");
     }
 
@@ -1358,10 +1366,10 @@ void lv_vg_lite_set_scissor_area(const lv_area_t * area)
                                area->y1,
                                area->x2 + 1,
                                area->y2 + 1),
-                           /* Error handler */
+                           /* Dump parameters */
     {
-        LV_LOG_ERROR("area: %d, %d, %d, %d",
-                     (int)area->x1, (int)area->y1, (int)area->x2, (int)area->y2);
+        LV_LOG_USER("area: %d, %d, %d, %d",
+                    (int)area->x1, (int)area->y1, (int)area->x2, (int)area->y2);
     });
     LV_PROFILER_DRAW_END;
 }
@@ -1375,9 +1383,9 @@ void lv_vg_lite_disable_scissor(void)
                                0,
                                LV_HOR_RES,
                                LV_VER_RES),
-                           /* Error handler */
+                           /* Dump parameters */
     {
-        LV_LOG_ERROR("hor_res: %d, ver_res: %d", (int)LV_HOR_RES, (int)LV_VER_RES);
+        LV_LOG_USER("hor_res: %d, ver_res: %d", (int)LV_HOR_RES, (int)LV_VER_RES);
     });
     LV_PROFILER_DRAW_END;
 }
@@ -1486,6 +1494,17 @@ float lv_vg_lite_get_running_time(void)
     LV_VG_LITE_CHECK_ERROR(vg_lite_get_parameter(VG_LITE_HARDWARE_RUNNING_TIME, 1, &time), {});
     /* Convert to millisecond */
     return time * 1000;
+}
+
+void lv_vg_lite_set_dump_param_enable(bool enable)
+{
+    g_is_dump_param_enabled = enable;
+    LV_LOG_USER(enable ? "Enabled" : "Disabled");
+}
+
+bool lv_vg_lite_is_dump_param_enabled(void)
+{
+    return g_is_dump_param_enabled;
 }
 
 /**********************
