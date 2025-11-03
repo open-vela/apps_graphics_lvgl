@@ -145,6 +145,8 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
     int hook = -1;
     unsigned long dispatch_task_mask = TASK_MASK_ALL;
     unsigned long evaluate_task_mask = TASK_MASK_ALL;
+    int send_event_code = -1;
+    const char * unit_name = NULL;
 
     struct argparse_option options[] = {
         OPT_HELP(),
@@ -153,6 +155,8 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
         OPT_INTEGER(0, "hook", &hook, "hook dispatch and evaluate callbacks", NULL, 0, 0),
         OPT_HEX(0, "dispatch-task-mask", &dispatch_task_mask, "The dispatch task mask for hooking", task_mask_cmd_cb, (intptr_t)&draw_ctx->dispatch_task_mask, 0),
         OPT_HEX(0, "evaluate-task-mask", &evaluate_task_mask, "The evaluate task mask for hooking", task_mask_cmd_cb, (intptr_t)&draw_ctx->evaluate_task_mask, 0),
+        OPT_INTEGER(0, "send-event", &send_event_code, "Send an event to the drawing unit", NULL, 0, 0),
+        OPT_STRING(0, "unit-name", &unit_name, "The name of the drawing unit", NULL, 0, 0),
         OPT_END(),
     };
 
@@ -194,6 +198,19 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
         lv_memzero(&draw_ctx->hook_unit, sizeof(draw_ctx->hook_unit));
         draw_ctx->ori_unit = NULL;
         draw_ctx->prev_unit = NULL;
+        return LV_RESULT_OK;
+    }
+
+    if(send_event_code >= 0) {
+        if(send_event_code >= _LV_EVENT_LAST) {
+            LV_LOG_WARN("Invalid event code: %d, out of range: [0, %d)", send_event_code, _LV_EVENT_LAST);
+            return LV_RESULT_INVALID;
+        }
+
+        LV_LOG_USER("Sending event: %d(%s), to %s",
+                    send_event_code, lv_event_get_code_name((lv_event_code_t)send_event_code),
+                    unit_name ? unit_name : "all units");
+        lv_draw_unit_send_event(unit_name, (lv_event_code_t)send_event_code, NULL);
         return LV_RESULT_OK;
     }
 

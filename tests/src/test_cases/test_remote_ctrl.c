@@ -310,6 +310,20 @@ void test_remote_ctrl_draw(void)
 
     /* redraw */
     lv_refr_now(NULL);
+
+    /* Test send event to draw unit, send LV_EVENT_CANCEL to VG-Lite */
+    const char * argv_send_event[] = {
+        "draw",
+        "--unit-name", "VG_LITE",
+        "--send-event", "34",
+    };
+    execute_args(ARRAY_SIZE(argv_send_event), argv_send_event, LV_RESULT_OK);
+
+    const char * argv_send_event_invalid[] = {
+        "draw",
+        "--send-event", "100",
+    };
+    execute_args(ARRAY_SIZE(argv_send_event_invalid), argv_send_event_invalid, LV_RESULT_INVALID);
 }
 
 void test_remote_ctrl_indev(void)
