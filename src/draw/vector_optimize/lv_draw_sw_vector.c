@@ -311,7 +311,7 @@ static void _set_paint_fill_pattern(Tvg_Paint * obj, Tvg_Canvas * canvas, const 
 
     if(cf != LV_COLOR_FORMAT_ARGB8888) {
         lv_image_decoder_close(&decoder_dsc);
-        LV_LOG_ERROR("Not support image format");
+        LV_LOG_ERROR("Not support color format: %d", cf);
         return;
     }
 
