@@ -52,6 +52,13 @@ void lv_draw_vg_lite_vector_deinit(struct _lv_draw_vg_lite_unit_t * u)
 
 #define OPA_MIX(opa1, opa2) LV_UDIV255((opa1) * (opa2))
 
+#if LV_VG_LITE_FLUSH_MAX_COUNT > 0
+    #define DRAW_VECTOR_FLUSH_COUNT_MAX 0
+#else
+    /* When using IDLE Flush mode, reduce the number of flushes */
+    #define DRAW_VECTOR_FLUSH_COUNT_MAX 8
+#endif
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -498,8 +505,11 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
         draw_stroke(u, path_impl, lv_vg_path, dsc, &matrix, layer_opa);
     }
 
-    /* Flush in time to avoid accumulation of drawing commands */
-    lv_vg_lite_flush(u);
+    u->vector_count++;
+    if(u->vector_count > DRAW_VECTOR_FLUSH_COUNT_MAX) {
+        /* Flush in time to avoid accumulation of drawing commands */
+        lv_vg_lite_flush(u);
+    }
 
     /* Restore original bounding box */
     lv_vg_lite_path_set_bounding_box(lv_vg_path, orig_min_x, orig_min_y, orig_max_x, orig_max_y);

@@ -1418,6 +1418,7 @@ void lv_vg_lite_flush(struct _lv_draw_vg_lite_unit_t * u)
     lv_vg_lite_pending_swap(u->letter_pending);
 
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
+    u->vector_count = 0;
     lv_vg_lite_pending_swap(u->vector_pending);
 #endif
 
@@ -1446,6 +1447,7 @@ void lv_vg_lite_finish(struct _lv_draw_vg_lite_unit_t * u)
 #if LV_USE_VECTOR_GRAPHIC_OPTIMIZE && LV_VG_LITE_USE_PATH_UPLOAD
     /* Clear vector reference */
     lv_vg_lite_pending_remove_all(u->vector_pending);
+    u->vector_count = 0;
 #endif
 
     u->flush_count = 0;
