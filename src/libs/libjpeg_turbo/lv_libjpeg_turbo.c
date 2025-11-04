@@ -143,7 +143,10 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         header->w = (orientation % 180) ? height : width;
         header->h = (orientation % 180) ? width : height;
 
-        lv_image_decoder_header_expand(header, LV_DECODER_IMG_SIZE_EXPAND);
+        /* Conditionally expand header if not disabled */
+        if(!dsc->args.no_size_expand) {
+            lv_image_decoder_header_expand(header, lv_image_decoder_get_size_expand());
+        }
 
         return LV_RESULT_OK;
     }
@@ -168,6 +171,17 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         if(decoded == NULL) {
             LV_LOG_WARN("decode jpeg file failed");
             return LV_RESULT_INVALID;
+        }
+        /* Conditionally expand decoded buffer if not disabled */
+        if(!dsc->args.no_size_expand) {
+            lv_draw_buf_t * expanded = lv_draw_buf_expand(decoded, lv_image_decoder_get_size_expand());
+            if(!expanded) {
+                LV_LOG_WARN("expand jpeg buffer failed");
+                lv_draw_buf_destroy(decoded);
+                return LV_RESULT_INVALID;
+            }
+
+            decoded = expanded;
         }
 
         dsc->decoded = decoded;
@@ -364,8 +378,6 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
     /* At this point you may want to check to see whether any corrupt-data
     * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
     */
-
-    decoded = lv_draw_buf_expand(decoded, LV_DECODER_IMG_SIZE_EXPAND);
 
     /* And we're done! */
     return decoded;

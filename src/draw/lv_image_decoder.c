@@ -54,6 +54,12 @@ static lv_result_t try_cache(lv_image_decoder_dsc_t * dsc);
  *  STATIC VARIABLES
  **********************/
 
+/**
+ * Runtime-configurable expand size for image decoder.
+ * This variable will not be added to lv_global for now to avoid affecting compatibility.
+ */
+static uint32_t img_decoder_size_expand = LV_DECODER_IMG_SIZE_EXPAND;
+
 /**********************
  *      MACROS
  **********************/
@@ -151,6 +157,7 @@ lv_result_t lv_image_decoder_open(lv_image_decoder_dsc_t * dsc, const void * src
         .no_cache = false,
         .use_indexed = false,
         .flush_cache = false,
+        .no_size_expand = false,
     };
 
     /*
@@ -365,6 +372,16 @@ void lv_image_decoder_header_expand(lv_image_header_t * header, uint32_t expand_
     if(expand_size > 0) {
         header->flags |= LV_IMAGE_FLAGS_EXPANDED;
     }
+}
+
+uint32_t lv_image_decoder_get_size_expand(void)
+{
+    return img_decoder_size_expand;
+}
+
+void lv_image_decoder_set_size_expand(uint32_t expand_size)
+{
+    img_decoder_size_expand = expand_size;
 }
 
 /**********************

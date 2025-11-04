@@ -73,6 +73,7 @@ typedef struct _lv_image_decoder_args_t {
     bool no_cache;          /*When set, decoded image won't be put to cache, and decoder open will also ignore cache.*/
     bool use_indexed;       /*Decoded indexed image as is. Convert to ARGB8888 if false.*/
     bool flush_cache;       /*Whether to flush the data cache after decoding*/
+    bool no_size_expand;    /*When set, DO NOT expand image by LV_DECODER_IMG_SIZE_EXPAND transparent border*/
 } lv_image_decoder_args_t;
 
 /**
@@ -314,6 +315,23 @@ lv_draw_buf_t * lv_image_decoder_post_process(lv_image_decoder_dsc_t * dsc, lv_d
  * @param expand_size the size to expand
  */
 void lv_image_decoder_header_expand(lv_image_header_t * header, uint32_t expand_size);
+
+/**
+ * Get the runtime expand size used by the image decoder.
+ * It affects how much transparent border is added around images when expansion is enabled.
+ * The default value equals LV_DECODER_IMG_SIZE_EXPAND at startup.
+ *
+ * @return Current expand size (in pixels). The effective width/height increment is 2x this value.
+ */
+uint32_t lv_image_decoder_get_size_expand(void);
+
+/**
+ * Set the runtime expand size used by the image decoder.
+ * It controls how much transparent border (in pixels) is added on each side when expansion is enabled.
+ *
+ * @param expand_size Expand size in pixels. The effective width/height increment is 2x this value.
+ */
+void lv_image_decoder_set_size_expand(uint32_t expand_size);
 
 /**********************
  *      MACROS

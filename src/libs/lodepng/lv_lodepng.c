@@ -125,7 +125,10 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         header->w = (int32_t)((size[0] & 0xff000000) >> 24) + ((size[0] & 0x00ff0000) >> 8);
         header->h = (int32_t)((size[1] & 0xff000000) >> 24) + ((size[1] & 0x00ff0000) >> 8);
 
-        lv_image_decoder_header_expand(header, LV_DECODER_IMG_SIZE_EXPAND);
+        /* Conditionally expand header if not disabled */
+        if(!dsc->args.no_size_expand) {
+            lv_image_decoder_header_expand(header, lv_image_decoder_get_size_expand());
+        }
 
         return LV_RESULT_OK;
     }
@@ -180,7 +183,10 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         return LV_RESULT_INVALID;
     }
 
-    decoded = lv_draw_buf_expand(decoded, LV_DECODER_IMG_SIZE_EXPAND);
+    /* Conditionally expand decoded buffer if not disabled */
+    if(!dsc->args.no_size_expand) {
+        decoded = lv_draw_buf_expand(decoded, lv_image_decoder_get_size_expand());
+    }
 
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
