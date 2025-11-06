@@ -505,11 +505,16 @@ static void task_draw_cb(void * ctx, const lv_platform_path_base_t * path_impl, 
         draw_stroke(u, path_impl, lv_vg_path, dsc, &matrix, layer_opa);
     }
 
+#if LV_VG_LITE_USE_PATH_UPLOAD
     u->vector_count++;
     if(u->vector_count > DRAW_VECTOR_FLUSH_COUNT_MAX) {
         /* Flush in time to avoid accumulation of drawing commands */
         lv_vg_lite_flush(u);
     }
+#else
+    /* Flush in time to avoid accumulation of drawing commands */
+    lv_vg_lite_flush(u);
+#endif
 
     /* Restore original bounding box */
     lv_vg_lite_path_set_bounding_box(lv_vg_path, orig_min_x, orig_min_y, orig_max_x, orig_max_y);
