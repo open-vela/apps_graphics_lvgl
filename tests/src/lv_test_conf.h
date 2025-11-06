@@ -92,13 +92,18 @@ typedef void * lv_user_data_t;
 #define  LV_ATTRIBUTE_MEM_ALIGN __attribute__((aligned(LV_DRAW_BUF_ALIGN)))
 #endif
 
-/* Not tested yet */
-#ifdef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+#include "lv_test_conf_vg_lite.h"
+#include "lv_test_conf_full.h"
+
+#if defined(LV_USE_VECTOR_GRAPHIC_OPTIMIZE) && defined(NON_AMD64_BUILD)
+/* When in 32-bit mode, enable vector optimization and path upload test. */
+#undef LV_USE_VECTOR_GRAPHIC
+#define LV_VG_LITE_USE_PATH_UPLOAD 1
+#else
+/* In 64-bit mode, the normal vector rendering mode was tested as a reference. */
 #undef LV_USE_VECTOR_GRAPHIC_OPTIMIZE
 #endif
 
-#include "lv_test_conf_vg_lite.h"
-#include "lv_test_conf_full.h"
 #elif LV_TEST_OPTION == 4
 #define  LV_COLOR_DEPTH     24
 #define  LV_DPI_DEF         120

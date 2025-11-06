@@ -19,9 +19,7 @@
  *      DEFINES
  *********************/
 
-#define LV_VG_LITE_PATH_CAST(ptr) \
-    (assert(ptr != NULL), \
-     (lv_platform_vg_lite_path_t *)(ptr))
+#define LV_VG_LITE_PATH_CAST(ptr) (lv_platform_vg_lite_path_t *)(ptr)
 
 /**********************
  *  STATIC PROTOTYPES
@@ -378,6 +376,7 @@ static void lv_vg_lite_path_transform_cb(struct lv_platform_path_base_t * self, 
 
 static void get_path_data_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
 {
+    LV_UNUSED(len);
     lv_vector_path_data_t * parser = (lv_vector_path_data_t *)user_data;
 
     uint8_t lv_op = LV_VECTOR_PATH_OP_MOVE_TO;
@@ -430,6 +429,7 @@ static void lv_vg_lite_path_get_data_cb(struct lv_platform_path_base_t * self, l
 
 static void transform_path_cb(void * user_data, uint8_t op_code, const float * data, uint32_t len)
 {
+    LV_UNUSED(len);
     lv_vector_path_transform_data_t * transform_data = (lv_vector_path_transform_data_t *)user_data;
     switch(op_code) {
         case VLC_OP_CLOSE:

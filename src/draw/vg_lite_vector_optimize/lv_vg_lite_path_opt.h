@@ -28,8 +28,6 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
-typedef struct _lv_vg_lite_path_t lv_vg_lite_path_t;
-typedef struct _lv_draw_vg_lite_unit_t lv_draw_vg_lite_unit_t;
 
 typedef struct _lv_platform_vg_lite_path_t {
     lv_platform_path_base_t base;
