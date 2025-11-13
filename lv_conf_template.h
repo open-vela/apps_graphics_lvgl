@@ -225,6 +225,9 @@
 /* Enable path upload mode. */
 #define LV_VG_LITE_USE_PATH_UPLOAD 1
 
+/* Maximum path dump print length (in points) */
+#define LV_VG_LITE_PATH_DUMP_MAX_LEN 1000
+
 #endif
 
 /* Use G2D GPU. */
