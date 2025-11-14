@@ -73,6 +73,18 @@ struct _lv_vg_lite_path_t * lv_vg_lite_stroke_path_get(struct _lv_draw_vg_lite_u
     }
 
     lv_vg_lite_path_end(unit->stroke_path);
+
+    /* Expand the bounding box by the stroke width to ensure the stroke is fully visible */
+    float expand_bound = dsc->width;
+    float min_x, min_y, max_x, max_y;
+    lv_vg_lite_path_get_bounding_box(unit->stroke_path, &min_x, &min_y, &max_x, &max_y);
+    lv_vg_lite_path_set_bounding_box(
+        unit->stroke_path,
+        min_x - expand_bound,
+        min_y - expand_bound,
+        max_x + expand_bound,
+        max_y + expand_bound);
+
     unit->stroke_path_in_use = true;
 
     LV_PROFILER_DRAW_END;
