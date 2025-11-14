@@ -377,6 +377,11 @@ menu "LVGL configuration"
 			default 8
 			depends on LV_USE_DRAW_VG_LITE
 
+		config LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT
+			bool "Disable linear gradient extension for some older versions of drivers."
+			default n
+			depends on LV_USE_DRAW_VG_LITE
+
 		config LV_VG_LITE_USE_STROKE_TO_PATH
 			bool "Enable stroke to path optimization"
 			default y

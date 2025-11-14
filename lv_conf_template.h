@@ -216,6 +216,9 @@
  */
 #define LV_VG_LITE_STROKE_CACHE_CNT 32
 
+/** Disable linear gradient extension for some older versions of drivers. */
+#define LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT 0
+
 /* Enable stroke to path optimization. */
 #define LV_VG_LITE_USE_STROKE_TO_PATH 1
 

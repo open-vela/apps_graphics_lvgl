@@ -589,6 +589,15 @@
     #endif
 #endif
 
+/** Disable linear gradient extension for some older versions of drivers. */
+#ifndef LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT
+    #ifdef CONFIG_LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT
+        #define LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT CONFIG_LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT
+    #else
+        #define LV_VG_LITE_DISABLE_LINEAR_GRADIENT_EXT 0
+    #endif
+#endif
+
 /* Enable stroke to path optimization. */
 #ifndef LV_VG_LITE_USE_STROKE_TO_PATH
     #ifdef _LV_KCONFIG_PRESENT
