@@ -44,19 +44,6 @@ void lv_vg_lite_path_add_end(lv_vg_lite_path_t * vg_path)
     }
 }
 
-#if LV_VG_LITE_USE_PATH_UPLOAD
-void lv_vg_lite_path_upload(lv_draw_vg_lite_unit_t * u, void * impl, lv_vg_lite_path_t * vg_path)
-{
-    if(!VLM_PATH_GET_UPLOAD_BIT(vg_path->base)) {
-        /* Increase ref count before adding to pending queue */
-        lv_platform_path_base_t * impl_path = *((lv_platform_path_base_t **)impl);
-        lv_vector_path_ref(impl_path);
-        lv_vg_lite_pending_add(u->vector_pending, impl);
-        lv_vg_lite_path_finish_upload(vg_path);
-    }
-}
-#endif
-
 void lv_vg_lite_path_clear_end(lv_vg_lite_path_t * vg_path)
 {
     if(vg_path->base.add_end) {

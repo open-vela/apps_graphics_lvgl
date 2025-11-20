@@ -174,7 +174,9 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
     /* If it is fill mode, the end op code should be added */
     lv_vg_lite_path_add_end(lv_vg_path);
 #if LV_VG_LITE_USE_PATH_UPLOAD
-    lv_vg_lite_path_upload(u, (void *)(&impl), lv_vg_path);
+    if(!VLM_PATH_GET_UPLOAD_BIT(lv_vg_path->base)) {
+        lv_vg_lite_path_finish_upload(lv_vg_path);
+    }
 #endif
 
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
@@ -276,6 +278,11 @@ static void draw_fill(lv_draw_vg_lite_unit_t * u,
             LV_LOG_WARN("unsupported style: %d", dsc->fill_dsc->style);
             break;
     }
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    /* Increase ref count before adding to pending queue */
+    lv_vector_path_ref((lv_platform_path_base_t *)impl);
+    lv_vg_lite_pending_add(u->vector_pending, &impl);
+#endif
 
     LV_PROFILER_DRAW_END;
 }
@@ -315,10 +322,11 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
         stroke_dsc->stroke_dsc_changed = false;
 
         lv_vg_lite_path_add_end(lv_vg_stroke_path);
-#if LV_VG_LITE_USE_PATH_UPLOAD
-        lv_vg_lite_path_upload(u, (void *)(&impl), lv_vg_stroke_path);
-#endif
         lv_vg_lite_path_set_quality(lv_vg_stroke_path, vg_path->quality);
+
+#if LV_VG_LITE_USE_PATH_UPLOAD
+        lv_vg_lite_path_finish_upload(lv_vg_stroke_path);
+#endif
     }
 
     vg_lite_path_t * vg_stroke_path = lv_vg_lite_path_get_path(lv_vg_stroke_path);
@@ -398,7 +406,11 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
             LV_LOG_WARN("unsupported style: %d", stroke_dsc->style);
             break;
     }
-
+#if LV_VG_LITE_USE_PATH_UPLOAD
+    /* Increase ref count before adding to pending queue */
+    lv_vector_path_ref((lv_platform_path_base_t *)impl);
+    lv_vg_lite_pending_add(u->vector_pending, &impl);
+#endif
     STROKE_DROP();
     LV_PROFILER_DRAW_END;
 }
