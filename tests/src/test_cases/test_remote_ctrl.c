@@ -652,4 +652,20 @@ void test_remote_ctrl_timer(void)
     execute_args(ARRAY_SIZE(argv_del), argv_del, LV_RESULT_OK);
 }
 
+void test_remote_ctrl_hello(void)
+{
+    test_invalid_arg("hello");
+
+    const char * argv_no_args[] = {
+        "hello",
+    };
+    execute_args(ARRAY_SIZE(argv_no_args), argv_no_args, LV_RESULT_OK);
+
+    const char * argv_set_value[] = {
+        "hello",
+        "--value", "42",
+    };
+    execute_args(ARRAY_SIZE(argv_set_value), argv_set_value, LV_RESULT_OK);
+}
+
 #endif

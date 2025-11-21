@@ -1,5 +1,5 @@
 /**
- * @file lv_remote_templ.c
+ * @file lv_remote_hello.c
  *
  */
 
@@ -23,7 +23,7 @@
 
 typedef struct {
     int value;
-} templ_ctx_t;
+} hello_ctx_t;
 
 /**********************
  *  STATIC PROTOTYPES
@@ -47,7 +47,7 @@ typedef struct {
 
 static void show_help_cb(lv_remote_ctrl_print_func_t print_func)
 {
-    print_func("This is a template remote control application.\n");
+    print_func("Hello world example.\n");
 }
 
 static void constructor_cb(void * ctx)
@@ -62,7 +62,7 @@ static void destructor_cb(void * ctx)
 
 static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
 {
-    templ_ctx_t * templ_ctx = ctx;
+    hello_ctx_t * hello_ctx = ctx;
 
     int value = -1;
 
@@ -80,13 +80,13 @@ static lv_result_t execute_cb(void * ctx, int argc, const char * argv[])
     }
 
     if(value >= 0) {
-        templ_ctx->value = value;
+        hello_ctx->value = value;
         LV_LOG_USER("value set to %d", value);
     }
 
     return LV_RESULT_OK;
 }
 
-LV_REMOTE_CTRL_CLASS_EXPORT(templ, sizeof(templ_ctx_t))
+LV_REMOTE_CTRL_CLASS_EXPORT(hello, sizeof(hello_ctx_t))
 
 #endif /*LV_USE_REMOTE_CTRL*/
