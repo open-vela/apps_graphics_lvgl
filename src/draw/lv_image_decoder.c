@@ -439,7 +439,6 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
     }
 
     /*Search the decoders*/
-    lv_image_decoder_t * decoder_prev = NULL;
     _LV_LL_READ(img_decoder_ll_p, decoder) {
         /*Info and Open callbacks are required*/
         if(decoder->info_cb && decoder->open_cb) {
@@ -448,8 +447,6 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
             lv_result_t res = decoder->info_cb(decoder, dsc, header);
             LV_PROFILER_DECODER_END_TAG(decoder->name);
 
-            if(decoder_prev) LV_LOG_TRACE("Can't open image with decoder %s. Trying next decoder.", decoder_prev->name);
-
             if(res == LV_RESULT_OK) {
                 if(header->stride == 0) {
                     LV_LOG_INFO("Image decoder didn't set stride. Calculate it from width.");
@@ -457,8 +454,9 @@ static lv_image_decoder_t * image_decoder_get_info(lv_image_decoder_dsc_t * dsc,
                 }
                 break;
             }
-
-            decoder_prev = decoder;
+            else {
+                LV_LOG_TRACE("Can't open image with decoder %s. Trying next decoder.", decoder->name);
+            }
         }
     }
 
