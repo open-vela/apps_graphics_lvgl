@@ -964,6 +964,89 @@ void test_error_handling_invalid_values(void)
     lv_vector_dsc_delete(dsc);
 }
 
+void test_draw_fill_gradient_invalid_args(void)
+{
+    lv_vector_dsc_t * ctx = lv_vector_dsc_create(&layer);
+    lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
+    lv_gradient_stop_t stops[2] = {
+        {.color = lv_color_hex(0xFF0000), .opa = LV_OPA_COVER, .frac = 0},
+        {.color = lv_color_hex(0x0000FF), .opa = LV_OPA_COVER, .frac = 255}
+    };
+
+    lv_vector_dsc_identity(ctx);
+    lv_vector_path_clear(path);
+    lv_area_t linear_rect = {50, 50, 100, 150};
+    lv_vector_path_append_rect(path, &linear_rect, 10, 10);
+
+    lv_vector_dsc_set_fill_opa(ctx, LV_OPA_50);
+    lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_TRANSP);
+
+    /* Test start and end points are the same point */
+    lv_vector_dsc_set_fill_linear_gradient(ctx, 50, 50, 50, 50);
+    lv_vector_dsc_set_fill_gradient_color_stops(ctx, stops, 2);
+    lv_vector_dsc_add_path(ctx, path);
+
+    /* Test gradient Radial is less than 0 */
+    lv_vector_dsc_identity(ctx);
+    lv_vector_dsc_translate(ctx, 100, 0);
+    lv_vector_dsc_set_fill_radial_gradient(ctx, 250, 100, -50);
+    lv_vector_dsc_set_fill_gradient_color_stops(ctx, stops, 2);
+    lv_vector_dsc_add_path(ctx, path);
+
+    draw_vector(ctx);
+    draw_snapshot("fill_gradient_invalid_args");
+
+    /* Cleanup */
+    lv_vector_path_delete(path);
+    lv_vector_dsc_delete(ctx);
+}
+
+void test_draw_stroke_gradient_invalid_args(void)
+{
+    lv_vector_dsc_t * ctx = lv_vector_dsc_create(&layer);
+    lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
+    lv_gradient_stop_t stops[2] = {
+        {.color = lv_color_hex(0xFF0000), .opa = LV_OPA_COVER, .frac = 0},
+        {.color = lv_color_hex(0x0000FF), .opa = LV_OPA_COVER, .frac = 255}
+    };
+
+    lv_vector_dsc_identity(ctx);
+    lv_vector_path_clear(path);
+    lv_area_t linear_rect = {50, 50, 100, 150};
+    lv_vector_path_append_rect(path, &linear_rect, 10, 10);
+
+    lv_vector_dsc_set_fill_opa(ctx, LV_OPA_TRANSP);
+    lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_50);
+    lv_vector_dsc_set_stroke_width(ctx, 10);
+
+    /* Test linear gradient with start and end points are the same point */
+    lv_vector_dsc_set_stroke_linear_gradient(ctx, 50, 50, 50, 50);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
+    lv_vector_dsc_add_path(ctx, path);
+
+    /* Test radial gradient radius is less than 0 */
+    lv_vector_dsc_identity(ctx);
+    lv_vector_dsc_translate(ctx, 100, 0);
+    lv_vector_dsc_set_stroke_radial_gradient(ctx, 250, 100, -50);
+    lv_vector_dsc_set_stroke_gradient_color_stops(ctx, stops, 2);
+    lv_vector_dsc_add_path(ctx, path);
+
+    /* Test invalid stroke width */
+    lv_vector_dsc_identity(ctx);
+    lv_vector_dsc_translate(ctx, 200, 0);
+    lv_vector_dsc_set_stroke_width(ctx, -10);
+    lv_vector_dsc_add_path(ctx, path);
+
+    draw_vector(ctx);
+    draw_snapshot("stroke_gradient_invalid_args");
+
+    /* Cleanup */
+    lv_vector_path_delete(path);
+    lv_vector_dsc_delete(ctx);
+}
+
 void test_draw_clipper_operations(void)
 {
     lv_vector_dsc_t * ctx = lv_vector_dsc_create(&layer);

@@ -601,6 +601,11 @@ void lv_vector_dsc_set_fill_image(lv_vector_dsc_t * dsc, const lv_draw_image_dsc
 
 void lv_vector_dsc_set_fill_linear_gradient(lv_vector_dsc_t * dsc, float x1, float y1, float x2, float y2)
 {
+    if(x1 == x2 && y1 == y2) {
+        LV_LOG_ERROR("Gradient start and end points are the same, (%f, %f)->(%f, %f)", x1, y1, x2, y2);
+        return;
+    }
+
     dsc->current_dsc.fill_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
     dsc->current_dsc.fill_dsc.gradient.style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
     dsc->current_dsc.fill_dsc.gradient.x1 = x1;
@@ -611,6 +616,11 @@ void lv_vector_dsc_set_fill_linear_gradient(lv_vector_dsc_t * dsc, float x1, flo
 
 void lv_vector_dsc_set_fill_radial_gradient(lv_vector_dsc_t * dsc, float cx, float cy, float radius)
 {
+    if(radius <= 0) {
+        LV_LOG_ERROR("Radius must be greater than 0, radius: %f", radius);
+        return;
+    }
+
     dsc->current_dsc.fill_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
     dsc->current_dsc.fill_dsc.gradient.style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
     dsc->current_dsc.fill_dsc.gradient.cx = cx;
@@ -664,6 +674,10 @@ void lv_vector_dsc_set_stroke_opa(lv_vector_dsc_t * dsc, lv_opa_t opa)
 
 void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
 {
+    if(width <= 0) {
+        LV_LOG_ERROR("Stroke width must be greater than 0, width: %f", width);
+        return;
+    }
     dsc->current_dsc.stroke_dsc.width = width;
 }
 
@@ -719,6 +733,11 @@ void lv_vector_dsc_set_stroke_miter_limit(lv_vector_dsc_t * dsc, uint16_t miter_
 
 void lv_vector_dsc_set_stroke_linear_gradient(lv_vector_dsc_t * dsc, float x1, float y1, float x2, float y2)
 {
+    if(x1 == x2 && y1 == y2) {
+        LV_LOG_ERROR("Gradient start and end points are the same, (%f, %f)->(%f, %f)", x1, y1, x2, y2);
+        return;
+    }
+
     dsc->current_dsc.stroke_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
     dsc->current_dsc.stroke_dsc.gradient.style = LV_VECTOR_GRADIENT_STYLE_LINEAR;
     dsc->current_dsc.stroke_dsc.gradient.x1 = x1;
@@ -729,6 +748,11 @@ void lv_vector_dsc_set_stroke_linear_gradient(lv_vector_dsc_t * dsc, float x1, f
 
 void lv_vector_dsc_set_stroke_radial_gradient(lv_vector_dsc_t * dsc, float cx, float cy, float radius)
 {
+    if(radius <= 0) {
+        LV_LOG_ERROR("Radius must be greater than 0, radius: %f", radius);
+        return;
+    }
+
     dsc->current_dsc.stroke_dsc.style = LV_VECTOR_DRAW_STYLE_GRADIENT;
     dsc->current_dsc.stroke_dsc.gradient.style = LV_VECTOR_GRADIENT_STYLE_RADIAL;
     dsc->current_dsc.stroke_dsc.gradient.cx = cx;
