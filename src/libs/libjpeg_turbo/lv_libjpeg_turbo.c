@@ -62,7 +62,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
 static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc);
 static void decoder_close(lv_image_decoder_t * decoder, lv_image_decoder_dsc_t * dsc);
 static void convert_size_with_orientation(image_orientation_t image_op, uint32_t * width, uint32_t * height);
-static lv_draw_buf_t * decode_jpeg_file(const char * filename);
+static lv_draw_buf_t * decode_jpeg_file(const char * filename, lv_image_decoder_args_t * args);
 static bool get_jpeg_head_info(const char * filename, uint32_t * width, uint32_t * height);
 static bool get_jpeg_size(uint8_t * data, uint32_t data_size, uint32_t * width, uint32_t * height);
 static image_orientation_t get_jpeg_direction(uint8_t * data, uint32_t data_size);
@@ -189,21 +189,10 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     /*If it's a JPEG file...*/
     if(dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char * fn = dsc->src;
-        lv_draw_buf_t * decoded = decode_jpeg_file(fn);
+        lv_draw_buf_t * decoded = decode_jpeg_file(fn, &dsc->args);
         if(decoded == NULL) {
             LV_LOG_WARN("decode jpeg file failed");
             return LV_RESULT_INVALID;
-        }
-        /* Conditionally expand decoded buffer if not disabled */
-        if(!dsc->args.no_size_expand) {
-            lv_draw_buf_t * expanded = lv_draw_buf_expand(decoded, lv_image_decoder_get_size_expand());
-            if(!expanded) {
-                LV_LOG_WARN("expand jpeg buffer failed");
-                lv_draw_buf_destroy(decoded);
-                return LV_RESULT_INVALID;
-            }
-
-            decoded = expanded;
         }
 
         dsc->decoded = decoded;
@@ -255,7 +244,7 @@ static void convert_size_with_orientation(image_orientation_t image_op, uint32_t
     *height = tmp;
 }
 
-static lv_draw_buf_t * decode_jpeg_file(const char * filename)
+static lv_draw_buf_t * decode_jpeg_file(const char * filename, lv_image_decoder_args_t * args)
 {
     uint32_t data_size;
     uint8_t * data = lv_fs_load_with_alloc(filename, &data_size);
@@ -362,10 +351,21 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
     uint32_t buf_width = image_header.w;
     uint32_t buf_height = image_header.h;
 
+    /* Conditionally expand decoded buffer if not disabled */
+    if(!args->no_size_expand) {
+        buf_width += lv_image_decoder_get_size_expand() * 2;
+        buf_height += lv_image_decoder_get_size_expand() * 2;
+    }
+
     decoded = lv_draw_buf_create_ex(image_cache_draw_buf_handlers, buf_width, buf_height, LV_COLOR_FORMAT_ARGB8888,
                                     LV_STRIDE_AUTO);
     if(decoded != NULL) {
         uint32_t line_index = 0;
+        uint32_t buf_offset = 0;
+
+        if(!args->no_size_expand) {
+            buf_offset = (decoded->header.stride + JPEG_PIXEL_SIZE) * lv_image_decoder_get_size_expand();
+        }
 
         /*Clean up garbage values ​​that appear in alignment*/
         lv_draw_buf_clear(decoded, NULL);
@@ -388,7 +388,7 @@ static lv_draw_buf_t * decode_jpeg_file(const char * filename)
             }
 
             /* Assume put_scanline_someplace wants a pointer and sample count. */
-            process_buffer_orientation(image_op, decoded->data, &image_header, line_index, buffer[0],
+            process_buffer_orientation(image_op, decoded->data + buf_offset, &image_header, line_index, buffer[0],
                                        decoded->header.stride);
             line_index++;
         }

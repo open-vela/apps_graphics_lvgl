@@ -149,11 +149,6 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         return LV_RESULT_INVALID;
     }
 
-    /* Conditionally expand decoded buffer if not disabled */
-    if(!dsc->args.no_size_expand) {
-        decoded = lv_draw_buf_expand(decoded, lv_image_decoder_get_size_expand());
-    }
-
     lv_draw_buf_t * adjusted = lv_image_decoder_post_process(dsc, decoded);
     if(adjusted == NULL) {
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
@@ -258,7 +253,19 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
 
     /*Alloc image buffer*/
     lv_draw_buf_t * decoded;
-    decoded = lv_draw_buf_create_ex(image_cache_draw_buf_handlers, image.width, image.height, cf, LV_STRIDE_AUTO);
+
+    uint32_t buf_width = image.width;
+    uint32_t buf_height = image.height;
+    uint32_t expand_size = 0;
+
+    /* Conditionally expand decoded buffer if not disabled */
+    if(!dsc->args.no_size_expand) {
+        expand_size = lv_image_decoder_get_size_expand();
+        buf_width += expand_size * 2;
+        buf_height += expand_size * 2;
+    }
+
+    decoded = lv_draw_buf_create_ex(image_cache_draw_buf_handlers, buf_width, buf_height, cf, LV_STRIDE_AUTO);
     if(decoded == NULL) {
 
         if(dsc->src_type == LV_IMAGE_SRC_FILE) {
@@ -280,7 +287,7 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
     lv_draw_buf_clear(decoded, NULL);
 
     void * palette = decoded->data;
-    void * map = decoded->data + LV_COLOR_INDEXED_PALETTE_SIZE(cf) * sizeof(lv_color32_t);
+    void * map = lv_draw_buf_goto_xy(decoded, expand_size, expand_size);
 
     /*Start decoding*/
     LV_PROFILER_DECODER_BEGIN_TAG("png_image_finish_read");
@@ -296,6 +303,38 @@ static lv_draw_buf_t * decode_png(lv_image_decoder_dsc_t * dsc)
         lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
         LV_PROFILER_DECODER_END;
         return NULL;
+    }
+
+    if(expand_size > 0 && cf == LV_COLOR_FORMAT_I8) {
+        const lv_color32_t * color_table = palette;
+        if(color_table[0].alpha != 0) {
+            /* In order to keep it simple, only judge whether the first entry is transparent or not.
+             * If it's not fully transparent, translate it to ARGB8888 format.
+            */
+
+            lv_draw_buf_t * new_decoded = lv_draw_buf_create(buf_width, buf_height, LV_COLOR_FORMAT_ARGB8888, LV_STRIDE_AUTO);
+            if(new_decoded == NULL) {
+                LV_LOG_ERROR("alloc PNG_IMAGE_SIZE(%" LV_PRIu32 ") failed!", (uint32_t)PNG_IMAGE_SIZE(image));
+                lv_draw_buf_destroy(decoded);
+                return NULL;
+            }
+
+            lv_draw_buf_clear(new_decoded, NULL);
+
+            uint8_t * src_pixel = (uint8_t *)lv_draw_buf_goto_xy(decoded, expand_size, expand_size);
+            uint8_t * dst_pixel = (uint8_t *)lv_draw_buf_goto_xy(new_decoded, expand_size, expand_size);
+            for(png_uint_32 y = 0; y < image.height; y++) {
+                lv_color32_t * dst_color = (lv_color32_t *)dst_pixel;
+                for(png_uint_32 x = 0; x < image.width; x++) {
+                    dst_color[x] = color_table[src_pixel[x]];
+                }
+                dst_pixel += new_decoded->header.stride;
+                src_pixel += decoded->header.stride;
+            }
+
+            lv_draw_buf_destroy(decoded);
+            decoded = new_decoded;
+        }
     }
 
     LV_PROFILER_DECODER_END;
