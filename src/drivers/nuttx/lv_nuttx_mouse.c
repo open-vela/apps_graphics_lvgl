@@ -87,7 +87,6 @@ lv_indev_t * lv_nuttx_mouse_create(const char * dev_path)
 static bool mouse_read_sample(int fd, struct mouse_report_s * sample)
 {
     int nbytes = read(fd, sample, sizeof(struct mouse_report_s));
-    return nbytes == sizeof(struct mouse_report_s);
     if(nbytes == sizeof(struct mouse_report_s)) {
         return true;
     }
