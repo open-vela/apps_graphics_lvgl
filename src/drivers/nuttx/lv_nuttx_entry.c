@@ -11,7 +11,7 @@
 #if LV_USE_NUTTX
 
 #include <time.h>
-#include <nuttx/tls.h>
+#include <nuttx/tls_task.h>
 #include <nuttx/clock.h>
 #include <syslog.h>
 #include <pthread.h>
