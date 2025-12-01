@@ -160,9 +160,6 @@ static void * _linear_alloc(struct _linear_allocator * mem, size_t size)
 
 lv_linear_allocator * lv_linear_allocator_create(lv_mem_align_type_t align, size_t block_size)
 {
-    LV_ASSERT(align > LV_MEM_ALIGN_1);
-    LV_ASSERT(align <= LV_MEM_ALIGN_32);
-
     block_size = LV_MAX(block_size, LV_LINEAR_DEFAULT_BLOCK_SIZE);
 
     lv_linear_allocator_private * mem = lv_zalloc(sizeof(lv_linear_allocator_private));

@@ -90,10 +90,8 @@ void test_linear_allocator_edge_cases(void)
 void test_linear_allocator_different_alignments(void)
 {
     /* Test all alignment types */
-    /*LV_ASSERT(align > LV_MEM_ALIGN_1);*/
-    /*LV_ASSERT(align <= LV_MEM_ALIGN_32);*/
     lv_mem_align_type_t alignments[] = {
-        LV_MEM_ALIGN_4, LV_MEM_ALIGN_8, LV_MEM_ALIGN_16, LV_MEM_ALIGN_32
+        LV_MEM_ALIGN_1, LV_MEM_ALIGN_4, LV_MEM_ALIGN_8, LV_MEM_ALIGN_16, LV_MEM_ALIGN_32, LV_MEM_ALIGN_64
     };
 
     for(size_t i = 0; i < sizeof(alignments) / sizeof(alignments[0]); i++) {
