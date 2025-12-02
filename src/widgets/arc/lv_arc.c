@@ -346,6 +346,12 @@ int32_t lv_arc_get_knob_offset(const lv_obj_t * obj)
     return ((lv_arc_t *)obj)->knob_offset;
 }
 
+uint32_t lv_arc_get_change_rate(const lv_obj_t * obj)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+    return ((lv_arc_t *)obj)->chg_rate;
+}
+
 /*=====================
  * Other functions
  *====================*/

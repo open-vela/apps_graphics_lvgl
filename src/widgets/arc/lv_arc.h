@@ -240,6 +240,13 @@ int32_t lv_arc_get_rotation(const lv_obj_t * obj);
  */
 int32_t lv_arc_get_knob_offset(const lv_obj_t * obj);
 
+/**
+ * Get a change rate that limits the speed how fast the arc should reach the pressed point.
+ * @param obj       pointer to an arc object
+ * @return          arc's change rate
+ */
+uint32_t lv_arc_get_change_rate(const lv_obj_t * obj);
+
 /*=====================
  * Other functions
  *====================*/

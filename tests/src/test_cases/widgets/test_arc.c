@@ -223,9 +223,16 @@ void test_arc_set_change_rate(void)
 
     /* Test setting various change rate values */
     lv_arc_set_change_rate(_test_arc, 0);
+    TEST_ASSERT_EQUAL_UINT32(0, lv_arc_get_change_rate(_test_arc));
+
     lv_arc_set_change_rate(_test_arc, 100);
+    TEST_ASSERT_EQUAL_UINT32(100, lv_arc_get_change_rate(_test_arc));
+
     lv_arc_set_change_rate(_test_arc, 500);
+    TEST_ASSERT_EQUAL_UINT32(500, lv_arc_get_change_rate(_test_arc));
+
     lv_arc_set_change_rate(_test_arc, 1000);
+    TEST_ASSERT_EQUAL_UINT32(1000, lv_arc_get_change_rate(_test_arc));
 }
 
 void test_arc_set_knob_offset(void)
