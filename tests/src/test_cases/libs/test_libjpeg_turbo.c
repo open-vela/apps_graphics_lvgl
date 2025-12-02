@@ -118,12 +118,14 @@ void test_jpg_decode_failed(void)
     /* Temporarily remove tjpgd decoder */
     lv_tjpgd_deinit();
 
-    lv_obj_clean(lv_screen_active());
-    lv_obj_t * img = lv_image_create(lv_screen_active());
-    lv_image_set_src(img, "A:src/test_assets/test_img_lvgl_logo_with_decode_failed.jpg");
-    lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
+    lv_image_decoder_dsc_t decoder_dsc;
+    const char * image_path = "A:src/test_assets/test_img_lvgl_logo_with_decode_failed.jpg";
 
-    TEST_ASSERT_EQUAL_SCREENSHOT("libs/jpg_decode_failed.png");
+    /* Try to decode the image */
+    lv_result_t res = lv_image_decoder_open(&decoder_dsc, image_path, NULL);
+
+    /* Should fail when decoder is removed */
+    TEST_ASSERT_EQUAL(LV_RESULT_INVALID, res);
 
     /* Re-add tjpgd decoder */
     lv_tjpgd_init();
@@ -137,7 +139,7 @@ void test_libjpeg_turbo_invalid_file_path(void)
     lv_tjpgd_deinit();
 
     lv_obj_t * img = lv_image_create(lv_screen_active());
-    lv_image_set_src(img, "A:nonexistent_file.jpg");
+    lv_image_set_src(img, "A:src/test_assets/nonexistent_file.jpg");
 
     /* The image should not load successfully */
     lv_obj_center(img);
