@@ -184,6 +184,7 @@ if(CONFIG_LVGL_UNITTESTS)
     APPEND
     UNITY_CSRCS
     ${LVGL_PATH}/tests/src/lv_test_indev.c
+    ${LVGL_PATH}/tests/src/lv_test_fs.c
     ${LVGL_PATH}/tests/src/lv_test_init.c
     ${LVGL_PATH}/tests/src/lv_test_helpers.c
     ${TEST_IMAGES_SRC}

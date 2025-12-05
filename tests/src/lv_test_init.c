@@ -2,6 +2,7 @@
 #include "lv_test_init.h"
 #include "../unity/unity.h"
 #include "lv_test_indev.h"
+#include "lv_test_fs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -30,6 +31,8 @@ void lv_test_init(void)
     /* Disable profiler, to reduce redundant profiler log printing  */
     lv_profiler_builtin_set_enable(false);
 #endif
+
+    lv_test_fs_init();
 
     hal_init();
 }

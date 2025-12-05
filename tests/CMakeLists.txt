@@ -237,6 +237,7 @@ file(GLOB_RECURSE TEST_IMAGES_SRC ${LVGL_TEST_DIR}/test_images/*.c)
 add_library(test_common
     STATIC
         src/lv_test_indev.c
+        src/lv_test_fs.c
         src/lv_test_init.c
         src/lv_test_helpers.c
         src/test_assets/test_animimg001.c
