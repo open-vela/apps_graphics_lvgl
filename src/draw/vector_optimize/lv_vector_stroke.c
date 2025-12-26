@@ -921,6 +921,11 @@ bool lv_vector_stroke_generate(const lv_platform_path_base_t * impl, const lv_ve
         return false;
     }
 
+    if(stroke_dsc->width <= 0.0f) {
+        LV_LOG_ERROR("stroke width is less than or equal to zero!");
+        return false;
+    }
+
     bool ret = false;
 
     lv_line_generator line_gen;

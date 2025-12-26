@@ -772,7 +772,7 @@ void lv_vector_dsc_set_stroke_opa(lv_vector_dsc_t * dsc, lv_opa_t opa)
 
 void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
 {
-    if(width <= 0) {
+    if(width < 0.0f) {
         LV_LOG_ERROR("Stroke width must be greater than 0, width: %f", width);
         return;
     }

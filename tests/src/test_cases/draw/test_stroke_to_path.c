@@ -173,11 +173,74 @@ void test_stroke_to_path(void)
     canvas_draw("draw_lines", draw_lines);
 }
 
+void test_stroke_to_path_errors(void)
+{
+    /* Test empty path */
+    lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+    lv_vector_path_t * result = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
+    /* Initialize stroke descriptor manually */
+    lv_vector_stroke_dsc_t stroke_dsc;
+    lv_memzero(&stroke_dsc, sizeof(lv_vector_stroke_dsc_t));
+
+#if LV_USE_VECTOR_GRAPHIC_OPTIMIZE
+    stroke_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
+    stroke_dsc.draw_attrs.color = lv_color_to_32(lv_color_black(), 0xFF);
+    stroke_dsc.opa = LV_OPA_COVER;
+    stroke_dsc.width = 5.0f;
+    stroke_dsc.cap = LV_VECTOR_STROKE_CAP_BUTT;
+    stroke_dsc.join = LV_VECTOR_STROKE_JOIN_MITER;
+    stroke_dsc.miter_limit = 4.0f;
+    lv_matrix_identity(&stroke_dsc.matrix);
+#else
+    stroke_dsc.style = LV_VECTOR_DRAW_STYLE_SOLID;
+    stroke_dsc.color = lv_color_to_32(lv_color_black(), 0xFF);
+    stroke_dsc.opa = LV_OPA_COVER;
+    stroke_dsc.width = 5.0f;
+    stroke_dsc.cap = LV_VECTOR_STROKE_CAP_BUTT;
+    stroke_dsc.join = LV_VECTOR_STROKE_JOIN_MITER;
+    stroke_dsc.miter_limit = 4.0f;
+    lv_matrix_identity(&stroke_dsc.matrix);
+#endif
+
+    /* Empty path should return false */
+    bool ret = lv_vector_stroke_to_path(result, path, &stroke_dsc);
+    TEST_ASSERT_FALSE(ret);
+
+    /* Test stroke width <= 0 */
+    lv_vector_path_clear(path);
+    lv_fpoint_t pt = {10, 10};
+    lv_vector_path_move_to(path, &pt);
+    pt.x = 20;
+    pt.y = 20;
+    lv_vector_path_line_to(path, &pt);
+
+    /* Test width = 0 */
+    stroke_dsc.width = 0.0f;
+    ret = lv_vector_stroke_to_path(result, path, &stroke_dsc);
+    TEST_ASSERT_FALSE(ret);
+
+    /* Test negative width */
+    stroke_dsc.width = -5.0f;
+    ret = lv_vector_stroke_to_path(result, path, &stroke_dsc);
+    TEST_ASSERT_FALSE(ret);
+
+    /* Clean up */
+    lv_vector_path_delete(path);
+    lv_vector_path_delete(result);
+}
+
 #else
 
 void test_stroke_to_path(void)
 {
     ;
 }
+
+void test_stroke_to_path_errors(void)
+{
+    ;
+}
+
 #endif
 #endif
