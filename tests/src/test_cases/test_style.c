@@ -140,4 +140,73 @@ void test_style_has_prop(void)
     lv_style_reset(&style);
 }
 
+void test_style_default_values(void)
+{
+    /* Create a basic object to test default style values */
+    lv_obj_t * obj = lv_obj_create(NULL);
+    lv_obj_remove_style_all(obj); /* Remove default styles */
+
+    /* Test transform scale default values */
+    TEST_ASSERT_EQUAL(LV_SCALE_NONE, lv_obj_get_style_transform_scale_x(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_SCALE_NONE, lv_obj_get_style_transform_scale_y(obj, LV_PART_MAIN));
+
+    /* Test background color default value */
+#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
+    TEST_ASSERT_EQUAL_COLOR(lv_color_hex(0x000000), lv_obj_get_style_bg_color(obj, LV_PART_MAIN));
+#else
+    TEST_ASSERT_EQUAL_COLOR(lv_color_hex(0xffffff), lv_obj_get_style_bg_color(obj, LV_PART_MAIN));
+#endif
+
+    /* Test color default values (should be white in dark theme, black otherwise) */
+    const lv_color_t expected_color_default =
+#if LV_USE_THEME_DEFAULT && LV_THEME_DEFAULT_DARK
+        lv_color_hex(0xffffff);
+#else
+        lv_color_hex(0x000000);
+#endif
+
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_bg_grad_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_border_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_shadow_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_outline_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_arc_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_line_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_text_color(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(expected_color_default, lv_obj_get_style_image_recolor(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL_COLOR(lv_color_hex(0x000000), lv_obj_get_style_recolor(obj, LV_PART_MAIN));
+
+    /* Test opacity default values (should be LV_OPA_COVER = 255) */
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_opa_layered(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_border_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_text_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_image_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_bg_grad_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_bg_main_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_bg_image_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_outline_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_shadow_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_line_opa(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_OPA_COVER, lv_obj_get_style_arc_opa(obj, LV_PART_MAIN));
+
+    /* Test gradient stop default value */
+    TEST_ASSERT_EQUAL(255, lv_obj_get_style_bg_grad_stop(obj, LV_PART_MAIN));
+
+    /* Test border side default value */
+    TEST_ASSERT_EQUAL(LV_BORDER_SIDE_FULL, lv_obj_get_style_border_side(obj, LV_PART_MAIN));
+
+    /* Test text font default value */
+    TEST_ASSERT_EQUAL_PTR(LV_FONT_DEFAULT, lv_obj_get_style_text_font(obj, LV_PART_MAIN));
+
+    /* Test max width/height default values */
+    TEST_ASSERT_EQUAL(LV_COORD_MAX, lv_obj_get_style_max_width(obj, LV_PART_MAIN));
+    TEST_ASSERT_EQUAL(LV_COORD_MAX, lv_obj_get_style_max_height(obj, LV_PART_MAIN));
+
+    /* Test rotary sensitivity default value */
+    TEST_ASSERT_EQUAL(256, lv_obj_get_style_rotary_sensitivity(obj, LV_PART_MAIN));
+
+    /* Test default for properties that should return 0 or NULL */
+    TEST_ASSERT_EQUAL(0, lv_obj_get_style_radius(obj, LV_PART_MAIN));
+}
+
 #endif
