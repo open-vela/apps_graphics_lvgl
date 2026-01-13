@@ -575,7 +575,7 @@
     #ifdef CONFIG_LV_VG_LITE_GRAD_CACHE_CNT
         #define LV_VG_LITE_GRAD_CACHE_CNT CONFIG_LV_VG_LITE_GRAD_CACHE_CNT
     #else
-        #define LV_VG_LITE_GRAD_CACHE_CNT 32
+        #define LV_VG_LITE_GRAD_CACHE_CNT 16
     #endif
 #endif
 
