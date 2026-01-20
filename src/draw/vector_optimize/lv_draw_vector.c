@@ -777,7 +777,6 @@ void lv_vector_dsc_set_stroke_width(lv_vector_dsc_t * dsc, float width)
         return;
     }
 
-    if(dsc->current_dsc->stroke_dsc->width == width) return;
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
 
     dsc->current_dsc->stroke_dsc->width = width;

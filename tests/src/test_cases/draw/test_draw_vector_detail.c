@@ -1132,5 +1132,46 @@ void test_draw_clipper_operations(void)
     lv_vector_dsc_delete(ctx);
 }
 
+void test_draw_same_path_different_stroke_width(void)
+{
+    lv_vector_dsc_t * ctx = lv_vector_dsc_create(&layer);
+    lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+
+    /* Clear background */
+    lv_area_t rect = {0, 0, 640, 480};
+    lv_vector_dsc_set_fill_color(ctx, lv_color_white());
+    lv_vector_clear_area(ctx, &rect);
+
+    /* Same path, different stroke widths.
+     * Expectation: every add_path captures current dsc state (stroke width),
+     * and later modifications won't retroactively affect previously added items.
+     */
+    lv_vector_path_clear(path);
+    lv_fpoint_t pts[] = { { 60, 80 }, { 420, 80 } };
+    lv_vector_path_move_to(path, &pts[0]);
+    lv_vector_path_line_to(path, &pts[1]);
+    lv_vector_path_close(path);
+
+    lv_vector_dsc_set_fill_opa(ctx, LV_OPA_TRANSP);
+    lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_COVER);
+
+    /* Draw from thin to thick, offset per row to avoid overlap */
+    const float widths[] = { 1.0f, 3.0f, 8.0f };
+    const uint32_t w_cnt = sizeof(widths) / sizeof(widths[0]);
+    for(uint32_t i = 0; i < w_cnt; i++) {
+        lv_vector_dsc_set_stroke_width(ctx, widths[i]);
+
+        lv_vector_dsc_translate(ctx, 0, i * 80);
+        lv_vector_dsc_add_path(ctx, path);
+    }
+
+    draw_vector(ctx);
+    draw_snapshot(SNAPSHOT_NAME(same_path_different_stroke_width));
+
+    /* Cleanup */
+    lv_vector_path_delete(path);
+    lv_vector_dsc_delete(ctx);
+}
+
 #endif
 #endif
