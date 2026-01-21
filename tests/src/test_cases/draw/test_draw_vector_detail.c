@@ -1132,43 +1132,176 @@ void test_draw_clipper_operations(void)
     lv_vector_dsc_delete(ctx);
 }
 
-void test_draw_same_path_different_stroke_width(void)
+void test_draw_same_path_different_stroke_dsc(void)
 {
     lv_vector_dsc_t * ctx = lv_vector_dsc_create(&layer);
     lv_vector_path_t * path = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
+    lv_vector_path_t * path_moved = lv_vector_path_create(LV_VECTOR_PATH_QUALITY_MEDIUM);
 
     /* Clear background */
     lv_area_t rect = {0, 0, 640, 480};
     lv_vector_dsc_set_fill_color(ctx, lv_color_white());
     lv_vector_clear_area(ctx, &rect);
 
-    /* Same path, different stroke widths.
-     * Expectation: every add_path captures current dsc state (stroke width),
-     * and later modifications won't retroactively affect previously added items.
+    /* Same path, different stroke properties.
+     * Layout: 2x2 quadrants in one snapshot.
+     *   TL: stroke_width (3 variants)
+     *   TR: stroke_cap   (3 variants)
+     *   BL: stroke_join  (3 variants)
+     *   BR: miter_limit  (3 variants, with miter join)
+     */
+
+    /* Use simple geometry:
+     * - For width/cap: straight line
+     * - For join/miter_limit: polyline with a corner
+     * Each quadrant has 3 non-overlapping rows.
      */
     lv_vector_path_clear(path);
-    lv_fpoint_t pts[] = { { 60, 80 }, { 420, 80 } };
-    lv_vector_path_move_to(path, &pts[0]);
-    lv_vector_path_line_to(path, &pts[1]);
-    lv_vector_path_close(path);
+    lv_fpoint_t p0 = { 30, 40 };
+    lv_fpoint_t p1 = { 200, 40 };
+
+    /* Corner polyline for join/miter (reference: test_draw_lines_group)
+     * Use a 4-point polyline to show join behavior clearly.
+     */
+    lv_fpoint_t j0 = { 30, 60 };
+    lv_fpoint_t j1 = { 80, 10 };
+    lv_fpoint_t j2 = { 130, 110 };
+    lv_fpoint_t j3 = { 180, 60 };
+
+    /* Build base path as a straight line (used by TL/TR) */
+    lv_vector_path_move_to(path, &p0);
+    lv_vector_path_line_to(path, &p1);
 
     lv_vector_dsc_set_fill_opa(ctx, LV_OPA_TRANSP);
     lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_COVER);
+    lv_vector_dsc_set_stroke_color(ctx, lv_color_black());
+    lv_vector_dsc_set_stroke_width(ctx, 10.0f);
 
-    /* Draw from thin to thick, offset per row to avoid overlap */
-    const float widths[] = { 1.0f, 3.0f, 8.0f };
-    const uint32_t w_cnt = sizeof(widths) / sizeof(widths[0]);
-    for(uint32_t i = 0; i < w_cnt; i++) {
-        lv_vector_dsc_set_stroke_width(ctx, widths[i]);
+    /* Helper: move (copy) the same path geometry to target quadrant without using
+     * dsc_save/dsc_restore or clip. This keeps "same path" semantics (same geometry),
+     * while meeting the restriction.
+     */
+    const int32_t q_dx[4] = { 0, 240, 0, 240 };
+    const int32_t q_dy[4] = { 0, 0, 240, 240 };
+    const int32_t row_h = 60;
 
-        lv_vector_dsc_translate(ctx, 0, i * 80);
-        lv_vector_dsc_add_path(ctx, path);
+    /* TL: stroke_width */
+    {
+        const float widths[] = { 2.0f, 8.0f, 16.0f };
+        for(uint32_t i = 0; i < 3; i++) {
+            const int32_t dx = q_dx[0];
+            const int32_t dy = q_dy[0] + (int32_t)i * row_h;
+
+            lv_vector_path_clear(path_moved);
+            lv_vector_path_move_to(path_moved, &(lv_fpoint_t) {
+                p0.x + dx, p0.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                p1.x + dx, p1.y + dy
+            });
+
+            lv_vector_dsc_set_stroke_width(ctx, widths[i]);
+            lv_vector_dsc_set_stroke_cap(ctx, LV_VECTOR_STROKE_CAP_BUTT);
+            lv_vector_dsc_set_stroke_join(ctx, LV_VECTOR_STROKE_JOIN_MITER);
+            lv_vector_dsc_set_stroke_miter_limit(ctx, 4.0f);
+            lv_vector_dsc_add_path(ctx, path_moved);
+        }
+    }
+
+    /* TR: stroke_cap */
+    {
+        const lv_vector_stroke_cap_t caps[] = {
+            LV_VECTOR_STROKE_CAP_BUTT,
+            LV_VECTOR_STROKE_CAP_SQUARE,
+            LV_VECTOR_STROKE_CAP_ROUND,
+        };
+        for(uint32_t i = 0; i < 3; i++) {
+            const int32_t dx = q_dx[1];
+            const int32_t dy = q_dy[1] + (int32_t)i * row_h;
+
+            lv_vector_path_clear(path_moved);
+            lv_vector_path_move_to(path_moved, &(lv_fpoint_t) {
+                p0.x + dx, p0.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                p1.x + dx, p1.y + dy
+            });
+
+            lv_vector_dsc_set_stroke_width(ctx, 12.0f);
+            lv_vector_dsc_set_stroke_cap(ctx, caps[i]);
+            lv_vector_dsc_set_stroke_join(ctx, LV_VECTOR_STROKE_JOIN_MITER);
+            lv_vector_dsc_set_stroke_miter_limit(ctx, 4.0f);
+            lv_vector_dsc_add_path(ctx, path_moved);
+        }
+    }
+
+    /* BL: stroke_join */
+    {
+        const lv_vector_stroke_join_t joins[] = {
+            LV_VECTOR_STROKE_JOIN_MITER,
+            LV_VECTOR_STROKE_JOIN_BEVEL,
+            LV_VECTOR_STROKE_JOIN_ROUND,
+        };
+        for(uint32_t i = 0; i < 3; i++) {
+            const int32_t dx = q_dx[2];
+            const int32_t dy = q_dy[2] + (int32_t)i * row_h;
+
+            lv_vector_path_clear(path_moved);
+            lv_vector_path_move_to(path_moved, &(lv_fpoint_t) {
+                j0.x + dx, j0.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j1.x + dx, j1.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j2.x + dx, j2.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j3.x + dx, j3.y + dy
+            });
+
+            lv_vector_dsc_set_stroke_width(ctx, 12.0f);
+            lv_vector_dsc_set_stroke_cap(ctx, LV_VECTOR_STROKE_CAP_BUTT);
+            lv_vector_dsc_set_stroke_join(ctx, joins[i]);
+            lv_vector_dsc_set_stroke_miter_limit(ctx, 4.0f);
+            lv_vector_dsc_add_path(ctx, path_moved);
+        }
+    }
+
+    /* BR: miter_limit (keep join=miter) */
+    {
+        const uint16_t limits[] = { 1, 4, 12 };
+        for(uint32_t i = 0; i < 3; i++) {
+            const int32_t dx = q_dx[3];
+            const int32_t dy = q_dy[3] + (int32_t)i * row_h;
+
+            lv_vector_path_clear(path_moved);
+            lv_vector_path_move_to(path_moved, &(lv_fpoint_t) {
+                j0.x + dx, j0.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j1.x + dx, j1.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j2.x + dx, j2.y + dy
+            });
+            lv_vector_path_line_to(path_moved, &(lv_fpoint_t) {
+                j3.x + dx, j3.y + dy
+            });
+
+            lv_vector_dsc_set_stroke_width(ctx, 12.0f);
+            lv_vector_dsc_set_stroke_cap(ctx, LV_VECTOR_STROKE_CAP_BUTT);
+            lv_vector_dsc_set_stroke_join(ctx, LV_VECTOR_STROKE_JOIN_MITER);
+            lv_vector_dsc_set_stroke_miter_limit(ctx, limits[i]);
+            lv_vector_dsc_add_path(ctx, path_moved);
+        }
     }
 
     draw_vector(ctx);
-    draw_snapshot(SNAPSHOT_NAME(same_path_different_stroke_width));
+    draw_snapshot(SNAPSHOT_NAME(same_path_different_stroke_dsc));
 
     /* Cleanup */
+    lv_vector_path_delete(path_moved);
     lv_vector_path_delete(path);
     lv_vector_dsc_delete(ctx);
 }

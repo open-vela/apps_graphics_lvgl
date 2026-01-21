@@ -823,8 +823,6 @@ void lv_vector_dsc_set_stroke_dash(lv_vector_dsc_t * dsc, float * dash_pattern, 
 
 void lv_vector_dsc_set_stroke_cap(lv_vector_dsc_t * dsc, lv_vector_stroke_cap_t cap)
 {
-    if(dsc->current_dsc->stroke_dsc->cap == cap) return;
-
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->cap = cap;
     dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
@@ -832,8 +830,6 @@ void lv_vector_dsc_set_stroke_cap(lv_vector_dsc_t * dsc, lv_vector_stroke_cap_t 
 
 void lv_vector_dsc_set_stroke_join(lv_vector_dsc_t * dsc, lv_vector_stroke_join_t join)
 {
-    if(dsc->current_dsc->stroke_dsc->join == join) return;
-
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->join = join;
     dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
@@ -841,8 +837,6 @@ void lv_vector_dsc_set_stroke_join(lv_vector_dsc_t * dsc, lv_vector_stroke_join_
 
 void lv_vector_dsc_set_stroke_miter_limit(lv_vector_dsc_t * dsc, uint16_t miter_limit)
 {
-    if(dsc->current_dsc->stroke_dsc->miter_limit == miter_limit) return;
-
     lv_vector_dsc_stroke_ensure_write_access(dsc->tasks.draw_task_list.allocator, &dsc->current_dsc->stroke_dsc);
     dsc->current_dsc->stroke_dsc->miter_limit = miter_limit;
     dsc->current_dsc->stroke_dsc->stroke_dsc_changed = true;
