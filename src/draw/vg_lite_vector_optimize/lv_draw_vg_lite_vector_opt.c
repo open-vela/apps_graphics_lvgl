@@ -296,6 +296,17 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
 {
     LV_PROFILER_DRAW_BEGIN;
 
+    /* Defensive checks: tasks might be created without stroke descriptor. */
+    if(dsc == NULL || dsc->stroke_dsc == NULL) {
+        LV_PROFILER_DRAW_END;
+        return;
+    }
+
+    if(lv_vector_path_impl_is_empty(impl)) {
+        LV_LOG_ERROR("path is empty!");
+        return;
+    }
+
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
     lv_vector_stroke_dsc_t * stroke_dsc = dsc->stroke_dsc;
 
@@ -303,7 +314,8 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
     lv_platform_vg_lite_path_t * impl_path = (lv_platform_vg_lite_path_t *)impl;
 
     lv_vg_lite_path_t * lv_vg_stroke_path;
-    if((impl_path->stroke_path_cache->base.path_length != 0)
+    /* stroke_path_cache can be NULL on first use. */
+    if(impl_path->stroke_path_cache && (impl_path->stroke_path_cache->base.path_length != 0)
        && (!(impl_path->base.flags & PATH_FLAG_CHANGED))
        && (!(stroke_dsc->stroke_dsc_changed))) {
         lv_vg_stroke_path = impl_path->stroke_path_cache;
@@ -315,6 +327,7 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
             LV_PROFILER_DRAW_END;
             return;
         }
+
 #if LV_VG_LITE_USE_STROKE_PATH_CACHE
         impl_path->stroke_path_cache = lv_vg_stroke_path;
 #endif
