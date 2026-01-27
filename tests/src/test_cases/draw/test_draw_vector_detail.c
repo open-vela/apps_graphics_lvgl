@@ -289,6 +289,16 @@ void test_draw_fill_stroke(void)
     lv_vector_dsc_set_fill_opa(ctx, LV_OPA_COVER);
     lv_vector_dsc_set_stroke_color(ctx, lv_color_make(0xff, 0x00, 0x00));
     lv_vector_dsc_add_path(ctx, path);
+
+    // Test 4: Empty stroke path added to draw queue
+    // Create a new empty path, set stroke-only, and add it to the draw queue.
+    // This should not crash and should render nothing.
+    lv_vector_path_clear(path);
+    lv_vector_dsc_set_fill_opa(ctx, LV_OPA_TRANSP);
+    lv_vector_dsc_set_stroke_opa(ctx, LV_OPA_COVER);
+    lv_vector_dsc_set_stroke_color(ctx, lv_color_make(0x00, 0x00, 0x00));
+    lv_vector_dsc_set_stroke_width(ctx, 5.0f);
+    lv_vector_dsc_add_path(ctx, path);
     draw_vector(ctx);
     draw_snapshot(SNAPSHOT_NAME(fill_and_stroke_base));
 

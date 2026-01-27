@@ -957,6 +957,10 @@ void lv_vector_dsc_add_path(lv_vector_dsc_t * dsc, const lv_vector_path_t * path
         return;
     }
 
+    if(lv_vector_path_is_empty(path)) {
+        return;
+    }
+
     if(!dsc->tasks.draw_task_list.task_list) {
         dsc->tasks.draw_task_list.task_list = lv_malloc(sizeof(lv_ll_t));
         LV_ASSERT_MALLOC(dsc->tasks.draw_task_list.task_list);

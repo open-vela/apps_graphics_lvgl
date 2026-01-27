@@ -296,17 +296,6 @@ static void draw_stroke(lv_draw_vg_lite_unit_t * u,
 {
     LV_PROFILER_DRAW_BEGIN;
 
-    /* Defensive checks: tasks might be created without stroke descriptor. */
-    if(dsc == NULL || dsc->stroke_dsc == NULL) {
-        LV_PROFILER_DRAW_END;
-        return;
-    }
-
-    if(lv_vector_path_impl_is_empty(impl)) {
-        LV_LOG_ERROR("path is empty!");
-        return;
-    }
-
     vg_lite_path_t * vg_path = lv_vg_lite_path_get_path(lv_vg_path);
     lv_vector_stroke_dsc_t * stroke_dsc = dsc->stroke_dsc;
 
