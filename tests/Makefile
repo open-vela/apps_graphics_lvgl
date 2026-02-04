@@ -46,6 +46,7 @@ TEST_CASE_FILES := \
     ${LVGL_PATH}/tests/src/test_cases/test_config.c \
     ${LVGL_PATH}/tests/src/test_cases/test_math.c \
     ${LVGL_PATH}/tests/src/test_cases/test_anim.c \
+    ${LVGL_PATH}/tests/src/test_cases/test_anim_precise_cb.c \
     ${LVGL_PATH}/tests/src/test_cases/test_margin_align.c \
     ${LVGL_PATH}/tests/src/test_cases/test_style.c \
     ${LVGL_PATH}/tests/src/test_cases/widgets/test_btnmatrix.c \

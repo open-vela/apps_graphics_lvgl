@@ -972,7 +972,7 @@ static void lv_label_refr_text(lv_obj_t * obj)
                 if(playback_now) {
                     a.playback_now = 1;
                     /*Swap the start and end values*/
-                    int32_t tmp;
+                    lv_anim_value_t tmp;
                     tmp      = a.start_value;
                     a.start_value = a.end_value;
                     a.end_value   = tmp;
@@ -1011,7 +1011,7 @@ static void lv_label_refr_text(lv_obj_t * obj)
                 if(playback_now) {
                     a.playback_now = 1;
                     /*Swap the start and end values*/
-                    int32_t tmp;
+                    lv_anim_value_t tmp;
                     tmp      = a.start_value;
                     a.start_value = a.end_value;
                     a.end_value   = tmp;

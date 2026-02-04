@@ -33,8 +33,8 @@
  **********************/
 static void lv_lottie_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
 static void lv_lottie_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
-static void anim_exec_cb(void * var, int32_t v);
-static void lottie_update(lv_lottie_t * lottie, int32_t v);
+static void anim_exec_cb(void * var, lv_anim_value_t v);
+static void lottie_update(lv_lottie_t * lottie, lv_anim_value_t v);
 
 /**********************
  *  STATIC VARIABLES
@@ -119,7 +119,7 @@ void lv_lottie_set_src_data(lv_obj_t * obj, const void * src, size_t src_size)
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
     lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;
-    lottie->anim->end_value = (int32_t)f_total;
+    lottie->anim->end_value = (lv_anim_value_t)f_total;
     lottie->anim->playback_now = false;
     lottie_update(lottie, 0);   /*Render immediately*/
 }
@@ -137,7 +137,7 @@ void lv_lottie_set_src_file(lv_obj_t * obj, const char * src)
     tvg_animation_get_total_frame(lottie->tvg_anim, &f_total);
     lv_anim_set_time(lottie->anim, (int32_t)f_total * 1000 / 60); /*60 FPS*/
     lottie->anim->act_time = 0;
-    lottie->anim->end_value = (int32_t)f_total;
+    lottie->anim->end_value = (lv_anim_value_t)f_total;
     lottie->anim->playback_now = false;
     lottie_update(lottie, 0);   /*Render immediately*/
 }
@@ -187,7 +187,7 @@ static void lv_lottie_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
     tvg_canvas_destroy(lottie->tvg_canvas);
 }
 
-static void anim_exec_cb(void * var, int32_t v)
+static void anim_exec_cb(void * var, lv_anim_value_t v)
 {
     lv_lottie_t * lottie = var;
 
@@ -207,7 +207,7 @@ static void anim_exec_cb(void * var, int32_t v)
     }
 }
 
-static void lottie_update(lv_lottie_t * lottie, int32_t v)
+static void lottie_update(lv_lottie_t * lottie, lv_anim_value_t v)
 {
     lv_obj_t * obj = (lv_obj_t *) lottie;
 
@@ -225,7 +225,7 @@ static void lottie_update(lv_lottie_t * lottie, int32_t v)
         lv_image_cache_drop(lv_image_get_src(obj));
     }
 
-    tvg_animation_set_frame(lottie->tvg_anim, v);
+    tvg_animation_set_frame(lottie->tvg_anim, (uint32_t)v);
     tvg_canvas_update(lottie->tvg_canvas);
     tvg_canvas_draw(lottie->tvg_canvas);
     tvg_canvas_sync(lottie->tvg_canvas);
