@@ -285,13 +285,13 @@ static void img_draw_core(lv_draw_unit_t * draw_unit, const lv_draw_image_dsc_t 
         if(cf_final == LV_COLOR_FORMAT_RGB565A8) {
             uint32_t buf_stride = blend_w * 3;
             buf_h = MAX_BUF_SIZE / buf_stride;
-            if(buf_h > blend_h) buf_h = blend_h;
+            buf_h = LV_CLAMP(1, buf_h, blend_h);
             tmp_buf = lv_malloc(buf_stride * buf_h);
         }
         else {
             uint32_t buf_stride = blend_w * lv_color_format_get_size(cf_final);
             buf_h = MAX_BUF_SIZE / buf_stride;
-            if(buf_h > blend_h) buf_h = blend_h;
+            buf_h = LV_CLAMP(1, buf_h, blend_h);
             tmp_buf = lv_malloc(buf_stride * buf_h);
         }
         LV_ASSERT_MALLOC(tmp_buf);
