@@ -84,8 +84,10 @@ static void arc_anim(benchmark_context_t * context, lv_obj_t * obj);
 
 static lv_obj_t * card_create(void);
 
+#if LV_USE_SPAN
 static void spans_init(lv_obj_t * spans);
 static void spans_text_add(lv_obj_t * spans, const lv_font_t * font, const char * text);
+#endif
 
 #if LV_USE_SVG
     static void svg_create(benchmark_context_t * context, const char * src);
@@ -179,6 +181,7 @@ static void label_tiny_ttf_text_cb(benchmark_context_t * context)
 }
 #endif
 
+#if LV_USE_SPAN
 static void span_text_cb(benchmark_context_t * context)
 {
     lv_obj_set_layout(lv_screen_active(), 0);
@@ -190,6 +193,7 @@ static void span_text_cb(benchmark_context_t * context)
 
     shake_anim(context, spans, - lv_display_get_vertical_resolution(NULL) / 3);
 }
+#endif
 
 #if LV_USE_SVG
 static void svg_tiger_cb(benchmark_context_t * context)
@@ -620,7 +624,9 @@ static scene_dsc_t scenes[] = {
     {.name = "Screen sized text",               .scene_time = 5000,  .create_cb = screen_sized_text_cb},
     {.name = "Multiple arcs",                   .scene_time = 3000,  .create_cb = multiple_arcs_cb},
 
+#if LV_USE_SPAN
     {.name = "Span text",                       .scene_time = 3000,  .create_cb = span_text_cb},
+#endif
 #if LV_USE_FREETYPE
     {.name = "FreeType span text(bitmap)",      .scene_time = 3000,  .create_cb = freetype_span_text_bitmap_cb},
     {.name = "FreeType span text(outline)",     .scene_time = 3000,  .create_cb = freetype_span_text_outline_cb},
@@ -1089,7 +1095,7 @@ static lv_obj_t * card_create(void)
     return panel;
 }
 
-#if LV_USE_FREETYPE || TEST_TINY_TTF
+#if LV_USE_SPAN
 static void spans_init(lv_obj_t * spans)
 {
     lv_obj_set_width(spans, LV_PCT(100));
