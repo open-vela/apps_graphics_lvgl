@@ -22,9 +22,9 @@
  **********************/
 static void auto_delete(lv_obj_t * obj, uint32_t delay);
 static void msgbox_delete(lv_timer_t * tmr);
-static void set_y_anim(void * obj, int32_t v);
-static void set_width_anim(void * obj, int32_t v);
-static void arc_set_end_angle_anim(void * obj, int32_t v);
+static void set_y_anim(void * obj, lv_anim_value_t v);
+static void set_width_anim(void * obj, lv_anim_value_t v);
+static void arc_set_end_angle_anim(void * obj, lv_anim_value_t v);
 static void obj_test_task_cb(lv_timer_t * tmr);
 
 /**********************
@@ -447,17 +447,17 @@ static void msgbox_delete(lv_timer_t * tmr)
     lv_msgbox_close(tmr->user_data);
 }
 
-static void set_y_anim(void * obj, int32_t v)
+static void set_y_anim(void * obj, lv_anim_value_t v)
 {
     lv_obj_set_y(obj, v);
 }
 
-static void set_width_anim(void * obj, int32_t v)
+static void set_width_anim(void * obj, lv_anim_value_t v)
 {
     lv_obj_set_width(obj, v);
 }
 
-static void arc_set_end_angle_anim(void * obj, int32_t v)
+static void arc_set_end_angle_anim(void * obj, lv_anim_value_t v)
 {
     lv_arc_set_end_angle(obj, v);
 }

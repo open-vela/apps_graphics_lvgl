@@ -48,12 +48,12 @@ static void calendar_event_cb(lv_event_t * e);
 static void slider_event_cb(lv_event_t * e);
 static void chart_event_cb(lv_event_t * e);
 static void shop_chart_event_cb(lv_event_t * e);
-static void scale1_indic1_anim_cb(void * var, int32_t v);
+static void scale1_indic1_anim_cb(void * var, lv_anim_value_t v);
 static void scale2_timer_cb(lv_timer_t * timer);
-static void scale3_anim_cb(void * var, int32_t v);
+static void scale3_anim_cb(void * var, lv_anim_value_t v);
 static void scale3_size_changed_event_cb(lv_event_t * e);
-static void scroll_anim_y_cb(void * var, int32_t v);
-static void scroll_anim_y_cb(void * var, int32_t v);
+static void scroll_anim_y_cb(void * var, lv_anim_value_t v);
+static void scroll_anim_y_cb(void * var, lv_anim_value_t v);
 static void delete_timer_event_cb(lv_event_t * e);
 static void slideshow_anim_completed_cb(lv_anim_t * a_old);
 static void scale3_delete_event_cb(lv_event_t * e);
@@ -1098,14 +1098,14 @@ static void color_changer_create(lv_obj_t * parent)
     }
 }
 
-static void color_changer_anim_cb(void * var, int32_t v)
+static void color_changer_anim_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_t * obj = var;
     int32_t max_w = lv_obj_get_width(lv_obj_get_parent(obj)) - LV_DPX(20);
     int32_t w;
 
     if(disp_size == DISP_SMALL) {
-        w = lv_map(v, 0, 256, LV_DPX(52), max_w);
+        w = lv_map((int32_t)v, 0, 256, LV_DPX(52), max_w);
         lv_obj_set_width(obj, w);
         lv_obj_align(obj, LV_ALIGN_BOTTOM_RIGHT, - LV_DPX(10),  - LV_DPX(10));
     }
@@ -1540,13 +1540,13 @@ static void shop_chart_event_cb(lv_event_t * e)
     LV_UNUSED(e);
 }
 
-static void scale1_indic1_anim_cb(void * var, int32_t v)
+static void scale1_indic1_anim_cb(void * var, lv_anim_value_t v)
 {
-    lv_arc_set_value(var, v);
+    lv_arc_set_value(var, (int32_t)v);
 
     lv_obj_t * card = lv_obj_get_parent(scale1);
     lv_obj_t * label = lv_obj_get_child(card, -5);
-    lv_label_set_text_fmt(label, "Revenue: %"LV_PRId32" %%", v);
+    lv_label_set_text_fmt(label, "Revenue: %"LV_PRId32" %%", (int32_t)v);
 }
 
 static void scale2_timer_cb(lv_timer_t * timer)
@@ -1605,13 +1605,13 @@ static void scale2_timer_cb(lv_timer_t * timer)
     lv_label_set_text_fmt(label, "Mobile: %"LV_PRIu32, session_mobile);
 }
 
-static void scale3_anim_cb(void * var, int32_t v)
+static void scale3_anim_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_t * needle = lv_obj_get_child(var, 0);
-    lv_scale_set_image_needle_value(var, needle, v);
+    lv_scale_set_image_needle_value(var, needle, (int32_t)v);
 
     lv_obj_t * label = lv_obj_get_child(var, 1);
-    lv_label_set_text_fmt(label, "%"LV_PRId32, v);
+    lv_label_set_text_fmt(label, "%"LV_PRId32, (int32_t)v);
 }
 
 static void scale3_size_changed_event_cb(lv_event_t * e)
@@ -1631,9 +1631,9 @@ static void scale3_size_changed_event_cb(lv_event_t * e)
     lv_obj_align(scale3_mbps_label, LV_ALIGN_TOP_LEFT, minor_dim_half, minor_dim * 55 / 100);
 }
 
-static void scroll_anim_y_cb(void * var, int32_t v)
+static void scroll_anim_y_cb(void * var, lv_anim_value_t v)
 {
-    lv_obj_scroll_to_y(var, v, LV_ANIM_OFF);
+    lv_obj_scroll_to_y(var, (int32_t)v, LV_ANIM_OFF);
 }
 
 static void delete_timer_event_cb(lv_event_t * e)

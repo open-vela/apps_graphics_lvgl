@@ -1,12 +1,12 @@
 #include "../lv_examples.h"
 #if LV_BUILD_EXAMPLES && LV_USE_SWITCH
 
-static void anim_x_cb(void * var, int32_t v)
+static void anim_x_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_set_x(var, v);
 }
 
-static void anim_size_cb(void * var, int32_t v)
+static void anim_size_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_set_size(var, v, v);
 }

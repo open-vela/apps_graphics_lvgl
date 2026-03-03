@@ -49,8 +49,8 @@ static void lv_label_revert_dots(lv_obj_t * label);
 static bool lv_label_set_dot_tmp(lv_obj_t * label, char * data, uint32_t len);
 static char * lv_label_get_dot_tmp(lv_obj_t * label);
 static void lv_label_dot_tmp_free(lv_obj_t * label);
-static void set_ofs_x_anim(void * obj, int32_t v);
-static void set_ofs_y_anim(void * obj, int32_t v);
+static void set_ofs_x_anim(void * obj, lv_anim_value_t v);
+static void set_ofs_y_anim(void * obj, lv_anim_value_t v);
 static size_t get_text_length(const char * text);
 static void copy_text_to_label(lv_label_t * label, const char * text);
 static lv_text_flag_t get_label_flags(lv_label_t * label);
@@ -1266,14 +1266,14 @@ static void lv_label_dot_tmp_free(lv_obj_t * obj)
     label->dot.tmp_ptr   = NULL;
 }
 
-static void set_ofs_x_anim(void * obj, int32_t v)
+static void set_ofs_x_anim(void * obj, lv_anim_value_t v)
 {
     lv_label_t * label = (lv_label_t *)obj;
     label->offset.x    = v;
     lv_obj_invalidate(obj);
 }
 
-static void set_ofs_y_anim(void * obj, int32_t v)
+static void set_ofs_y_anim(void * obj, lv_anim_value_t v)
 {
     lv_label_t * label = (lv_label_t *)obj;
     label->offset.y    = v;

@@ -257,11 +257,11 @@ static void inactive_timer_cb(lv_timer_t * t)
     }
 }
 
-static void shrink_anim_cb(void * var, int32_t v)
+static void shrink_anim_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_t * cont = var;
-    lv_obj_set_height(cont, (v * CARD_HEIGHT) >> 8);
-    lv_obj_set_style_opa(cont, v, 0);
+    lv_obj_set_height(cont, ((int32_t)v * CARD_HEIGHT) >> 8);
+    lv_obj_set_style_opa(cont, (int32_t)v, 0);
 }
 
 static void scroll_event_cb(lv_event_t * e)

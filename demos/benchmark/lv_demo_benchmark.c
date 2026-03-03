@@ -74,11 +74,11 @@ static void summary_create(void);
 
 static void rnd_reset(benchmark_context_t * context);
 static int32_t rnd_next(benchmark_context_t * context, int32_t min, int32_t max);
-static void shake_anim_y_cb(void * var, int32_t v);
+static void shake_anim_y_cb(void * var, lv_anim_value_t v);
 static void shake_anim(benchmark_context_t * context, lv_obj_t * obj, int32_t y_max);
 static void scroll_anim(lv_obj_t * obj, int32_t y_max);
-static void scroll_anim_y_cb(void * var, int32_t v);
-static void color_anim_cb(void * var, int32_t v);
+static void scroll_anim_y_cb(void * var, lv_anim_value_t v);
+static void color_anim_cb(void * var, lv_anim_value_t v);
 static void color_anim(lv_obj_t * obj);
 static void arc_anim(benchmark_context_t * context, lv_obj_t * obj);
 
@@ -979,7 +979,7 @@ static void summary_create(void)
  * SCENE HELPERS
  *----------------*/
 
-static void color_anim_cb(void * var, int32_t v)
+static void color_anim_cb(void * var, lv_anim_value_t v)
 {
     LV_UNUSED(v);
     lv_obj_set_style_bg_color(var, lv_color_hex3(lv_rand(0x00f, 0xff0)), 0);
@@ -998,7 +998,7 @@ static void color_anim(lv_obj_t * obj)
     lv_anim_start(&a);
 }
 
-static void arc_anim_cb(void * var, int32_t v)
+static void arc_anim_cb(void * var, lv_anim_value_t v)
 {
     lv_arc_set_value(var, v);
 }
@@ -1018,7 +1018,7 @@ static void arc_anim(benchmark_context_t * context, lv_obj_t * obj)
     lv_anim_start(&a);
 }
 
-static void scroll_anim_y_cb(void * var, int32_t v)
+static void scroll_anim_y_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_scroll_to_y(var, v, LV_ANIM_OFF);
 }
@@ -1038,7 +1038,7 @@ static void scroll_anim(lv_obj_t * obj, int32_t y_max)
     lv_anim_start(&a);
 }
 
-static void shake_anim_y_cb(void * var, int32_t v)
+static void shake_anim_y_cb(void * var, lv_anim_value_t v)
 {
     lv_obj_set_style_translate_y(var, v, 0);
 }

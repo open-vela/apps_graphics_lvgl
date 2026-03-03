@@ -55,12 +55,12 @@ static lv_style_res_t get_prop_core(const lv_obj_t * obj, lv_style_selector_t se
 static void report_style_change_core(void * style, lv_obj_t * obj);
 static void refresh_children_style(lv_obj_t * obj);
 static bool trans_delete(lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, trans_t * tr_limit);
-static void trans_anim_cb(void * _tr, int32_t v);
+static void trans_anim_cb(void * _tr, lv_anim_value_t v);
 static void trans_anim_start_cb(lv_anim_t * a);
 static void trans_anim_completed_cb(lv_anim_t * a);
 static lv_layer_type_t calculate_layer_type(lv_obj_t * obj);
 static void full_cache_refresh(lv_obj_t * obj, lv_part_t part);
-static void fade_anim_cb(void * obj, int32_t v);
+static void fade_anim_cb(void * obj, lv_anim_value_t v);
 static void fade_in_anim_completed(lv_anim_t * a);
 static bool style_has_flag(const lv_style_t * style, uint32_t flag);
 static lv_style_res_t get_selector_style_prop(const lv_obj_t * obj, lv_style_selector_t selector, lv_style_prop_t prop,
@@ -891,7 +891,7 @@ static bool trans_delete(lv_obj_t * obj, lv_part_t part, lv_style_prop_t prop, t
     return removed;
 }
 
-static void trans_anim_cb(void * _tr, int32_t v)
+static void trans_anim_cb(void * _tr, lv_anim_value_t v)
 {
     trans_t * tr = _tr;
     lv_obj_t * obj = tr->obj;
@@ -1082,7 +1082,7 @@ static void full_cache_refresh(lv_obj_t * obj, lv_part_t part)
 #endif
 }
 
-static void fade_anim_cb(void * obj, int32_t v)
+static void fade_anim_cb(void * obj, lv_anim_value_t v)
 {
     lv_obj_set_style_opa(obj, v, 0);
 }
