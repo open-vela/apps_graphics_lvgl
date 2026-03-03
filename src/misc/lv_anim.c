@@ -40,6 +40,7 @@ static uint32_t convert_speed_to_time(uint32_t speed_or_time, lv_anim_value_t st
                                       lv_anim_value_t end);
 static void resolve_time(lv_anim_t * a);
 static bool remove_concurrent_anims(const lv_anim_t * a_current);
+static bool anim_is_finished_time_cb(const lv_anim_t * a);
 
 /**********************
  *  STATIC VARIABLES
@@ -81,6 +82,7 @@ void lv_anim_init(lv_anim_t * a)
     a->repeat_cnt = 1;
     a->path_cb = lv_anim_path_linear;
     a->early_apply = 1;
+    a->is_finished_cb = anim_is_finished_time_cb;
 }
 
 lv_anim_t * lv_anim_start(const lv_anim_t * a)
@@ -416,7 +418,13 @@ static void anim_timer(lv_timer_t * param)
             }
 
             if(a->act_time >= 0) {
-                if(a->act_time > a->duration) a->act_time = a->duration;
+                /*For time-finished animations clamp act_time to duration.
+                 *For convergence-finished paths (e.g. spring) act_time can run past duration;
+                 *clamping would freeze dt (= act_time - last_act_time) and break integration.
+                 */
+                if(a->is_finished_cb == anim_is_finished_time_cb) {
+                    if(a->act_time > a->duration) a->act_time = a->duration;
+                }
 
                 lv_anim_value_t new_value = a->path_cb(a);
 
@@ -427,8 +435,8 @@ static void anim_timer(lv_timer_t * param)
                     if(!state.anim_list_changed && a->custom_exec_cb) a->custom_exec_cb(a, new_value);
                 }
 
-                /*If the time is elapsed the animation is ready*/
-                if(!state.anim_list_changed && a->act_time >= a->duration) {
+                /*If the animation is ready (time based, or custom condition)*/
+                if(!state.anim_list_changed && a->is_finished_cb && a->is_finished_cb(a)) {
                     anim_completed_handler(a);
                 }
             }
@@ -582,4 +590,9 @@ static bool remove_concurrent_anims(const lv_anim_t * a_current)
     }
 
     return del_any;
+}
+
+static bool anim_is_finished_time_cb(const lv_anim_t * a)
+{
+    return (a->act_time >= a->duration);
 }

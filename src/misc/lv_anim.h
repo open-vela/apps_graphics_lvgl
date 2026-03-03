@@ -106,6 +106,16 @@ typedef struct {
 /** Get the current value during an animation*/
 typedef lv_anim_value_t (*lv_anim_path_cb_t)(const lv_anim_t *);
 
+/**
+ * Optional callback to decide whether an animation is finished.
+ * If set, the animation core will call it from `anim_timer`.
+ * Return true to finish the animation (run `anim_completed_handler`).
+ *
+ * Typical use: spring-like curves that converge based on error/velocity
+ * thresholds rather than only `duration`.
+ */
+typedef bool (*lv_anim_is_finished_cb_t)(const lv_anim_t *);
+
 /** Generic prototype of "animator" functions.
  * First parameter is the variable to animate.
  * Second parameter is the value to set.
@@ -163,6 +173,7 @@ struct _lv_anim_t {
     lv_anim_get_value_cb_t get_value_cb; /**< Get the current value in relative mode*/
     void * user_data;                    /**< Custom user data*/
     lv_anim_path_cb_t path_cb;         /**< Describe the path (curve) of animations*/
+    lv_anim_is_finished_cb_t is_finished_cb;/**< Optional finish condition override */
     lv_anim_value_t start_value;       /**< Start value*/
     lv_anim_value_t current_value;     /**< Current value*/
     lv_anim_value_t end_value;         /**< End value*/
@@ -296,6 +307,16 @@ static inline void lv_anim_set_custom_exec_cb(lv_anim_t * a, lv_anim_custom_exec
 static inline void lv_anim_set_path_cb(lv_anim_t * a, lv_anim_path_cb_t path_cb)
 {
     a->path_cb = path_cb;
+}
+
+/**
+ * Set a custom finish condition.
+ * If set, the animation core can finish an animation before `duration` (or
+ * later, if desired), based on custom logic.
+ */
+static inline void lv_anim_set_is_finished_cb(lv_anim_t * a, lv_anim_is_finished_cb_t cb)
+{
+    a->is_finished_cb = cb;
 }
 
 /**
