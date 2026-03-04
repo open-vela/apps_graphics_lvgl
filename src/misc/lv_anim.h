@@ -137,6 +137,20 @@ typedef struct _lv_anim_bezier3_para_t {
     int16_t y2;
 } lv_anim_bezier3_para_t; /**< Parameter used when path is custom_bezier*/
 
+/** Different custom paths represent different parameters.
+ * For example, in a spring curve,
+ * p1 represents tension,
+ * p2 represents damping,
+ * p3 represents speed,
+ * p4 represents the threshold.*/
+typedef struct _lv_anim_ease_para_t {
+    lv_value_precise_t p1;
+    lv_value_precise_t p2;
+    lv_value_precise_t p3;
+    lv_value_precise_t p4;
+    int32_t last_act_time; /**< last act_time used to derive dt for ease integration */
+} lv_anim_ease_para_t; /**< Parameter used when path is custom_ease*/
+
 /** Describes an animation*/
 struct _lv_anim_t {
     void * var;                                 /**<Variable to animate*/
@@ -160,6 +174,7 @@ struct _lv_anim_t {
     uint16_t repeat_cnt;         /**< Repeat count for the animation*/
     union _lv_anim_path_para_t {
         lv_anim_bezier3_para_t bezier3; /**< Parameter used when path is custom_bezier*/
+        lv_anim_ease_para_t ease;       /**< Parameter used when path is custom_ease*/
     } parameter;
 
     uint8_t early_apply  : 1;    /**< 1: Apply start value immediately even is there is `delay`*/
