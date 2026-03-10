@@ -126,7 +126,7 @@ void lv_buttonmatrix_set_map(lv_obj_t * obj, const char * map[])
     const char ** map_row = map;
 
     /*Count the units and the buttons in a line*/
-    uint32_t row;
+    int32_t row;
     for(row = 0; row < btnm->row_cnt; row++) {
         uint32_t unit_cnt = 0;           /*Number of units in a row*/
         uint32_t btn_cnt = 0;            /*Number of buttons in a row*/
@@ -142,8 +142,8 @@ void lv_buttonmatrix_set_map(lv_obj_t * obj, const char * map[])
             continue;
         }
 
-        int32_t row_y1 = stop + (max_h_no_gap * row) / btnm->row_cnt + row * prow;
-        int32_t row_y2 = stop + (max_h_no_gap * (row + 1)) / btnm->row_cnt + row * prow - 1;
+        int32_t row_y1 = stop + (max_h_no_gap * row) / (int32_t)btnm->row_cnt + row * prow;
+        int32_t row_y2 = stop + (max_h_no_gap * (row + 1)) / (int32_t)btnm->row_cnt + row * prow - 1;
 
         /*Set the button size and positions*/
         int32_t max_w_no_gap = max_w - (pcol * (btn_cnt - 1));
