@@ -20,7 +20,7 @@ jobs:
                        "OPTIONS_VG_LITE"]
     name: Build ${{ matrix.build_option }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: ammaraskar/gcc-problem-matcher@master
     - name: Install prerequisites
       run: scripts/install-prerequisites.sh
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     name: amd64 Executable Tests
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: ammaraskar/gcc-problem-matcher@master
     - name: Install prerequisites
       run: scripts/install-prerequisites.sh
@@ -85,7 +85,7 @@ jobs:
           - arch: armv7
             distro: bullseye
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ammaraskar/gcc-problem-matcher@master
       - name: Setup cache
         uses: actions/cache@v4
