@@ -1016,6 +1016,7 @@ static void pwd_char_hider(lv_obj_t * obj)
     const char * bullet = lv_textarea_get_password_bullet(obj);
     const size_t bullet_len = lv_strlen(bullet);
     char * txt_tmp = lv_malloc(enc_len * bullet_len + 1);
+    if(txt_tmp == NULL) return;
 
     uint32_t i;
     for(i = 0; i < enc_len; i++) {

@@ -374,11 +374,16 @@ static void decompress(const uint8_t * in, uint8_t * out, int32_t w, int32_t h, 
     rle_init(in, bpp);
 
     uint8_t * line_buf1 = lv_malloc(w);
+    if(line_buf1 == NULL) return;
 
     uint8_t * line_buf2 = NULL;
 
     if(prefilter) {
         line_buf2 = lv_malloc(w);
+        if(line_buf2 == NULL) {
+            lv_free(line_buf1);
+            return;
+        }
     }
 
     decompress_line(line_buf1, w);

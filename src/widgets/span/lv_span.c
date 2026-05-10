@@ -972,7 +972,7 @@ static int32_t lv_span_get_style_text_decor(lv_obj_t * par, lv_span_t * span)
     lv_style_value_t value;
     lv_result_t res = lv_style_get_prop(&span->style, LV_STYLE_TEXT_DECOR, &value);
     if(res != LV_RESULT_OK) {
-        decor = (lv_text_decor_t)lv_obj_get_style_text_decor(par, LV_PART_MAIN);;
+        decor = (lv_text_decor_t)lv_obj_get_style_text_decor(par, LV_PART_MAIN);
     }
     else {
         decor = (int32_t)value.num;

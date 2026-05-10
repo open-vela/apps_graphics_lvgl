@@ -681,7 +681,8 @@ static void lv_ime_pinyin_kb_event(lv_event_t * e)
             return;
         }
         else if(lv_strcmp(txt, "123") == 0) {
-            for(uint16_t i = 0; i < lv_strlen(txt); i++)
+            uint16_t txt_len = lv_strlen(txt);
+            for(uint16_t i = 0; i < txt_len; i++)
                 lv_textarea_delete_char(ta);
 
             pinyin_ime_clear_data(obj);

@@ -241,7 +241,7 @@ struct RenderShape
     {
         if (!stroke) return 4.0f;
 
-        return stroke->miterlimit;;
+        return stroke->miterlimit;
     }
 };
 

@@ -85,7 +85,7 @@ void lv_file_explorer_set_quick_access_path(lv_obj_t * obj, lv_file_explorer_dir
     lv_file_explorer_t * explorer = (lv_file_explorer_t *)obj;
 
     /*If path is unavailable */
-    if((path == NULL) || (lv_strlen(path) <= 0)) return;
+    if((path == NULL) || (lv_strlen(path) == 0)) return;
 
     char ** dir_str = NULL;
     switch(dir) {
