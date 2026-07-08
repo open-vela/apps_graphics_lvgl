@@ -54,6 +54,12 @@
 #if LV_USE_DRAW_G2D
     #include "draw/sunxi_g2d/lv_draw_g2d.h"
 #endif
+#if LV_USE_DRAW_GE2D
+    #include "draw/artinchip/ge2d/lv_draw_ge2d.h"
+#endif
+#if LV_USE_MPP_DEC
+    #include "draw/artinchip/mpp_dec/lv_mpp_dec.h"
+#endif
 #if LV_USE_WINDOWS
     #include "drivers/windows/lv_windows_context.h"
 #endif
@@ -205,6 +211,10 @@ void lv_init(void)
     lv_draw_g2d_init();
 #endif
 
+#if LV_USE_DRAW_GE2D
+    lv_draw_ge2d_init();
+#endif
+
 #if LV_USE_DRAW_DAVE2D
     lv_draw_dave2d_init();
 #endif
@@ -314,6 +324,10 @@ void lv_init(void)
     lv_bmp_init();
 #endif
 
+#if LV_USE_MPP_DEC
+    lv_mpp_dec_init();
+#endif
+
 #if LV_USE_ETC2
     lv_etc2_init();
 #endif
@@ -417,6 +431,14 @@ void lv_deinit(void)
 
 #if LV_USE_DRAW_G2D
     lv_draw_g2d_deinit();
+#endif
+
+#if LV_USE_DRAW_GE2D
+    lv_draw_ge2d_deinit();
+#endif
+
+#if LV_USE_MPP_DEC
+    lv_mpp_dec_deinit();
 #endif
 
     lv_draw_deinit();

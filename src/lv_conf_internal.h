@@ -657,6 +657,33 @@
     #endif
 #endif
 
+/* Use ArtInChip GE2D GPU. */
+#ifndef LV_USE_DRAW_GE2D
+    #ifdef CONFIG_LV_USE_DRAW_GE2D
+        #define LV_USE_DRAW_GE2D CONFIG_LV_USE_DRAW_GE2D
+    #else
+        #define LV_USE_DRAW_GE2D 0
+    #endif
+#endif
+
+/* Use ArtInChip MPP hardware image decoder. */
+#ifndef LV_USE_MPP_DEC
+    #ifdef CONFIG_LV_USE_MPP_DEC
+        #define LV_USE_MPP_DEC CONFIG_LV_USE_MPP_DEC
+    #else
+        #define LV_USE_MPP_DEC 0
+    #endif
+#endif
+
+/* Use ArtInChip BMP decoder. */
+#ifndef LV_USE_AIC_BMP
+    #ifdef CONFIG_LV_USE_AIC_BMP
+        #define LV_USE_AIC_BMP CONFIG_LV_USE_AIC_BMP
+    #else
+        #define LV_USE_AIC_BMP 0
+    #endif
+#endif
+
 /*=======================
  * FEATURE CONFIGURATION
  *=======================*/
