@@ -236,6 +236,15 @@
 /* Use G2D GPU. */
 #define LV_USE_DRAW_G2D 0
 
+/* Use ArtInChip GE2D GPU. */
+#define LV_USE_DRAW_GE2D 0
+
+/* Use ArtInChip MPP hardware image decoder. */
+#define LV_USE_MPP_DEC 0
+
+/* Use ArtInChip BMP decoder. */
+#define LV_USE_AIC_BMP 0
+
 /*=======================
  * FEATURE CONFIGURATION
  *=======================*/
