@@ -52,6 +52,7 @@ typedef lv_display_rotation_t       lv_disp_rotation_t;
 typedef lv_display_render_mode_t    lv_disp_render_t;
 typedef lv_anim_completed_cb_t      lv_anim_ready_cb_t;
 typedef lv_screen_load_anim_t       lv_scr_load_anim_t;
+typedef lv_buttonmatrix_ctrl_t      lv_btnmatrix_ctrl_t;
 
 /**********************
  * GLOBAL PROTOTYPES
@@ -248,6 +249,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_obj_set_style_bg_img_src              lv_obj_set_style_bg_image_src
 #define lv_obj_set_style_bg_img_recolor          lv_obj_set_style_bg_image_recolor
 #define lv_obj_set_style_bg_img_recolor_opa      lv_obj_set_style_bg_image_recolor_opa
+#define lv_obj_set_style_arc_img_src             lv_obj_set_style_arc_image_src
 
 #define lv_style_set_anim_time                   lv_style_set_anim_duration
 #define lv_style_set_img_opa                     lv_style_set_image_opa
@@ -271,6 +273,71 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
 #define lv_image_set_angle                  lv_image_set_rotation
 #define lv_image_set_zoom                   lv_image_set_scale
 
+#define  LV_IMGBTN_STATE_RELEASED           LV_IMAGEBUTTON_STATE_RELEASED
+#define  LV_IMGBTN_STATE_PRESSED            LV_IMAGEBUTTON_STATE_PRESSED
+#define  LV_IMGBTN_STATE_DISABLED           LV_IMAGEBUTTON_STATE_DISABLED
+#define  LV_IMGBTN_STATE_CHECKED_RELEASED   LV_IMAGEBUTTON_STATE_CHECKED_RELEASED
+#define  LV_IMGBTN_STATE_CHECKED_PRESSED    LV_IMAGEBUTTON_STATE_CHECKED_PRESSED
+#define  LV_IMGBTN_STATE_CHECKED_DISABLED   LV_IMAGEBUTTON_STATE_CHECKED_DISABLED
+#define  _LV_IMGBTN_STATE_NUM               _LV_IMAGEBUTTON_STATE_NUM
+
+#define lv_imgbtn_create                    lv_imagebutton_create
+#define lv_imgbtn_set_src                   lv_imagebutton_set_src
+#define lv_imgbtn_set_state                 lv_imagebutton_set_state
+#define lv_imgbtn_get_src_left              lv_imagebutton_get_src_left
+#define lv_imgbtn_get_src_middle            lv_imagebutton_get_src_middle
+#define lv_imgbtn_get_src_right             lv_imagebutton_get_src_right
+
+#define lv_img_cache_invalidate_src         lv_image_cache_drop
+
+#define lv_style_set_bg_img_src             lv_style_set_bg_image_src
+#define lv_style_set_bg_img_opa             lv_style_set_bg_image_opa
+#define lv_style_set_bg_img_recolor         lv_style_set_bg_image_recolor
+#define lv_style_set_bg_img_recolor_opa     lv_style_set_bg_image_recolor_opa
+#define lv_style_set_img_opa                lv_style_set_image_opa
+#define lv_style_set_img_recolor            lv_style_set_image_recolor
+#define lv_style_set_img_recolor_opa        lv_style_set_image_recolor_opa
+#define lv_style_set_arc_img_src            lv_style_set_arc_image_src
+
+#define lv_obj_set_style_bg_img_src         lv_obj_set_style_bg_image_src
+#define lv_obj_set_style_bg_img_opa         lv_obj_set_style_bg_image_opa
+#define lv_obj_set_style_bg_img_recolor     lv_obj_set_style_bg_image_recolor
+#define lv_obj_set_style_bg_img_recolor_opa lv_obj_set_style_bg_image_recolor_opa
+#define lv_obj_set_style_bg_img_tiled       lv_obj_set_style_bg_image_tiled
+
+#define lv_obj_get_style_bg_img_src                lv_obj_get_style_bg_image_src
+#define lv_obj_get_style_bg_img_opa                lv_obj_get_style_bg_image_opa
+#define lv_obj_get_style_bg_img_recolor            lv_obj_get_style_bg_image_recolor
+#define lv_obj_get_style_bg_img_recolor_filtered   lv_obj_get_style_bg_image_recolor_filtered
+#define lv_obj_get_style_bg_img_recolor_opa        lv_obj_get_style_bg_image_recolor_opa
+#define lv_obj_get_style_bg_img_tiled              lv_obj_get_style_bg_image_tiled
+
+#define LV_MENU_ROOT_BACK_BTN_DISABLED      LV_MENU_ROOT_BACK_BUTTON_DISABLED
+#define LV_MENU_ROOT_BACK_BTN_ENABLED       LV_MENU_ROOT_BACK_BUTTON_ENABLED
+#define lv_btnmatrix_set_selected_btn       lv_buttonmatrix_set_selected_button
+#define lv_btnmatrix_set_btn_ctrl           lv_buttonmatrix_set_button_ctrl
+#define lv_btnmatrix_clear_btn_ctrl         lv_buttonmatrix_clear_button_ctrl
+#define lv_btnmatrix_set_btn_ctrl_all       lv_buttonmatrix_set_button_ctrl_all
+#define lv_btnmatrix_clear_btn_ctrl_all     lv_buttonmatrix_clear_button_ctrl_all
+#define lv_btnmatrix_set_btn_width          lv_buttonmatrix_set_button_width
+#define lv_btnmatrix_get_selected_btn       lv_buttonmatrix_get_selected_button
+#define lv_btnmatrix_get_btn_text           lv_buttonmatrix_get_button_text
+#define lv_btnmatrix_has_btn_ctrl           lv_buttonmatrix_has_button_ctrl
+
+#define lv_menu_set_mode_root_back_btn      lv_menu_set_mode_root_back_button
+#define lv_menu_get_main_header_back_btn    lv_menu_get_main_header_back_button
+#define lv_menu_get_sidebar_header_back_btn lv_menu_get_sidebar_header_back_button
+#define lv_menu_back_btn_is_root            lv_menu_back_button_is_root
+
+#define lv_event_get_target                 lv_event_get_target_obj
+
+#define lv_label_set_recolor(x, y)          LV_UNUSED(x);LV_UNUSED(y)
+
+#define lv_img_decoder_get_info             lv_image_decoder_get_info
+
+#define lv_mem_alloc                        lv_malloc
+#define lv_mem_realloc                      lv_realloc
+#define lv_mem_free                         lv_free
 /**********************
  *      MACROS
  **********************/
