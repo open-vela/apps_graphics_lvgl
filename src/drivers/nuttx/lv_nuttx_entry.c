@@ -96,7 +96,11 @@ void lv_nuttx_dsc_init(lv_nuttx_dsc_t * dsc)
         return;
 
     lv_memzero(dsc, sizeof(lv_nuttx_dsc_t));
+#if LV_USE_NUTTX_LCD
+    dsc->fb_path = "/dev/lcd0";
+#else
     dsc->fb_path = "/dev/fb0";
+#endif
     dsc->input_path = "/dev/input0";
 
 #ifdef CONFIG_UINPUT_TOUCH
