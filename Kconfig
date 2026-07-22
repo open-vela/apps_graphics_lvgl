@@ -328,6 +328,24 @@ menu "LVGL configuration"
 			help
 				Uses SDL renderer API
 
+		config LV_USE_SIFLI_EPIC
+			bool "Use SiFli EPIC draw accelerator"
+			default n
+			depends on BSP_USING_EPIC
+			help
+				Use the SiFli EPIC hardware accelerator for supported LVGL
+				draw tasks and framebuffer copy fallback.
+
+		config LV_USE_SIFLI_EPIC_DRAW_THREAD
+			bool "Use a dedicated SiFli EPIC draw thread"
+			default n
+			depends on LV_USE_SIFLI_EPIC && LV_USE_OS > 0
+
+		config LV_USE_SIFLI_EPIC_ASSERT
+			bool "Enable SiFli EPIC asserts"
+			default n
+			depends on LV_USE_SIFLI_EPIC
+
 		config LV_USE_DRAW_VG_LITE
 			bool "Use VG-Lite GPU"
 			default n
