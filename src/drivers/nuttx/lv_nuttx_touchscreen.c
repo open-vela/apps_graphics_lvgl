@@ -154,14 +154,13 @@ static void process_single_touch(lv_indev_t * drv,
         data->point.x = LV_CLAMP(0, sample->point[0].x, hor_max);
         data->point.y = LV_CLAMP(0, sample->point[0].y, ver_max);
         touchscreen->last_state = LV_INDEV_STATE_PRESSED;
-
-        if(touch_flags & TOUCH_DOWN) {
-            touchscreen->primary_point.id = sample->point[0].id;
-            touchscreen->primary_point.x = data->point.x;
-            touchscreen->primary_point.y = data->point.y;
-        }
+        touchscreen->primary_point.id = sample->point[0].id;
+        touchscreen->primary_point.x = data->point.x;
+        touchscreen->primary_point.y = data->point.y;
     }
     else if(touch_flags & TOUCH_UP) {
+        data->point.x = touchscreen->primary_point.x;
+        data->point.y = touchscreen->primary_point.y;
         touchscreen->primary_point.id = UINT8_MAX;
         touchscreen->last_state = LV_INDEV_STATE_RELEASED;
     }
@@ -302,13 +301,19 @@ static void touchscreen_read(lv_indev_t * drv, lv_indev_data_t * data)
     else {
         /* Read first sample */
         if(!touchscreen_read_sample(touchscreen)) {
-            /* No sample available, return last state */
+            /* No sample available, return last state.
+             * lv_indev zeroes this struct every call: leaving point at
+             * (0,0) while PRESSED makes every tap jump to the corner
+             * and widgets treat it as a drag, not a click.
+             */
 #if LV_USE_GESTURE_RECOGNITION
             if(touchscreen->active_points > 1) {
                 return;
             }
 #endif
             data->state = touchscreen->last_state;
+            data->point.x = touchscreen->primary_point.x;
+            data->point.y = touchscreen->primary_point.y;
             return;
         }
 

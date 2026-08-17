@@ -175,23 +175,12 @@ errout:
 
 static void display_refr_timer_cb(lv_timer_t * tmr)
 {
-    lv_display_t * disp = lv_timer_get_user_data(tmr);
-    lv_nuttx_fb_t * dsc = lv_display_get_driver_data(disp);
-    struct pollfd pfds[1];
+    /* This MIPI-DSI panel has no vsync pan queue.  Waiting for POLLOUT
+     * leaves the front buffer at memset(0) forever (backlight on, black
+     * screen) even though LVGL is running.
+     */
 
-    lv_memzero(pfds, sizeof(pfds));
-    pfds[0].fd = dsc->fd;
-    pfds[0].events = POLLOUT;
-
-    /* Query free fb to draw */
-
-    if(poll(pfds, 1, 0) < 0) {
-        return;
-    }
-
-    if(pfds[0].revents & POLLOUT) {
-        _lv_display_refr_timer(tmr);
-    }
+    _lv_display_refr_timer(tmr);
 }
 
 static void flush_cb(lv_display_t * disp, const lv_area_t * area, uint8_t * color_p)
