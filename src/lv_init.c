@@ -54,6 +54,9 @@
 #if LV_USE_DRAW_G2D
     #include "draw/sunxi_g2d/lv_draw_g2d.h"
 #endif
+#if LV_USE_SIFLI_EPIC
+    #include "draw/sifli/epic/lv_draw_sifli_epic.h"
+#endif
 #if LV_USE_WINDOWS
     #include "drivers/windows/lv_windows_context.h"
 #endif
@@ -205,8 +208,16 @@ void lv_init(void)
     lv_draw_g2d_init();
 #endif
 
+#if LV_USE_SIFLI_EPIC
+    lv_draw_sifli_epic_init();
+#endif
+
 #if LV_USE_DRAW_DAVE2D
     lv_draw_dave2d_init();
+#endif
+
+#if LV_USE_DRAW_EPIC
+    lv_draw_epic_init();
 #endif
 
 #if LV_USE_DRAW_SDL
@@ -417,6 +428,10 @@ void lv_deinit(void)
 
 #if LV_USE_DRAW_G2D
     lv_draw_g2d_deinit();
+#endif
+
+#if LV_USE_SIFLI_EPIC
+    lv_draw_sifli_epic_deinit();
 #endif
 
     lv_draw_deinit();

@@ -516,6 +516,33 @@
     #endif
 #endif
 
+/* Use SiFli EPIC draw accelerator. */
+#ifndef LV_USE_SIFLI_EPIC
+    #ifdef CONFIG_LV_USE_SIFLI_EPIC
+        #define LV_USE_SIFLI_EPIC CONFIG_LV_USE_SIFLI_EPIC
+    #else
+        #define LV_USE_SIFLI_EPIC 0
+    #endif
+#endif
+
+#if LV_USE_SIFLI_EPIC
+    #ifndef LV_USE_SIFLI_EPIC_DRAW_THREAD
+        #ifdef CONFIG_LV_USE_SIFLI_EPIC_DRAW_THREAD
+            #define LV_USE_SIFLI_EPIC_DRAW_THREAD CONFIG_LV_USE_SIFLI_EPIC_DRAW_THREAD
+        #else
+            #define LV_USE_SIFLI_EPIC_DRAW_THREAD 0
+        #endif
+    #endif
+
+    #ifndef LV_USE_SIFLI_EPIC_ASSERT
+        #ifdef CONFIG_LV_USE_SIFLI_EPIC_ASSERT
+            #define LV_USE_SIFLI_EPIC_ASSERT CONFIG_LV_USE_SIFLI_EPIC_ASSERT
+        #else
+            #define LV_USE_SIFLI_EPIC_ASSERT 0
+        #endif
+    #endif
+#endif
+
 /* Use VG-Lite GPU. */
 #ifndef LV_USE_DRAW_VG_LITE
     #ifdef CONFIG_LV_USE_DRAW_VG_LITE
@@ -656,6 +683,16 @@
         #define LV_USE_DRAW_G2D 0
     #endif
 #endif
+
+/* Use SiFli EPIC GPU for hardware acceleration. */
+#ifndef LV_USE_DRAW_EPIC
+    #ifdef CONFIG_LV_USE_DRAW_EPIC
+        #define LV_USE_DRAW_EPIC CONFIG_LV_USE_DRAW_EPIC
+    #else
+        #define LV_USE_DRAW_EPIC 0
+    #endif
+#endif
+
 
 /*=======================
  * FEATURE CONFIGURATION
